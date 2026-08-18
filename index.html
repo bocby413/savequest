@@ -281,6 +281,12 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .f input:focus,.f select:focus{border-color:var(--cyan)}
 .f select option{background:var(--panel);color:var(--txt)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 0;border-top:1px solid var(--edge)}
+.setrow .lb b{display:block;font-size:15px;font-weight:700}
+.setrow .lb span{font-size:12.5px;color:var(--txt3)}
+.setrow.danger .lb b{color:var(--red)}
+.setrow.danger .btn:hover{border-color:var(--red);color:var(--red)}
+.setrow .btn{flex:none;min-width:82px}
 .kinds{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:15px}
 .kinds button{font:inherit;font-size:14px;font-weight:700;padding:9px 0;border-radius:11px;cursor:pointer;
   background:var(--panel2);border:2px solid var(--edge);color:var(--txt3);transition:.14s}
@@ -351,6 +357,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M6.4 5L12 10.6 17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4L12 13.4 6.4 19 5 17.6 10.6 12 5 6.4z"/></symbol>
   <symbol id="i-undo" viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4z"/><path d="M19.4 13a7.7 7.7 0 0 0 0-2l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-1.7-1L15 3.5H9.9L9.6 6a7.6 7.6 0 0 0-1.7 1l-2.3-1-2 3.4L5.6 11a7.7 7.7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1c.5.4 1.1.8 1.7 1l.3 2.6h5.1l.3-2.6c.6-.2 1.2-.6 1.7-1l2.3 1 2-3.4-2-1.5z" opacity=".55"/></symbol>
   <symbol id="i-vol" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4V9zm12.5-1.6a6 6 0 0 1 0 9.2l-1.3-1.5a4 4 0 0 0 0-6.2l1.3-1.5zm2.6-2.9a10 10 0 0 1 0 15l-1.3-1.5a8 8 0 0 0 0-12l1.3-1.5z"/></symbol>
   <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4V9zm12.6.4l1.4-1.4 2.1 2.1 2.1-2.1 1.4 1.4-2.1 2.1 2.1 2.1-1.4 1.4-2.1-2.1-2.1 2.1-1.4-1.4 2.1-2.1-2.1-2.1z"/></symbol>
   <symbol id="i-cam" viewBox="0 0 24 24"><path d="M9 3h6l1.5 2H21v16H3V5h4.5L9 3zm3 5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zm0 2a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7z"/></symbol>
@@ -386,11 +393,8 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
       <button class="btn sm" id="btnTarget">每月目標</button>
       <button class="btn sm ghost" id="btnSfx" title="音效開關"><svg class="i" id="sfxIcon"><use href="#i-vol"/></svg></button>
       <button class="btn sm ghost" id="btnSync" style="display:none">雲端同步</button>
-      <button class="btn sm ghost" id="btnSkin">亮色</button>
-      <button class="btn sm ghost" id="btnExport">備份</button>
-      <button class="btn sm ghost" id="btnImport">還原</button>
+      <button class="btn sm ghost" id="btnMore" title="設定"><svg class="i"><use href="#i-gear"/></svg></button>
       <input type="file" id="fileImport" accept=".json" hidden>
-      <button class="btn sm ghost" id="btnReset">清空</button>
     </div>
   </div>
   <div class="hudright">
@@ -494,6 +498,20 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   <div class="f"><label>每個月要存</label><input type="number" id="tAmt" placeholder="20000" step="1" inputmode="decimal"></div>
   <div class="say" id="tHint" style="margin:0 0 4px"></div>
   <div class="dfoot"><button class="btn ghost" data-close>取消</button><button class="btn go" id="saveTarget">設定</button></div>
+</div></div>
+
+<div class="veil" id="vMore"><div class="dlg">
+  <h3>設定</h3>
+  <div class="say">平常用不到的東西都收在這裡。</div>
+  <div class="setrow"><div class="lb"><b>畫面</b><span>深色或亮色</span></div>
+    <button class="btn sm ghost" id="btnSkin">亮色</button></div>
+  <div class="setrow"><div class="lb"><b>備份</b><span>把所有資料存成一個檔案</span></div>
+    <button class="btn sm ghost" id="btnExport">匯出</button></div>
+  <div class="setrow"><div class="lb"><b>還原</b><span>讀回備份檔，會蓋掉現在的資料</span></div>
+    <button class="btn sm ghost" id="btnImport">選檔案</button></div>
+  <div class="setrow danger"><div class="lb"><b>清空</b><span>紀錄、任務、設定全部刪掉，救不回來</span></div>
+    <button class="btn sm ghost" id="btnReset">清空</button></div>
+  <div class="dfoot"><button class="btn ghost" data-close>關閉</button></div>
 </div></div>
 
 <div class="veil" id="vSync"><div class="dlg">
@@ -1192,6 +1210,7 @@ document.body.addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
   if(b.id==='btnAddGoal'||b.id==='btnAddGoal2') return open('vGoal');
   if(b.id==='btnTarget2') return openTarget();
+  if(b.id==='btnMore'){ SFX.play('tick'); return open('vMore'); }
   if(b.id==='btnSync'){ open('vSync'); $('syncBody').innerHTML=CLOUD.body(); return; }
   if(b.id==='btnSignIn') return CLOUD.signIn();
   if(b.id==='btnSignOut') return CLOUD.signOut();
@@ -1237,7 +1256,7 @@ $('fileImport').onchange=e=>{
       const d=JSON.parse(fr.result);
       if(!Array.isArray(d.records)||!Array.isArray(d.goals)) throw 0;
       if(!confirm('還原會覆蓋現在的資料，確定？')) return;
-      db={records:d.records,goals:d.goals,settings:d.settings||{}}; save(); shown=0; booted=false; render(); booted=true; toast('已還原');
+      db={records:d.records,goals:d.goals,settings:d.settings||{},deleted:d.deleted||{}}; save(); shown=0; booted=false; shut(); render(); booted=true; toast('已還原');
     }catch(err){ toast('檔案格式不對'); }
     e.target.value='';
   };
@@ -1246,7 +1265,7 @@ $('fileImport').onchange=e=>{
 $('btnReset').onclick=()=>{
   if(!confirm('所有紀錄、任務、設定都會不見，無法復原。確定？')) return;
   if(!confirm('再確認一次，真的要清空？')) return;
-  db={records:[],goals:[],settings:{}}; save(); shown=0; render(); toast('已清空');
+  db={records:[],goals:[],settings:{},deleted:{}}; save(); shown=0; shut(); render(); toast('已清空');
 };
 
 /* ── 雲端同步（Firebase）──
