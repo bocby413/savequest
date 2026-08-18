@@ -266,7 +266,9 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   background:transparent;border:none;color:var(--txt3);transition:color .14s,background-color .14s}
 .segs button.on{background:var(--panel3);color:var(--txt)}
 .sechead .segs:last-of-type{margin-left:auto}
-.pietitle{font-size:13.5px;font-weight:700;margin-bottom:9px;display:flex;align-items:baseline;gap:8px}
+.pietitle{font-size:14px;font-weight:700;margin-bottom:9px;display:flex;align-items:baseline;gap:8px;
+  padding-left:11px;border-left:3px solid var(--gold);border-radius:2px}
+.pietitle.stock{border-left-color:var(--cyan)}
 .pietitle span{font-size:12px;color:var(--txt3);font-weight:400}
 .piebox{padding:20px;display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:center}
 @media(max-width:1080px){.piebox{grid-template-columns:150px 1fr;gap:14px}.pie svg{width:150px;height:150px}}
@@ -504,7 +506,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
       <div class="card piebox" id="pieCard"></div>
     </div>
     <div>
-      <div class="pietitle">股票進出<span>買進與賣出對比</span></div>
+      <div class="pietitle stock">股票進出<span>當沖買賣單獨算</span></div>
       <div class="card piebox" id="stockCard"></div>
     </div>
   </div>
@@ -1346,7 +1348,10 @@ function renderStock(){
   const buy=rs.filter(x=>x.kind==='out').reduce((s,x)=>s+x.amount,0);
   const sell=rs.filter(x=>x.kind==='in').reduce((s,x)=>s+x.amount,0);
   if(!rs.length){
-    box.innerHTML='<div class="pieempty">'+rangeName()+'還沒有股票進出。記帳時類別選「股票」，這裡就會單獨算。</div>';
+    box.innerHTML=donut([],1,'<b style="color:var(--txt3)">—</b>',rangeName()+'沒有進出',180)+
+      '<div class="legend"><div class="lg" style="grid-template-columns:1fr">'+
+      '<span class="nm" style="color:var(--txt3);font-weight:400;font-size:13.5px;line-height:1.6">'+
+      '記帳時類別選「股票」，當沖的買進賣出就會單獨算在這裡，不會混進左邊的日常收支。</span></div></div>';
     return;
   }
   const net=sell-buy, rows=[{k:'賣出回收',v:sell,c:'#8ee65a'},{k:'買進投入',v:buy,c:'#ff6b6b'}];
@@ -1375,8 +1380,10 @@ function renderPie(){
   const total=rows.reduce((s,r)=>s+r.v,0);
   const period=rangeName();
   if(!total){
-    box.innerHTML='<div class="pieempty">'+period+'還沒有'+(pieKind==='out'?'支出':'收入')+
-      '紀錄（股票不算在這裡）。</div>';
+    box.innerHTML=donut([],1,'<b style="color:var(--txt3)">—</b>',period+'沒有紀錄',180)+
+      '<div class="legend"><div class="lg" style="grid-template-columns:1fr">'+
+      '<span class="nm" style="color:var(--txt3);font-weight:400;font-size:13.5px;line-height:1.6">'+
+      period+'還沒有'+(pieKind==='out'?'支出':'收入')+'紀錄（股票另外算在右邊）。</span></div></div>';
     return;
   }
   box.innerHTML=donut(rows,total,'<b>'+short(total)+'</b>',period+(pieKind==='out'?'花掉':'存進來'),180)+
