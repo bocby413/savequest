@@ -286,7 +286,9 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .lg i{width:12px;height:12px;border-radius:4px;display:block}
 .lg .nm{font-size:14px;font-weight:600}
 .lg .amt{font-size:14px;font-variant-numeric:tabular-nums}
-.lg .pct{font-size:12.5px;color:var(--txt3);min-width:42px;text-align:right}
+.lg .pct{font-size:12.5px;color:var(--txt3);min-width:46px;text-align:right}
+.lg .sn{font-size:11.5px;color:var(--txt3);font-weight:400}
+.lg .mono{font-size:12px;color:var(--txt3);font-weight:400}
 .lg .bar{grid-column:2/5;height:4px;border-radius:2px;background:var(--panel3);overflow:hidden;margin-top:-2px}
 .lg .bar u{display:block;height:100%;border-radius:2px;transform-origin:left;transform:scaleX(0);
   transition:transform .45s cubic-bezier(.25,1,.4,1)}
@@ -357,6 +359,13 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   transition:color .14s,border-color .14s,background-color .14s}
 .cats button:hover{color:var(--txt)}
 .cats button.on{color:var(--txt);font-weight:700}
+.subs{flex-basis:100%;display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-top:9px;padding-top:10px;
+  border-top:1px dashed var(--edge)}
+.subs .subl{font-size:12px;color:var(--txt3);margin-right:2px}
+.subs button{font:inherit;font-size:12.5px;padding:5px 11px;border-radius:99px;cursor:pointer;
+  background:var(--panel2);border:1.5px solid var(--edge);color:var(--txt3);
+  transition:color .14s,border-color .14s,background-color .14s}
+.subs button.on{color:var(--txt);font-weight:700;border-color:var(--edge2)}
 .cats input{flex:1;min-width:130px;background:var(--panel2);border:1.5px solid var(--cyan);border-radius:99px;
   padding:6px 13px;color:var(--txt);font:inherit;font-size:13px;outline:none}
 .kinds{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:15px}
@@ -532,7 +541,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
       <div class="card piebox" id="pieCard"></div>
     </div>
     <div>
-      <div class="pietitle stock">股票進出<span>當沖買賣單獨算</span></div>
+      <div class="pietitle stock">股票進出<span>五個策略分開結算</span></div>
       <div class="card piebox" id="stockCard"></div>
     </div>
   </div>
@@ -630,6 +639,8 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 <script>
 const KEY='life_goals_savings_v1', SKIN='life_goals_skin';
 const STOCK='股票';
+const SUBS=['1號','2號','3號','4號','5號'];      /* 股票底下的策略 */
+const SUBCOLOR={'1號':'#ffc233','2號':'#3ce0d0','3號':'#ff5c8a','4號':'#a879ff','5號':'#8ee65a','未分':'#8a93a8'};
 const CATS={
   out:['現金','卡費','貸款',STOCK,'其他'],
   in :['薪水','獎金','投資','副業',STOCK,'其他']
@@ -1326,7 +1337,8 @@ function renderLog(){
         : '<span class="tag" style="margin-left:6px">'+
           (first?'起始餘額':'校正 '+(p.delta>=0?'+':'-')+short(Math.abs(p.delta)))+'</span>';
       return '<tr><td class="d">'+(sameDay?'<span style="opacity:.3">〃</span>':mdY(p.date))+'</td>'+
-        '<td>'+(p.cat?'<span class="cattag" style="--c:'+catColor(p.cat,CATS[p.kind]||[])+'">'+esc(p.cat)+'</span> ':'')+label+badge+'</td>'+
+        '<td>'+(p.cat?'<span class="cattag" style="--c:'+(p.sub?SUBCOLOR[p.sub]:catColor(p.cat,CATS[p.kind]||[]))+'">'+
+            esc(p.cat)+(p.sub?'·'+esc(p.sub):'')+'</span> ':'')+label+badge+'</td>'+
         '<td class="c n up deskonly">'+(p.kind==='in'?'+'+money(p.amount):'')+'</td>'+
         '<td class="c n down deskonly">'+(p.kind==='out'?'-'+money(p.amount):'')+'</td>'+
         '<td class="c n mobonly '+(p.delta>=0?'up':'down')+'">'+
@@ -1380,15 +1392,34 @@ function renderStock(){
       '記帳時類別選「股票」，當沖的買進賣出就會單獨算在這裡，不會混進左邊的日常收支。</span></div></div>';
     return;
   }
-  const net=sell-buy, rows=[{k:'賣出回收',v:sell,c:'#8ee65a'},{k:'買進投入',v:buy,c:'#ff6b6b'}];
+  const net=sell-buy;
+  /* 每個策略各自結算，才看得出誰在賺誰在賠 */
+  const by={};
+  rs.forEach(x=>{
+    const k=x.sub||'未分', o=by[k]||(by[k]={buy:0,sell:0,n:0});
+    if(x.kind==='out') o.buy+=x.amount; else o.sell+=x.amount;
+    o.n++;
+  });
+  const strat=Object.entries(by).map(([k,o])=>({k,net:o.sell-o.buy,buy:o.buy,sell:o.sell,n:o.n,
+    c:SUBCOLOR[k]||'#8a93a8'})).sort((a,b)=>b.net-a.net);
+  const mx=Math.max(...strat.map(x=>Math.abs(x.net)),1);
   const mid='<b class="'+(net>=0?'up':'down')+'">'+(net>=0?'+':'-')+short(Math.abs(net))+'</b>';
-  box.innerHTML=donut(rows,buy+sell,mid,rangeName()+'淨損益',180)+
+  const donutRows=strat.map(x=>({k:x.k,v:x.buy+x.sell,c:x.c}));
+  box.innerHTML=donut(donutRows,buy+sell,mid,rangeName()+'淨損益',180)+
     '<div class="legend">'+
-      legend(rows,buy+sell).replace('<div class="legend">','').replace(/<\/div>$/,'')+
+      strat.map(x=>
+        '<div class="lg"><i style="background:'+x.c+'"></i>'+
+        '<span class="nm">'+esc(x.k)+'<span class="sn"> '+x.n+' 筆</span></span>'+
+        '<span class="amt n '+(x.net>=0?'up':'down')+'">'+(x.net>=0?'+':'-')+money(Math.abs(x.net))+'</span>'+
+        '<span class="pct">'+(x.buy?((x.net/x.buy)*100).toFixed(1)+'%':'—')+'</span>'+
+        '<span class="bar"><u data-w="'+(Math.abs(x.net)/mx)+'" style="background:'+(x.net>=0?'#8ee65a':'#ff6b6b')+'"></u></span></div>'
+      ).join('')+
       '<div class="lg" style="border-top:1px solid var(--edge);margin-top:6px;padding-top:11px">'+
-        '<i style="background:transparent"></i><span class="nm">'+rs.length+' 筆進出</span>'+
+        '<i style="background:transparent"></i><span class="nm">合計 '+rs.length+' 筆</span>'+
         '<span class="amt n '+(net>=0?'up':'down')+'">'+(net>=0?'+':'-')+money(Math.abs(net))+'</span>'+
         '<span class="pct">'+(buy?((net/buy)*100).toFixed(1)+'%':'—')+'</span></div>'+
+      '<div class="lg" style="padding-top:2px"><i style="background:transparent"></i>'+
+        '<span class="nm mono">買進 '+short(buy)+'　賣出 '+short(sell)+'</span></div>'+
     '</div>';
   setTimeout(()=>box.querySelectorAll('.lg u').forEach(u=>u.style.transform='scaleX('+u.dataset.w+')'),30);
 }
@@ -1483,7 +1514,7 @@ const shut=()=>document.querySelectorAll('.veil').forEach(v=>v.classList.remove(
 document.addEventListener('click',e=>{if(e.target.classList.contains('veil')||e.target.hasAttribute('data-close'))shut();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')shut();});
 
-let rKind='in', rCat='', rCustom=false;
+let rKind='in', rCat='', rCustom=false, rSub='';
 function renderCats(){
   const list=CATS[rKind];
   if(!list){ $('rCatWrap').style.display='none'; return; }
@@ -1495,17 +1526,26 @@ function renderCats(){
     return '<button data-cat="'+esc(c)+'" class="'+(on?'on':'')+'"'+
       (on?' style="border-color:'+col+';background:'+col+'22;color:'+col+'"':'')+'>'+esc(c)+'</button>';
   };
+  const subRow = (!rCustom&&rCat===STOCK)
+    ? '<div class="subs"><span class="subl">哪個策略</span>'+
+      SUBS.map(x=>'<button data-sub="'+x+'" class="'+(rSub===x?'on':'')+'"'+
+        (rSub===x?' style="border-color:'+SUBCOLOR[x]+';background:'+SUBCOLOR[x]+'22;color:'+SUBCOLOR[x]+'"':'')+
+        '>'+x+'</button>').join('')+
+      '<button data-sub="" class="'+(rSub?'':'on')+'">不分</button></div>'
+    : '';
   $('rCats').innerHTML=chips.map(btn).join('')+
     '<button data-other="1" class="'+(rCustom?'on':'')+'"'+
       (rCustom?' style="border-color:var(--cyan);background:rgba(60,224,208,.13);color:var(--cyan)"':'')+
       '>＋ 其他</button>'+
-    (rCustom?'<input id="rCatOther" placeholder="自己打，例如 醫療、旅遊" maxlength="8">':'');
+    (rCustom?'<input id="rCatOther" placeholder="自己打，例如 醫療、旅遊" maxlength="8">':'')+
+    subRow;
   if(rCustom){ const i=$('rCatOther'); if(i){ i.value=rCat; setTimeout(()=>i.focus(),40);
     i.oninput=()=>{ rCat=i.value.trim(); }; } }
 }
 $('rCats').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
-  if(b.dataset.other){ rCustom=true; rCat=''; }
+  if(b.dataset.sub!==undefined) rSub=b.dataset.sub;
+  else if(b.dataset.other){ rCustom=true; rCat=''; }
   else if(b.dataset.cat){ rCustom=false; rCat=b.dataset.cat; }
   else return;
   renderCats(); SFX.play('tick');
@@ -1548,7 +1588,9 @@ $('saveRec').onclick=()=>{
   const thisMon=()=>{const d=new Date(),m=monthly().find(x=>x.y===d.getFullYear()&&x.m===d.getMonth());return m?m.delta:null;};
   const mBefore=thisMon();
   const cat = rKind==='set' ? '' : ((rCustom?($('rCatOther')?$('rCatOther').value.trim():''):rCat)||'其他');
-  db.records.push({id:uid(),ts:Date.now(),date,kind:rKind,amount:v,cat,note:$('rNote').value.trim()});
+  const rec={id:uid(),ts:Date.now(),date,kind:rKind,amount:v,cat,note:$('rNote').value.trim()};
+  if(cat===STOCK&&rSub) rec.sub=rSub;
+  db.records.push(rec);
   save(); shut(); render();
   const after=levelInfo().lv, bal=now(), mAfter=thisMon();
   if(after>before){ burst(innerWidth/2,innerHeight*.35); SFX.play('level'); toast('升級了，現在 Lv.'+after+'　餘額 '+money(bal)); }
