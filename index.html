@@ -550,7 +550,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
     <div class="cellrow"><span id="xpL"></span><span id="xpR"></span></div>
     <div class="acts">
       <button class="btn go" id="btnAddRec"><svg class="i"><use href="#i-plus"/></svg> 記一筆</button>
-      <button class="btn sm" id="btnTarget">每月目標</button>
+      <button class="btn sm" id="btnTarget">每月存款目標</button>
       <button class="btn sm ghost" id="btnSync" style="display:none">雲端同步</button>
       <button class="btn sm ghost" id="btnMore" title="設定"><svg class="i"><use href="#i-gear"/></svg></button>
       <input type="file" id="fileImport" accept=".json" hidden>
@@ -711,7 +711,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 </div></div>
 
 <div class="veil" id="vTarget"><div class="dlg">
-  <h3>每月存款目標</h3>
+  <h3>設定每個月存款目標</h3>
   <div class="say">之後變寬裕想調高，直接設一個新的生效月份就好，以前的打卡紀錄不會被動到。</div>
   <div class="two">
     <div class="f"><label>每個月要存</label><input type="number" id="tAmt" placeholder="20000" step="1" inputmode="decimal"></div>
@@ -1188,15 +1188,14 @@ function renderQuest(){
 function renderCal(){
   const box=$('calCard'), ms=monthly(), tgt=targetNow(), pm=perMonth();
   if(!tgt){
-    const sug=pm&&pm>0?Math.round(pm/1000)*1000:20000;
     box.innerHTML='<div class="setup"><p>設一個每月存款目標，這裡會變成一年 12 格的打卡表，<br>達標的月份蓋星星，還能看你連續達標幾個月。</p>'+
-      '<button class="btn go" id="btnTarget2">設定每月目標'+(pm&&pm>0?'（建議 '+money(sug)+'）':'')+'</button></div>';
+      '<button class="btn go" id="btnTarget2">設定每個月存款目標</button></div>';
     $('calSub').textContent=''; return;
   }
   const years=[...new Set(ms.map(m=>m.y))];
   if(!years.length){
     box.innerHTML='<div class="setup"><p>目標是每月 '+money(tgt)+'。<br>記帳跨過一個完整月份之後，這裡就會開始蓋章。</p>'+
-      '<button class="btn sm" id="btnTarget2">改目標</button></div>';
+      '<button class="btn sm" id="btnTarget2">設定每個月存款目標</button></div>';
     $('calSub').textContent=''; return;
   }
   if(!years.includes(calYear)) calYear=years[years.length-1];
@@ -1244,7 +1243,7 @@ function renderCal(){
           return yr.length>1 ? '這年目標 '+short(Math.min(...yr))+'～'+short(Math.max(...yr))
                              : '每月目標 '+money(yr[0]||tgt);
         })()+'</span>'+
-      '<button class="btn sm ghost" id="btnTarget2" style="margin-left:auto">改目標</button></div>'+
+      '<button class="btn sm ghost" id="btnTarget2" style="margin-left:auto">改存款目標</button></div>'+
     '<div class="cal">'+cells.join('')+'</div>'+
     '<div class="calfoot">'+
       '<div class="kv">達標月份<b>'+hit+' / '+has+' 個月</b></div>'+
@@ -1925,12 +1924,10 @@ $('saveTarget').onclick=()=>{
   toast(ymLabel(from)+'起 每月目標 '+money(v));
 };
 function openTarget(){
-  const pm=perMonth(), d=new Date(), cur=targetNow();
-  $('tAmt').value=cur||(pm&&pm>0?Math.round(pm/1000)*1000:'');
+  const d=new Date(), cur=targetNow();
+  $('tAmt').value=cur||'';
   $('tFrom').value=d.getFullYear()+'-'+pad(d.getMonth()+1);
-  $('tHint').textContent = cur
-    ? '目前每月目標 '+money(cur)+(pm&&pm>0?'，你最近平均存 '+money(pm):'')+'。'
-    : (pm&&pm>0?'你最近平均每月存 '+money(pm)+'，可以拿來當參考。':'記滿兩筆之後，這裡會給你建議數字。');
+  $('tHint').textContent = cur?'目前每月目標 '+money(cur)+'。':'';
   renderTargetList();
   open('vTarget');
 }
