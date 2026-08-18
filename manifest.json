@@ -1,7 +1,7 @@
 {
   "name": "存錢Bo士",
   "short_name": "存錢Bo士",
-  "description": "記一筆收支，看存款怎麼長、每個月存了多少、離目標還差多遠。當沖的買賣另外算，不會蓋掉日常花費。手機和電腦登入同一個 Google 帳號就會同步。",
+  "description": "把存款變成闖關：記錄收支、設定每月目標，達標打卡、逐關升級，隨時掌握資產成長。支援多裝置同步。",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
