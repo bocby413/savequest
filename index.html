@@ -270,26 +270,26 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   padding-left:11px;border-left:3px solid var(--gold);border-radius:2px}
 .pietitle.stock{border-left-color:var(--cyan)}
 .pietitle span{font-size:12px;color:var(--txt3);font-weight:400}
-.piebox{padding:20px;display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:center}
-@media(max-width:1080px){.piebox{grid-template-columns:150px 1fr;gap:14px}.pie svg{width:150px;height:150px}}
+.piebox{padding:20px 22px;display:grid;grid-template-columns:190px 1fr;gap:30px;align-items:center}
+@media(max-width:1080px){.piebox{grid-template-columns:160px 1fr;gap:20px}.pie svg{width:160px;height:160px}}
 @media(max-width:760px){.piebox{grid-template-columns:1fr;gap:18px;padding:18px 16px}}
 .pie{position:relative;display:grid;place-items:center}
-.pie svg{width:210px;height:210px;transform:rotate(-90deg)}
+.pie svg{width:190px;height:190px;transform:rotate(-90deg)}
 .pie circle{fill:none;transition:stroke-width .14s}
 .pie .mid{position:absolute;text-align:center;pointer-events:none}
-.pie .mid b{display:block;font-size:24px;font-weight:800;letter-spacing:-.5px}
-.pie .mid span{font-size:12px;color:var(--txt3)}
+.pie .mid b{display:block;font-size:22px;font-weight:800;letter-spacing:-.5px}
+.pie .mid span{font-size:11.5px;color:var(--txt3)}
 .legend{display:flex;flex-direction:column;gap:2px}
-.lg{display:grid;grid-template-columns:14px 1fr auto auto;gap:11px;align-items:center;padding:7px 8px;border-radius:9px;
+.lg{display:grid;grid-template-columns:12px 1fr auto auto;gap:9px;align-items:center;padding:5px 6px;border-radius:8px;
   transition:background-color .14s}
 .lg:hover{background:var(--panel2)}
-.lg i{width:12px;height:12px;border-radius:4px;display:block}
-.lg .nm{font-size:14px;font-weight:600}
-.lg .amt{font-size:14px;font-variant-numeric:tabular-nums}
-.lg .pct{font-size:12.5px;color:var(--txt3);min-width:46px;text-align:right}
-.lg .sn{font-size:11.5px;color:var(--txt3);font-weight:400}
-.lg .mono{font-size:12px;color:var(--txt3);font-weight:400}
-.lg .bar{grid-column:2/5;height:4px;border-radius:2px;background:var(--panel3);overflow:hidden;margin-top:-2px}
+.lg i{width:10px;height:10px;border-radius:3px;display:block}
+.lg .nm{font-size:13px;font-weight:600}
+.lg .amt{font-size:13px;font-variant-numeric:tabular-nums}
+.lg .pct{font-size:11.5px;color:var(--txt3);min-width:44px;text-align:right}
+.lg .sn{font-size:11px;color:var(--txt3);font-weight:400}
+.lg .mono{font-size:11.5px;color:var(--txt3);font-weight:400}
+.lg .bar{grid-column:2/5;height:3px;border-radius:2px;background:var(--panel3);overflow:hidden;margin-top:-3px}
 .lg .bar u{display:block;height:100%;border-radius:2px;transform-origin:left;transform:scaleX(0);
   transition:transform .45s cubic-bezier(.25,1,.4,1)}
 .pieempty{grid-column:1/-1;text-align:center;color:var(--txt3);font-size:14px;padding:26px 0}
@@ -313,6 +313,25 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   .mtab .bal{font-size:14px}
   .mtab .hidem{display:none}
 }
+
+/* ── 紀錄篩選與翻頁 ── */
+.logbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 10px 12px;border-bottom:1px solid var(--edge);
+  margin-bottom:4px}
+.logbar input{background:var(--panel2);border:1.5px solid var(--edge);border-radius:10px;padding:6px 10px;
+  color:var(--txt);font:inherit;font-size:13px;outline:none;color-scheme:dark}
+html[data-skin="light"] .logbar input{color-scheme:light}
+.logbar input:focus{border-color:var(--cyan)}
+.logbar .tilde{color:var(--txt3);font-size:13px}
+.logbar .segs{margin-left:auto}
+.pager{display:flex;align-items:center;justify-content:center;gap:12px;padding:12px 0 8px}
+.pager button{width:34px;height:34px;border-radius:10px;border:1.5px solid var(--edge);background:var(--panel2);
+  color:var(--txt2);cursor:pointer;font-size:14px;display:grid;place-items:center;
+  transition:color .14s,border-color .14s,background-color .14s}
+.pager button:hover:not(:disabled){color:var(--txt);border-color:var(--edge2)}
+.pager button:disabled{opacity:.3;cursor:default}
+.pager .now{font-size:13.5px;color:var(--txt2);font-variant-numeric:tabular-nums;min-width:96px;text-align:center}
+.pager .now b{color:var(--txt);font-weight:700}
+@media(max-width:640px){.logbar{gap:6px}.logbar .segs{margin-left:0;width:100%;justify-content:center}}
 
 /* ── 歷程 ── */
 .logt{width:100%;border-collapse:collapse;contain:content}
@@ -499,11 +518,6 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 </div>
 
 <div class="sec">
-  <div class="sechead"><h2><svg class="i"><use href="#i-cal"/></svg>每月打卡</h2><span class="sub" id="calSub"></span></div>
-  <div class="card" style="padding:20px" id="calCard"></div>
-</div>
-
-<div class="sec">
   <div class="sechead"><h2><svg class="i"><use href="#i-cup"/></svg>任務清單</h2><span class="sub" id="qSub"></span></div>
   <div class="quests" id="quests"></div>
 </div>
@@ -548,8 +562,21 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 </div>
 
 <div class="sec">
+  <div class="sechead"><h2><svg class="i"><use href="#i-cal"/></svg>每月打卡</h2><span class="sub" id="calSub"></span></div>
+  <div class="card" style="padding:20px" id="calCard"></div>
+</div>
+
+<div class="sec">
   <div class="sechead"><h2><svg class="i"><use href="#i-list"/></svg>闖關紀錄</h2><span class="sub" id="logSub"></span></div>
-  <div class="card" style="padding:16px 6px" id="logWrap"></div>
+  <div class="card" style="padding:14px 6px 6px">
+    <div class="logbar">
+      <input type="date" id="logFrom"><span class="tilde">～</span><input type="date" id="logTo">
+      <span class="segs" id="logQuick">
+        <button data-lq="m">這個月</button><button data-lq="y">今年</button><button data-lq="a" class="on">全部</button>
+      </span>
+    </div>
+    <div id="logWrap"></div>
+  </div>
 </div>
 
 </div>
@@ -1225,7 +1252,10 @@ function renderChart(){
   if(g){ const A=alloc(), i=A.q.findIndex(x=>x.id===g.id); gLine=A.q.slice(0,i+1).reduce((s,x)=>s+x.amount,0); }
   let hi=Math.max(...ys), lo=Math.min(...ys);
   if(gLine&&gLine<hi*2.2) hi=Math.max(hi,gLine);
-  const sp=(hi-lo)||Math.abs(hi)||1; lo=Math.max(0,lo-sp*.2); hi+=sp*.12;
+  const sp=(hi-lo)||Math.abs(hi)||1;
+  /* 餘額有可能是負的（先記買進還沒記賣出），下限不能硬壓在 0，否則那幾點會被裁掉 */
+  lo = lo<0 ? lo-sp*.2 : Math.max(0,lo-sp*.2);
+  hi+=sp*.12;
   const x0=Math.min(...xs),x1=Math.max(...xs);
   const X=t=>L+(x1===x0?0:(t-x0)/(x1-x0))*(W-L-R), Y=v=>T+(1-(v-lo)/(hi-lo))*(H-T-B);
   let o='<defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="0">'+
@@ -1245,6 +1275,10 @@ function renderChart(){
     const gy=Y(gLine);
     o+='<line class="gline" x1="'+L+'" y1="'+gy.toFixed(1)+'" x2="'+(W-R)+'" y2="'+gy.toFixed(1)+'"/>'+
        '<text class="gtext" x="'+(W-R)+'" y="'+(gy-7).toFixed(1)+'" text-anchor="end">'+esc(g.name)+' '+short(gLine)+'</text>';
+  }
+  if(lo<0&&hi>0){
+    const zy=Y(0);
+    o+='<line class="zero" x1="'+L+'" y1="'+zy.toFixed(1)+'" x2="'+(W-R)+'" y2="'+zy.toFixed(1)+'"/>';
   }
   pts.forEach(p=>o+='<circle class="pt" cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="3.4"/>');
   const st=Math.max(1,Math.ceil(r.length/6));
@@ -1315,14 +1349,22 @@ function renderBars(){
   svg.innerHTML=o;
 }
 
-let logLimit=30;                     /* 帳本一次只畫 30 列，免得幾百筆全塞進 DOM */
+const PER=8;                          /* 一頁 8 筆 */
+let logPage=1, logFrom='', logTo='';
 function renderLog(){
-  const all=recs(), full=all.slice().reverse(), r=full.slice(0,logLimit);
-  const inSum=all.filter(x=>x.kind==='in').reduce((s,x)=>s+x.amount,0);
-  const outSum=all.filter(x=>x.kind==='out').reduce((s,x)=>s+x.amount,0);
-  $('logSub').textContent=r.length?'共 '+r.length+' 筆　存入 '+short(inSum)+'　花掉 '+short(outSum):'';
-  if(!r.length){
-    $('logWrap').innerHTML='<div class="empty"><b>還沒有紀錄</b>先按「記一筆」用「對帳」寫下現在戶頭的總數，之後每次存錢花錢就用加減記。</div>';
+  const all=recs();
+  const hit=all.filter(x=>(!logFrom||x.date>=logFrom)&&(!logTo||x.date<=logTo));
+  const full=hit.slice().reverse();
+  const pages=Math.max(1,Math.ceil(full.length/PER));
+  if(logPage>pages) logPage=pages;
+  const r=full.slice((logPage-1)*PER,logPage*PER);
+  const inSum=hit.filter(x=>x.kind==='in').reduce((s,x)=>s+x.amount,0);
+  const outSum=hit.filter(x=>x.kind==='out').reduce((s,x)=>s+x.amount,0);
+  $('logSub').textContent=full.length
+    ? (logFrom||logTo?'篩選出 ':'共 ')+full.length+' 筆　存入 '+short(inSum)+'　花掉 '+short(outSum) : '';
+  if(!full.length){
+    $('logWrap').innerHTML='<div class="empty"><b>'+((logFrom||logTo)?'這段期間沒有紀錄':'還沒有紀錄')+'</b>'+
+      ((logFrom||logTo)?'換一段日期看看，或按「全部」。':'先按「記一筆」用「對帳」寫下現在戶頭的總數，之後每次存錢花錢就用加減記。')+'</div>';
     return;
   }
   $('logWrap').innerHTML='<table class="logt"><thead><tr><th>日期</th><th>項目</th>'+
@@ -1330,7 +1372,8 @@ function renderLog(){
     '<th class="mobonly" style="text-align:right">增減</th>'+
     '<th style="text-align:right">餘額</th><th></th></tr></thead><tbody>'+
     r.map((p,i)=>{
-      const sameDay=i>0&&r[i-1].date===p.date;          /* 同一天只在最上面那列標日期 */
+      const idx=(logPage-1)*PER+i;
+      const sameDay=idx>0&&full[idx-1].date===p.date;   /* 同一天只在最上面那列標日期 */
       const first=all[0].id===p.id;
       const label=p.note?esc(p.note):(p.kind==='in'?'存入':p.kind==='out'?'支出':'對帳');
       const badge=p.kind!=='set'?''
@@ -1346,9 +1389,14 @@ function renderLog(){
         '<td class="m n">'+money(p.bal)+'</td>'+
         '<td class="x"><button class="iq del" data-del-rec="'+p.id+'"><svg class="i"><use href="#i-x"/></svg></button></td></tr>';
     }).join('')+'</tbody></table>'+
-    (full.length>logLimit
-      ? '<div style="text-align:center;padding:14px 0 4px">'+
-        '<button class="btn sm ghost" id="btnMoreLog">還有 '+(full.length-logLimit)+' 筆，看更多</button></div>'
+    (pages>1
+      ? '<div class="pager">'+
+        '<button data-lp="1" '+(logPage===1?'disabled':'')+'>«</button>'+
+        '<button data-lp="'+(logPage-1)+'" '+(logPage===1?'disabled':'')+'>‹</button>'+
+        '<span class="now">第 <b>'+logPage+'</b> / '+pages+' 頁</span>'+
+        '<button data-lp="'+(logPage+1)+'" '+(logPage===pages?'disabled':'')+'>›</button>'+
+        '<button data-lp="'+pages+'" '+(logPage===pages?'disabled':'')+'>»</button>'+
+        '</div>'
       : '');
 }
 
@@ -1360,7 +1408,7 @@ function inRange(x){
 const rangeName=()=>pieRange==='m'?'這個月':pieRange==='y'?'今年':'全部';
 /* 甜甜圈：rows=[{k,v,c}] */
 function donut(rows,total,midTop,midSub,size){
-  const R=size*0.42, W=size*0.145, cx=size/2;
+  const R=size*0.41, W=size*0.155, cx=size/2;
   let off=0;
   const arcs=rows.map(r=>{
     const len=total?r.v/total*(2*Math.PI*R):0;
@@ -1591,6 +1639,12 @@ $('saveRec').onclick=()=>{
   const rec={id:uid(),ts:Date.now(),date,kind:rKind,amount:v,cat,note:$('rNote').value.trim()};
   if(cat===STOCK&&rSub) rec.sub=rSub;
   db.records.push(rec);
+  /* 剛記的那筆一定要看得到：跳回第一頁，範圍外就把篩選清掉 */
+  logPage=1;
+  if((logFrom&&date<logFrom)||(logTo&&date>logTo)){
+    logFrom=''; logTo=''; $('logFrom').value=''; $('logTo').value='';
+    document.querySelectorAll('#logQuick button').forEach(x=>x.classList.toggle('on',x.dataset.lq==='a'));
+  }
   save(); shut(); render();
   const after=levelInfo().lv, bal=now(), mAfter=thisMon();
   if(after>before){ burst(innerWidth/2,innerHeight*.35); SFX.play('level'); toast('升級了，現在 Lv.'+after+'　餘額 '+money(bal)); }
@@ -1655,7 +1709,17 @@ document.body.addEventListener('click',e=>{
   if(b.id==='btnAddGoal'||b.id==='btnAddGoal2') return open('vGoal');
   if(b.id==='btnTarget2') return openTarget();
   if(b.id==='btnMore'){ SFX.play('tick'); return open('vMore'); }
-  if(b.id==='btnMoreLog'){ logLimit+=50; renderLog(); return; }
+  if(b.dataset.lp){ logPage=+b.dataset.lp; renderLog();
+    document.querySelector('.logbar').scrollIntoView({block:'nearest'}); return; }
+  if(b.dataset.lq){
+    const d=new Date(), y=d.getFullYear();
+    if(b.dataset.lq==='m'){ logFrom=y+'-'+pad(d.getMonth()+1)+'-01'; logTo=iso(new Date(y,d.getMonth()+1,0)); }
+    else if(b.dataset.lq==='y'){ logFrom=y+'-01-01'; logTo=y+'-12-31'; }
+    else { logFrom=''; logTo=''; }
+    $('logFrom').value=logFrom; $('logTo').value=logTo;
+    b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+    logPage=1; SFX.play('tick'); renderLog(); return;
+  }
   if(b.id==='btnMoreMt'){ mtLimit+=24; renderMonthTable(); return; }
   if(b.dataset.pk||b.dataset.pr){
     if(b.dataset.pk) pieKind=b.dataset.pk; else pieRange=b.dataset.pr;
@@ -1864,6 +1928,13 @@ window.CLOUD={
   }
 };
 
+['logFrom','logTo'].forEach(id=>{
+  $(id).addEventListener('change',()=>{
+    logFrom=$('logFrom').value; logTo=$('logTo').value; logPage=1;
+    document.querySelectorAll('#logQuick button').forEach(x=>x.classList.toggle('on',x.dataset.lq==='a'&&!logFrom&&!logTo));
+    renderLog();
+  });
+});
 $('fab').onclick=()=>$('btnAddRec').onclick();
 
 /* ── 裝到手機主畫面 ── */
