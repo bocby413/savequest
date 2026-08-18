@@ -2199,19 +2199,27 @@ window.CLOUD={
 });
 $('fab').onclick=()=>$('btnAddRec').onclick();
 
-/* ── 裝到手機主畫面 ── */
+/* ── 裝到桌面／主畫面：瀏覽器發出可安裝事件時，上排才冒出這顆 ── */
 let installEvt=null;
 window.addEventListener('beforeinstallprompt',e=>{
   e.preventDefault(); installEvt=e;
+  if($('btnInstall')) return;
   const b=document.createElement('button');
   b.className='btn sm'; b.id='btnInstall'; b.textContent='裝到桌面';
-  b.onclick=async()=>{ b.remove(); installEvt.prompt(); const r=await installEvt.userChoice;
-    installEvt=null; if(r.outcome==='accepted'){ SFX.play('win'); toast('裝好了，回主畫面找圖示'); } };
+  b.onclick=async()=>{
+    if(!installEvt) return;
+    installEvt.prompt();
+    const r=await installEvt.userChoice;
+    installEvt=null; b.remove();
+    if(r.outcome==='accepted'){ SFX.play('win'); toast('裝好了，回桌面找圖示'); }
+  };
   document.querySelector('.acts').appendChild(b);
 });
-window.addEventListener('appinstalled',()=>{ const b=$('btnInstall'); if(b) b.remove(); toast('已加到主畫面'); });
+window.addEventListener('appinstalled',()=>{
+  const b=$('btnInstall'); if(b) b.remove();
+  installEvt=null; toast('已加到桌面');
+});
 
-/* 有新版就自己更新，不用手動清快取 */
 if('serviceWorker' in navigator && location.protocol!=='file:'){
   window.addEventListener('load',()=>{
     navigator.serviceWorker.register('sw.js').then(reg=>{
