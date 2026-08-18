@@ -1,6 +1,6 @@
 {
-  "name": "存錢闖關",
-  "short_name": "存錢闖關",
+  "name": "存錢Bo士",
+  "short_name": "存錢Bo士",
   "description": "把存錢變成闖關遊戲的記帳本",
   "start_url": "./index.html",
   "scope": "./",
@@ -11,8 +11,23 @@
   "lang": "zh-Hant",
   "dir": "ltr",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

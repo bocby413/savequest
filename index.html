@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>存錢闖關</title>
+<title>存錢Bo士</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#120f2e">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="存錢闖關">
+<meta name="apple-mobile-web-app-title" content="存錢Bo士">
 <link rel="icon" href="icon-32.png" sizes="32x32">
 <link rel="apple-touch-icon" href="icon-180.png">
 <style>
@@ -2034,7 +2034,7 @@ $('btnSfx').onclick=()=>{ const on=SFX.toggle(); sfxIcon(); toast(on?'音效開�
 $('btnExport').onclick=()=>{
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}));
-  a.download='存錢闖關-'+todayStr()+'.json'; a.click(); URL.revokeObjectURL(a.href); toast('備份已下載');
+  a.download='存錢Bo士-'+todayStr()+'.json'; a.click(); URL.revokeObjectURL(a.href); toast('備份已下載');
 };
 $('btnImport').onclick=()=>$('fileImport').click();
 $('fileImport').onchange=e=>{
