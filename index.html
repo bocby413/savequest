@@ -332,6 +332,8 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   transition:color .14s,border-color .14s,background-color .14s}
 .cats button:hover{color:var(--txt)}
 .cats button.on{color:var(--txt);font-weight:700}
+.cats input{flex:1;min-width:130px;background:var(--panel2);border:1.5px solid var(--cyan);border-radius:99px;
+  padding:6px 13px;color:var(--txt);font:inherit;font-size:13px;outline:none}
 .kinds{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:15px}
 .kinds button{font:inherit;font-size:14px;font-weight:700;padding:9px 0;border-radius:11px;cursor:pointer;
   background:var(--panel2);border:2px solid var(--edge);color:var(--txt3);transition:color .14s,background-color .14s,border-color .14s,opacity .14s,transform .14s,box-shadow .14s,filter .14s}
@@ -588,11 +590,25 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 <script>
 const KEY='life_goals_savings_v1', SKIN='life_goals_skin';
 const CATS={
-  out:['飲食','交通','居住','娛樂','購物','醫療','學習','人情','其他'],
-  in :['薪水','獎金','投資','副業','其他收入','其他']
+  out:['現金','卡費','貸款','其他'],
+  in :['薪水','獎金','投資','副業','其他']
 };
 const CATCOLOR=['#ffc233','#3ce0d0','#ff5c8a','#a879ff','#8ee65a','#ff9f45','#5aa9ff','#e06be0','#8a93a8'];
-const catColor=(name,list)=>CATCOLOR[Math.max(0,list.indexOf(name))%CATCOLOR.length];
+/* 固定類別照順序配色；自己填的用名稱去挑後面幾個顏色，才不會全部同色 */
+function catColor(name,list){
+  list=list||[];
+  const i=list.indexOf(name);
+  if(i>=0) return CATCOLOR[i%CATCOLOR.length];
+  let h=0; for(let k=0;k<String(name).length;k++) h=(h*31+String(name).charCodeAt(k))|0;
+  const base=list.length, pool=Math.max(1,CATCOLOR.length-base);
+  return CATCOLOR[(base+Math.abs(h)%pool)%CATCOLOR.length];
+}
+/* 你自己打過的類別，下次直接變成按鈕 */
+function usedCats(kind){
+  const fixed=CATS[kind]||[], set=new Set();
+  db.records.forEach(r=>{ if(r.kind===kind&&r.cat&&fixed.indexOf(r.cat)<0) set.add(r.cat); });
+  return [...set];
+}
 let db=load(), shown=0, calYear=new Date().getFullYear(), booted=false;
 
 function load(){
@@ -1290,8 +1306,12 @@ function renderPie(){
   const rs=recs().filter(x=>x.kind===pieKind&&(
     pieRange==='m'?x.date.slice(0,7)===ym : pieRange==='y'?x.date.slice(0,4)===yr : true));
   const list=CATS[pieKind], sum={};
-  rs.forEach(x=>{ const c=x.cat&&list.indexOf(x.cat)>=0?x.cat:'其他'; sum[c]=(sum[c]||0)+x.amount; });
-  const rows=Object.entries(sum).map(([k,v])=>({k,v,c:catColor(k,list)})).sort((a,b)=>b.v-a.v);
+  rs.forEach(x=>{ const c=x.cat||'其他'; sum[c]=(sum[c]||0)+x.amount; });
+  let rows=Object.entries(sum).map(([k,v])=>({k,v,c:catColor(k,list)})).sort((a,b)=>b.v-a.v);
+  if(rows.length>9){                       /* 類別太多就把尾巴併起來，圖才看得懂 */
+    const tail=rows.slice(8), rest=tail.reduce((s,r)=>s+r.v,0);
+    rows=rows.slice(0,8).concat([{k:'其餘 '+tail.length+' 類',v:rest,c:'#8a93a8'}]);
+  }
   const total=rows.reduce((s,r)=>s+r.v,0);
   const period=pieRange==='m'?'這個月':pieRange==='y'?'今年':'全部';
   if(!total){
@@ -1326,21 +1346,32 @@ const shut=()=>document.querySelectorAll('.veil').forEach(v=>v.classList.remove(
 document.addEventListener('click',e=>{if(e.target.classList.contains('veil')||e.target.hasAttribute('data-close'))shut();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')shut();});
 
-let rKind='in', rCat='';
+let rKind='in', rCat='', rCustom=false;
 function renderCats(){
   const list=CATS[rKind];
   if(!list){ $('rCatWrap').style.display='none'; return; }
   $('rCatWrap').style.display='';
-  if(list.indexOf(rCat)<0) rCat=list[0];
-  $('rCats').innerHTML=list.map(c=>{
-    const col=catColor(c,list), on=c===rCat;
+  const chips=list.filter(c=>c!=='其他').concat(usedCats(rKind));
+  if(!rCustom&&chips.indexOf(rCat)<0) rCat=chips[0]||'其他';
+  const btn=c=>{
+    const col=catColor(c,list), on=!rCustom&&c===rCat;
     return '<button data-cat="'+esc(c)+'" class="'+(on?'on':'')+'"'+
       (on?' style="border-color:'+col+';background:'+col+'22;color:'+col+'"':'')+'>'+esc(c)+'</button>';
-  }).join('');
+  };
+  $('rCats').innerHTML=chips.map(btn).join('')+
+    '<button data-other="1" class="'+(rCustom?'on':'')+'"'+
+      (rCustom?' style="border-color:var(--cyan);background:rgba(60,224,208,.13);color:var(--cyan)"':'')+
+      '>＋ 其他</button>'+
+    (rCustom?'<input id="rCatOther" placeholder="自己打，例如 醫療、旅遊" maxlength="8">':'');
+  if(rCustom){ const i=$('rCatOther'); if(i){ i.value=rCat; setTimeout(()=>i.focus(),40);
+    i.oninput=()=>{ rCat=i.value.trim(); }; } }
 }
 $('rCats').addEventListener('click',e=>{
-  const b=e.target.closest('button[data-cat]'); if(!b) return;
-  rCat=b.dataset.cat; renderCats(); SFX.play('tick');
+  const b=e.target.closest('button'); if(!b) return;
+  if(b.dataset.other){ rCustom=true; rCat=''; }
+  else if(b.dataset.cat){ rCustom=false; rCat=b.dataset.cat; }
+  else return;
+  renderCats(); SFX.play('tick');
 });
 function setKind(k){
   rKind=k;
@@ -1350,7 +1381,7 @@ function setKind(k){
     :k==='out'?'這次花掉多少，餘額自動扣掉。'
     :'直接把餘額改成銀行上看到的數字。';
   $('rAmt').placeholder=k==='set'?'350000':'5000';
-  rCat=''; renderCats();
+  rCat=''; rCustom=false; renderCats();
   updatePrev();
 }
 function updatePrev(){
@@ -1379,7 +1410,8 @@ $('saveRec').onclick=()=>{
   const d0=new Date(), before=levelInfo().lv, tgt=targetAt(d0.getFullYear(),d0.getMonth());
   const thisMon=()=>{const d=new Date(),m=monthly().find(x=>x.y===d.getFullYear()&&x.m===d.getMonth());return m?m.delta:null;};
   const mBefore=thisMon();
-  db.records.push({id:uid(),ts:Date.now(),date,kind:rKind,amount:v,cat:(rKind==='set'?'':rCat),note:$('rNote').value.trim()});
+  const cat = rKind==='set' ? '' : ((rCustom?($('rCatOther')?$('rCatOther').value.trim():''):rCat)||'其他');
+  db.records.push({id:uid(),ts:Date.now(),date,kind:rKind,amount:v,cat,note:$('rNote').value.trim()});
   save(); shut(); render();
   const after=levelInfo().lv, bal=now(), mAfter=thisMon();
   if(after>before){ burst(innerWidth/2,innerHeight*.35); SFX.play('level'); toast('升級了，現在 Lv.'+after+'　餘額 '+money(bal)); }
