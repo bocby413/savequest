@@ -67,8 +67,7 @@ svg.i{width:1em;height:1em;fill:currentColor;vertical-align:-.13em}
 .hud{display:grid;grid-template-columns:auto 1fr auto;gap:22px;align-items:center;padding:20px 24px;margin-bottom:18px}
 @media(max-width:900px){.hud{grid-template-columns:1fr;gap:16px}}
 .ava{position:relative;width:104px;height:104px;flex:none;padding:0;border:none;background:none;cursor:pointer}
-.ava .ring{position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--gold) var(--p,0%),var(--panel3) 0);
-  transition:background .45s cubic-bezier(.25,1,.4,1)}
+.ava .ring{position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--gold) var(--p,0%),var(--panel3) 0)}
 .ava .pic{position:absolute;inset:6px;border-radius:50%;overflow:hidden;background:var(--panel2);
   border:3px solid var(--panel);display:grid;place-items:center}
 .ava .pic img{width:100%;height:100%;object-fit:cover;display:block}
@@ -109,8 +108,9 @@ svg.i{width:1em;height:1em;fill:currentColor;vertical-align:-.13em}
   box-shadow:0 0 5px rgba(255,194,51,.4);animation:pop .26s cubic-bezier(.2,1.5,.4,1) backwards}
 .cells .c.on.c1{background:linear-gradient(180deg,var(--cyan),#12a596);border-color:#7ff0e4;box-shadow:0 0 9px rgba(60,224,208,.45)}
 .cells .c.on.c2{background:linear-gradient(180deg,var(--lime),#4d9e2a);border-color:#c2f59b;box-shadow:0 0 9px rgba(142,230,90,.4)}
-.cells .c b{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(180deg,var(--gold),var(--gold2));
-  transition:width .35s cubic-bezier(.25,1,.4,1)}
+.cells .c b{position:absolute;left:0;top:0;bottom:0;width:100%;transform:scaleX(0);transform-origin:left;
+  background:linear-gradient(180deg,var(--gold),var(--gold2));
+  transition:transform .35s cubic-bezier(.25,1,.4,1)}
 .cells .c.tick:after{content:"";position:absolute;right:-3px;top:-4px;bottom:-4px;border-right:2px dotted var(--edge2)}
 .cells.sm .c{height:13px;border-radius:4px;gap:3px}
 .cells.sm .c.on{animation:none;box-shadow:none}
@@ -178,8 +178,9 @@ svg.i{width:1em;height:1em;fill:currentColor;vertical-align:-.13em}
 @media(max-width:430px){.cal{grid-template-columns:repeat(3,1fr)}}
 .mon{position:relative;border-radius:13px;border:2px solid var(--edge);background:var(--panel2);overflow:hidden;
   aspect-ratio:1/1.05;display:flex;flex-direction:column;justify-content:space-between;padding:9px 10px}
-.mon .fill{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(180deg,rgba(60,224,208,.42),rgba(60,224,208,.16));
-  transition:height .45s cubic-bezier(.25,1,.4,1)}
+.mon .fill{position:absolute;left:0;right:0;bottom:0;height:100%;transform:scaleY(0);transform-origin:bottom;
+  background:linear-gradient(180deg,rgba(60,224,208,.42),rgba(60,224,208,.16));
+  transition:transform .45s cubic-bezier(.25,1,.4,1)}
 .mon.neg .fill{background:linear-gradient(180deg,rgba(255,107,107,.4),rgba(255,107,107,.14))}
 .mon .mo{position:relative;font-size:12.5px;color:var(--txt3);font-weight:600}
 .mon .v{position:relative;font-size:14.5px;font-weight:800;letter-spacing:-.2px}
@@ -275,9 +276,9 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .empty b{display:block;color:var(--txt2);font-size:15.5px;font-weight:700;margin-bottom:4px}
 
 /* ── 對話框 ── */
-.veil{position:fixed;inset:0;background:rgba(8,6,22,.68);display:grid;place-items:center;
+.veil{position:fixed;inset:0;background:rgba(6,4,18,.82);display:grid;place-items:center;
   padding:20px;z-index:50;opacity:0;pointer-events:none;visibility:hidden;transition:opacity .16s}
-.veil.on{opacity:1;pointer-events:auto;visibility:visible;backdrop-filter:blur(3px)}
+.veil.on{opacity:1;pointer-events:auto;visibility:visible}
 .dlg{width:min(410px,100%);background:var(--panel);border:2px solid var(--edge2);border-radius:20px;
   box-shadow:0 10px 0 var(--deep);padding:24px;transform:translateY(12px) scale(.97);transition:color .22s,background-color .22s,border-color .22s,opacity .22s,transform .22s,box-shadow .22s,filter .22s}
 .veil.on .dlg{transform:none}
@@ -726,10 +727,15 @@ function moveGoal(id,dir){
 }
 function roll(el,to){
   const from=shown; shown=to;
-  if(from===to||!booted){el.textContent=money(to);return;}
-  const t0=Date.now(),dur=480; clearTimeout(el._t);
-  (function s(){const p=Math.min(1,(Date.now()-t0)/dur),e=1-Math.pow(1-p,3);
-    el.textContent=money(from+(to-from)*e); if(p<1) el._t=setTimeout(s,16);})();
+  if(from===to||!booted||document.hidden){el.textContent=money(to);return;}
+  const t0=performance.now(), dur=480;
+  cancelAnimationFrame(el._raf);
+  const step=t=>{
+    const p=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-p,3);
+    el.textContent=money(from+(to-from)*e);
+    if(p<1) el._raf=requestAnimationFrame(step);
+  };
+  el._raf=requestAnimationFrame(step);
 }
 /* 格子條：n 格，pct 決定亮幾格，最後一格部分填。
    帶 key 的話會記住上次亮到第幾格，只有「這次新亮的」才播彈出動畫，
@@ -744,7 +750,7 @@ function cellBar(pct,n,cls,tickEvery,key){
     const full=fill>=1, fresh=!key||i>=was;
     h+='<span class="c'+(full?' on '+(cls||''):'')+(tick?' tick':'')+'"'+
       (full?(fresh?' style="animation-delay:'+Math.min((i-was)*26,240)+'ms"':' style="animation:none"'):'')+'>'+
-      (!full&&fill>0?'<b style="width:'+(fill*100).toFixed(0)+'%"></b>':'')+'</span>';
+      (!full&&fill>0?'<b style="transform:scaleX('+fill.toFixed(3)+')"></b>':'')+'</span>';
   }
   return h;
 }
@@ -853,7 +859,8 @@ function renderMap(){
       '<div class="amtx">'+short(s.lv)+'</div><div class="sub">還沒解鎖</div></div>';
   }).join('');
   const nowEl=$('map').querySelector('.st.now');
-  if(nowEl) nowEl.scrollIntoView({block:'nearest',inline:'center'});
+  const key=nowEl?nowEl.querySelector('.amtx').textContent:'';
+  if(nowEl&&key!==renderMap.last){ renderMap.last=key; nowEl.scrollIntoView({block:'nearest',inline:'center'}); }
 }
 
 /* ── 主線任務 ── */
@@ -963,7 +970,7 @@ function renderCal(){
     (ms.some(x=>x.y===calYear&&!x.real)
       ? '<div class="foot-note">虛線框的月份完全沒記帳，不算達標也不列入統計。</div>' : '');
   $('calSub').textContent='目標每月 '+money(tgt);
-  setTimeout(()=>box.querySelectorAll('.mon .fill').forEach(f=>f.style.height=f.dataset.h+'%'),40);
+  setTimeout(()=>box.querySelectorAll('.mon .fill').forEach(f=>f.style.transform='scaleY('+(f.dataset.h/100)+')'),30);
 }
 
 /* ── 任務清單 ── */
@@ -1389,7 +1396,10 @@ window.CLOUD={
     const {F}=this.api;
     if(this.unsub) this.unsub();
     this.unsub=F.onSnapshot(this.ref(),
-      s=>{ const d=s.data(); if(d) this.apply(d); else this.push(); },
+      s=>{
+        if(s.metadata.hasPendingWrites) return;   /* 自己剛送出去的，不用再畫一次 */
+        const d=s.data(); if(d) this.apply(d); else this.push();
+      },
       e=>{ this.err=e.code||'讀取失敗'; this.paint(); });
   },
   pushSoon(){ clearTimeout(this.timer); this.timer=setTimeout(()=>this.push(),900); },
@@ -1421,10 +1431,12 @@ window.CLOUD={
     db.goals=join(db.goals,r.goals);
     db.deleted=del;
     if(((r.settings||{}).updatedAt||0)>(db.settings.updatedAt||0)) db.settings=r.settings;
-    localStorage.setItem(KEY,JSON.stringify(db));
+    const after=JSON.stringify(db);
     this.last=Date.now(); this.err='';
-    shown=0; render(); this.paint();
-    if(JSON.stringify(db)!==before) this.pushSoon();   /* 本地有、雲端沒有的補推回去 */
+    if(after===before){ this.paint(); return; }        /* 內容一樣就別重畫 */
+    localStorage.setItem(KEY,after);
+    render(); this.paint();
+    this.pushSoon();                                   /* 本地有、雲端沒有的補推回去 */
   },
   paint(){
     const b=$('btnSync'); if(!b) return;
