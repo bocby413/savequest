@@ -1949,8 +1949,24 @@ window.addEventListener('beforeinstallprompt',e=>{
 });
 window.addEventListener('appinstalled',()=>{ const b=$('btnInstall'); if(b) b.remove(); toast('已加到主畫面'); });
 
+/* 有新版就自己更新，不用手動清快取 */
 if('serviceWorker' in navigator && location.protocol!=='file:'){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').then(reg=>{
+      reg.addEventListener('updatefound',()=>{
+        const nw=reg.installing; if(!nw) return;
+        nw.addEventListener('statechange',()=>{
+          if(nw.state==='installed'&&navigator.serviceWorker.controller){
+            toast('有新版，正在更新…');
+            setTimeout(()=>location.reload(),900);
+          }
+        });
+      });
+      const check=()=>{ if(document.visibilityState==='visible') reg.update().catch(()=>{}); };
+      document.addEventListener('visibilitychange',check);   /* 每次切回來看一下有沒有新版 */
+      setInterval(check,30*60*1000);
+    }).catch(()=>{});
+  });
 }
 
 skin(localStorage.getItem(SKIN)||'dark');
