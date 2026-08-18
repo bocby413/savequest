@@ -294,6 +294,35 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   transition:transform .45s cubic-bezier(.25,1,.4,1)}
 .pieempty{grid-column:1/-1;text-align:center;color:var(--txt3);font-size:14px;padding:26px 0}
 
+/* ── 貸款 road map ── */
+.loan{padding:20px 22px 16px;margin-bottom:14px}
+.loan .lh{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+.loan .lname{font-size:18px;font-weight:800;letter-spacing:.2px}
+.loan .lname span{font-size:12px;font-weight:400;color:var(--txt3);margin-left:8px}
+.loan .lsum{font-size:13px;color:var(--txt2)}
+.loan .lsum b{color:var(--txt);font-weight:700}
+.road{display:flex;align-items:flex-start;margin:18px 0 4px;overflow-x:auto;padding-bottom:4px}
+.road .rs{flex:1;min-width:74px;text-align:center;position:relative}
+.road .rs:before{content:"";position:absolute;top:15px;right:50%;width:100%;height:4px;background:var(--panel3);border-radius:2px}
+.road .rs:first-child:before{display:none}
+.road .rs.done:before{background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.road .rn{position:relative;width:32px;height:32px;margin:0 auto 7px;border-radius:50%;display:grid;place-items:center;
+  background:var(--panel2);border:2.5px solid var(--edge);font-size:12px;font-weight:800;color:var(--txt3)}
+.road .rs.done .rn{background:linear-gradient(180deg,var(--gold),var(--gold2));border-color:#ffd76b;color:#3a2600}
+.road .rs.here .rn{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 0 4px rgba(60,224,208,.14)}
+.road .rn svg{width:15px;height:15px;fill:currentColor}
+.road .rt{font-size:11.5px;color:var(--txt3);line-height:1.45}
+.road .rs.here .rt{color:var(--cyan)}
+.road .rt b{display:block;font-size:12.5px;color:var(--txt2);font-weight:700}
+.loan .lfoot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;
+  margin-top:14px;padding-top:12px;border-top:1px solid var(--edge);font-size:12.5px;color:var(--txt3)}
+.loan .lfoot b{color:var(--txt);font-weight:700;font-size:13.5px}
+.loan .ops{display:flex;gap:7px}
+.loan.paid{border-color:var(--lime)}
+.loan.paid .lname:after{content:"已還清";font-size:11.5px;font-weight:700;color:var(--lime);margin-left:9px;
+  border:1px solid var(--lime);border-radius:99px;padding:2px 9px}
+.loanempty{padding:26px 20px;text-align:center;color:var(--txt3);font-size:14px}
+
 /* ── 每月收支表 ── */
 .mtab{width:100%;border-collapse:collapse}
 .mtab th{font-size:11px;letter-spacing:1px;color:var(--txt3);font-weight:700;padding:0 12px 10px;text-align:right;white-space:nowrap}
@@ -380,6 +409,24 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .setrow.danger .lb b{color:var(--red)}
 .setrow.danger .btn:hover{border-color:var(--red);color:var(--red)}
 .setrow .btn{flex:none;min-width:82px}
+.lvbtn{margin-left:10px;font:inherit;font-size:11.5px;font-weight:600;padding:2px 10px;border-radius:99px;
+  background:var(--panel2);border:1px solid var(--edge);color:var(--txt3);cursor:pointer;
+  transition:color .14s,border-color .14s}
+.lvbtn:hover{color:var(--gold);border-color:var(--gold)}
+.lvrow{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:center;padding:9px 10px;border-radius:10px}
+.lvrow+.lvrow{border-top:1px solid var(--edge)}
+.lvrow.now{background:rgba(255,194,51,.12);border-radius:10px}
+.lvrow .n{font-size:13px;font-weight:800;color:var(--txt3)}
+.lvrow.now .n,.lvrow.now .t{color:var(--gold)}
+.lvrow.passed .n{color:var(--lime)}
+.lvrow .t{font-size:14px;font-weight:600}
+.lvrow .g{font-size:13px;color:var(--txt2);font-variant-numeric:tabular-nums}
+.sw{flex:none;width:50px;height:28px;border-radius:99px;border:2px solid var(--edge);background:var(--panel2);
+  cursor:pointer;padding:0;position:relative;transition:background-color .16s,border-color .16s}
+.sw i{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--txt3);
+  transition:transform .18s cubic-bezier(.25,1,.4,1),background-color .16s}
+.sw.on{background:rgba(142,230,90,.2);border-color:var(--lime)}
+.sw.on i{transform:translateX(22px);background:var(--lime)}
 .cats{display:flex;flex-wrap:wrap;gap:7px}
 .cats button{font:inherit;font-size:13px;padding:6px 12px;border-radius:99px;cursor:pointer;
   background:var(--panel2);border:1.5px solid var(--edge);color:var(--txt3);
@@ -461,6 +508,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   <symbol id="i-map" viewBox="0 0 24 24"><path d="M15 4l6-2v16l-6 2-6-2-6 2V4l6-2 6 2zm-1 2.2L10 4.8v13l4 1.4v-13z"/></symbol>
   <symbol id="i-cal" viewBox="0 0 24 24"><path d="M7 2v2h10V2h2v2h2v18H3V4h2V2h2zm12 8H5v10h14V10z"/></symbol>
   <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3h2v16h16v2H3V3zm4 10h3v5H7v-5zm5-5h3v10h-3V8zm5-4h3v14h-3V4z"/></symbol>
+  <symbol id="i-road" viewBox="0 0 24 24"><path d="M9 2h2v4H9V2zm0 7h2v6H9V9zm0 9h2v4H9v-4z" opacity=".55"/><path d="M14 2h6v20h-6l2-10-2-10zM4 2h3l-2 10 2 10H4V2z"/></symbol>
   <symbol id="i-table" viewBox="0 0 24 24"><path d="M3 3h18v18H3V3zm2 2v3h14V5H5zm0 5v3h6v-3H5zm8 0v3h6v-3h-6zm-8 5v4h6v-4H5zm8 0v4h6v-4h-6z"/></symbol>
   <symbol id="i-pie" viewBox="0 0 24 24"><path d="M11 2v9.6l6.8 6.8A10 10 0 0 0 11 2z" opacity=".55"/><path d="M9 4.1A10 10 0 1 0 19.9 15L9 4.1z"/></symbol>
   <symbol id="i-list" viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></symbol>
@@ -523,6 +571,14 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 <div class="sec">
   <div class="sechead"><h2><svg class="i"><use href="#i-flag"/></svg>主線任務</h2></div>
   <div class="card quest" id="quest"></div>
+</div>
+
+<div class="sec">
+  <div class="sechead"><h2><svg class="i"><use href="#i-road"/></svg>貸款進度</h2>
+    <span class="sub" id="loanSub"></span>
+    <button class="btn sm ghost" id="btnAddLoan" style="margin-left:auto">＋ 新增貸款</button>
+  </div>
+  <div id="loans"></div>
 </div>
 
 <div class="sec">
@@ -631,6 +687,29 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   <div class="dfoot"><button class="btn ghost" data-close>取消</button><button class="btn go" id="saveAva">好了</button></div>
 </div></div>
 
+<div class="veil" id="vLevels"><div class="dlg">
+  <h3>等級表</h3>
+  <div class="say">看的是「目前總存款」，跨過門檻就升級，不會往回掉。</div>
+  <div id="levelList" style="max-height:52vh;overflow:auto"></div>
+  <div class="dfoot"><button class="btn ghost" data-close>關閉</button></div>
+</div></div>
+
+<div class="veil" id="vLoan"><div class="dlg">
+  <h3 id="loanTitle">新增貸款</h3>
+  <div class="say">設好之後，記帳時類別選「貸款」再指定是哪一筆，已還金額就會自己累加。</div>
+  <div class="f"><label>名稱</label><input type="text" id="lName" placeholder="房貸、車貸、信貸…" maxlength="10"></div>
+  <div class="two">
+    <div class="f"><label>貸款總額</label><input type="number" id="lTotal" placeholder="1200000" step="1" inputmode="decimal"></div>
+    <div class="f"><label>每月應繳</label><input type="number" id="lMonthly" placeholder="20000" step="1" inputmode="decimal"></div>
+  </div>
+  <div class="two">
+    <div class="f"><label>開始還款</label><input type="month" id="lFrom"></div>
+    <div class="f"><label>已還金額（選填）</label><input type="number" id="lPaid" placeholder="0" step="1" inputmode="decimal"></div>
+  </div>
+  <div class="say">「已還金額」是你在用這個 app 之前就還掉的部分，之後記帳的會自動加上去。</div>
+  <div class="dfoot"><button class="btn ghost" data-close>取消</button><button class="btn go" id="saveLoan">儲存</button></div>
+</div></div>
+
 <div class="veil" id="vTarget"><div class="dlg">
   <h3>每月存款目標</h3>
   <div class="say">之後變寬裕想調高，直接設一個新的生效月份就好，以前的打卡紀錄不會被動到。</div>
@@ -646,6 +725,10 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 <div class="veil" id="vMore"><div class="dlg">
   <h3>設定</h3>
   <div class="say">平常用不到的東西都收在這裡。</div>
+  <div class="setrow"><div class="lb"><b>貸款進度</b><span>顯示貸款 road map 區塊</span></div>
+    <button class="sw" id="swLoan" role="switch"><i></i></button></div>
+  <div class="setrow"><div class="lb"><b>股票分開算</b><span>股票不併入日常收支，單獨一張圖</span></div>
+    <button class="sw" id="swStock" role="switch"><i></i></button></div>
   <div class="setrow"><div class="lb"><b>音效</b><span>記帳、升級、完成任務的聲音</span></div>
     <button class="btn sm ghost" id="btnSfx"><svg class="i" id="sfxIcon"><use href="#i-vol"/></svg></button></div>
   <div class="setrow"><div class="lb"><b>畫面</b><span>深色或亮色</span></div>
@@ -836,7 +919,7 @@ function perMonth(){
   const r=recs(); if(r.length<2) return null;
   const last=r[r.length-1], cut=new Date(last.date); cut.setDate(cut.getDate()-180);
   const win=r.filter(x=>x.date>=iso(cut)), base=win.length>=2?win[0]:r[0], d=dayGap(base.date,last.date);
-  return d<=0?null:(last.amount-base.amount)/d*30;
+  return d<=0?null:(last.bal-base.bal)/d*30;      /* 用餘額變化，不是單筆金額 */
 }
 /* 每月目標可以分段設定，例如 1 月起 1 萬、7 月起 2 萬。
    舊版只有單一數字，轉成「從最早開始」的一段。 */
@@ -853,18 +936,38 @@ function targetAt(y,m){
   return v;
 }
 function targetNow(){ const d=new Date(); return targetAt(d.getFullYear(),d.getMonth()); }
-const stepOf=v=>v<300000?50000:v<1000000?100000:v<5000000?250000:500000;
+/* 固定的等級門檻。本來是依存款規模動態算間距，結果跨過 30 萬時等級會往回掉 */
+const LEVELS=[0,50000,100000,200000,300000,500000,750000,1000000,1500000,2000000,3000000,5000000];
+const TITLES=['新手','存錢學徒','小有積蓄','穩健存戶','資深存戶','存錢老手','理財達人',
+              '百萬俱樂部','存錢高手','存錢大師','財富自由預備','傳說級'];
+const OVER=2500000;                      /* 500 萬之後每 250 萬一級 */
+function levelAt(cur){
+  const top=LEVELS[LEVELS.length-1];
+  if(cur>=top){
+    const extra=Math.floor((cur-top)/OVER);
+    const base=top+extra*OVER;
+    return {lv:LEVELS.length+extra,base,next:base+OVER};
+  }
+  for(let i=LEVELS.length-1;i>=0;i--) if(cur>=LEVELS[i]) return {lv:i+1,base:LEVELS[i],next:LEVELS[i+1]};
+  return {lv:1,base:0,next:LEVELS[1]};
+}
+function levelTitle(lv){
+  return lv<=TITLES.length?TITLES[lv-1]:'傳說級 '+'Ⅱ Ⅲ Ⅳ Ⅴ Ⅵ Ⅶ Ⅷ Ⅸ Ⅹ'.split(' ')[Math.min(8,lv-TITLES.length-1)];
+}
 function levelInfo(){
-  const cur=now(), hi=Math.max(cur,...recs().map(r=>r.bal),0), step=stepOf(hi||cur);
-  const lv=Math.floor(cur/step)+1, base=(lv-1)*step;
-  return {lv,step,base,next:lv*step,into:cur-base,pct:step?(cur-base)/step*100:0};
+  const cur=now(), L=levelAt(cur), step=L.next-L.base;
+  return {lv:L.lv,step,base:L.base,next:L.next,into:cur-L.base,pct:step?(cur-L.base)/step*100:0};
 }
 function stages(){
-  const r=recs(), cur=now();
-  const hi=Math.max(cur,...r.map(x=>x.bal),0), step=stepOf(hi), out=[];
-  const top=Math.floor(cur/step)+2;
-  for(let k=1;k<=top;k++){
-    const lv=k*step;
+  const r=recs(), cur=now(), out=[];
+  const here=levelAt(cur).lv;
+  const marks=[];
+  for(let i=1;i<=Math.min(LEVELS.length-1,here+1);i++) marks.push(LEVELS[i]);
+  if(here>=LEVELS.length-1){                       /* 已經破表就往上再長幾關 */
+    const top=LEVELS[LEVELS.length-1];
+    for(let k=0;k<=here-LEVELS.length+1;k++) marks.push(top+(k+1)*OVER);
+  }
+  for(const lv of marks){
     let hit=null;
     for(let i=0;i<r.length;i++) if(r[i].bal>=lv){
       if(i===0) hit=r[0].date;
@@ -875,8 +978,9 @@ function stages(){
       }
       break;
     }
-    out.push({lv,date:hit,done:cur>=lv,now:cur<lv&&cur>=lv-step});
+    out.push({lv,date:hit,done:cur>=lv});
   }
+  const nx=out.find(o=>!o.done); if(nx) nx.now=true;      /* 第一個還沒過的就是現在這關 */
   return out;
 }
 /* 錢只有一份，要排隊分配：排前面的先吃飽，剩下的才輪到後面 */
@@ -999,9 +1103,9 @@ function renderHud(){
   $('lvNum').textContent=L.lv;
   $('avaRing').style.setProperty('--p',L.pct.toFixed(1)+'%');
   $('avaPic').innerHTML=avaHTML(db.settings.avatar);
-  const titles=['新手','存錢學徒','小有積蓄','穩健存戶','資深存戶','存錢老手','理財達人','存錢大師','傳說級'];
   const nick=db.settings.name?esc(db.settings.name)+'　':'';
-  $('lvWho').innerHTML=nick+'<b>'+titles[Math.min(titles.length-1,L.lv-1)]+'</b>　每 '+short(L.step)+' 升一級';
+  $('lvWho').innerHTML=nick+'<b>'+levelTitle(L.lv)+'</b>'+
+    '<button class="lvbtn" id="btnLevels">等級表</button>';
   $('lvNext').textContent=cur>=L.next?'':'距 Lv.'+(L.lv+1)+' 還差 '+money(L.next-cur);
   $('xp').innerHTML=cellBar(L.pct,20,'',5,'xp');
   $('xpL').innerHTML='<b>'+money(L.base)+'</b>';
@@ -1021,12 +1125,12 @@ function renderMap(){
     $('mapSub').textContent=''; return;
   }
   const doneN=st.filter(s=>s.done).length;
-  $('mapSub').textContent='已過 '+doneN+' 關，每 '+short(stepOf(Math.max(cur,1)))+' 一關';
+  $('mapSub').textContent='已過 '+doneN+' 關　目前 Lv.'+levelAt(cur).lv+' '+levelTitle(levelAt(cur).lv);
   $('map').innerHTML=st.map(s=>{
     if(s.done) return '<div class="st done"><div class="node"><svg class="i"><use href="#i-check"/></svg></div>'+
       '<div class="amtx">'+short(s.lv)+'</div><div class="sub">'+(s.date?mdY(s.date):'')+'</div></div>';
     if(s.now){
-      const step=stepOf(Math.max(cur,1)), p=(cur-(s.lv-step))/step*100;
+      const L=levelAt(cur), p=L.next>L.base?(cur-L.base)/(L.next-L.base)*100:0;
       let sub='還差 '+short(s.lv-cur);
       if(pm&&pm>0){const d=new Date(); d.setMonth(d.getMonth()+Math.round((s.lv-cur)/pm)); sub+='　'+ymD(d);}
       return '<div class="st now"><div class="node"><div class="ring" style="--p:'+p.toFixed(1)+'%"><i>'+p.toFixed(0)+'%</i></div></div>'+
@@ -1485,9 +1589,14 @@ function renderStock(){
   setTimeout(()=>box.querySelectorAll('.lg u').forEach(u=>u.style.transform='scaleX('+u.dataset.w+')'),30);
 }
 function renderPie(){
-  renderStock();
+  const split=db.settings.splitStock!==false;
+  const stockSec=$('stockCard').closest('div').parentNode;   /* 股票那一欄 */
+  $('stockCard').parentNode.style.display=split?'':'none';
+  document.querySelectorAll('.pietitle')[0].style.display=split?'':'none';
+  $('pieCard').closest('.duo').style.gridTemplateColumns=split?'':'1fr';
+  if(split) renderStock();
   const box=$('pieCard');
-  const rs=recs().filter(x=>x.kind===pieKind&&x.cat!==STOCK&&inRange(x));
+  const rs=recs().filter(x=>x.kind===pieKind&&(split?x.cat!==STOCK:true)&&inRange(x));
   const list=CATS[pieKind], sum={};
   rs.forEach(x=>{ const c=x.cat||'其他'; sum[c]=(sum[c]||0)+x.amount; });
   let rows=Object.entries(sum).map(([k,v])=>({k,v,c:catColor(k,list)})).sort((a,b)=>b.v-a.v);
@@ -1501,7 +1610,7 @@ function renderPie(){
     box.innerHTML=donut([],1,'<b style="color:var(--txt3)">—</b>',period+'沒有紀錄',180)+
       '<div class="legend"><div class="lg" style="grid-template-columns:1fr">'+
       '<span class="nm" style="color:var(--txt3);font-weight:400;font-size:13.5px;line-height:1.6">'+
-      period+'還沒有'+(pieKind==='out'?'支出':'收入')+'紀錄（股票另外算在右邊）。</span></div></div>';
+      period+'還沒有'+(pieKind==='out'?'支出':'收入')+'紀錄'+(split?'（股票另外算在右邊）':'')+'。</span></div></div>';
     return;
   }
   box.innerHTML=donut(rows,total,'<b>'+short(total)+'</b>',period+(pieKind==='out'?'花掉':'存進來'),180)+
@@ -1572,7 +1681,107 @@ function yearRow(all,y){
     '<td class="bal">'+n2(bal,bal>=0?'up':'down')+'</td>'+
     '<td class="hidem mono">'+ys.reduce((s,r)=>s+r.n,0)+'</td></tr>';
 }
-function render(){ renderMonthTable(); renderPie(); renderHud(); renderMap(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); }
+/* ── 貸款 ── */
+const LOAN='貸款';
+const loans=()=>Array.isArray(db.settings.loans)?db.settings.loans:[];
+/* 已還＝之前就還掉的 + 之後記帳指定到這筆的支出 */
+function loanPaid(l){
+  const rec=recs().filter(x=>x.kind==='out'&&x.cat===LOAN&&(x.sub===l.name||(!x.sub&&loans().length===1)))
+    .reduce((s,x)=>s+x.amount,0);
+  return (l.paid||0)+rec;
+}
+function loanInfo(l){
+  const paid=Math.min(l.total,loanPaid(l)), left=Math.max(0,l.total-paid);
+  const pct=l.total?paid/l.total*100:0;
+  const mo=l.monthly>0?Math.ceil(left/l.monthly):null;
+  let when=null;
+  if(mo!==null&&left>0){ when=new Date(); when.setMonth(when.getMonth()+mo); }
+  const doneN=l.monthly>0?Math.floor(paid/l.monthly):null;
+  const totalN=l.monthly>0?Math.ceil(l.total/l.monthly):null;
+  return {paid,left,pct,mo,when,doneN,totalN,done:left<=0};
+}
+function renderLoans(){
+  const box=$('loans'), ls=loans();
+  const sec=box.closest('.sec');
+  if(db.settings.showLoan===false){ sec.style.display='none'; return; }
+  sec.style.display='';
+  if(!ls.length){
+    box.innerHTML='<div class="card loanempty">還沒有貸款。按右上角「＋ 新增貸款」設一筆，'+
+      '之後記帳選「貸款」類別就會自動累計還了多少、還剩幾期。</div>';
+    $('loanSub').textContent=''; return;
+  }
+  const tl=ls.reduce((s,l)=>s+l.total,0), tp=ls.reduce((s,l)=>s+loanInfo(l).paid,0);
+  $('loanSub').textContent='共 '+ls.length+' 筆　已還 '+short(tp)+' / '+short(tl)+'　還欠 '+short(tl-tp);
+  box.innerHTML=ls.map(l=>{
+    const I=loanInfo(l);
+    const marks=[25,50,75,100].map((m,i)=>{
+      const on=I.pct>=m, here=!on&&I.pct>=(i?[0,25,50,75][i]:0)&&(i===0||I.pct>=[0,25,50,75][i]);
+      const amt=l.total*m/100;
+      let sub='';
+      if(on) sub='已過';
+      else if(l.monthly>0){
+        const need=Math.max(0,amt-I.paid), mm=Math.ceil(need/l.monthly), d=new Date();
+        d.setMonth(d.getMonth()+mm); sub=ymD(d);
+      } else sub='還差 '+short(Math.max(0,amt-I.paid));
+      return '<div class="rs '+(on?'done':'')+(!on&&(i===0||I.pct>=[0,25,50,75][i])?' here':'')+'">'+
+        '<div class="rn">'+(on?'<svg><use href="#i-check"/></svg>':m+'%')+'</div>'+
+        '<div class="rt"><b>'+short(amt)+'</b>'+sub+'</div></div>';
+    }).join('');
+    return '<div class="card loan'+(I.done?' paid':'')+'">'+
+      '<div class="lh"><div class="lname">'+esc(l.name)+
+        (l.monthly>0&&I.totalN?'<span>共 '+I.totalN+' 期　每月 '+money(l.monthly)+'</span>':'')+'</div>'+
+        '<div class="lsum">已還 <b>'+money(I.paid)+'</b> / '+money(l.total)+'　<b>'+I.pct.toFixed(1)+'%</b></div></div>'+
+      '<div class="cells" style="margin-top:12px">'+cellBar(I.pct,20,I.done?'c2':'',5,'loan:'+l.id)+'</div>'+
+      '<div class="road">'+marks+'</div>'+
+      '<div class="lfoot"><span>'+
+        (I.done?'已經還完了'
+          :'還欠 <b>'+money(I.left)+'</b>'+
+           (I.mo!==null?'　剩 <b>'+I.mo+'</b> 期，預計 <b>'+ymD(I.when)+'</b>還完':''))+
+      '</span><span class="ops">'+
+        '<button class="iq" data-editloan="'+l.id+'" title="修改"><svg class="i"><use href="#i-gear"/></svg></button>'+
+        '<button class="iq del" data-delloan="'+l.id+'" title="刪除"><svg class="i"><use href="#i-x"/></svg></button>'+
+      '</span></div></div>';
+  }).join('');
+}
+let editLoan=null;
+function openLoan(id){
+  editLoan=id||null;
+  const l=id?loans().find(x=>x.id===id):null;
+  $('loanTitle').textContent=l?'修改貸款':'新增貸款';
+  $('lName').value=l?l.name:''; $('lTotal').value=l?l.total:'';
+  $('lMonthly').value=l?l.monthly||'':''; $('lPaid').value=l?(l.paid||''):'';
+  const d=new Date();
+  $('lFrom').value=l&&l.from?l.from:d.getFullYear()+'-'+pad(d.getMonth()+1);
+  open('vLoan');
+}
+$('saveLoan').onclick=()=>{
+  const name=$('lName').value.trim(), total=parseFloat($('lTotal').value);
+  if(!name){ toast('先填名稱'); return; }
+  if(isNaN(total)||total<=0){ toast('貸款總額要大於 0'); return; }
+  const m=parseFloat($('lMonthly').value), pd=parseFloat($('lPaid').value);
+  const data={name,total,monthly:isNaN(m)?0:m,from:$('lFrom').value,paid:isNaN(pd)?0:pd,ts:Date.now()};
+  const ls=loans().slice();
+  if(editLoan){ const i=ls.findIndex(x=>x.id===editLoan); if(i>=0) ls[i]=Object.assign({},ls[i],data); }
+  else ls.push(Object.assign({id:uid()},data));
+  db.settings.loans=ls; save(); shut(); render(); SFX.play('coin');
+  toast(editLoan?'貸款已更新':'加了一筆貸款');
+};
+$('btnAddLoan').onclick=()=>openLoan(null);
+
+function renderLevels(){
+  const cur=now(), here=levelAt(cur).lv, rows=[];
+  const top=LEVELS.length+Math.max(0,here-LEVELS.length+2);
+  for(let lv=1;lv<=Math.max(LEVELS.length,here+2);lv++){
+    const base=lv<=LEVELS.length?LEVELS[lv-1]:LEVELS[LEVELS.length-1]+(lv-LEVELS.length)*OVER;
+    rows.push('<div class="lvrow '+(lv===here?'now':(lv<here?'passed':''))+'">'+
+      '<span class="n">Lv.'+lv+'</span><span class="t">'+levelTitle(lv)+'</span>'+
+      '<span class="g">'+(base?money(base)+' 起':'0 起')+'</span></div>');
+  }
+  $('levelList').innerHTML=rows.join('')+
+    '<div class="say" style="margin-top:10px">Lv.'+LEVELS.length+' 之後每 '+short(OVER)+' 升一級。</div>';
+}
+
+function render(){ renderLoans(); renderMonthTable(); renderPie(); renderHud(); renderMap(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); }
 
 /* ── 互動 ── */
 const open=id=>{$(id).classList.add('on');const f=$(id).querySelector('input');setTimeout(()=>f&&f.focus(),120);};
@@ -1592,13 +1801,18 @@ function renderCats(){
     return '<button data-cat="'+esc(c)+'" class="'+(on?'on':'')+'"'+
       (on?' style="border-color:'+col+';background:'+col+'22;color:'+col+'"':'')+'>'+esc(c)+'</button>';
   };
-  const subRow = (!rCustom&&rCat===STOCK)
-    ? '<div class="subs"><span class="subl">哪個策略</span>'+
+  let subRow='';
+  if(!rCustom&&rCat===STOCK){
+    subRow='<div class="subs"><span class="subl">哪個策略</span>'+
       SUBS.map(x=>'<button data-sub="'+x+'" class="'+(rSub===x?'on':'')+'"'+
         (rSub===x?' style="border-color:'+SUBCOLOR[x]+';background:'+SUBCOLOR[x]+'22;color:'+SUBCOLOR[x]+'"':'')+
         '>'+x+'</button>').join('')+
-      '<button data-sub="" class="'+(rSub?'':'on')+'">不分</button></div>'
-    : '';
+      '<button data-sub="" class="'+(rSub?'':'on')+'">不分</button></div>';
+  } else if(!rCustom&&rCat===LOAN&&loans().length){
+    subRow='<div class="subs"><span class="subl">哪一筆貸款</span>'+
+      loans().map(l=>'<button data-sub="'+esc(l.name)+'" class="'+(rSub===l.name?'on':'')+'">'+esc(l.name)+'</button>').join('')+
+      '<button data-sub="" class="'+(rSub?'':'on')+'">不指定</button></div>';
+  }
   $('rCats').innerHTML=chips.map(btn).join('')+
     '<button data-other="1" class="'+(rCustom?'on':'')+'"'+
       (rCustom?' style="border-color:var(--cyan);background:rgba(60,224,208,.13);color:var(--cyan)"':'')+
@@ -1655,7 +1869,7 @@ $('saveRec').onclick=()=>{
   const mBefore=thisMon();
   const cat = rKind==='set' ? '' : ((rCustom?($('rCatOther')?$('rCatOther').value.trim():''):rCat)||'其他');
   const rec={id:uid(),ts:Date.now(),date,kind:rKind,amount:v,cat,note:$('rNote').value.trim()};
-  if(cat===STOCK&&rSub) rec.sub=rSub;
+  if((cat===STOCK||cat===LOAN)&&rSub) rec.sub=rSub;
   db.records.push(rec);
   /* 剛記的那筆一定要看得到：跳回第一頁，範圍外就把篩選清掉 */
   logPage=1;
@@ -1727,6 +1941,7 @@ document.body.addEventListener('click',e=>{
   if(b.id==='btnAddGoal'||b.id==='btnAddGoal2') return open('vGoal');
   if(b.id==='btnTarget2') return openTarget();
   if(b.id==='btnMore'){ SFX.play('tick'); return open('vMore'); }
+  if(b.id==='btnLevels'){ renderLevels(); return open('vLevels'); }
   if(b.dataset.lp){ logPage=+b.dataset.lp; renderLog();
     document.querySelector('.logbar').scrollIntoView({block:'nearest'}); return; }
   if(b.dataset.lq){
@@ -1765,6 +1980,13 @@ document.body.addEventListener('click',e=>{
     if(!confirm('刪掉任務「'+g.name+'」？')) return;
     markDeleted(b.dataset.delGoal);
     db.goals=db.goals.filter(x=>x.id!==b.dataset.delGoal); save(); render(); SFX.play('del'); toast('已刪除'); }
+  if(b.dataset.editloan) return openLoan(b.dataset.editloan);
+  if(b.dataset.delloan){
+    const l=loans().find(x=>x.id===b.dataset.delloan);
+    if(!confirm('刪掉貸款「'+l.name+'」？記過的帳不會被刪。')) return;
+    db.settings.loans=loans().filter(x=>x.id!==b.dataset.delloan);
+    save(); render(); SFX.play('del'); toast('已刪除'); return;
+  }
   if(b.dataset.up) return moveGoal(b.dataset.up,-1);
   if(b.dataset.down) return moveGoal(b.dataset.down,1);
   if(b.dataset.toggle){ const g=db.goals.find(x=>x.id===b.dataset.toggle);
@@ -1780,6 +2002,18 @@ function skin(s){
 }
 $('btnSkin').onclick=()=>{SFX.play('tick'); skin(document.documentElement.dataset.skin==='dark'?'light':'dark'); renderChart(); renderBars();};
 
+function swPaint(){
+  $('swLoan').classList.toggle('on',db.settings.showLoan!==false);
+  $('swStock').classList.toggle('on',db.settings.splitStock!==false);
+}
+$('swLoan').onclick=()=>{
+  db.settings.showLoan=db.settings.showLoan===false; save(); swPaint(); render(); SFX.play('tick');
+  toast(db.settings.showLoan?'貸款進度打開了':'貸款進度收起來了');
+};
+$('swStock').onclick=()=>{
+  db.settings.splitStock=db.settings.splitStock===false; save(); swPaint(); render(); SFX.play('tick');
+  toast(db.settings.splitStock?'股票分開算':'股票併入日常一起算');
+};
 function sfxIcon(){
   $('sfxIcon').innerHTML='<use href="#i-'+(SFX.on?'vol':'mute')+'"/>';
   $('btnSfx').style.opacity=SFX.on?1:.5;
@@ -1988,7 +2222,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
 }
 
 skin(localStorage.getItem(SKIN)||'dark');
-sfxIcon();
+sfxIcon(); swPaint();
 render();
 booted=true;
 CLOUD.paint();
