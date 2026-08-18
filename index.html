@@ -915,11 +915,24 @@ function monthly(){
   }
   return out;
 }
+/* 每月存錢速度：只看日常收支，當沖的買賣進出不算。
+   本來用頭尾餘額相減，只要最後一筆剛好是買進還沒賣出，就會算出一個大負數。 */
 function perMonth(){
   const r=recs(); if(r.length<2) return null;
   const last=r[r.length-1], cut=new Date(last.date); cut.setDate(cut.getDate()-180);
-  const win=r.filter(x=>x.date>=iso(cut)), base=win.length>=2?win[0]:r[0], d=dayGap(base.date,last.date);
-  return d<=0?null:(last.bal-base.bal)/d*30;      /* 用餘額變化，不是單筆金額 */
+  const from=iso(cut), win=r.filter(x=>x.date>=from);
+  if(win.length<2) return null;
+  const days=dayGap(win[0].date,last.date);
+  if(days<=0) return null;
+  const firstId=r[0].id;
+  let net=0;
+  win.forEach(x=>{
+    if(x.cat===STOCK) return;                       /* 股票另外看，不列入存錢速度 */
+    if(x.kind==='in') net+=x.amount;
+    else if(x.kind==='out') net-=x.amount;
+    else if(x.id!==firstId) net+=x.delta;           /* 對帳校正算進來，起始餘額不算 */
+  });
+  return net/days*30;
 }
 /* 每月目標可以分段設定，例如 1 月起 1 萬、7 月起 2 萬。
    舊版只有單一數字，轉成「從最早開始」的一段。 */
@@ -1161,7 +1174,7 @@ function renderQuest(){
   if(need<=0) words='錢已經夠了，隨時可以出發。';
   else if(pm&&pm>0){
     const m=need/pm; eta=new Date(); eta.setMonth(eta.getMonth()+Math.round(m));
-    words='還差 <b>'+money(need)+'</b>，照最近的速度大概 <b>'+ymD(eta)+'</b>到手'+(m<1?'（不用一個月）':'，約 '+m.toFixed(1)+' 個月')+'。';
+    words='還差 <b>'+money(need)+'</b>，照最近的存錢速度（不含股票）大概 <b>'+ymD(eta)+'</b>到手'+(m<1?'（不用一個月）':'，約 '+m.toFixed(1)+' 個月')+'。';
   } else words='還差 <b>'+money(need)+'</b>，多記幾筆就能估出完成時間。';
   if(g.date&&need>0){
     const left=dayGap(todayStr(),g.date);
