@@ -1,7 +1,7 @@
 {
   "name": "存錢Bo士",
   "short_name": "存錢Bo士",
-  "description": "把存錢變成闖關遊戲的記帳本",
+  "description": "記帳與存錢進度",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
