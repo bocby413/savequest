@@ -266,7 +266,10 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   background:transparent;border:none;color:var(--txt3);transition:color .14s,background-color .14s}
 .segs button.on{background:var(--panel3);color:var(--txt)}
 .sechead .segs:last-of-type{margin-left:auto}
-.piebox{padding:22px 24px;display:grid;grid-template-columns:230px 1fr;gap:26px;align-items:center}
+.pietitle{font-size:13.5px;font-weight:700;margin-bottom:9px;display:flex;align-items:baseline;gap:8px}
+.pietitle span{font-size:12px;color:var(--txt3);font-weight:400}
+.piebox{padding:20px;display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:center}
+@media(max-width:1080px){.piebox{grid-template-columns:150px 1fr;gap:14px}.pie svg{width:150px;height:150px}}
 @media(max-width:760px){.piebox{grid-template-columns:1fr;gap:18px;padding:18px 16px}}
 .pie{position:relative;display:grid;place-items:center}
 .pie svg{width:210px;height:210px;transform:rotate(-90deg)}
@@ -495,7 +498,16 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
     <span class="segs" id="pieKind"><button data-pk="out" class="on">花掉的</button><button data-pk="in">存進來的</button></span>
     <span class="segs" id="pieRange"><button data-pr="m">這個月</button><button data-pr="y" class="on">今年</button><button data-pr="a">全部</button></span>
   </div>
-  <div class="card piebox" id="pieCard"></div>
+  <div class="duo">
+    <div>
+      <div class="pietitle">日常收支<span>不含股票</span></div>
+      <div class="card piebox" id="pieCard"></div>
+    </div>
+    <div>
+      <div class="pietitle">股票進出<span>買進與賣出對比</span></div>
+      <div class="card piebox" id="stockCard"></div>
+    </div>
+  </div>
 </div>
 
 <div class="sec">
@@ -589,9 +601,10 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 
 <script>
 const KEY='life_goals_savings_v1', SKIN='life_goals_skin';
+const STOCK='股票';
 const CATS={
-  out:['現金','卡費','貸款','其他'],
-  in :['薪水','獎金','投資','副業','其他']
+  out:['現金','卡費','貸款',STOCK,'其他'],
+  in :['薪水','獎金','投資','副業',STOCK,'其他']
 };
 const CATCOLOR=['#ffc233','#3ce0d0','#ff5c8a','#a879ff','#8ee65a','#ff9f45','#5aa9ff','#e06be0','#8a93a8'];
 /* 固定類別照順序配色；自己填的用名稱去挑後面幾個顏色，才不會全部同色 */
@@ -1300,11 +1313,58 @@ function renderLog(){
 }
 
 let pieKind='out', pieRange='y';
+function inRange(x){
+  const now=new Date(), ym=now.getFullYear()+'-'+pad(now.getMonth()+1), yr=String(now.getFullYear());
+  return pieRange==='m'?x.date.slice(0,7)===ym : pieRange==='y'?x.date.slice(0,4)===yr : true;
+}
+const rangeName=()=>pieRange==='m'?'這個月':pieRange==='y'?'今年':'全部';
+/* 甜甜圈：rows=[{k,v,c}] */
+function donut(rows,total,midTop,midSub,size){
+  const R=size*0.42, W=size*0.145, cx=size/2;
+  let off=0;
+  const arcs=rows.map(r=>{
+    const len=total?r.v/total*(2*Math.PI*R):0;
+    const el='<circle cx="'+cx+'" cy="'+cx+'" r="'+R.toFixed(1)+'" stroke="'+r.c+'" stroke-width="'+W.toFixed(1)+'" '+
+      'stroke-dasharray="'+Math.max(0,len-1.5).toFixed(2)+' '+(2*Math.PI*R-len+1.5).toFixed(2)+'" '+
+      'stroke-dashoffset="'+(-off).toFixed(2)+'"><title>'+esc(r.k)+' '+money(r.v)+'</title></circle>';
+    off+=len; return el;
+  }).join('');
+  return '<div class="pie"><svg viewBox="0 0 '+size+' '+size+'">'+
+    '<circle cx="'+cx+'" cy="'+cx+'" r="'+R.toFixed(1)+'" stroke="var(--panel2)" stroke-width="'+W.toFixed(1)+'"/>'+
+    arcs+'</svg><div class="mid">'+midTop+'<span>'+midSub+'</span></div></div>';
+}
+function legend(rows,total){
+  return '<div class="legend">'+rows.map(r=>
+    '<div class="lg"><i style="background:'+r.c+'"></i><span class="nm">'+esc(r.k)+'</span>'+
+    '<span class="amt n">'+money(r.v)+'</span><span class="pct">'+(total?(r.v/total*100).toFixed(0):0)+'%</span>'+
+    '<span class="bar"><u data-w="'+(total?r.v/total:0)+'" style="background:'+r.c+'"></u></span></div>').join('')+'</div>';
+}
+/* 股票單獨一張：買進對賣出，中間看淨損益 */
+function renderStock(){
+  const box=$('stockCard');
+  const rs=recs().filter(x=>x.cat===STOCK&&inRange(x));
+  const buy=rs.filter(x=>x.kind==='out').reduce((s,x)=>s+x.amount,0);
+  const sell=rs.filter(x=>x.kind==='in').reduce((s,x)=>s+x.amount,0);
+  if(!rs.length){
+    box.innerHTML='<div class="pieempty">'+rangeName()+'還沒有股票進出。記帳時類別選「股票」，這裡就會單獨算。</div>';
+    return;
+  }
+  const net=sell-buy, rows=[{k:'賣出回收',v:sell,c:'#8ee65a'},{k:'買進投入',v:buy,c:'#ff6b6b'}];
+  const mid='<b class="'+(net>=0?'up':'down')+'">'+(net>=0?'+':'-')+short(Math.abs(net))+'</b>';
+  box.innerHTML=donut(rows,buy+sell,mid,rangeName()+'淨損益',180)+
+    '<div class="legend">'+
+      legend(rows,buy+sell).replace('<div class="legend">','').replace(/<\/div>$/,'')+
+      '<div class="lg" style="border-top:1px solid var(--edge);margin-top:6px;padding-top:11px">'+
+        '<i style="background:transparent"></i><span class="nm">'+rs.length+' 筆進出</span>'+
+        '<span class="amt n '+(net>=0?'up':'down')+'">'+(net>=0?'+':'-')+money(Math.abs(net))+'</span>'+
+        '<span class="pct">'+(buy?((net/buy)*100).toFixed(1)+'%':'—')+'</span></div>'+
+    '</div>';
+  setTimeout(()=>box.querySelectorAll('.lg u').forEach(u=>u.style.transform='scaleX('+u.dataset.w+')'),30);
+}
 function renderPie(){
-  const box=$('pieCard'), now=new Date();
-  const ym=now.getFullYear()+'-'+pad(now.getMonth()+1), yr=String(now.getFullYear());
-  const rs=recs().filter(x=>x.kind===pieKind&&(
-    pieRange==='m'?x.date.slice(0,7)===ym : pieRange==='y'?x.date.slice(0,4)===yr : true));
+  renderStock();
+  const box=$('pieCard');
+  const rs=recs().filter(x=>x.kind===pieKind&&x.cat!==STOCK&&inRange(x));
   const list=CATS[pieKind], sum={};
   rs.forEach(x=>{ const c=x.cat||'其他'; sum[c]=(sum[c]||0)+x.amount; });
   let rows=Object.entries(sum).map(([k,v])=>({k,v,c:catColor(k,list)})).sort((a,b)=>b.v-a.v);
@@ -1313,29 +1373,14 @@ function renderPie(){
     rows=rows.slice(0,8).concat([{k:'其餘 '+tail.length+' 類',v:rest,c:'#8a93a8'}]);
   }
   const total=rows.reduce((s,r)=>s+r.v,0);
-  const period=pieRange==='m'?'這個月':pieRange==='y'?'今年':'全部';
+  const period=rangeName();
   if(!total){
     box.innerHTML='<div class="pieempty">'+period+'還沒有'+(pieKind==='out'?'支出':'收入')+
-      '紀錄。記帳時挑一個類別，這裡就會畫出來。</div>';
+      '紀錄（股票不算在這裡）。</div>';
     return;
   }
-  const R=88, W=30, C=2*Math.PI*R;
-  let off=0;
-  const arcs=rows.map(r=>{
-    const len=r.v/total*C;
-    const el='<circle cx="105" cy="105" r="'+R+'" stroke="'+r.c+'" stroke-width="'+W+'" '+
-      'stroke-dasharray="'+(len-1.5).toFixed(2)+' '+(C-len+1.5).toFixed(2)+'" '+
-      'stroke-dashoffset="'+(-off).toFixed(2)+'"><title>'+esc(r.k)+' '+money(r.v)+'</title></circle>';
-    off+=len; return el;
-  }).join('');
-  box.innerHTML=
-    '<div class="pie"><svg viewBox="0 0 210 210">'+
-      '<circle cx="105" cy="105" r="'+R+'" stroke="var(--panel2)" stroke-width="'+W+'"/>'+arcs+'</svg>'+
-      '<div class="mid"><b>'+short(total)+'</b><span>'+period+(pieKind==='out'?'花掉':'存進來')+'</span></div></div>'+
-    '<div class="legend">'+rows.map(r=>
-      '<div class="lg"><i style="background:'+r.c+'"></i><span class="nm">'+esc(r.k)+'</span>'+
-      '<span class="amt n">'+money(r.v)+'</span><span class="pct">'+(r.v/total*100).toFixed(0)+'%</span>'+
-      '<span class="bar"><u data-w="'+(r.v/total)+'" style="background:'+r.c+'"></u></span></div>').join('')+'</div>';
+  box.innerHTML=donut(rows,total,'<b>'+short(total)+'</b>',period+(pieKind==='out'?'花掉':'存進來'),180)+
+    legend(rows,total);
   setTimeout(()=>box.querySelectorAll('.lg u').forEach(u=>u.style.transform='scaleX('+u.dataset.w+')'),30);
 }
 function render(){ renderPie(); renderHud(); renderMap(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); }
