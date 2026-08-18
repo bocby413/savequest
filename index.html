@@ -292,6 +292,26 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   transition:transform .45s cubic-bezier(.25,1,.4,1)}
 .pieempty{grid-column:1/-1;text-align:center;color:var(--txt3);font-size:14px;padding:26px 0}
 
+/* ── 每月收支表 ── */
+.mtab{width:100%;border-collapse:collapse}
+.mtab th{font-size:11px;letter-spacing:1px;color:var(--txt3);font-weight:700;padding:0 12px 10px;text-align:right;white-space:nowrap}
+.mtab th:first-child{text-align:left}
+.mtab td{padding:11px 12px;border-top:1px solid var(--edge);font-size:14px;text-align:right;white-space:nowrap;
+  font-variant-numeric:tabular-nums}
+.mtab td:first-child{text-align:left;font-weight:600}
+.mtab tbody tr:hover{background:var(--panel2)}
+.mtab .zero{color:var(--txt3)}
+.mtab .bal{font-weight:800;font-size:15px}
+.mtab tr.yr td{background:var(--panel3);border-top:2px solid var(--edge2);font-weight:800;color:var(--txt)}
+.mtab tr.yr td:first-child{letter-spacing:1px}
+.mtab .st{font-size:12px;color:var(--gold)}
+.mtab .mono{font-size:12.5px;color:var(--txt3)}
+@media(max-width:640px){
+  .mtab th,.mtab td{padding:9px 7px;font-size:13px}
+  .mtab .bal{font-size:14px}
+  .mtab .hidem{display:none}
+}
+
 /* ── 歷程 ── */
 .logt{width:100%;border-collapse:collapse;contain:content}
 .logt th{font-size:11.5px;letter-spacing:1.2px;color:var(--txt3);font-weight:700;text-align:left;padding:0 14px 10px}
@@ -405,6 +425,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   <symbol id="i-map" viewBox="0 0 24 24"><path d="M15 4l6-2v16l-6 2-6-2-6 2V4l6-2 6 2zm-1 2.2L10 4.8v13l4 1.4v-13z"/></symbol>
   <symbol id="i-cal" viewBox="0 0 24 24"><path d="M7 2v2h10V2h2v2h2v18H3V4h2V2h2zm12 8H5v10h14V10z"/></symbol>
   <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3h2v16h16v2H3V3zm4 10h3v5H7v-5zm5-5h3v10h-3V8zm5-4h3v14h-3V4z"/></symbol>
+  <symbol id="i-table" viewBox="0 0 24 24"><path d="M3 3h18v18H3V3zm2 2v3h14V5H5zm0 5v3h6v-3H5zm8 0v3h6v-3h-6zm-8 5v4h6v-4H5zm8 0v4h6v-4h-6z"/></symbol>
   <symbol id="i-pie" viewBox="0 0 24 24"><path d="M11 2v9.6l6.8 6.8A10 10 0 0 0 11 2z" opacity=".55"/><path d="M9 4.1A10 10 0 1 0 19.9 15L9 4.1z"/></symbol>
   <symbol id="i-list" viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></symbol>
@@ -493,6 +514,11 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
       <div class="foot-note">每根柱子是當月所有存入減掉支出；半透明那根是還沒過完的當月。</div>
     </div>
   </div>
+</div>
+
+<div class="sec">
+  <div class="sechead"><h2><svg class="i"><use href="#i-table"/></svg>每月收支</h2><span class="sub" id="mtSub"></span></div>
+  <div class="card" style="padding:16px 6px" id="mtWrap"></div>
 </div>
 
 <div class="sec">
@@ -1390,7 +1416,66 @@ function renderPie(){
     legend(rows,total);
   setTimeout(()=>box.querySelectorAll('.lg u').forEach(u=>u.style.transform='scaleX('+u.dataset.w+')'),30);
 }
-function render(){ renderPie(); renderHud(); renderMap(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); }
+/* 每月收支：日常收入、日常支出、股票淨額分開看，結餘＝當月餘額變化 */
+function monthTable(){
+  const rs=recs(), map={};
+  rs.forEach((x,i)=>{
+    const k=x.date.slice(0,7);
+    const r=map[k]||(map[k]={in:0,out:0,stock:0,adj:0,n:0});
+    r.n++;
+    if(x.kind==='set'){ if(i>0) r.adj+=x.delta; }        /* 第一筆是起始餘額，不算 */
+    else if(x.cat===STOCK) r.stock += x.kind==='in'?x.amount:-x.amount;
+    else if(x.kind==='in') r.in+=x.amount;
+    else r.out+=x.amount;
+  });
+  return Object.entries(map).map(([k,v])=>Object.assign({k,y:+k.slice(0,4),m:+k.slice(5,7)},v,
+    {bal:v.in-v.out+v.stock+v.adj})).sort((a,b)=>a.k<b.k?1:-1);   /* 新的在上 */
+}
+let mtLimit=18;
+function renderMonthTable(){
+  const all=monthTable();
+  if(!all.length){
+    $('mtWrap').innerHTML='<div class="empty"><b>還沒有資料</b>記幾筆之後，這裡會按月份列出收入、支出跟結餘。</div>';
+    $('mtSub').textContent=''; return;
+  }
+  const rows=all.slice(0,mtLimit);
+  const cell=(v,cls)=>v?'<span class="'+cls+'">'+(cls==='down'?'-':'+')+money(Math.abs(v))+'</span>':'<span class="zero">—</span>';
+  let html='<table class="mtab"><thead><tr><th>月份</th><th>收入</th><th>支出</th><th>股票</th>'+
+    '<th>結餘</th><th class="hidem">筆數</th></tr></thead><tbody>';
+  let curYear=null;
+  rows.forEach(r=>{
+    if(curYear!==null&&r.y!==curYear) html+=yearRow(all,curYear);
+    curYear=r.y;
+    const tgt=targetAt(r.y,r.m-1), hit=tgt>0&&r.bal>=tgt;
+    html+='<tr><td>'+r.y+' 年 '+r.m+' 月'+(hit?' <span class="st">★</span>':'')+
+      (r.adj?'<div class="mono">含對帳 '+(r.adj>=0?'+':'-')+short(Math.abs(r.adj))+'</div>':'')+'</td>'+
+      '<td>'+cell(r.in,'up')+'</td>'+
+      '<td>'+cell(-r.out,'down')+'</td>'+
+      '<td>'+(r.stock?'<span class="'+(r.stock>=0?'up':'down')+'">'+(r.stock>=0?'+':'-')+money(Math.abs(r.stock))+'</span>':'<span class="zero">—</span>')+'</td>'+
+      '<td class="bal '+(r.bal>=0?'up':'down')+'">'+(r.bal>=0?'+':'-')+money(Math.abs(r.bal))+'</td>'+
+      '<td class="hidem mono">'+r.n+'</td></tr>';
+  });
+  if(curYear!==null) html+=yearRow(all,curYear);
+  html+='</tbody></table>';
+  if(all.length>mtLimit)
+    html+='<div style="text-align:center;padding:14px 0 4px"><button class="btn sm ghost" id="btnMoreMt">'+
+      '還有 '+(all.length-mtLimit)+' 個月，看更多</button></div>';
+  $('mtWrap').innerHTML=html;
+  const last=all[0];
+  $('mtSub').textContent=last.y+' 年 '+last.m+' 月結餘 '+(last.bal>=0?'+':'-')+short(Math.abs(last.bal));
+}
+function yearRow(all,y){
+  const ys=all.filter(r=>r.y===y);
+  const sum=k=>ys.reduce((s,r)=>s+r[k],0);
+  const bal=sum('bal');
+  return '<tr class="yr"><td>'+y+' 年合計</td>'+
+    '<td class="up">'+(sum('in')?'+'+money(sum('in')):'—')+'</td>'+
+    '<td class="down">'+(sum('out')?'-'+money(sum('out')):'—')+'</td>'+
+    '<td class="'+(sum('stock')>=0?'up':'down')+'">'+(sum('stock')?(sum('stock')>=0?'+':'-')+money(Math.abs(sum('stock'))):'—')+'</td>'+
+    '<td class="bal '+(bal>=0?'up':'down')+'">'+(bal>=0?'+':'-')+money(Math.abs(bal))+'</td>'+
+    '<td class="hidem mono">'+ys.reduce((s,r)=>s+r.n,0)+'</td></tr>';
+}
+function render(){ renderMonthTable(); renderPie(); renderHud(); renderMap(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); }
 
 /* ── 互動 ── */
 const open=id=>{$(id).classList.add('on');const f=$(id).querySelector('input');setTimeout(()=>f&&f.focus(),120);};
@@ -1529,6 +1614,7 @@ document.body.addEventListener('click',e=>{
   if(b.id==='btnTarget2') return openTarget();
   if(b.id==='btnMore'){ SFX.play('tick'); return open('vMore'); }
   if(b.id==='btnMoreLog'){ logLimit+=50; renderLog(); return; }
+  if(b.id==='btnMoreMt'){ mtLimit+=24; renderMonthTable(); return; }
   if(b.dataset.pk||b.dataset.pr){
     if(b.dataset.pk) pieKind=b.dataset.pk; else pieRange=b.dataset.pr;
     b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
