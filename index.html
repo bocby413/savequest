@@ -542,7 +542,11 @@ let db=load(), shown=0, calYear=new Date().getFullYear(), booted=false;
 
 function load(){
   try{const d=JSON.parse(localStorage.getItem(KEY));
-    if(d) return {records:d.records||[],goals:d.goals||[],settings:d.settings||{},deleted:d.deleted||{}};}catch(e){}
+    if(d){
+      const cut=Date.now()-180*86400000, del={};
+      Object.entries(d.deleted||{}).forEach(([k,v])=>{ if(v>cut) del[k]=v; });  /* 半年前的刪除記號就不用留了 */
+      return {records:d.records||[],goals:d.goals||[],settings:d.settings||{},deleted:del};
+    }}catch(e){}
   return {records:[],goals:[],settings:{},deleted:{}};
 }
 /* 存本機，順便推一份到雲端（沒開同步就只存本機） */
@@ -1330,7 +1334,14 @@ $('fileImport').onchange=e=>{
       const d=JSON.parse(fr.result);
       if(!Array.isArray(d.records)||!Array.isArray(d.goals)) throw 0;
       if(!confirm('還原會覆蓋現在的資料，確定？')) return;
-      db={records:d.records,goals:d.goals,settings:d.settings||{},deleted:d.deleted||{}}; save(); shown=0; booted=false; shut(); render(); booted=true; toast('已還原');
+      const t=Date.now(), keep=new Set([].concat(d.records,d.goals).map(x=>x&&x.id));
+      const tomb=Object.assign({},db.deleted||{},d.deleted||{});
+      [].concat(db.records,db.goals).forEach(x=>{ if(x&&!keep.has(x.id)) tomb[x.id]=t; });
+      db={records:d.records,goals:d.goals,
+          settings:Object.assign({},d.settings||{},{updatedAt:t}),deleted:tomb};
+      save();
+      if(window.CLOUD&&CLOUD.user) CLOUD.push();
+      shown=0; booted=false; shut(); render(); booted=true; toast('已還原');
     }catch(err){ toast('檔案格式不對'); }
     e.target.value='';
   };
@@ -1339,7 +1350,14 @@ $('fileImport').onchange=e=>{
 $('btnReset').onclick=()=>{
   if(!confirm('所有紀錄、任務、設定都會不見，無法復原。確定？')) return;
   if(!confirm('再確認一次，真的要清空？')) return;
-  db={records:[],goals:[],settings:{},deleted:{}}; save(); shown=0; shut(); render(); toast('已清空');
+  /* 每一筆都要留刪除記號，否則雲端會把它們同步回來 */
+  const t=Date.now(), tomb=Object.assign({},db.deleted||{});
+  db.records.forEach(x=>tomb[x.id]=t);
+  db.goals.forEach(x=>tomb[x.id]=t);
+  db={records:[],goals:[],settings:{updatedAt:t},deleted:tomb};
+  save();
+  if(window.CLOUD&&CLOUD.user) CLOUD.push();   /* 立刻推，別等 900ms */
+  shown=0; shut(); render(); toast('已清空');
 };
 
 /* ── 雲端同步（Firebase）──
