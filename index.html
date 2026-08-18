@@ -307,6 +307,11 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .mtab tr.yr td{background:var(--panel3);border-top:2px solid var(--edge2);font-weight:800;color:var(--txt)}
 .mtab tr.yr td:first-child{letter-spacing:1px}
 .mtab .st{font-size:12px;color:var(--gold)}
+.mtab .abbr{display:none}
+@media(max-width:640px){
+  .mtab .full{display:none}
+  .mtab .abbr{display:inline}
+}
 .mtab .mono{font-size:12.5px;color:var(--txt3)}
 @media(max-width:640px){
   .mtab th,.mtab td{padding:9px 7px;font-size:13px}
@@ -342,7 +347,10 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .logt .m{font-size:17px;font-weight:800;text-align:right;white-space:nowrap}
 .logt .c{text-align:right;white-space:nowrap;font-weight:600}
 .logt .g{color:var(--txt3);font-size:12.5px;white-space:nowrap}
-.logt .memo{color:var(--txt3);font-size:13px}
+.logt .item{line-height:1.4}
+.logt .i1{margin-bottom:2px}
+.logt .i2{font-size:12px;color:var(--txt3)}
+.cattag.plain{color:var(--txt3);border-color:var(--edge);background:var(--panel2)}
 .cattag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap;
   color:var(--c);border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) 12%,transparent)}
 .logt .x{text-align:right}
@@ -1375,13 +1383,18 @@ function renderLog(){
       const idx=(logPage-1)*PER+i;
       const sameDay=idx>0&&full[idx-1].date===p.date;   /* 同一天只在最上面那列標日期 */
       const first=all[0].id===p.id;
-      const label=p.note?esc(p.note):(p.kind==='in'?'存入':p.kind==='out'?'支出':'對帳');
+      const kindTxt=p.kind==='in'?'存入':p.kind==='out'?'支出':'對帳';
       const badge=p.kind!=='set'?''
         : '<span class="tag" style="margin-left:6px">'+
           (first?'起始餘額':'校正 '+(p.delta>=0?'+':'-')+short(Math.abs(p.delta)))+'</span>';
+      /* 上面一行放分類，下面一行放存入／支出跟備註，每一列長得都一樣 */
+      const topLine = p.cat
+        ? '<span class="cattag" style="--c:'+(p.sub?SUBCOLOR[p.sub]:catColor(p.cat,CATS[p.kind]||[]))+'">'+
+            esc(p.cat)+(p.sub?'·'+esc(p.sub):'')+'</span>'
+        : (p.kind==='set' ? '' : '<span class="cattag plain">未分類</span>');   /* 對帳那列的標籤就是 badge，別重複 */
       return '<tr><td class="d">'+(sameDay?'<span style="opacity:.3">〃</span>':mdY(p.date))+'</td>'+
-        '<td>'+(p.cat?'<span class="cattag" style="--c:'+(p.sub?SUBCOLOR[p.sub]:catColor(p.cat,CATS[p.kind]||[]))+'">'+
-            esc(p.cat)+(p.sub?'·'+esc(p.sub):'')+'</span> ':'')+label+badge+'</td>'+
+        '<td class="item"><div class="i1">'+topLine+badge+'</div>'+
+          '<div class="i2">'+kindTxt+(p.note?'　'+esc(p.note):'')+'</div></td>'+
         '<td class="c n up deskonly">'+(p.kind==='in'?'+'+money(p.amount):'')+'</td>'+
         '<td class="c n down deskonly">'+(p.kind==='out'?'-'+money(p.amount):'')+'</td>'+
         '<td class="c n mobonly '+(p.delta>=0?'up':'down')+'">'+
@@ -1518,7 +1531,9 @@ function renderMonthTable(){
     $('mtSub').textContent=''; return;
   }
   const rows=all.slice(0,mtLimit);
-  const cell=(v,cls)=>v?'<span class="'+cls+'">'+(cls==='down'?'-':'+')+money(Math.abs(v))+'</span>':'<span class="zero">—</span>';
+  const num=(v,cls)=>'<span class="'+cls+'"><span class="full">'+(v>=0?'+':'-')+money(Math.abs(v))+
+    '</span><span class="abbr">'+(v>=0?'+':'-')+short(Math.abs(v))+'</span></span>';
+  const cell=(v,cls)=>v?num(v,cls):'<span class="zero">—</span>';
   let html='<table class="mtab"><thead><tr><th>月份</th><th>收入</th><th>支出</th><th>股票</th>'+
     '<th>結餘</th><th class="hidem">筆數</th></tr></thead><tbody>';
   let curYear=null;
@@ -1530,8 +1545,9 @@ function renderMonthTable(){
       (r.adj?'<div class="mono">含對帳 '+(r.adj>=0?'+':'-')+short(Math.abs(r.adj))+'</div>':'')+'</td>'+
       '<td>'+cell(r.in,'up')+'</td>'+
       '<td>'+cell(-r.out,'down')+'</td>'+
-      '<td>'+(r.stock?'<span class="'+(r.stock>=0?'up':'down')+'">'+(r.stock>=0?'+':'-')+money(Math.abs(r.stock))+'</span>':'<span class="zero">—</span>')+'</td>'+
-      '<td class="bal '+(r.bal>=0?'up':'down')+'">'+(r.bal>=0?'+':'-')+money(Math.abs(r.bal))+'</td>'+
+      '<td>'+(r.stock?num(r.stock,r.stock>=0?'up':'down'):'<span class="zero">—</span>')+'</td>'+
+      '<td class="bal '+(r.bal>=0?'up':'down')+'"><span class="full">'+(r.bal>=0?'+':'-')+money(Math.abs(r.bal))+
+        '</span><span class="abbr">'+(r.bal>=0?'+':'-')+short(Math.abs(r.bal))+'</span></td>'+
       '<td class="hidem mono">'+r.n+'</td></tr>';
   });
   if(curYear!==null) html+=yearRow(all,curYear);
@@ -1547,11 +1563,13 @@ function yearRow(all,y){
   const ys=all.filter(r=>r.y===y);
   const sum=k=>ys.reduce((s,r)=>s+r[k],0);
   const bal=sum('bal');
+  const n2=(v,cls)=>'<span class="'+cls+'"><span class="full">'+(v>=0?'+':'-')+money(Math.abs(v))+
+    '</span><span class="abbr">'+(v>=0?'+':'-')+short(Math.abs(v))+'</span></span>';
   return '<tr class="yr"><td>'+y+' 年合計</td>'+
-    '<td class="up">'+(sum('in')?'+'+money(sum('in')):'—')+'</td>'+
-    '<td class="down">'+(sum('out')?'-'+money(sum('out')):'—')+'</td>'+
-    '<td class="'+(sum('stock')>=0?'up':'down')+'">'+(sum('stock')?(sum('stock')>=0?'+':'-')+money(Math.abs(sum('stock'))):'—')+'</td>'+
-    '<td class="bal '+(bal>=0?'up':'down')+'">'+(bal>=0?'+':'-')+money(Math.abs(bal))+'</td>'+
+    '<td>'+(sum('in')?n2(sum('in'),'up'):'—')+'</td>'+
+    '<td>'+(sum('out')?n2(-sum('out'),'down'):'—')+'</td>'+
+    '<td>'+(sum('stock')?n2(sum('stock'),sum('stock')>=0?'up':'down'):'—')+'</td>'+
+    '<td class="bal">'+n2(bal,bal>=0?'up':'down')+'</td>'+
     '<td class="hidem mono">'+ys.reduce((s,r)=>s+r.n,0)+'</td></tr>';
 }
 function render(){ renderMonthTable(); renderPie(); renderHud(); renderMap(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); }
