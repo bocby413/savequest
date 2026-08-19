@@ -2427,9 +2427,14 @@ $('saveGrant').onclick=async()=>{
 $('btnFriAdd').onclick=async()=>{
   const m=$('friMail').value.trim();
   if(!m||m.indexOf('@')<0){ toast('填對方的 Gmail'); return; }
-  $('friMsg').textContent='送出中…';
-  const r=await CLOUD.sendRequest(m);
-  if(r.err){ $('friMsg').innerHTML='<span style="color:var(--red)">'+esc(r.err)+'</span>'; SFX.play('err'); }
+  if(!CLOUD.user){ $('friMsg').innerHTML='<span style="color:var(--red)">還沒登入雲端同步</span>'; return; }
+  if(!CLOUD.api){ $('friMsg').innerHTML='<span style="color:var(--red)">雲端還沒連上，等幾秒再試</span>'; return; }
+  $('btnFriAdd').disabled=true; $('friMsg').textContent='送出中…';
+  let r;
+  try{ r=await CLOUD.sendRequest(m); }
+  catch(e){ r={err:'出錯了：'+(e&&(e.code||e.message)||e)}; }   /* 不讓它卡在送出中 */
+  $('btnFriAdd').disabled=false;
+  if(!r||r.err){ $('friMsg').innerHTML='<span style="color:var(--red)">'+esc((r&&r.err)||'沒有回應')+'</span>'; SFX.play('err'); }
   else{ $('friMsg').innerHTML='<span style="color:var(--lime)">已送出給 '+esc(r.ok)+'，等對方接受</span>';
         $('friMail').value=''; SFX.play('coin'); }
 };
