@@ -476,6 +476,12 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .subs button.on{color:var(--txt);font-weight:700;border-color:var(--edge2)}
 .cats input{flex:1;min-width:130px;background:var(--panel2);border:1.5px solid var(--cyan);border-radius:99px;
   padding:6px 13px;color:var(--txt);font:inherit;font-size:13px;outline:none}
+.quickpick{display:flex;flex-wrap:wrap;gap:6px;margin:-6px 0 12px}
+.quickpick .qp{font:inherit;font-size:12.5px;padding:4px 11px;border-radius:99px;cursor:pointer;
+  background:var(--panel2);border:1.5px solid var(--edge);color:var(--txt2);
+  transition:color .14s,border-color .14s}
+.quickpick .qp:hover{color:var(--cyan);border-color:var(--cyan)}
+.quickpick .qpl{font-size:12px;color:var(--txt3);align-self:center;margin-right:2px}
 .chk{display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(--txt2);cursor:pointer;margin:0 0 12px;
   padding:9px 12px;border:1.5px solid var(--edge);border-radius:11px;background:var(--panel2);transition:border-color .14s,color .14s}
 .chk:hover{color:var(--txt);border-color:var(--edge2)}
@@ -761,6 +767,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 
   <div id="aStock">
     <div class="f"><label>股票代碼</label><input type="text" id="hCode" placeholder="2330" maxlength="6"></div>
+    <div class="quickpick" id="hQuick"></div>
     <div class="say" id="hName" style="margin:-6px 0 12px;min-height:20px"></div>
     <div class="kinds" id="aDir" style="grid-template-columns:1fr 1fr;display:none;margin:2px 0 12px">
       <button data-dir="add" class="on">加碼</button>
@@ -777,6 +784,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 
   <div id="aOther" style="display:none">
     <div class="f"><label>資產名稱</label><input type="text" id="oName" placeholder="定存、黃金、保單、加密貨幣…" maxlength="12"></div>
+    <div class="quickpick" id="oQuick"></div>
     <div class="say" id="oHave" style="margin:-6px 0 12px;min-height:20px"></div>
     <label class="chk" id="oQtyChk"><input type="checkbox" id="oHasQty"><span></span>
       這筆有數量（黃金幾兩、幣幾顆、外幣幾元…）</label>
@@ -797,6 +805,8 @@ html[data-skin="light"] .logbar input{color-scheme:light}
       <div class="say" style="margin-top:6px">會自動記一筆現金收入，並算出這次的已實現損益。</div></div>
   </div>
 
+  <label class="chk" id="payChkWrap"><input type="checkbox" id="aPayCash"><span></span>
+    <span id="payChkText">這筆成本要從現金扣掉（剛買進才勾，補登舊資產不用）</span></label>
   <div class="preview" id="hPrev"></div>
   <div class="dfoot"><button class="btn ghost" data-close>取消</button><button class="btn go" id="saveHold">儲存</button></div>
 </div></div>
@@ -1932,6 +1942,7 @@ function setODirQuiet(d){
 function setODir(d){ setODirQuiet(d); holdPrev(); }
 $('oDir').addEventListener('click',e=>{const b=e.target.closest('button[data-odir]');if(b){SFX.play('tick');setODir(b.dataset.odir);}});
 $('oHasQty').addEventListener('change',()=>{ SFX.play('tick'); holdPrev(); });
+$('aPayCash').addEventListener('change',()=>{ SFX.play('tick'); holdPrev(); });
 $('aDir').addEventListener('click',e=>{const b=e.target.closest('button[data-dir]');if(b){SFX.play('tick');setDir(b.dataset.dir);}});
 
 /* 賣出金額對照持有成本，算出這次實際賺賠 */
@@ -1952,6 +1963,7 @@ function holdPrev(){
     $('oDir').style.display = own?'grid':'none';
     if(!own&&oDir!=='add') setODirQuiet('add');
     const cut = !!own && oDir==='sub';
+    $('payChkWrap').style.display = (editHold||cut)?'none':'flex';
     if(own) $('oHasQty').checked = !!own.qty;                 /* 既有的照原本設定 */
     const hasQty = $('oHasQty').checked;
     $('oQtyChk').style.display = own?'none':'flex';           /* 加減碼時不讓改設定 */
@@ -1980,9 +1992,11 @@ function holdPrev(){
       }
       const v2=parseFloat($('oValue').value), c2=parseFloat($('oCost').value);
       if(!(qv>0)||!(v2>0)){ $('hPrev').innerHTML='填要增加的數量與價值'; return; }
+      const pay1=(c2>0?c2:v2);
       $('hPrev').innerHTML='加完後共 <b>'+money(own.qty+qv)+'</b> '+esc(own.unit||'')+
         '　價值<b>'+money(own.value+v2)+'</b>'+
-        (own.cost||c2>0?'<span style="font-size:12.5px">　成本 '+money((own.cost||0)+(c2>0?c2:0))+'</span>':'');
+        (own.cost||c2>0?'<span style="font-size:12.5px">　成本 '+money((own.cost||0)+(c2>0?c2:0))+'</span>':'')+
+        (($('aPayCash').checked&&pay1>0)?'<br><span style="font-size:12.5px" class="down">現金扣 '+money(pay1)+'　餘額剩 '+money(now()-pay1)+'</span>':'');
       return;
     }
     const v=parseFloat($('oValue').value), c=parseFloat($('oCost').value);
@@ -2002,8 +2016,10 @@ function holdPrev(){
     if(!(v>0)){ $('hPrev').innerHTML=own?'填要增加多少價值':'填目前價值'; return; }
     const tv=own?own.value+v:v, tc=own?(own.cost||0)+(c>0?c:0):(c>0?c:0);
     const pl=tc>0?tv-tc:null;
+    const pay0=(c>0?c:v);
     $('hPrev').innerHTML=(own?'加完後共<b>'+money(tv)+'</b>':'目前價值<b>'+money(tv)+'</b>')+
-      (pl!==null?'<span style="font-size:12.5px" class="'+(pl>=0?'up':'down')+'">　損益 '+(pl>=0?'+':'-')+money(Math.abs(pl))+'</span>':'');
+      (pl!==null?'<span style="font-size:12.5px" class="'+(pl>=0?'up':'down')+'">　損益 '+(pl>=0?'+':'-')+money(Math.abs(pl))+'</span>':'')+
+      (($('aPayCash').checked&&pay0>0)?'<br><span style="font-size:12.5px" class="down">現金扣 '+money(pay0)+'　餘額剩 '+money(now()-pay0)+'</span>':'');
     return;
   }
   const q=quoteOf($('hCode').value), sh=parseFloat($('hShares').value);
@@ -2014,6 +2030,7 @@ function holdPrev(){
   $('aDir').style.display = own?'grid':'none';
   if(!own&&aDir!=='add') setDirQuiet('add');
   const cutting = !!own && aDir==='sub';
+  $('payChkWrap').style.display = (editHold||cutting)?'none':'flex';
   $('aTotalWrap').style.display= cutting?'none':'';
   $('aCashWrap').style.display = cutting?'':'none';
   if(cutting&&q&&sh>0&&!$('hCash').value) $('hCash').placeholder='參考市價 '+money(q.c*sh);
@@ -2049,11 +2066,29 @@ function holdPrev(){
     const v=q.c*tot, c=navg>0?navg*tot:null, pl=c!==null?v-c:null;
     $('hPrev').innerHTML=(own?'加完後共 <b>'+money(tot)+'</b> 股　市值<b>':'市值<b>')+money(v)+'</b>'+
       (navg>0?'<span style="font-size:12.5px">　均價 '+navg.toLocaleString('en-US',{maximumFractionDigits:2})+'</span>':'')+
-      (pl!==null?'<span style="font-size:12.5px" class="'+(pl>=0?'up':'down')+'">　損益 '+(pl>=0?'+':'-')+money(Math.abs(pl))+'</span>':'');
+      (pl!==null?'<span style="font-size:12.5px" class="'+(pl>=0?'up':'down')+'">　損益 '+(pl>=0?'+':'-')+money(Math.abs(pl))+'</span>':'')+
+      (($('aPayCash').checked&&tot0>0)?'<br><span style="font-size:12.5px" class="down">現金扣 '+money(tot0)+'　餘額剩 '+money(now()-tot0)+'</span>':'');
   } else $('hPrev').innerHTML=cutting?'填要減幾股與賣出總金額':'填代碼、股數與總成本';
 }
 ['hCode','hShares','hTotal','hCash','oName','oValue','oCost','oCash','oQty','oUnit'].forEach(id=>$(id).addEventListener('input',holdPrev));
 
+function renderQuick(){
+  const hs=holdings(), os=others();
+  $('hQuick').innerHTML = hs.length
+    ? '<span class="qpl">已有：</span>'+hs.map(h=>'<button type="button" class="qp" data-qs="'+esc(h.code)+'">'+
+        esc(h.code)+(quoteOf(h.code)?' '+esc(quoteOf(h.code).n):'')+'</button>').join('') : '';
+  $('oQuick').innerHTML = os.length
+    ? '<span class="qpl">已有：</span>'+os.map(o=>'<button type="button" class="qp" data-qo="'+esc(o.name)+'">'+
+        esc(o.name)+'</button>').join('') : '';
+}
+$('hQuick').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-qs]'); if(!b) return;
+  SFX.play('tick'); $('hCode').value=b.dataset.qs; holdPrev();
+});
+$('oQuick').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-qo]'); if(!b) return;
+  SFX.play('tick'); $('oName').value=b.dataset.qo; holdPrev();
+});
 function openHold(id,type){
   editHold=id||null;
   const h=id?holdings().find(x=>x.id===id):null;
@@ -2065,7 +2100,7 @@ function openHold(id,type){
   $('hCode').value=h?h.code:''; $('hShares').value=h?h.shares:'';
   $('hTotal').value=(h&&h.avg&&h.shares)?Math.round(h.avg*h.shares):''; $('hCash').value=''; $('oName').value=o?o.name:''; $('oValue').value=o?o.value:''; $('oCost').value=o&&o.cost?o.cost:''; $('oCash').value='';
   $('oHasQty').checked=!!(o&&o.qty); $('oQty').value=o&&o.qty?o.qty:''; $('oUnit').value=o&&o.unit?o.unit:'';
-  holdPrev(); open('vHold');
+  renderQuick(); $('aPayCash').checked=false; holdPrev(); open('vHold');
 }
 $('btnAddAsset').onclick=()=>openHold(null);
 $('saveHold').onclick=()=>{
@@ -2122,6 +2157,14 @@ $('saveHold').onclick=()=>{
                               hasQty?{qty:q,unit:unit}:{}));
       }
     }
+    if(!editHold&&oDir==='add'&&$('aPayCash').checked){
+      const pay=(c>0?c:v);
+      if(pay>0){
+        db.records.push({id:uid(),ts:Date.now(),date:todayStr(),kind:'out',amount:pay,
+          cat:'其他',asset:1,note:name+' 買入'});
+        msg+='　現金扣 '+money(pay);
+      }
+    }
     db.settings.others=os; save(); shut(); render(); SFX.play('coin');
     toast(msg);
     return;
@@ -2163,6 +2206,11 @@ $('saveHold').onclick=()=>{
       hs[i]=Object.assign({},h,{shares:tot,avg:navg,ts:Date.now()});
       msg=code+' 加到 '+money(tot)+' 股'+(navg?'　均價 '+navg.toLocaleString('en-US',{maximumFractionDigits:2}):'');
     }else hs.push({id:uid(),code,shares:sh,avg:av,ts:Date.now()});
+  }
+  if(!editHold&&aDir==='add'&&$('aPayCash').checked&&t>0){
+    db.records.push({id:uid(),ts:Date.now(),date:todayStr(),kind:'out',amount:t,
+      cat:STOCK,code,shares:sh,asset:1,note:''});
+    msg+='　現金扣 '+money(t);
   }
   db.settings.holdings=hs; save(); shut(); render(); SFX.play('coin');
   toast(msg);
