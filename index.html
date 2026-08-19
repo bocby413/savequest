@@ -397,6 +397,30 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .empty{padding:30px 22px;color:var(--txt3);font-size:14px}
 .empty b{display:block;color:var(--txt2);font-size:15.5px;font-weight:700;margin-bottom:4px}
 
+/* ── 好友 ── */
+.dot{width:8px;height:8px;border-radius:50%;background:var(--pink);display:none;margin-left:6px}
+.dot.on{display:inline-block;animation:beat2 1.6s infinite}
+@keyframes beat2{0%,100%{opacity:1}50%{opacity:.35}}
+.frisec{margin-top:16px;padding-top:14px;border-top:1px solid var(--edge)}
+.frisec h4{font-size:12px;letter-spacing:1.4px;color:var(--txt3);font-weight:700;margin-bottom:10px}
+.fri{display:flex;align-items:center;gap:12px;padding:10px;border-radius:12px;background:var(--panel2);
+  border:1.5px solid var(--edge);margin-bottom:8px}
+.fri .pic{width:42px;height:42px;border-radius:50%;overflow:hidden;background:var(--panel3);flex:none;
+  display:grid;place-items:center}
+.fri .pic img{width:100%;height:100%;object-fit:cover}
+.fri .pic svg{width:82%;height:82%}
+.fri .info{flex:1;min-width:0}
+.fri .nm{font-size:15px;font-weight:700}
+.fri .sub{font-size:12px;color:var(--txt3);margin-top:2px;line-height:1.5}
+.fri .lvtag{display:inline-flex;align-items:baseline;gap:3px;padding:1px 8px;border-radius:99px;
+  background:rgba(255,194,51,.16);color:var(--gold);font-weight:700;font-size:12px;margin-right:6px}
+.fri .ops{display:flex;gap:6px;flex:none}
+.friempty{color:var(--txt3);font-size:13.5px;padding:14px 2px}
+.grantrow{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--edge)}
+.grantrow .gi{flex:1}
+.grantrow b{display:block;font-size:14.5px;font-weight:600}
+.grantrow span{font-size:12px;color:var(--txt3)}
+
 /* ── 對話框 ── */
 .veil{position:fixed;inset:0;background:rgba(6,4,18,.82);display:grid;place-items:center;
   padding:20px;z-index:50;opacity:0;pointer-events:none;visibility:hidden;transition:opacity .16s}
@@ -590,6 +614,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
       <button class="btn" id="btnAddAsset"><svg class="i"><use href="#i-stock"/></svg> 新增資產</button>
       <button class="btn sm" id="btnTarget">每月存款目標</button>
       <button class="btn sm ghost" id="btnSync" style="display:none">雲端同步</button>
+      <button class="btn sm ghost" id="btnFriends" style="display:none">好友<span class="dot" id="friDot"></span></button>
       <button class="btn sm ghost" id="btnMore" title="設定"><svg class="i"><use href="#i-gear"/></svg></button>
       <input type="file" id="fileImport" accept=".json" hidden>
     </div>
@@ -837,6 +862,24 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   <div class="dfoot"><button class="btn ghost" data-close>關閉</button></div>
 </div></div>
 
+<div class="veil" id="vFri"><div class="dlg">
+  <h3>好友</h3>
+  <div class="say">互相看得到什麼由你決定，每個好友可以分開設定。</div>
+  <div class="f"><label>用 Gmail 加好友</label>
+    <input type="email" id="friMail" placeholder="對方登入用的信箱" inputmode="email"></div>
+  <button class="btn go" id="btnFriAdd" style="width:100%">送出好友邀請</button>
+  <div class="say" id="friMsg" style="min-height:20px;margin-top:8px"></div>
+  <div id="friBody"></div>
+  <div class="dfoot"><button class="btn ghost" data-close>關閉</button></div>
+</div></div>
+
+<div class="veil" id="vGrant"><div class="dlg">
+  <h3 id="grantTitle">分享設定</h3>
+  <div class="say">勾起來的項目，這位好友才看得到。頭貼和暱稱一律看得到。</div>
+  <div id="grantBody"></div>
+  <div class="dfoot"><button class="btn ghost" data-close>取消</button><button class="btn go" id="saveGrant">儲存</button></div>
+</div></div>
+
 <div class="veil" id="vSync"><div class="dlg">
   <h3>雲端同步</h3>
   <div class="say">手機和電腦看同一份資料。</div>
@@ -889,7 +932,7 @@ function load(){
 function save(){
   db.settings.updatedAt=Date.now();
   localStorage.setItem(KEY,JSON.stringify(db));
-  if(window.CLOUD&&CLOUD.user) CLOUD.pushSoon();
+  if(window.CLOUD&&CLOUD.user){ CLOUD.pushSoon(); CLOUD.pushShares(); }
 }
 /* 刪除要留個記號，否則另一台裝置會把它同步回來 */
 function markDeleted(id){ db.deleted=db.deleted||{}; db.deleted[id]=Date.now(); }
@@ -1778,6 +1821,16 @@ function yearRow(all,y){
 /* ── 股票資產 ──
    收盤價由 GitHub Actions 每天盤後寫進 prices.json，網頁只讀同源檔案，
    證交所與櫃買的 API 沒開跨網域，瀏覽器直接抓會被擋 */
+/* 好友：清單、待處理邀請、對方分享給我的快照 */
+let FRIENDS=[], REQS=[], SHARED={};
+const GRANTS=[
+  {k:'lv',    t:'等級與稱號', d:'Lv 幾級、稱號、這一級的進度'},
+  {k:'streak',t:'打卡紀錄',   d:'這個月有沒有達標、連續達標幾個月'},
+  {k:'goals', t:'任務進度',   d:'完成了幾個任務'},
+  {k:'month', t:'本月存款',   d:'這個月存了多少、每月目標多少'},
+  {k:'assets',t:'資產金額',   d:'總資產、現金、股票市值'}
+];
+const DEFAULT_GRANT={lv:true,streak:false,goals:false,month:false,assets:false};
 const PKEY='life_goals_prices';
 let PRICES=null;
 try{ PRICES=JSON.parse(localStorage.getItem(PKEY)); }catch(e){}
@@ -2281,6 +2334,99 @@ function renderLevels(){
     '，看的是現金加資產的總額。</div>';
 }
 
+/* 打卡統計，分享給好友時會用到 */
+function calStats(){
+  const ms=monthly(), d=new Date();
+  const cur=ms.find(x=>x.y===d.getFullYear()&&x.m===d.getMonth());
+  let streak=0;
+  for(let i=ms.length-1;i>=0;i--){
+    const x=ms[i], mt=targetAt(x.y,x.m);
+    if(!x.real||!mt) break;
+    if(x.delta>=mt){ streak++; continue; }
+    if(x.partial) continue;
+    break;
+  }
+  const yr=d.getFullYear(), list=ms.filter(x=>x.y===yr&&x.real);
+  return {streak, hit:list.filter(x=>x.delta>=targetAt(x.y,x.m)).length, has:list.length,
+          monthDelta:cur?cur.delta:0};
+}
+function friAvatar(a){
+  if(a&&a.type==='photo'&&a.data) return '<img src="'+a.data+'" alt="">';
+  return '<svg viewBox="0 0 64 64"><use href="#'+((a&&a.id)||AVATARS[0])+'"/></svg>';
+}
+function renderFriends(){
+  const btn=$('btnFriends'); if(!btn) return;
+  const on=!!(CLOUD.ready()&&CLOUD.user);
+  btn.style.display=on?'':'none';
+  $('friDot').className='dot'+(REQS.length?' on':'');
+  const box=$('friBody'); if(!box) return;
+  let html='';
+  if(REQS.length){
+    html+='<div class="frisec"><h4>等你回覆（'+REQS.length+'）</h4>'+
+      REQS.map(r=>'<div class="fri"><div class="pic">'+friAvatar(null)+'</div>'+
+        '<div class="info"><div class="nm">'+esc(r.fromName||r.fromEmail)+'</div>'+
+        '<div class="sub">'+esc(r.fromEmail)+'</div></div>'+
+        '<span class="ops"><button class="btn sm go" data-acc="'+r.id+'">接受</button>'+
+        '<button class="btn sm ghost" data-rej="'+r.id+'">拒絕</button></span></div>').join('')+'</div>';
+  }
+  html+='<div class="frisec"><h4>好友（'+FRIENDS.length+'）</h4>';
+  if(!FRIENDS.length) html+='<div class="friempty">還沒有好友。用上面的信箱送出邀請，對方接受後就會出現在這裡。</div>';
+  else html+=FRIENDS.map(f=>{
+    const d=SHARED[f.uid], g=(d&&d.grant)||{};
+    const bits=[];
+    if(d){
+      if(g.lv&&d.lv) bits.push('<span class="lvtag">Lv.'+d.lv+'</span>'+esc(d.title||''));
+      if(g.streak&&d.streak!==undefined) bits.push('連續達標 '+d.streak+' 個月');
+      if(g.goals&&d.goalsAll!==undefined) bits.push('任務 '+d.goalsDone+'/'+d.goalsAll);
+      if(g.month&&d.monthDelta!==undefined) bits.push('這個月 '+(d.monthDelta>=0?'+':'')+short(d.monthDelta));
+      if(g.assets&&d.assets!==undefined) bits.push('資產 '+short(d.assets));
+    }
+    if(!bits.length) bits.push('<span style="color:var(--txt3)">對方還沒分享任何資訊</span>');
+    return '<div class="fri"><div class="pic">'+friAvatar(d&&d.avatar)+'</div>'+
+      '<div class="info"><div class="nm">'+esc((d&&d.name)||f.name||f.email)+'</div>'+
+      '<div class="sub">'+bits.join('　')+'</div></div>'+
+      '<span class="ops">'+
+        '<button class="iq" data-grant="'+f.uid+'" title="我要分享什麼"><svg class="i"><use href="#i-gear"/></svg></button>'+
+        '<button class="iq del" data-unfri="'+f.uid+'" title="移除好友"><svg class="i"><use href="#i-x"/></svg></button>'+
+      '</span></div>';
+  }).join('');
+  box.innerHTML=html+'</div>';
+}
+let grantFor=null;
+function openGrant(uid){
+  const f=FRIENDS.find(x=>x.uid===uid); if(!f) return;
+  grantFor=f;
+  const g=Object.assign({},DEFAULT_GRANT,f.grant||{});
+  $('grantTitle').textContent='分享給 '+(f.name||f.email);
+  $('grantBody').innerHTML=GRANTS.map(x=>
+    '<label class="grantrow"><div class="gi"><b>'+x.t+'</b><span>'+x.d+'</span></div>'+
+    '<input type="checkbox" class="gchk" data-g="'+x.k+'" '+(g[x.k]?'checked':'')+' hidden>'+
+    '<span class="sw'+(g[x.k]?' on':'')+'" data-sw="'+x.k+'"><i></i></span></label>').join('');
+  open('vGrant');
+}
+$('grantBody').addEventListener('click',e=>{
+  const sw=e.target.closest('[data-sw]'); if(!sw) return;
+  e.preventDefault();
+  const k=sw.dataset.sw, chk=$('grantBody').querySelector('[data-g="'+k+'"]');
+  chk.checked=!chk.checked; sw.classList.toggle('on',chk.checked); SFX.play('tick');
+});
+$('saveGrant').onclick=async()=>{
+  if(!grantFor) return;
+  const g={};
+  $('grantBody').querySelectorAll('.gchk').forEach(c=>g[c.dataset.g]=c.checked);
+  await CLOUD.setGrant(grantFor,g);
+  shut(); toast('分享設定已更新');
+};
+$('btnFriAdd').onclick=async()=>{
+  const m=$('friMail').value.trim();
+  if(!m||m.indexOf('@')<0){ toast('填對方的 Gmail'); return; }
+  $('friMsg').textContent='送出中…';
+  const r=await CLOUD.sendRequest(m);
+  if(r.err){ $('friMsg').innerHTML='<span style="color:var(--red)">'+esc(r.err)+'</span>'; SFX.play('err'); }
+  else{ $('friMsg').innerHTML='<span style="color:var(--lime)">已送出給 '+esc(r.ok)+'，等對方接受</span>';
+        $('friMail').value=''; SFX.play('coin'); }
+};
+
 function render(){ renderStocks(); renderLoans(); renderMonthTable(); renderPie(); renderHud(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); }
 
 /* ── 互動 ── */
@@ -2476,6 +2622,15 @@ document.body.addEventListener('click',e=>{
     return;
   }
   if(b.id==='btnSync'){ open('vSync'); $('syncBody').innerHTML=CLOUD.body(); return; }
+  if(b.id==='btnFriends'){ renderFriends(); $('friMsg').textContent=''; return open('vFri'); }
+  if(b.dataset.acc){ const r=REQS.find(x=>x.id===b.dataset.acc);
+    if(r){ CLOUD.accept(r).then(()=>{ SFX.play('win'); toast('已成為好友'); }); } return; }
+  if(b.dataset.rej){ const r=REQS.find(x=>x.id===b.dataset.rej);
+    if(r){ CLOUD.reject(r).then(()=>toast('已拒絕')); } return; }
+  if(b.dataset.grant) return openGrant(b.dataset.grant);
+  if(b.dataset.unfri){ const f=FRIENDS.find(x=>x.uid===b.dataset.unfri);
+    if(f&&confirm('移除好友「'+(f.name||f.email)+'」？')) CLOUD.removeFriend(f).then(()=>{SFX.play('del');toast('已移除');});
+    return; }
   if(b.id==='btnSignIn') return CLOUD.signIn();
   if(b.id==='btnSignOut') return CLOUD.signOut();
   if(b.id==='calPrev'||b.id==='calNext'){
@@ -2611,8 +2766,13 @@ window.CLOUD={
       this.api={U,F,auth:U.getAuth(app),fs:F.getFirestore(app,'default')};
       U.onAuthStateChanged(this.api.auth,u=>{
         this.user=u; this.paint();
-        if(u) this.watch();
-        else if(this.unsub){ this.unsub(); this.unsub=null; }
+        if(u){ this.watch(); this.publishProfile(); this.watchRequests(); this.watchFriends(); }
+        else{
+          if(this.unsub){ this.unsub(); this.unsub=null; }
+          if(this.unsubReq){ this.unsubReq(); this.unsubReq=null; }
+          if(this.unsubFri){ this.unsubFri(); this.unsubFri=null; }
+          FRIENDS=[]; REQS=[]; SHARED={}; renderFriends();
+        }
       });
       try{ await U.getRedirectResult(this.api.auth); }catch(e){}
     }catch(e){ this.err='連不上雲端'; this.paint(); }
@@ -2654,6 +2814,115 @@ window.CLOUD={
       this.last=Date.now(); this.err=''; this.paint();
     }catch(e){ this.err=e.code||'寫入失敗'; this.paint(); }
   },
+  /* ── 好友 ── */
+  prof(){ const F=this.api.F; return F.doc(this.api.fs,'publicProfiles',this.user.uid); },
+  /* 登入後把自己登記進名冊，別人才找得到你 */
+  async publishProfile(){
+    if(!this.user||!this.api) return;
+    const {F}=this.api, L=levelInfo();
+    try{
+      await F.setDoc(this.prof(),{
+        uid:this.user.uid,
+        email:(this.user.email||'').toLowerCase(),
+        name:db.settings.name||this.user.displayName||'某人',
+        avatar:db.settings.avatar||null,
+        lv:L.lv, title:levelTitle(L.lv), updatedAt:Date.now()
+      });
+    }catch(e){ this.err=e.code||'名冊寫入失敗'; this.paint(); }
+  },
+  async findByEmail(email){
+    const {F}=this.api;
+    const q=F.query(F.collection(this.api.fs,'publicProfiles'),
+                    F.where('email','==',String(email).trim().toLowerCase()));
+    const snap=await F.getDocs(q);
+    let hit=null; snap.forEach(d=>{ if(!hit) hit=d.data(); });
+    return hit;
+  },
+  async sendRequest(email){
+    const me=this.user;
+    if(!me) return {err:'還沒登入'};
+    const target=await this.findByEmail(email);
+    if(!target) return {err:'找不到這個信箱，請對方先登入一次'};
+    if(target.uid===me.uid) return {err:'這是你自己'};
+    if(FRIENDS.some(f=>f.uid===target.uid)) return {err:'你們已經是好友了'};
+    const {F}=this.api;
+    const id=[me.uid,target.uid].sort().join('__');
+    await F.setDoc(F.doc(this.api.fs,'friendRequests',id),{
+      from:me.uid, fromEmail:(me.email||'').toLowerCase(), fromName:db.settings.name||me.displayName||'某人',
+      to:target.uid, toEmail:target.email, toName:target.name||'',
+      status:'pending', ts:Date.now()
+    });
+    return {ok:target.name||target.email};
+  },
+  watchRequests(){
+    const {F}=this.api;
+    if(this.unsubReq) this.unsubReq();
+    const q=F.query(F.collection(this.api.fs,'friendRequests'),
+                    F.where('to','==',this.user.uid),F.where('status','==','pending'));
+    this.unsubReq=F.onSnapshot(q,snap=>{
+      REQS=[]; snap.forEach(d=>REQS.push(Object.assign({id:d.id},d.data())));
+      renderFriends(); this.paint();
+    },()=>{});
+  },
+  async accept(req){
+    const {F}=this.api, me=this.user;
+    await F.setDoc(F.doc(this.api.fs,'users',me.uid,'friends',req.from),
+      {uid:req.from,email:req.fromEmail,name:req.fromName,since:Date.now(),grant:DEFAULT_GRANT},{merge:true});
+    await F.setDoc(F.doc(this.api.fs,'users',req.from,'friends',me.uid),
+      {uid:me.uid,email:(me.email||'').toLowerCase(),name:db.settings.name||'某人',since:Date.now()},{merge:true});
+    await F.updateDoc(F.doc(this.api.fs,'friendRequests',req.id),{status:'accepted'});
+    this.pushShares();
+  },
+  async reject(req){
+    await this.api.F.deleteDoc(this.api.F.doc(this.api.fs,'friendRequests',req.id));
+  },
+  async removeFriend(f){
+    const {F}=this.api, me=this.user;
+    await F.deleteDoc(F.doc(this.api.fs,'users',me.uid,'friends',f.uid));
+    try{ await F.deleteDoc(F.doc(this.api.fs,'shares',me.uid+'__'+f.uid)); }catch(e){}
+    try{ await F.deleteDoc(F.doc(this.api.fs,'friendRequests',[me.uid,f.uid].sort().join('__'))); }catch(e){}
+  },
+  watchFriends(){
+    const {F}=this.api;
+    if(this.unsubFri) this.unsubFri();
+    this.unsubFri=F.onSnapshot(F.collection(this.api.fs,'users',this.user.uid,'friends'),snap=>{
+      FRIENDS=[]; snap.forEach(d=>FRIENDS.push(Object.assign({uid:d.id},d.data())));
+      this.watchShares(); this.pushShares(); renderFriends();
+    },()=>{});
+  },
+  /* 好友分享給我的快照 */
+  watchShares(){
+    const {F}=this.api, me=this.user.uid;
+    (this.unsubShare||[]).forEach(u=>u());
+    this.unsubShare=FRIENDS.map(f=>
+      F.onSnapshot(F.doc(this.api.fs,'shares',f.uid+'__'+me),d=>{
+        SHARED[f.uid]=d.exists()?d.data():null; renderFriends();
+      },()=>{}));
+  },
+  /* 依每個好友的權限，各自產生一份我要給他看的快照 */
+  async pushShares(){
+    if(!this.user||!this.api||!FRIENDS.length) return;
+    const {F}=this.api, me=this.user.uid;
+    for(const f of FRIENDS){
+      const g=Object.assign({},DEFAULT_GRANT,f.grant||{});
+      const L=levelInfo();
+      const data={owner:me,viewer:f.uid,updatedAt:Date.now(),
+        name:db.settings.name||'某人', avatar:db.settings.avatar||null,
+        grant:g};
+      if(g.lv){ data.lv=L.lv; data.title=levelTitle(L.lv); data.pct=Math.round(L.pct); }
+      if(g.streak){ const c=calStats(); data.streak=c.streak; data.hit=c.hit; data.has=c.has; }
+      if(g.goals){ data.goalsDone=db.goals.filter(x=>x.done).length; data.goalsAll=db.goals.length; }
+      if(g.month){ const c=calStats(); data.monthDelta=c.monthDelta; data.target=targetNow(); }
+      if(g.assets){ data.assets=assets(); data.cash=now(); data.stock=stockValue(); }
+      try{ await F.setDoc(F.doc(this.api.fs,'shares',me+'__'+f.uid),data); }catch(e){}
+    }
+  },
+  async setGrant(f,grant){
+    const {F}=this.api;
+    await F.setDoc(F.doc(this.api.fs,'users',this.user.uid,'friends',f.uid),{grant},{merge:true});
+    f.grant=grant; await this.pushShares(); renderFriends();
+  },
+
   /* 兩邊合併：同一筆取比較新的，被刪掉的不會復活 */
   apply(r){
     const before=JSON.stringify(db);
@@ -2685,6 +2954,7 @@ window.CLOUD={
     b.style.display=this.ready()?'':'none';
     b.textContent=this.err?'同步異常':this.user?'已同步':'雲端同步';
     b.style.borderColor=this.err?'var(--red)':this.user?'var(--lime)':'';
+    if(typeof renderFriends==='function') renderFriends();
     const box=$('syncBody'); if(!box||!$('vSync').classList.contains('on')) return;
     box.innerHTML=this.body();
   },
