@@ -125,7 +125,7 @@ svg.i{width:1em;height:1em;fill:currentColor;vertical-align:-.13em}
 .cells .c.tick:after{content:"";position:absolute;right:-3px;top:-4px;bottom:-4px;border-right:2px dotted var(--edge2)}
 .cells.sm .c{height:13px;border-radius:4px;gap:3px}
 .cells.sm .c.on{animation:none;box-shadow:none}
-.cells.lg .c{height:30px;border-radius:7px}
+.cells.big .c{height:30px;border-radius:7px}
 @keyframes pop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
 .cellrow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:12.5px;color:var(--txt3);margin-top:7px}
 .cellrow b{color:var(--txt);font-size:14px;font-weight:700}
@@ -1313,7 +1313,7 @@ function renderQuest(){
   box.innerHTML='<div><div class="lbl">主線任務'+(gi>0?'（前面 '+gi+' 個已經存滿）':'')+'</div><h3>'+esc(g.name)+'</h3>'+
     '<div class="sub">目標 '+money(g.amount)+'　·　分到 '+money(got)+
       (ahead>0?'　·　總存款要到 '+money(ahead+g.amount):'')+'</div>'+
-    '<div class="cells lg">'+cellBar(pct,cells,'',5,'quest:'+g.id)+'</div>'+
+    '<div class="cells big">'+cellBar(pct,cells,'',5,'quest:'+g.id)+'</div>'+
     '<div class="cellrow"><span>填滿 <b>'+filled+'</b> / '+cells+' 格　每格 '+short(g.amount/cells)+'</span>'+
     '<span><b>'+pct.toFixed(1)+'%</b></span></div><p>'+words+'</p></div>'+
     '<div class="dial"><div class="circ" style="--p:'+pct.toFixed(1)+'%"><div class="mid"><div>'+
