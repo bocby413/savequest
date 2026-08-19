@@ -2364,7 +2364,7 @@ function renderFriends(){
   let html='';
   if(REQS.length){
     html+='<div class="frisec"><h4>等你回覆（'+REQS.length+'）</h4>'+
-      REQS.map(r=>'<div class="fri"><div class="pic">'+friAvatar(null)+'</div>'+
+      REQS.map(r=>'<div class="fri"><div class="pic">'+friAvatar(r.avatar)+'</div>'+
         '<div class="info"><div class="nm">'+esc(r.fromName||r.fromEmail)+'</div>'+
         '<div class="sub">'+esc(r.fromEmail)+'</div></div>'+
         '<span class="ops"><button class="btn sm go" data-acc="'+r.id+'">接受</button>'+
@@ -2636,9 +2636,14 @@ document.body.addEventListener('click',e=>{
   if(b.id==='btnSync'){ open('vSync'); $('syncBody').innerHTML=CLOUD.body(); return; }
   if(b.id==='btnFriends'){ renderFriends(); $('friMsg').textContent=''; return open('vFri'); }
   if(b.dataset.acc){ const r=REQS.find(x=>x.id===b.dataset.acc);
-    if(r){ CLOUD.accept(r).then(()=>{ SFX.play('win'); toast('已成為好友'); }); } return; }
+    if(r) CLOUD.accept(r).then(res=>{
+      if(res&&res.err){ SFX.play('err'); toast('接受失敗：'+res.err); }
+      else{ SFX.play('win'); toast('已成為好友'); }
+    });
+    return; }
   if(b.dataset.rej){ const r=REQS.find(x=>x.id===b.dataset.rej);
-    if(r){ CLOUD.reject(r).then(()=>toast('已拒絕')); } return; }
+    if(r) CLOUD.reject(r).then(res=>toast(res&&res.err?'拒絕失敗：'+res.err:'已拒絕'));
+    return; }
   if(b.dataset.grant) return openGrant(b.dataset.grant);
   if(b.dataset.unfri){ const f=FRIENDS.find(x=>x.uid===b.dataset.unfri);
     if(f&&confirm('移除好友「'+(f.name||f.email)+'」？')) CLOUD.removeFriend(f).then(()=>{SFX.play('del');toast('已移除');});
@@ -2862,44 +2867,45 @@ window.CLOUD={
     if(target.uid===me.uid) return {err:'這是你自己'};
     if(FRIENDS.some(f=>f.uid===target.uid)) return {err:'你們已經是好友了'};
     const {F}=this.api;
-    const id=[me.uid,target.uid].sort().join('__');
     try{
-    await F.setDoc(F.doc(this.api.fs,'friendRequests',id),{
-      from:me.uid, fromEmail:(me.email||'').toLowerCase(), fromName:db.settings.name||me.displayName||'某人',
-      to:target.uid, toEmail:target.email, toName:target.name||'',
-      status:'pending', ts:Date.now()
-    });
+      await F.setDoc(F.doc(this.api.fs,'users',target.uid,'inbox',me.uid),{
+        from:me.uid, fromEmail:(me.email||'').toLowerCase(),
+        fromName:db.settings.name||me.displayName||'某人',
+        avatar:db.settings.avatar||null, ts:Date.now()
+      });
     }catch(e){ return {err:'寫入失敗：'+(e.code||e.message)}; }
     return {ok:target.name||target.email};
   },
   watchRequests(){
     const {F}=this.api;
     if(this.unsubReq) this.unsubReq();
-    const q=F.query(F.collection(this.api.fs,'friendRequests'),
-                    F.where('to','==',this.user.uid));      /* 只用一個條件就不必建複合索引 */
-    this.unsubReq=F.onSnapshot(q,snap=>{
-      REQS=[];
-      snap.forEach(d=>{ const v=d.data(); if(v.status==='pending') REQS.push(Object.assign({id:d.id},v)); });
+    /* 邀請放在自己底下的 inbox，規則用路徑判斷，查詢不會被擋 */
+    this.unsubReq=F.onSnapshot(F.collection(this.api.fs,'users',this.user.uid,'inbox'),snap=>{
+      REQS=[]; snap.forEach(d=>REQS.push(Object.assign({id:d.id},d.data())));
       renderFriends(); this.paint();
-    },e=>{ this.err=e.code||'邀請讀取失敗'; this.paint(); });
+    },e=>{ this.err=e.code||'邀請讀取失敗'; this.paint(); renderFriends(); });
   },
   async accept(req){
     const {F}=this.api, me=this.user;
-    await F.setDoc(F.doc(this.api.fs,'users',me.uid,'friends',req.from),
-      {uid:req.from,email:req.fromEmail,name:req.fromName,since:Date.now(),grant:DEFAULT_GRANT},{merge:true});
-    await F.setDoc(F.doc(this.api.fs,'users',req.from,'friends',me.uid),
-      {uid:me.uid,email:(me.email||'').toLowerCase(),name:db.settings.name||'某人',since:Date.now()},{merge:true});
-    await F.updateDoc(F.doc(this.api.fs,'friendRequests',req.id),{status:'accepted'});
-    this.pushShares();
+    try{
+      await F.setDoc(F.doc(this.api.fs,'users',me.uid,'friends',req.from),
+        {uid:req.from,email:req.fromEmail,name:req.fromName,since:Date.now(),grant:DEFAULT_GRANT},{merge:true});
+      await F.setDoc(F.doc(this.api.fs,'users',req.from,'friends',me.uid),
+        {uid:me.uid,email:(me.email||'').toLowerCase(),name:db.settings.name||'某人',since:Date.now()},{merge:true});
+      await F.deleteDoc(F.doc(this.api.fs,'users',me.uid,'inbox',req.from));
+      this.pushShares();
+      return {ok:1};
+    }catch(e){ return {err:e.code||e.message}; }
   },
   async reject(req){
-    await this.api.F.deleteDoc(this.api.F.doc(this.api.fs,'friendRequests',req.id));
+    try{ await this.api.F.deleteDoc(this.api.F.doc(this.api.fs,'users',this.user.uid,'inbox',req.from)); return {ok:1}; }
+    catch(e){ return {err:e.code||e.message}; }
   },
   async removeFriend(f){
     const {F}=this.api, me=this.user;
     await F.deleteDoc(F.doc(this.api.fs,'users',me.uid,'friends',f.uid));
     try{ await F.deleteDoc(F.doc(this.api.fs,'shares',me.uid+'__'+f.uid)); }catch(e){}
-    try{ await F.deleteDoc(F.doc(this.api.fs,'friendRequests',[me.uid,f.uid].sort().join('__'))); }catch(e){}
+    try{ await F.deleteDoc(F.doc(this.api.fs,'users',me.uid,'inbox',f.uid)); }catch(e){}
   },
   watchFriends(){
     const {F}=this.api;
