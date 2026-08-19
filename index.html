@@ -426,7 +426,8 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   padding:20px;z-index:50;opacity:0;pointer-events:none;visibility:hidden;transition:opacity .16s}
 .veil.on{opacity:1;pointer-events:auto;visibility:visible}
 .dlg{width:min(410px,100%);background:var(--panel);border:2px solid var(--edge2);border-radius:20px;
-  box-shadow:0 10px 0 var(--deep);padding:24px;transform:translateY(12px) scale(.97);transition:color .22s,background-color .22s,border-color .22s,opacity .22s,transform .22s,box-shadow .22s,filter .22s}
+  box-shadow:0 10px 0 var(--deep);padding:24px;transform:translateY(12px) scale(.97);transition:color .22s,background-color .22s,border-color .22s,opacity .22s,transform .22s,box-shadow .22s,filter .22s;
+  max-height:min(88vh,860px);overflow-y:auto;overscroll-behavior:contain}
 .veil.on .dlg{transform:none}
 .dlg h3{font-size:20px;font-weight:800;letter-spacing:.4px}
 .dlg .say{font-size:13px;color:var(--txt3);margin-bottom:17px}
@@ -507,7 +508,8 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   color:var(--txt2);text-align:center;margin-top:4px}
 .preview b{font-size:19px;font-weight:800;color:var(--txt);display:block;margin-top:2px}
 .quickbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.dfoot{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+.dfoot{display:flex;justify-content:flex-end;gap:10px;position:sticky;bottom:-24px;z-index:3;
+  background:var(--panel);margin:20px -24px -24px;padding:14px 24px 24px;border-top:1px solid var(--edge)}
 #toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,16px);opacity:0;pointer-events:none;z-index:70;
   background:var(--panel);border:2px solid var(--gold);border-radius:13px;padding:10px 20px;font-weight:600;
   box-shadow:0 5px 0 var(--deep);transition:color .24s,background-color .24s,border-color .24s,opacity .24s,transform .24s,box-shadow .24s,filter .24s}
@@ -537,7 +539,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   .logt .x .iq{opacity:1}          /* 手機沒有滑鼠移過去這回事 */
   .q .ops .iq{opacity:1}
   .fab{display:flex}
-  .dlg{max-height:88vh;overflow:auto;border-radius:18px}
+  .dlg{border-radius:18px}
   .kinds button{padding:11px 0}
   .btn{padding:10px 16px}
   .sechead h2{font-size:16px}
