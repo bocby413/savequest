@@ -2858,11 +2858,12 @@ window.CLOUD={
     const {F}=this.api;
     if(this.unsubReq) this.unsubReq();
     const q=F.query(F.collection(this.api.fs,'friendRequests'),
-                    F.where('to','==',this.user.uid),F.where('status','==','pending'));
+                    F.where('to','==',this.user.uid));      /* 只用一個條件就不必建複合索引 */
     this.unsubReq=F.onSnapshot(q,snap=>{
-      REQS=[]; snap.forEach(d=>REQS.push(Object.assign({id:d.id},d.data())));
+      REQS=[];
+      snap.forEach(d=>{ const v=d.data(); if(v.status==='pending') REQS.push(Object.assign({id:d.id},v)); });
       renderFriends(); this.paint();
-    },()=>{});
+    },e=>{ this.err=e.code||'邀請讀取失敗'; this.paint(); });
   },
   async accept(req){
     const {F}=this.api, me=this.user;
