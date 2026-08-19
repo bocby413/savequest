@@ -1250,6 +1250,7 @@ $('saveAva').onclick=()=>{
   if(tempAva) db.settings.avatar=tempAva;
   try{ save(); }
   catch(err){ db.settings.avatar=back; toast('照片太大存不下，換一張小一點的'); return; }
+  if(window.CLOUD&&CLOUD.user){ CLOUD.publishProfile(); CLOUD.pushShares(); }
   shut(); renderHud(); toast('頭貼換好了');
 };
 
@@ -1823,7 +1824,7 @@ function yearRow(all,y){
    收盤價由 GitHub Actions 每天盤後寫進 prices.json，網頁只讀同源檔案，
    證交所與櫃買的 API 沒開跨網域，瀏覽器直接抓會被擋 */
 /* 好友：清單、待處理邀請、對方分享給我的快照 */
-let FRIENDS=[], REQS=[], SHARED={};
+let FRIENDS=[], REQS=[], SHARED={}, PROFILES={};
 const GRANTS=[
   {k:'lv',    t:'等級與稱號', d:'Lv 幾級、稱號、這一級的進度'},
   {k:'streak',t:'打卡紀錄',   d:'這個月有沒有達標、連續達標幾個月'},
@@ -2382,9 +2383,11 @@ function renderFriends(){
       if(g.month&&d.monthDelta!==undefined) bits.push('這個月 '+(d.monthDelta>=0?'+':'')+short(d.monthDelta));
       if(g.assets&&d.assets!==undefined) bits.push('資產 '+short(d.assets));
     }
-    if(!bits.length) bits.push('<span style="color:var(--txt3)">對方還沒分享任何資訊</span>');
-    return '<div class="fri"><div class="pic">'+friAvatar(d&&d.avatar)+'</div>'+
-      '<div class="info"><div class="nm">'+esc((d&&d.name)||f.name||f.email)+'</div>'+
+    if(!bits.length) bits.push('<span style="color:var(--txt3)">'+
+      (d?'對方沒有分享其他資訊':'等對方開啟 app 後才會同步進度')+'</span>');
+    const p=PROFILES[f.uid]||{};
+    return '<div class="fri"><div class="pic">'+friAvatar((d&&d.avatar)||p.avatar)+'</div>'+
+      '<div class="info"><div class="nm">'+esc((d&&d.name)||p.name||f.name||f.email)+'</div>'+
       '<div class="sub">'+bits.join('　')+'</div></div>'+
       '<span class="ops">'+
         '<button class="iq" data-grant="'+f.uid+'" title="我要分享什麼"><svg class="i"><use href="#i-gear"/></svg></button>'+
@@ -2788,7 +2791,7 @@ window.CLOUD={
           if(this.unsub){ this.unsub(); this.unsub=null; }
           if(this.unsubReq){ this.unsubReq(); this.unsubReq=null; }
           if(this.unsubFri){ this.unsubFri(); this.unsubFri=null; }
-          FRIENDS=[]; REQS=[]; SHARED={}; renderFriends();
+          FRIENDS=[]; REQS=[]; SHARED={}; PROFILES={}; renderFriends();
         }
       });
       try{ await U.getRedirectResult(this.api.auth); }catch(e){}
@@ -2836,15 +2839,15 @@ window.CLOUD={
   /* 登入後把自己登記進名冊，別人才找得到你 */
   async publishProfile(){
     if(!this.user||!this.api) return;
-    const {F}=this.api, L=levelInfo();
+    const {F}=this.api;
     try{
       await F.setDoc(this.prof(),{
         uid:this.user.uid,
         email:(this.user.email||'').toLowerCase(),
         name:db.settings.name||this.user.displayName||'某人',
         avatar:db.settings.avatar||null,
-        lv:L.lv, title:levelTitle(L.lv), updatedAt:Date.now()
-      });
+        updatedAt:Date.now()
+      });                       /* 等級屬於授權內容，放在 shares 裡，不放名冊 */
     }catch(e){ this.err=e.code||'名冊寫入失敗'; this.paint(); }
   },
   async findByEmail(email){
@@ -2912,8 +2915,20 @@ window.CLOUD={
     if(this.unsubFri) this.unsubFri();
     this.unsubFri=F.onSnapshot(F.collection(this.api.fs,'users',this.user.uid,'friends'),snap=>{
       FRIENDS=[]; snap.forEach(d=>FRIENDS.push(Object.assign({uid:d.id},d.data())));
-      this.watchShares(); this.pushShares(); renderFriends();
+      this.watchShares(); this.pushShares(); this.loadProfiles(); renderFriends();
     },()=>{});
+  },
+  /* 對方的頭貼與暱稱：登入時就寫進名冊了，不必等他推快照 */
+  async loadProfiles(){
+    if(!this.api||!this.user) return;
+    const {F}=this.api;
+    for(const f of FRIENDS.slice()){
+      try{
+        const d=await F.getDoc(F.doc(this.api.fs,'publicProfiles',f.uid));
+        if(d.exists()) PROFILES[f.uid]=d.data();
+      }catch(e){}
+    }
+    renderFriends();
   },
   /* 好友分享給我的快照 */
   watchShares(){
