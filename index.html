@@ -305,6 +305,29 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   transition:transform .45s cubic-bezier(.25,1,.4,1)}
 .pieempty{grid-column:1/-1;text-align:center;color:var(--txt3);font-size:14px;padding:26px 0}
 
+/* ── 股票資產 ── */
+.stkbox{padding:0}
+.stkt{width:100%;border-collapse:collapse}
+.stkt th{font-size:11px;letter-spacing:1px;color:var(--txt3);font-weight:700;padding:14px 12px 10px;text-align:right;white-space:nowrap}
+.stkt th:first-child{text-align:left;padding-left:20px}
+.stkt td{padding:12px;border-top:1px solid var(--edge);font-size:14px;text-align:right;white-space:nowrap;
+  font-variant-numeric:tabular-nums}
+.stkt td:first-child{text-align:left;padding-left:20px}
+.stkt tbody tr:hover{background:var(--panel2)}
+.stkt .cd{font-weight:800;font-size:15px}
+.stkt .nm{font-size:12px;color:var(--txt3);display:block;margin-top:2px}
+.stkt .val{font-weight:800;font-size:15px}
+.stkt .miss{color:var(--gold);font-size:12px}
+.stkt tr.sum td{border-top:2px solid var(--edge2);background:var(--panel2);font-weight:800}
+.stkfoot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 20px 14px;
+  font-size:12px;color:var(--txt3)}
+.stkempty{padding:26px 20px;text-align:center;color:var(--txt3);font-size:14px}
+@media(max-width:640px){
+  .stkt th,.stkt td{padding:10px 7px;font-size:13px}
+  .stkt th:first-child,.stkt td:first-child{padding-left:12px}
+  .stkt .hidem{display:none}
+}
+
 /* ── 貸款 road map ── */
 .loan{padding:20px 22px 16px;margin-bottom:14px}
 .loan .lh{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px}
@@ -519,6 +542,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   <symbol id="i-map" viewBox="0 0 24 24"><path d="M15 4l6-2v16l-6 2-6-2-6 2V4l6-2 6 2zm-1 2.2L10 4.8v13l4 1.4v-13z"/></symbol>
   <symbol id="i-cal" viewBox="0 0 24 24"><path d="M7 2v2h10V2h2v2h2v18H3V4h2V2h2zm12 8H5v10h14V10z"/></symbol>
   <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3h2v16h16v2H3V3zm4 10h3v5H7v-5zm5-5h3v10h-3V8zm5-4h3v14h-3V4z"/></symbol>
+  <symbol id="i-stock" viewBox="0 0 24 24"><path d="M3 3h2v16h16v2H3V3z"/><path d="M7.5 14.5l4-4 3 3 5-6 1.5 1.3-6.5 7.7-3-3-3.4 3.4z"/></symbol>
   <symbol id="i-road" viewBox="0 0 24 24"><path d="M9 2h2v4H9V2zm0 7h2v6H9V9zm0 9h2v4H9v-4z" opacity=".55"/><path d="M14 2h6v20h-6l2-10-2-10zM4 2h3l-2 10 2 10H4V2z"/></symbol>
   <symbol id="i-table" viewBox="0 0 24 24"><path d="M3 3h18v18H3V3zm2 2v3h14V5H5zm0 5v3h6v-3H5zm8 0v3h6v-3h-6zm-8 5v4h6v-4H5zm8 0v4h6v-4h-6z"/></symbol>
   <symbol id="i-pie" viewBox="0 0 24 24"><path d="M11 2v9.6l6.8 6.8A10 10 0 0 0 11 2z" opacity=".55"/><path d="M9 4.1A10 10 0 1 0 19.9 15L9 4.1z"/></symbol>
@@ -568,7 +592,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
     </div>
   </div>
   <div class="hudright">
-    <div class="k">目前存款</div>
+    <div class="k" id="amtK">目前存款</div>
     <div class="v n" id="amt">0</div>
     <div class="d" id="amtSub"></div>
   </div>
@@ -631,6 +655,14 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 <div class="sec">
   <div class="sechead"><h2><svg class="i"><use href="#i-cal"/></svg>每月打卡</h2><span class="sub" id="calSub"></span></div>
   <div class="card" style="padding:20px" id="calCard"></div>
+</div>
+
+<div class="sec">
+  <div class="sechead"><h2><svg class="i"><use href="#i-stock"/></svg>股票資產</h2>
+    <span class="sub" id="stkSub"></span>
+    <button class="btn sm ghost" id="btnAddHold" style="margin-left:auto">＋ 新增持股</button>
+  </div>
+  <div id="stocks"></div>
 </div>
 
 <div class="sec">
@@ -703,6 +735,19 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   <div class="say">看的是「目前總存款」，跨過門檻就升級，不會往回掉。</div>
   <div id="levelList" style="max-height:52vh;overflow:auto"></div>
   <div class="dfoot"><button class="btn ghost" data-close>關閉</button></div>
+</div></div>
+
+<div class="veil" id="vHold"><div class="dlg">
+  <h3 id="holdTitle">新增持股</h3>
+  <div class="say">收盤價每天盤後自動更新，不用自己填。</div>
+  <div class="f"><label>股票代碼</label><input type="text" id="hCode" placeholder="2330" maxlength="6" inputmode="numeric"></div>
+  <div class="say" id="hName" style="margin:-6px 0 12px;min-height:20px"></div>
+  <div class="two">
+    <div class="f"><label>股數</label><input type="number" id="hShares" placeholder="1000" step="1" inputmode="decimal"></div>
+    <div class="f"><label>每股均價</label><input type="number" id="hAvg" placeholder="750" step="0.01" inputmode="decimal"></div>
+  </div>
+  <div class="preview" id="hPrev"></div>
+  <div class="dfoot"><button class="btn ghost" data-close>取消</button><button class="btn go" id="saveHold">儲存</button></div>
 </div></div>
 
 <div class="veil" id="vLoan"><div class="dlg">
@@ -981,11 +1026,11 @@ function levelTitle(lv){
   return lv<=TITLES.length?TITLES[lv-1]:'傳說級 '+'Ⅱ Ⅲ Ⅳ Ⅴ Ⅵ Ⅶ Ⅷ Ⅸ Ⅹ'.split(' ')[Math.min(8,lv-TITLES.length-1)];
 }
 function levelInfo(){
-  const cur=now(), L=levelAt(cur), step=L.next-L.base;
+  const cur=assets(), L=levelAt(cur), step=L.next-L.base;   /* 現金＋股票 */
   return {lv:L.lv,step,base:L.base,next:L.next,into:cur-L.base,pct:step?(cur-L.base)/step*100:0};
 }
 function stages(){
-  const r=recs(), cur=now(), out=[];
+  const r=recs(), cur=assets(), out=[];
   const here=levelAt(cur).lv;
   const marks=[];
   for(let i=1;i<=Math.min(LEVELS.length-1,here+1);i++) marks.push(LEVELS[i]);
@@ -1015,7 +1060,7 @@ function queueGoals(){
     .sort((a,b)=>(a.order==null?1e9:a.order)-(b.order==null?1e9:b.order)||(a.ts||0)-(b.ts||0));
 }
 function alloc(){
-  const q=queueGoals(); let left=now(); const m={};
+  const q=queueGoals(); let left=assets(); const m={};
   q.forEach(g=>{ const take=Math.max(0,Math.min(left,g.amount)); m[g.id]=take; left-=take; });
   return {m,left,q,need:q.reduce((s,g)=>s+g.amount,0)};
 }
@@ -1124,8 +1169,9 @@ $('saveAva').onclick=()=>{
 
 /* ── HUD ── */
 function renderHud(){
-  const r=recs(), cur=now(), L=levelInfo();
+  const r=recs(), cash=now(), sv=stockValue(), cur=cash+sv, L=levelInfo();
   roll($('amt'),cur);
+  $('amtK').textContent=sv?'總資產':'目前存款';
   $('lvNum').textContent=L.lv;
   $('avaRing').style.setProperty('--p',L.pct.toFixed(1)+'%');
   $('avaPic').innerHTML=avaHTML(db.settings.avatar);
@@ -1136,11 +1182,14 @@ function renderHud(){
   $('xp').innerHTML=cellBar(L.pct,20,'',5,'xp');
   $('xpL').innerHTML='<b>'+money(L.base)+'</b>';
   $('xpR').innerHTML='<b>'+money(L.next)+'</b>';
-  if(!r.length){ $('amtSub').textContent='還沒記過帳'; return; }
-  const prev=r.length>=2?r[r.length-2]:null, d=prev?cur-prev.bal:null;
-  $('amtSub').innerHTML=(d===null?'第一筆　'+mdY(r[0].date)
-    :'<span class="'+(d>=0?'up':'down')+'">'+(d>=0?'+':'-')+money(Math.abs(d))+'</span> 自 '+mdY(prev.date))+
-    '　·　'+ago(dayGap(r[r.length-1].date,todayStr()))+'更新';
+  if(!r.length&&!sv){ $('amtSub').textContent='還沒記過帳'; return; }
+  const prev=r.length>=2?r[r.length-2]:null, d=prev?cash-prev.bal:null;
+  const parts=[];
+  if(sv) parts.push('現金 '+money(cash)+'　股票 '+money(sv));
+  if(d!==null) parts.push('<span class="'+(d>=0?'up':'down')+'">'+(d>=0?'+':'-')+money(Math.abs(d))+'</span> 自 '+mdY(prev.date));
+  else if(r.length) parts.push('第一筆　'+mdY(r[0].date));
+  if(r.length) parts.push(ago(dayGap(r[r.length-1].date,todayStr()))+'更新');
+  $('amtSub').innerHTML=parts.join('　·　');
 }
 
 /* ── 關卡地圖 ── */
@@ -1172,7 +1221,7 @@ function renderMap(){
 
 /* ── 主線任務 ── */
 function renderQuest(){
-  const box=$('quest'), cur=now(), g=focusGoal();
+  const box=$('quest'), cur=assets(), g=focusGoal();
   if(!g){
     box.innerHTML='<div><div class="lbl">目前沒有主線任務</div><h3>想存到什麼？</h3>'+
       '<div class="sub">在下面「任務清單」加一個要花錢的目標，這裡就會變成主線，幫你算還差多少、什麼時候到。</div>'+
@@ -1286,7 +1335,7 @@ function renderCal(){
 
 /* ── 任務清單 ── */
 function renderQuests(){
-  const cur=now(), {m,q,need}=alloc();
+  const cur=assets(), {m,q,need}=alloc();
   const rank={}; q.forEach((g,i)=>rank[g.id]=i+1);
   const gs=[...db.goals].sort((a,b)=>{
     if(a.done!==b.done) return a.done?1:-1;
@@ -1706,6 +1755,113 @@ function yearRow(all,y){
     '<td class="bal">'+n2(bal,bal>=0?'up':'down')+'</td>'+
     '<td class="hidem mono">'+ys.reduce((s,r)=>s+r.n,0)+'</td></tr>';
 }
+/* ── 股票資產 ──
+   收盤價由 GitHub Actions 每天盤後寫進 prices.json，網頁只讀同源檔案，
+   證交所與櫃買的 API 沒開跨網域，瀏覽器直接抓會被擋 */
+const PKEY='life_goals_prices';
+let PRICES=null;
+try{ PRICES=JSON.parse(localStorage.getItem(PKEY)); }catch(e){}
+async function loadPrices(){
+  try{
+    const r=await fetch('prices.json?t='+Math.floor(Date.now()/3600000));
+    if(!r.ok) throw 0;
+    const d=await r.json();
+    if(d&&d.quotes){
+      PRICES=d;
+      try{ localStorage.setItem(PKEY,JSON.stringify(d)); }catch(e){}
+      renderStocks(); renderHud(); renderMap(); renderQuest(); renderQuests();
+    }
+  }catch(e){ /* 沒網路就用上次存的 */ }
+}
+const holdings=()=>Array.isArray(db.settings.holdings)?db.settings.holdings:[];
+const quoteOf=c=>PRICES&&PRICES.quotes?PRICES.quotes[String(c).trim().toUpperCase()]:null;
+function stockRows(){
+  return holdings().map(h=>{
+    const q=quoteOf(h.code), price=q?q.c:null;
+    const value=price!==null?price*h.shares:null;
+    const cost=h.avg>0?h.avg*h.shares:null;
+    return Object.assign({},h,{name:q?q.n:'',price,value,cost,ch:q?q.ch:0,
+      pl:(value!==null&&cost!==null)?value-cost:null});
+  });
+}
+const stockValue=()=>stockRows().reduce((s,r)=>s+(r.value||0),0);
+/* 總資產＝現金餘額＋股票市值，等級與關卡都看這個 */
+const assets=()=>now()+stockValue();
+
+function renderStocks(){
+  const box=$('stocks'), rows=stockRows();
+  if(!rows.length){
+    box.innerHTML='<div class="card stkempty">還沒有持股。按右上角「＋ 新增持股」填股票代碼與股數，'+
+      '收盤價每天盤後自動更新，市值會併進總資產。</div>';
+    $('stkSub').textContent=''; return;
+  }
+  const tv=rows.reduce((s,r)=>s+(r.value||0),0);
+  const tc=rows.reduce((s,r)=>s+(r.cost||0),0);
+  const tp=rows.some(r=>r.pl!==null)?rows.reduce((s,r)=>s+(r.pl||0),0):null;
+  $('stkSub').textContent='市值 '+short(tv)+(tp!==null?'　損益 '+(tp>=0?'+':'-')+short(Math.abs(tp)):'');
+  const cell=(v,cls)=>'<span class="'+cls+'">'+(v>=0?'+':'-')+money(Math.abs(v))+'</span>';
+  box.innerHTML='<div class="card stkbox"><table class="stkt"><thead><tr>'+
+    '<th>股票</th><th class="hidem">股數</th><th class="hidem">均價</th><th>現價</th>'+
+    '<th>市值</th><th>損益</th></tr></thead><tbody>'+
+    rows.map(r=>{
+      const plpct=(r.pl!==null&&r.cost)?(r.pl/r.cost*100):null;
+      return '<tr><td><span class="cd">'+esc(r.code)+'</span>'+
+          '<span class="nm">'+(r.name||'<span class="miss">查不到這檔</span>')+'</span></td>'+
+        '<td class="hidem">'+money(r.shares)+'</td>'+
+        '<td class="hidem">'+(r.avg>0?r.avg.toLocaleString('en-US',{minimumFractionDigits:2}):'—')+'</td>'+
+        '<td>'+(r.price!==null?'<span class="'+(r.ch>0?'up':r.ch<0?'down':'')+'">'+r.price.toFixed(2)+'</span>':'—')+'</td>'+
+        '<td class="val">'+(r.value!==null?money(r.value):'—')+'</td>'+
+        '<td>'+(r.pl!==null?cell(r.pl,r.pl>=0?'up':'down')+
+          '<span class="nm">'+(plpct>=0?'+':'')+plpct.toFixed(1)+'%</span>':'—')+'</td>'+
+        '<td class="x" style="padding-right:14px">'+
+          '<button class="iq" data-edithold="'+r.id+'"><svg class="i"><use href="#i-gear"/></svg></button> '+
+          '<button class="iq del" data-delhold="'+r.id+'"><svg class="i"><use href="#i-x"/></svg></button></td></tr>';
+    }).join('')+
+    '<tr class="sum"><td>合計 '+rows.length+' 檔</td><td class="hidem"></td><td class="hidem"></td><td></td>'+
+      '<td class="val">'+money(tv)+'</td>'+
+      '<td>'+(tp!==null?cell(tp,tp>=0?'up':'down')+
+        '<span class="nm">'+(tc?((tp/tc*100)>=0?'+':'')+(tp/tc*100).toFixed(1)+'%':'')+'</span>':'—')+'</td><td></td></tr>'+
+    '</tbody></table><div class="stkfoot"><span>'+
+      (PRICES?'收盤價 '+PRICES.date+'（'+PRICES.count+' 檔）':'還沒抓到收盤價')+
+    '</span><span>'+(PRICES?'更新於 '+PRICES.updated:'')+'</span></div></div>';
+}
+let editHold=null;
+function holdPrev(){
+  const q=quoteOf($('hCode').value), sh=parseFloat($('hShares').value), av=parseFloat($('hAvg').value);
+  $('hName').innerHTML = $('hCode').value.trim()
+    ? (q?'<b style="color:var(--cyan)">'+esc(q.n)+'</b>　收盤 '+q.c.toFixed(2)
+        :'<span style="color:var(--gold)">查不到這個代碼，還是可以存，之後抓得到就會顯示</span>') : '';
+  if(q&&sh>0){
+    const v=q.c*sh, c=av>0?av*sh:null, pl=c!==null?v-c:null;
+    $('hPrev').innerHTML='市值<b>'+money(v)+'</b>'+
+      (pl!==null?'<span style="font-size:12.5px" class="'+(pl>=0?'up':'down')+'">　損益 '+(pl>=0?'+':'-')+money(Math.abs(pl))+'</span>':'');
+  } else $('hPrev').innerHTML='填代碼與股數後會算市值';
+}
+['hCode','hShares','hAvg'].forEach(id=>$(id).addEventListener('input',holdPrev));
+function openHold(id){
+  editHold=id||null;
+  const h=id?holdings().find(x=>x.id===id):null;
+  $('holdTitle').textContent=h?'修改持股':'新增持股';
+  $('hCode').value=h?h.code:''; $('hShares').value=h?h.shares:''; $('hAvg').value=h&&h.avg?h.avg:'';
+  holdPrev(); open('vHold');
+}
+$('btnAddHold').onclick=()=>openHold(null);
+$('saveHold').onclick=()=>{
+  const code=$('hCode').value.trim().toUpperCase(), sh=parseFloat($('hShares').value), av=parseFloat($('hAvg').value);
+  if(!code){ toast('填股票代碼'); return; }
+  if(isNaN(sh)||sh<=0){ toast('股數要大於 0'); return; }
+  const data={code,shares:sh,avg:isNaN(av)?0:av,ts:Date.now()};
+  const hs=holdings().slice();
+  if(editHold){ const i=hs.findIndex(x=>x.id===editHold); if(i>=0) hs[i]=Object.assign({},hs[i],data); }
+  else{
+    const same=hs.findIndex(x=>x.code===code);
+    if(same>=0&&!confirm(code+' 已經有一筆了，要覆蓋嗎？')) return;
+    if(same>=0) hs[same]=Object.assign({},hs[same],data); else hs.push(Object.assign({id:uid()},data));
+  }
+  db.settings.holdings=hs; save(); shut(); render(); SFX.play('coin');
+  toast(editHold?'持股已更新':'加了 '+code);
+};
+
 /* ── 貸款 ── */
 const LOAN='貸款';
 const loans=()=>Array.isArray(db.settings.loans)?db.settings.loans:[];
@@ -1806,7 +1962,7 @@ function renderLevels(){
     '<div class="say" style="margin-top:10px">Lv.'+LEVELS.length+' 之後每 '+short(OVER)+' 升一級。</div>';
 }
 
-function render(){ renderLoans(); renderMonthTable(); renderPie(); renderHud(); renderMap(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); }
+function render(){ renderStocks(); renderLoans(); renderMonthTable(); renderPie(); renderHud(); renderMap(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); }
 
 /* ── 互動 ── */
 const open=id=>{$(id).classList.add('on');const f=$(id).querySelector('input');setTimeout(()=>f&&f.focus(),120);};
@@ -2003,6 +2159,13 @@ document.body.addEventListener('click',e=>{
     if(!confirm('刪掉任務「'+g.name+'」？')) return;
     markDeleted(b.dataset.delGoal);
     db.goals=db.goals.filter(x=>x.id!==b.dataset.delGoal); save(); render(); SFX.play('del'); toast('已刪除'); }
+  if(b.dataset.edithold) return openHold(b.dataset.edithold);
+  if(b.dataset.delhold){
+    const h=holdings().find(x=>x.id===b.dataset.delhold);
+    if(!confirm('刪掉持股 '+h.code+'？')) return;
+    db.settings.holdings=holdings().filter(x=>x.id!==b.dataset.delhold);
+    save(); render(); SFX.play('del'); toast('已刪除'); return;
+  }
   if(b.dataset.editloan) return openLoan(b.dataset.editloan);
   if(b.dataset.delloan){
     const l=loans().find(x=>x.id===b.dataset.delloan);
@@ -2252,6 +2415,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
   });
 }
 
+loadPrices();
 skin(localStorage.getItem(SKIN)||'dark');
 sfxIcon(); swPaint();
 render();
