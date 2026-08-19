@@ -765,10 +765,10 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   </div>
 
   <div id="aOther" style="display:none">
-    <div class="f"><label>資產名稱</label><input type="text" id="aName" placeholder="定存、黃金、保單、加密貨幣…" maxlength="12"></div>
+    <div class="f"><label>資產名稱</label><input type="text" id="oName" placeholder="定存、黃金、保單、加密貨幣…" maxlength="12"></div>
     <div class="two">
-      <div class="f"><label>目前價值</label><input type="number" id="aValue" placeholder="500000" step="1" inputmode="decimal"></div>
-      <div class="f"><label>當初成本（可留白）</label><input type="number" id="aCost" placeholder="450000" step="1" inputmode="decimal"></div>
+      <div class="f"><label>目前價值</label><input type="number" id="oValue" placeholder="500000" step="1" inputmode="decimal"></div>
+      <div class="f"><label>當初成本（可留白）</label><input type="number" id="oCost" placeholder="450000" step="1" inputmode="decimal"></div>
     </div>
   </div>
 
@@ -1900,7 +1900,7 @@ $('aCostMode').addEventListener('click',e=>{const b=e.target.closest('button[dat
 
 function holdPrev(){
   if(aType==='other'){
-    const v=parseFloat($('aValue').value), c=parseFloat($('aCost').value);
+    const v=parseFloat($('oValue').value), c=parseFloat($('oCost').value);
     $('hPrev').innerHTML = v>0
       ? '目前價值<b>'+money(v)+'</b>'+(c>0?'<span style="font-size:12.5px" class="'+(v-c>=0?'up':'down')+'">　損益 '+(v-c>=0?'+':'-')+money(Math.abs(v-c))+'</span>':'')
       : '填目前價值';
@@ -1930,7 +1930,7 @@ function holdPrev(){
       (pl!==null?'<span style="font-size:12.5px" class="'+(pl>=0?'up':'down')+'">　損益 '+(pl>=0?'+':'-')+money(Math.abs(pl))+'</span>':'');
   } else $('hPrev').innerHTML='填代碼與股數後會算市值';
 }
-['hCode','hShares','hAvg','hTotal','aValue','aCost'].forEach(id=>$(id).addEventListener('input',holdPrev));
+['hCode','hShares','hAvg','hTotal','oValue','oCost'].forEach(id=>$(id).addEventListener('input',holdPrev));
 
 function openHold(id,type){
   editHold=id||null;
@@ -1941,13 +1941,13 @@ function openHold(id,type){
   setAType(type||(o?'other':'stock'));
   setCostMode('avg');
   $('hCode').value=h?h.code:''; $('hShares').value=h?h.shares:''; $('hAvg').value=h&&h.avg?h.avg:'';
-  $('hTotal').value=''; $('aName').value=o?o.name:''; $('aValue').value=o?o.value:''; $('aCost').value=o&&o.cost?o.cost:'';
+  $('hTotal').value=''; $('oName').value=o?o.name:''; $('oValue').value=o?o.value:''; $('oCost').value=o&&o.cost?o.cost:'';
   holdPrev(); open('vHold');
 }
 $('btnAddAsset').onclick=()=>openHold(null);
 $('saveHold').onclick=()=>{
   if(aType==='other'){
-    const name=$('aName').value.trim(), v=parseFloat($('aValue').value), c=parseFloat($('aCost').value);
+    const name=$('oName').value.trim(), v=parseFloat($('oValue').value), c=parseFloat($('oCost').value);
     if(!name){ toast('填資產名稱'); return; }
     if(isNaN(v)||v<0){ toast('目前價值要填'); return; }
     const os=others().slice(), data={name,value:v,cost:isNaN(c)?0:c,ts:Date.now()};
