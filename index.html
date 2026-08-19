@@ -476,6 +476,9 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .subs button.on{color:var(--txt);font-weight:700;border-color:var(--edge2)}
 .cats input{flex:1;min-width:130px;background:var(--panel2);border:1.5px solid var(--cyan);border-radius:99px;
   padding:6px 13px;color:var(--txt);font:inherit;font-size:13px;outline:none}
+.note-bar{background:var(--panel2);border:1.5px solid var(--edge);border-left:4px solid var(--cyan);
+  border-radius:10px;padding:9px 13px;font-size:13px;color:var(--txt2);margin:0 0 14px}
+.note-bar b{color:var(--txt)}
 .kinds{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:15px}
 .kinds button{font:inherit;font-size:14px;font-weight:700;padding:9px 0;border-radius:11px;cursor:pointer;
   background:var(--panel2);border:2px solid var(--edge);color:var(--txt3);transition:color .14s,background-color .14s,border-color .14s,opacity .14s,transform .14s,box-shadow .14s,filter .14s}
@@ -585,6 +588,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
     <div class="cellrow"><span id="xpL"></span><span id="xpR"></span></div>
     <div class="acts">
       <button class="btn go" id="btnAddRec"><svg class="i"><use href="#i-plus"/></svg> 記一筆</button>
+      <button class="btn" id="btnAddAsset"><svg class="i"><use href="#i-stock"/></svg> 新增資產</button>
       <button class="btn sm" id="btnTarget">每月存款目標</button>
       <button class="btn sm ghost" id="btnSync" style="display:none">雲端同步</button>
       <button class="btn sm ghost" id="btnMore" title="設定"><svg class="i"><use href="#i-gear"/></svg></button>
@@ -658,9 +662,8 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 </div>
 
 <div class="sec">
-  <div class="sechead"><h2><svg class="i"><use href="#i-stock"/></svg>股票資產</h2>
+  <div class="sechead"><h2><svg class="i"><use href="#i-stock"/></svg>資產</h2>
     <span class="sub" id="stkSub"></span>
-    <button class="btn sm ghost" id="btnAddHold" style="margin-left:auto">＋ 新增持股</button>
   </div>
   <div id="stocks"></div>
 </div>
@@ -690,6 +693,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 
 <div class="veil" id="vRec"><div class="dlg">
   <h3>記一筆</h3>
+  <div class="note-bar">這裡記<b>日常開銷的收入與支出</b>。買股票、其他資產請用上面的「新增資產」。</div>
   <div class="say" id="rSay">存了錢按「存入」，花掉按「支出」，跟銀行對過帳按「對帳」。</div>
   <div class="kinds" id="rKinds">
     <button data-kind="in" class="on">存入</button>
@@ -701,13 +705,6 @@ html[data-skin="light"] .logbar input{color-scheme:light}
     <div class="f"><label id="rAmtLabel">存入多少</label><input type="number" id="rAmt" placeholder="5000" step="1" inputmode="decimal"></div>
   </div>
   <div class="f" id="rCatWrap"><label>類別</label><div class="cats" id="rCats"></div></div>
-  <div id="rKeepWrap" style="display:none">
-    <div class="two">
-      <div class="f"><label>股票代號</label><input type="text" id="rCode" placeholder="2330" maxlength="6"></div>
-      <div class="f"><label>股數</label><input type="number" id="rShares" placeholder="1000" step="1" inputmode="decimal"></div>
-    </div>
-    <div class="say" id="rKeepHint" style="margin:-6px 0 12px;min-height:20px"></div>
-  </div>
   <div class="f"><label>備註（可留白）</label><input type="text" id="rNote" placeholder="跟誰、買什麼…"></div>
   <div class="preview" id="rPrev"></div>
   <div class="dfoot"><button class="btn ghost" data-close>取消</button><button class="btn go" id="saveRec">記下來</button></div>
@@ -745,14 +742,35 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 </div></div>
 
 <div class="veil" id="vHold"><div class="dlg">
-  <h3 id="holdTitle">新增持股</h3>
-  <div class="say">收盤價每天盤後自動更新，不用自己填。</div>
-  <div class="f"><label>股票代碼</label><input type="text" id="hCode" placeholder="2330" maxlength="6" inputmode="numeric"></div>
-  <div class="say" id="hName" style="margin:-6px 0 12px;min-height:20px"></div>
-  <div class="two">
-    <div class="f"><label>股數</label><input type="number" id="hShares" placeholder="1000" step="1" inputmode="decimal"></div>
-    <div class="f"><label>每股均價</label><input type="number" id="hAvg" placeholder="750" step="0.01" inputmode="decimal"></div>
+  <h3 id="holdTitle">新增資產</h3>
+  <div class="note-bar">這裡放<b>手上的資產</b>：股票會自動抓收盤價算損益，其他資產自己填目前價值。</div>
+  <div class="kinds" id="aKinds" style="grid-template-columns:1fr 1fr">
+    <button data-atype="stock" class="on">股票</button>
+    <button data-atype="other">其他資產</button>
   </div>
+
+  <div id="aStock">
+    <div class="f"><label>股票代碼</label><input type="text" id="hCode" placeholder="2330" maxlength="6"></div>
+    <div class="say" id="hName" style="margin:-6px 0 12px;min-height:20px"></div>
+    <div class="f"><label>股數</label><input type="number" id="hShares" placeholder="1000" step="1" inputmode="decimal"></div>
+    <div class="kinds" id="aCostMode" style="grid-template-columns:1fr 1fr;margin:2px 0 12px">
+      <button data-cost="avg" class="on">填每股均價</button>
+      <button data-cost="total">填買入總成本</button>
+    </div>
+    <div class="f" id="aAvgWrap"><label>每股均價</label>
+      <input type="number" id="hAvg" placeholder="750" step="0.01" inputmode="decimal"></div>
+    <div class="f" id="aTotalWrap" style="display:none"><label>買入總成本</label>
+      <input type="number" id="hTotal" placeholder="750000" step="1" inputmode="decimal"></div>
+  </div>
+
+  <div id="aOther" style="display:none">
+    <div class="f"><label>資產名稱</label><input type="text" id="aName" placeholder="定存、黃金、保單、加密貨幣…" maxlength="12"></div>
+    <div class="two">
+      <div class="f"><label>目前價值</label><input type="number" id="aValue" placeholder="500000" step="1" inputmode="decimal"></div>
+      <div class="f"><label>當初成本（可留白）</label><input type="number" id="aCost" placeholder="450000" step="1" inputmode="decimal"></div>
+    </div>
+  </div>
+
   <div class="preview" id="hPrev"></div>
   <div class="dfoot"><button class="btn ghost" data-close>取消</button><button class="btn go" id="saveHold">儲存</button></div>
 </div></div>
@@ -820,9 +838,8 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 <script>
 const KEY='life_goals_savings_v1', SKIN='life_goals_skin';
 const STOCK='股票';
-const KEEP='留倉';
-const SUBS=['1號','2號','3號','4號','5號',KEEP];   /* 股票底下：五個當沖策略，加上留倉 */
-const SUBCOLOR={'1號':'#ffc233','2號':'#3ce0d0','3號':'#ff5c8a','4號':'#a879ff','5號':'#8ee65a','留倉':'#5aa9ff','未分':'#8a93a8'};
+const SUBS=['1號','2號','3號','4號','5號','手動'];   /* 股票底下：五個策略加手動 */
+const SUBCOLOR={'1號':'#ffc233','2號':'#3ce0d0','3號':'#ff5c8a','4號':'#a879ff','5號':'#8ee65a','手動':'#5aa9ff','未分':'#8a93a8'};
 const CATS={
   out:['現金','卡費','貸款',STOCK,'其他'],
   in :['薪水','獎金','投資','副業',STOCK,'其他']
@@ -1177,9 +1194,9 @@ $('saveAva').onclick=()=>{
 
 /* ── HUD ── */
 function renderHud(){
-  const r=recs(), cash=now(), sv=stockValue(), cur=cash+sv, L=levelInfo();
+  const r=recs(), cash=now(), sv=stockValue(), ov=othersValue(), cur=cash+sv+ov, L=levelInfo();
   roll($('amt'),cur);
-  $('amtK').textContent=sv?'總資產':'目前存款';
+  $('amtK').textContent=(sv||ov)?'總資產':'目前存款';
   $('lvNum').textContent=L.lv;
   $('avaRing').style.setProperty('--p',L.pct.toFixed(1)+'%');
   $('avaPic').innerHTML=avaHTML(db.settings.avatar);
@@ -1190,10 +1207,10 @@ function renderHud(){
   $('xp').innerHTML=cellBar(L.pct,20,'',5,'xp');
   $('xpL').innerHTML='<b>'+money(L.base)+'</b>';
   $('xpR').innerHTML='<b>'+money(L.next)+'</b>';
-  if(!r.length&&!sv){ $('amtSub').textContent='還沒記過帳'; return; }
+  if(!r.length&&!sv&&!ov){ $('amtSub').textContent='還沒記過帳'; return; }
   const prev=r.length>=2?r[r.length-2]:null, d=prev?cash-prev.bal:null;
   const parts=[];
-  if(sv) parts.push('現金 '+money(cash)+'　股票 '+money(sv));
+  if(sv||ov) parts.push('現金 '+money(cash)+(sv?'　股票 '+money(sv):'')+(ov?'　其他 '+money(ov):''));
   if(d!==null) parts.push('<span class="'+(d>=0?'up':'down')+'">'+(d>=0?'+':'-')+money(Math.abs(d))+'</span> 自 '+mdY(prev.date));
   else if(r.length) parts.push('第一筆　'+mdY(r[0].date));
   if(r.length) parts.push(ago(dayGap(r[r.length-1].date,todayStr()))+'更新');
@@ -1630,7 +1647,7 @@ function legend(rows,total){
 /* 股票單獨一張：買進對賣出，中間看淨損益 */
 function renderStock(){
   const box=$('stockCard');
-  const rs=recs().filter(x=>x.cat===STOCK&&x.sub!==KEEP&&inRange(x));   /* 留倉在持股表看 */
+  const rs=recs().filter(x=>x.cat===STOCK&&inRange(x));
   const buy=rs.filter(x=>x.kind==='out').reduce((s,x)=>s+x.amount,0);
   const sell=rs.filter(x=>x.kind==='in').reduce((s,x)=>s+x.amount,0);
   if(!rs.length){
@@ -1679,9 +1696,7 @@ function renderPie(){
   $('pieCard').closest('.duo').style.gridTemplateColumns=split?'':'1fr';
   if(split) renderStock();
   const box=$('pieCard');
-  /* 留倉是現金換成股票，不是花掉，永遠不列入日常；當沖則看開關 */
-  const rs=recs().filter(x=>x.kind===pieKind&&inRange(x)&&
-    !(x.cat===STOCK&&(split||x.sub===KEEP)));
+  const rs=recs().filter(x=>x.kind===pieKind&&inRange(x)&&!(x.cat===STOCK&&split));
   const list=CATS[pieKind], sum={};
   rs.forEach(x=>{ const c=x.cat||'其他'; sum[c]=(sum[c]||0)+x.amount; });
   let rows=Object.entries(sum).map(([k,v])=>({k,v,c:catColor(k,list)})).sort((a,b)=>b.v-a.v);
@@ -1796,20 +1811,23 @@ function stockRows(){
   });
 }
 const stockValue=()=>stockRows().reduce((s,r)=>s+(r.value||0),0);
-/* 總資產＝現金餘額＋股票市值，等級與關卡都看這個 */
-const assets=()=>now()+stockValue();
+/* 總資產＝現金＋股票市值＋其他資產，等級與關卡都看這個 */
+const assets=()=>now()+stockValue()+othersValue();
 
 function renderStocks(){
-  const box=$('stocks'), rows=stockRows();
-  if(!rows.length){
-    box.innerHTML='<div class="card stkempty">還沒有持股。按右上角「＋ 新增持股」填股票代碼與股數，'+
-      '收盤價每天盤後自動更新，市值會併進總資產。</div>';
+  const box=$('stocks'), rows=stockRows(), os=others();
+  if(!rows.length&&!os.length){
+    box.innerHTML='<div class="card stkempty">還沒有資產。按上面的「新增資產」加股票或其他資產，'+
+      '股票的收盤價每天盤後自動更新，市值會併進總資產。</div>';
     $('stkSub').textContent=''; return;
   }
-  const tv=rows.reduce((s,r)=>s+(r.value||0),0);
-  const tc=rows.reduce((s,r)=>s+(r.cost||0),0);
-  const tp=rows.some(r=>r.pl!==null)?rows.reduce((s,r)=>s+(r.pl||0),0):null;
-  $('stkSub').textContent='市值 '+short(tv)+(tp!==null?'　損益 '+(tp>=0?'+':'-')+short(Math.abs(tp)):'');
+  const ov=os.reduce((s,o)=>s+(o.value||0),0);
+  const oc=os.reduce((s,o)=>s+(o.cost||0),0);
+  const tv=rows.reduce((s,r)=>s+(r.value||0),0)+ov;
+  const tc=rows.reduce((s,r)=>s+(r.cost||0),0)+oc;
+  const hasPl=rows.some(r=>r.pl!==null)||os.some(o=>o.cost>0);
+  const tp=hasPl?rows.reduce((s,r)=>s+(r.pl||0),0)+os.reduce((s,o)=>s+(o.cost>0?o.value-o.cost:0),0):null;
+  $('stkSub').textContent='總值 '+short(tv)+(tp!==null?'　損益 '+(tp>=0?'+':'-')+short(Math.abs(tp)):'');
   const cell=(v,cls)=>'<span class="'+cls+'">'+(v>=0?'+':'-')+money(Math.abs(v))+'</span>';
   box.innerHTML='<div class="card stkbox"><table class="stkt"><thead><tr>'+
     '<th>股票</th><th class="hidem">股數</th><th class="hidem">均價</th><th>現價</th>'+
@@ -1828,7 +1846,18 @@ function renderStocks(){
           '<button class="iq" data-edithold="'+r.id+'"><svg class="i"><use href="#i-gear"/></svg></button> '+
           '<button class="iq del" data-delhold="'+r.id+'"><svg class="i"><use href="#i-x"/></svg></button></td></tr>';
     }).join('')+
-    '<tr class="sum"><td>合計 '+rows.length+' 檔</td><td class="hidem"></td><td class="hidem"></td><td></td>'+
+    os.map(o=>{
+      const pl=o.cost>0?o.value-o.cost:null;
+      return '<tr><td><span class="cd">'+esc(o.name)+'</span><span class="nm">其他資產</span></td>'+
+        '<td class="hidem">—</td><td class="hidem">'+(o.cost>0?money(o.cost):'—')+'</td><td>—</td>'+
+        '<td class="val">'+money(o.value)+'</td>'+
+        '<td>'+(pl!==null?'<span class="'+(pl>=0?'up':'down')+'">'+(pl>=0?'+':'-')+money(Math.abs(pl))+'</span>'+
+          '<span class="nm">'+((pl/o.cost*100)>=0?'+':'')+(pl/o.cost*100).toFixed(1)+'%</span>':'—')+'</td>'+
+        '<td class="x" style="padding-right:14px">'+
+          '<button class="iq" data-edithold="'+o.id+'"><svg class="i"><use href="#i-gear"/></svg></button> '+
+          '<button class="iq del" data-delother="'+o.id+'"><svg class="i"><use href="#i-x"/></svg></button></td></tr>';
+    }).join('')+
+    '<tr class="sum"><td>合計 '+(rows.length+os.length)+' 項</td><td class="hidem"></td><td class="hidem"></td><td></td>'+
       '<td class="val">'+money(tv)+'</td>'+
       '<td>'+(tp!==null?cell(tp,tp>=0?'up':'down')+
         '<span class="nm">'+(tc?((tp/tc*100)>=0?'+':'')+(tp/tc*100).toFixed(1)+'%':'')+'</span>':'—')+'</td><td></td></tr>'+
@@ -1836,31 +1865,81 @@ function renderStocks(){
       (PRICES?'收盤價 '+PRICES.date+'（'+PRICES.count+' 檔）':'還沒抓到收盤價')+
     '</span><span>'+(PRICES?'更新於 '+PRICES.updated:'')+'</span></div></div>';
 }
-let editHold=null;
+/* 其他資產：手動維護的價值，跟股票一起算進總資產 */
+const others=()=>Array.isArray(db.settings.others)?db.settings.others:[];
+const othersValue=()=>others().reduce((s,o)=>s+(o.value||0),0);
+
+let editHold=null, aType='stock', aCostMode='avg';
+function setAType(t){
+  aType=t;
+  document.querySelectorAll('#aKinds button').forEach(b=>b.classList.toggle('on',b.dataset.atype===t));
+  $('aStock').style.display=t==='stock'?'':'none';
+  $('aOther').style.display=t==='other'?'':'none';
+  holdPrev();
+}
+function setCostMode(m){
+  aCostMode=m;
+  document.querySelectorAll('#aCostMode button').forEach(b=>b.classList.toggle('on',b.dataset.cost===m));
+  $('aAvgWrap').style.display=m==='avg'?'':'none';
+  $('aTotalWrap').style.display=m==='total'?'':'none';
+  holdPrev();
+}
+$('aKinds').addEventListener('click',e=>{const b=e.target.closest('button[data-atype]');if(b){SFX.play('tick');setAType(b.dataset.atype);}});
+$('aCostMode').addEventListener('click',e=>{const b=e.target.closest('button[data-cost]');if(b){SFX.play('tick');setCostMode(b.dataset.cost);}});
+
 function holdPrev(){
-  const q=quoteOf($('hCode').value), sh=parseFloat($('hShares').value), av=parseFloat($('hAvg').value);
+  if(aType==='other'){
+    const v=parseFloat($('aValue').value), c=parseFloat($('aCost').value);
+    $('hPrev').innerHTML = v>0
+      ? '目前價值<b>'+money(v)+'</b>'+(c>0?'<span style="font-size:12.5px" class="'+(v-c>=0?'up':'down')+'">　損益 '+(v-c>=0?'+':'-')+money(Math.abs(v-c))+'</span>':'')
+      : '填目前價值';
+    return;
+  }
+  const q=quoteOf($('hCode').value), sh=parseFloat($('hShares').value);
+  const av=aCostMode==='avg'?parseFloat($('hAvg').value):(parseFloat($('hTotal').value)/sh);
   $('hName').innerHTML = $('hCode').value.trim()
     ? (q?'<b style="color:var(--cyan)">'+esc(q.n)+'</b>　收盤 '+q.c.toFixed(2)
         :'<span style="color:var(--gold)">查不到這個代碼，還是可以存，之後抓得到就會顯示</span>') : '';
   if(q&&sh>0){
     const v=q.c*sh, c=av>0?av*sh:null, pl=c!==null?v-c:null;
     $('hPrev').innerHTML='市值<b>'+money(v)+'</b>'+
+      (av>0?'<span style="font-size:12.5px">　每股成本 '+av.toLocaleString('en-US',{maximumFractionDigits:2})+'</span>':'')+
       (pl!==null?'<span style="font-size:12.5px" class="'+(pl>=0?'up':'down')+'">　損益 '+(pl>=0?'+':'-')+money(Math.abs(pl))+'</span>':'');
   } else $('hPrev').innerHTML='填代碼與股數後會算市值';
 }
-['hCode','hShares','hAvg'].forEach(id=>$(id).addEventListener('input',holdPrev));
-function openHold(id){
+['hCode','hShares','hAvg','hTotal','aValue','aCost'].forEach(id=>$(id).addEventListener('input',holdPrev));
+
+function openHold(id,type){
   editHold=id||null;
   const h=id?holdings().find(x=>x.id===id):null;
-  $('holdTitle').textContent=h?'修改持股':'新增持股';
+  const o=id?others().find(x=>x.id===id):null;
+  $('holdTitle').textContent=id?'修改資產':'新增資產';
+  $('aKinds').style.display=id?'none':'';
+  setAType(type||(o?'other':'stock'));
+  setCostMode('avg');
   $('hCode').value=h?h.code:''; $('hShares').value=h?h.shares:''; $('hAvg').value=h&&h.avg?h.avg:'';
+  $('hTotal').value=''; $('aName').value=o?o.name:''; $('aValue').value=o?o.value:''; $('aCost').value=o&&o.cost?o.cost:'';
   holdPrev(); open('vHold');
 }
-$('btnAddHold').onclick=()=>openHold(null);
+$('btnAddAsset').onclick=()=>openHold(null);
 $('saveHold').onclick=()=>{
-  const code=$('hCode').value.trim().toUpperCase(), sh=parseFloat($('hShares').value), av=parseFloat($('hAvg').value);
+  if(aType==='other'){
+    const name=$('aName').value.trim(), v=parseFloat($('aValue').value), c=parseFloat($('aCost').value);
+    if(!name){ toast('填資產名稱'); return; }
+    if(isNaN(v)||v<0){ toast('目前價值要填'); return; }
+    const os=others().slice(), data={name,value:v,cost:isNaN(c)?0:c,ts:Date.now()};
+    if(editHold){ const i=os.findIndex(x=>x.id===editHold); if(i>=0) os[i]=Object.assign({},os[i],data); }
+    else os.push(Object.assign({id:uid()},data));
+    db.settings.others=os; save(); shut(); render(); SFX.play('coin');
+    toast(editHold?'資產已更新':'加了 '+name);
+    return;
+  }
+  const code=$('hCode').value.trim().toUpperCase(), sh=parseFloat($('hShares').value);
   if(!code){ toast('填股票代碼'); return; }
   if(isNaN(sh)||sh<=0){ toast('股數要大於 0'); return; }
+  let av;
+  if(aCostMode==='avg'){ av=parseFloat($('hAvg').value); }
+  else{ const t=parseFloat($('hTotal').value); av=(!isNaN(t)&&t>0)?t/sh:NaN; }
   const data={code,shares:sh,avg:isNaN(av)?0:av,ts:Date.now()};
   const hs=holdings().slice();
   if(editHold){ const i=hs.findIndex(x=>x.id===editHold); if(i>=0) hs[i]=Object.assign({},hs[i],data); }
@@ -1870,7 +1949,7 @@ $('saveHold').onclick=()=>{
     if(same>=0) hs[same]=Object.assign({},hs[same],data); else hs.push(Object.assign({id:uid()},data));
   }
   db.settings.holdings=hs; save(); shut(); render(); SFX.play('coin');
-  toast(editHold?'持股已更新':'加了 '+code);
+  toast(editHold?'資產已更新':'加了 '+code);
 };
 
 /* ── 貸款 ── */
@@ -1983,26 +2062,26 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')shut();});
 
 let rKind='in', rCat='', rCustom=false, rSub='';
 function renderCats(){
-  const list=CATS[rKind];
-  if(!list){ $('rCatWrap').style.display='none'; return; }
+  const base=CATS[rKind];
+  if(!base){ $('rCatWrap').style.display='none'; return; }
+  const split=db.settings.splitStock!==false;
+  const list=split?base:base.filter(c=>c!==STOCK);     /* 當沖不分開算就不用選股票 */
+  if(!split&&rCat===STOCK) rCat='';
   $('rCatWrap').style.display='';
   const chips=list.filter(c=>c!=='其他').concat(usedCats(rKind));
   if(!rCustom&&chips.indexOf(rCat)<0) rCat=chips[0]||'其他';
   const btn=c=>{
-    const col=catColor(c,list), on=!rCustom&&c===rCat;
+    const col=catColor(c,base), on=!rCustom&&c===rCat;
     return '<button data-cat="'+esc(c)+'" class="'+(on?'on':'')+'"'+
       (on?' style="border-color:'+col+';background:'+col+'22;color:'+col+'"':'')+'>'+esc(c)+'</button>';
   };
   let subRow='';
   if(!rCustom&&rCat===STOCK){
-    const split=db.settings.splitStock!==false;
-    const list=split?SUBS:[KEEP];                 /* 不分開算就只留「留倉」 */
-    if(!split&&rSub&&rSub!==KEEP) rSub='';
-    subRow='<div class="subs"><span class="subl">'+(split?'哪個策略':'')+'</span>'+
-      list.map(x=>'<button data-sub="'+x+'" class="'+(rSub===x?'on':'')+'"'+
+    if(SUBS.indexOf(rSub)<0) rSub=SUBS[0];
+    subRow='<div class="subs"><span class="subl">哪個策略</span>'+
+      SUBS.map(x=>'<button data-sub="'+x+'" class="'+(rSub===x?'on':'')+'"'+
         (rSub===x?' style="border-color:'+SUBCOLOR[x]+';background:'+SUBCOLOR[x]+'22;color:'+SUBCOLOR[x]+'"':'')+
-        '>'+x+'</button>').join('')+
-      '<button data-sub="" class="'+(rSub?'':'on')+'">不分</button></div>';
+        '>'+x+'</button>').join('')+'</div>';
   } else if(!rCustom&&rCat===LOAN&&loans().length){
     subRow='<div class="subs"><span class="subl">哪一筆貸款</span>'+
       loans().map(l=>'<button data-sub="'+esc(l.name)+'" class="'+(rSub===l.name?'on':'')+'">'+esc(l.name)+'</button>').join('')+
@@ -2016,23 +2095,8 @@ function renderCats(){
     subRow;
   if(rCustom){ const i=$('rCatOther'); if(i){ i.value=rCat; setTimeout(()=>i.focus(),40);
     i.oninput=()=>{ rCat=i.value.trim(); }; } }
-  paintKeep();
 }
-/* 留倉：填代號與股數，均價由成交金額除以股數算出來 */
-function paintKeep(){
-  const on = !rCustom && rCat===STOCK && rSub===KEEP;
-  $('rKeepWrap').style.display = on?'':'none';
-  if(!on) return;
-  const q=quoteOf($('rCode').value), sh=parseFloat($('rShares').value), amt=parseFloat($('rAmt').value);
-  const bits=[];
-  if($('rCode').value.trim())
-    bits.push(q?'<b style="color:var(--cyan)">'+esc(q.n)+'</b> 收盤 '+q.c.toFixed(2)
-               :'<span style="color:var(--gold)">查不到這個代碼</span>');
-  if(sh>0&&amt>0) bits.push('每股 '+(amt/sh).toLocaleString('en-US',{maximumFractionDigits:2}));
-  if(sh>0) bits.push(rKind==='in'?'賣出後持股會減少':'買進後會加進持股表');
-  $('rKeepHint').innerHTML=bits.join('　·　');
-}
-['rCode','rShares'].forEach(id=>$(id).addEventListener('input',()=>{paintKeep();updatePrev();}));
+
 $('rCats').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
   if(b.dataset.sub!==undefined) rSub=b.dataset.sub;
@@ -2064,13 +2128,12 @@ $('rKinds').addEventListener('click',e=>{
   const b=e.target.closest('button[data-kind]'); if(!b) return;
   SFX.play('tick'); setKind(b.dataset.kind);
 });
-$('rAmt').addEventListener('input',()=>{updatePrev();paintKeep();});
+$('rAmt').addEventListener('input',updatePrev);
 $('rDate').addEventListener('change',updatePrev);
 
 $('btnAddRec').onclick=()=>{
   $('rDate').value=todayStr(); $('rAmt').value=''; $('rNote').value='';
-  $('rCode').value=''; $('rShares').value='';
-  setKind(recs().length?rKind:'set');
+  setKind('in');
   open('vRec');
 };
 $('saveRec').onclick=()=>{
@@ -2083,31 +2146,6 @@ $('saveRec').onclick=()=>{
   const rec={id:uid(),ts:Date.now(),date,kind:rKind,amount:v,cat,note:$('rNote').value.trim()};
   if((cat===STOCK||cat===LOAN)&&rSub) rec.sub=rSub;
 
-  /* 留倉：買進就加進持股（均價用加權平均重算），賣出就扣股數 */
-  let keepMsg='';
-  if(cat===STOCK&&rSub===KEEP){
-    const code=$('rCode').value.trim().toUpperCase(), sh=parseFloat($('rShares').value);
-    if(!code||isNaN(sh)||sh<=0){ SFX.play('err'); toast('留倉要填股票代號和股數'); return; }
-    rec.code=code; rec.shares=sh;
-    const hs=holdings().slice(), i=hs.findIndex(x=>x.code===code);
-    if(rKind==='out'){
-      if(i>=0){
-        const tot=hs[i].shares+sh, cost=(hs[i].avg||0)*hs[i].shares+v;
-        hs[i]=Object.assign({},hs[i],{shares:tot,avg:tot?cost/tot:0,ts:Date.now()});
-        keepMsg='　'+code+' 加到 '+money(tot)+' 股';
-      }else{
-        hs.push({id:uid(),code,shares:sh,avg:v/sh,ts:Date.now()});
-        keepMsg='　'+code+' 進了持股表';
-      }
-    }else if(rKind==='in'){
-      if(i<0){ SFX.play('err'); toast('持股表裡沒有 '+code+'，先用「新增持股」建一筆'); return; }
-      const left=hs[i].shares-sh;
-      if(left<-0.0001){ SFX.play('err'); toast(code+' 只有 '+money(hs[i].shares)+' 股，賣不了這麼多'); return; }
-      if(left<=0.0001){ hs.splice(i,1); keepMsg='　'+code+' 已出清'; }
-      else{ hs[i]=Object.assign({},hs[i],{shares:left,ts:Date.now()}); keepMsg='　'+code+' 剩 '+money(left)+' 股'; }
-    }
-    db.settings.holdings=hs;
-  }
   db.records.push(rec);
   /* 剛記的那筆一定要看得到：跳回第一頁，範圍外就把篩選清掉 */
   logPage=1;
@@ -2123,7 +2161,7 @@ $('saveRec').onclick=()=>{
   }
   else{
     SFX.play(rKind==='out'?'spend':rKind==='set'?'set':'coin');
-    toast((rKind==='in'?'存入 '+money(v):rKind==='out'?'花掉 '+money(v):'餘額校正')+'　現在 '+money(bal)+keepMsg);
+    toast((rKind==='in'?'存入 '+money(v):rKind==='out'?'花掉 '+money(v):'餘額校正')+'　現在 '+money(bal));
   }
 };
 $('saveGoal').onclick=()=>{
@@ -2217,6 +2255,12 @@ document.body.addEventListener('click',e=>{
     markDeleted(b.dataset.delGoal);
     db.goals=db.goals.filter(x=>x.id!==b.dataset.delGoal); save(); render(); SFX.play('del'); toast('已刪除'); }
   if(b.dataset.edithold) return openHold(b.dataset.edithold);
+  if(b.dataset.delother){
+    const o=others().find(x=>x.id===b.dataset.delother);
+    if(!confirm('刪掉資產「'+o.name+'」？')) return;
+    db.settings.others=others().filter(x=>x.id!==b.dataset.delother);
+    save(); render(); SFX.play('del'); toast('已刪除'); return;
+  }
   if(b.dataset.delhold){
     const h=holdings().find(x=>x.id===b.dataset.delhold);
     if(!confirm('刪掉持股 '+h.code+'？')) return;
