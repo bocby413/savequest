@@ -483,6 +483,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .kinds button{font:inherit;font-size:14px;font-weight:700;padding:9px 0;border-radius:11px;cursor:pointer;
   background:var(--panel2);border:2px solid var(--edge);color:var(--txt3);transition:color .14s,background-color .14s,border-color .14s,opacity .14s,transform .14s,box-shadow .14s,filter .14s}
 .kinds button:hover{color:var(--txt)}
+.kinds button.on{background:rgba(60,224,208,.16);border-color:var(--cyan);color:var(--cyan)}
 .kinds button.on[data-kind="in"]{background:rgba(142,230,90,.16);border-color:var(--lime);color:var(--lime)}
 .kinds button.on[data-kind="out"]{background:rgba(255,107,107,.16);border-color:var(--red);color:var(--red)}
 .kinds button.on[data-kind="set"]{background:rgba(60,224,208,.16);border-color:var(--cyan);color:var(--cyan)}
@@ -1870,16 +1871,26 @@ const others=()=>Array.isArray(db.settings.others)?db.settings.others:[];
 const othersValue=()=>others().reduce((s,o)=>s+(o.value||0),0);
 
 let editHold=null, aType='stock', aCostMode='avg';
+/* 直接寫進 style，選在哪一個一眼看得出來 */
+function markPick(sel,attr,val){
+  document.querySelectorAll(sel).forEach(b=>{
+    const on=b.dataset[attr]===val;
+    b.classList.toggle('on',on);
+    b.style.borderColor = on?'var(--cyan)':'';
+    b.style.background  = on?'rgba(60,224,208,.16)':'';
+    b.style.color       = on?'var(--cyan)':'';
+  });
+}
 function setAType(t){
   aType=t;
-  document.querySelectorAll('#aKinds button').forEach(b=>b.classList.toggle('on',b.dataset.atype===t));
+  markPick('#aKinds button','atype',t);
   $('aStock').style.display=t==='stock'?'':'none';
   $('aOther').style.display=t==='other'?'':'none';
   holdPrev();
 }
 function setCostMode(m){
   aCostMode=m;
-  document.querySelectorAll('#aCostMode button').forEach(b=>b.classList.toggle('on',b.dataset.cost===m));
+  markPick('#aCostMode button','cost',m);
   $('aAvgWrap').style.display=m==='avg'?'':'none';
   $('aTotalWrap').style.display=m==='total'?'':'none';
   holdPrev();
@@ -1897,13 +1908,25 @@ function holdPrev(){
   }
   const q=quoteOf($('hCode').value), sh=parseFloat($('hShares').value);
   const av=aCostMode==='avg'?parseFloat($('hAvg').value):(parseFloat($('hTotal').value)/sh);
+  const own=!editHold&&$('hCode').value.trim()
+    ? holdings().find(x=>x.code===$('hCode').value.trim().toUpperCase()) : null;
   $('hName').innerHTML = $('hCode').value.trim()
     ? (q?'<b style="color:var(--cyan)">'+esc(q.n)+'</b>　收盤 '+q.c.toFixed(2)
-        :'<span style="color:var(--gold)">查不到這個代碼，還是可以存，之後抓得到就會顯示</span>') : '';
+        :'<span style="color:var(--gold)">查不到這個代碼，還是可以存，之後抓得到就會顯示</span>')
+      +(own?'<br><span style="color:var(--lime)">持股已有 '+money(own.shares)+' 股'+
+        (own.avg?'（均價 '+own.avg.toLocaleString('en-US',{maximumFractionDigits:2})+'）':'')+
+        '，這筆會加上去</span>':'')
+    : '';
   if(q&&sh>0){
-    const v=q.c*sh, c=av>0?av*sh:null, pl=c!==null?v-c:null;
-    $('hPrev').innerHTML='市值<b>'+money(v)+'</b>'+
-      (av>0?'<span style="font-size:12.5px">　每股成本 '+av.toLocaleString('en-US',{maximumFractionDigits:2})+'</span>':'')+
+    const tot=own?own.shares+sh:sh;
+    let navg=av;
+    if(own){
+      if(av>0&&own.avg>0) navg=((own.avg*own.shares)+(av*sh))/tot;
+      else if(!av) navg=own.avg;
+    }
+    const v=q.c*tot, c=navg>0?navg*tot:null, pl=c!==null?v-c:null;
+    $('hPrev').innerHTML=(own?'加完後共 <b>'+money(tot)+'</b> 股　市值<b>':'市值<b>')+money(v)+'</b>'+
+      (navg>0?'<span style="font-size:12.5px">　均價 '+navg.toLocaleString('en-US',{maximumFractionDigits:2})+'</span>':'')+
       (pl!==null?'<span style="font-size:12.5px" class="'+(pl>=0?'up':'down')+'">　損益 '+(pl>=0?'+':'-')+money(Math.abs(pl))+'</span>':'');
   } else $('hPrev').innerHTML='填代碼與股數後會算市值';
 }
@@ -1940,16 +1963,27 @@ $('saveHold').onclick=()=>{
   let av;
   if(aCostMode==='avg'){ av=parseFloat($('hAvg').value); }
   else{ const t=parseFloat($('hTotal').value); av=(!isNaN(t)&&t>0)?t/sh:NaN; }
-  const data={code,shares:sh,avg:isNaN(av)?0:av,ts:Date.now()};
+  av=isNaN(av)?0:av;
   const hs=holdings().slice();
-  if(editHold){ const i=hs.findIndex(x=>x.id===editHold); if(i>=0) hs[i]=Object.assign({},hs[i],data); }
-  else{
-    const same=hs.findIndex(x=>x.code===code);
-    if(same>=0&&!confirm(code+' 已經有一筆了，要覆蓋嗎？')) return;
-    if(same>=0) hs[same]=Object.assign({},hs[same],data); else hs.push(Object.assign({id:uid()},data));
+  let msg='加了 '+code;
+  if(editHold){
+    const i=hs.findIndex(x=>x.id===editHold);
+    if(i>=0) hs[i]=Object.assign({},hs[i],{code,shares:sh,avg:av,ts:Date.now()});
+    msg='資產已更新';
+  }else{
+    const i=hs.findIndex(x=>x.code===code);
+    if(i>=0){
+      /* 已經有這檔就加碼：股數相加，均價按成本加權重算 */
+      const h=hs[i], tot=h.shares+sh;
+      let navg=h.avg||0;
+      if(av>0&&h.avg>0) navg=((h.avg*h.shares)+(av*sh))/tot;
+      else if(av>0&&!h.avg) navg=av;
+      hs[i]=Object.assign({},h,{shares:tot,avg:navg,ts:Date.now()});
+      msg=code+' 加到 '+money(tot)+' 股'+(navg?'　均價 '+navg.toLocaleString('en-US',{maximumFractionDigits:2}):'');
+    }else hs.push({id:uid(),code,shares:sh,avg:av,ts:Date.now()});
   }
   db.settings.holdings=hs; save(); shut(); render(); SFX.play('coin');
-  toast(editHold?'資產已更新':'加了 '+code);
+  toast(msg);
 };
 
 /* ── 貸款 ── */
@@ -2105,9 +2139,16 @@ $('rCats').addEventListener('click',e=>{
   else return;
   renderCats(); updatePrev(); SFX.play('tick');
 });
+const KINDCOLOR={in:'142,230,90',out:'255,107,107',set:'60,224,208'};
 function setKind(k){
   rKind=k;
-  document.querySelectorAll('#rKinds button').forEach(b=>b.classList.toggle('on',b.dataset.kind===k));
+  document.querySelectorAll('#rKinds button').forEach(b=>{
+    const on=b.dataset.kind===k, col=KINDCOLOR[b.dataset.kind];
+    b.classList.toggle('on',on);
+    b.style.borderColor = on?'rgb('+col+')':'';
+    b.style.background  = on?'rgba('+col+',.16)':'';
+    b.style.color       = on?'rgb('+col+')':'';
+  });
   $('rAmtLabel').textContent=k==='in'?'存入多少':k==='out'?'花掉多少':'現在總共有多少';
   $('rSay').textContent=k==='in'?'這次存進去多少，餘額自動加上去。'
     :k==='out'?'這次花掉多少，餘額自動扣掉。'
