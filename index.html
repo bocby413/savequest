@@ -137,30 +137,6 @@ svg.i{width:1em;height:1em;fill:currentColor;vertical-align:-.13em}
 .sechead h2 svg{color:var(--gold);font-size:19px}
 .sechead .sub{font-size:12.5px;color:var(--txt3);margin-left:auto}
 
-/* ── 關卡地圖 ── */
-.mapbox{padding:22px 4px 16px;overflow-x:auto}
-.map{display:flex;min-width:min-content;padding:0 18px}
-.st{flex:none;width:118px;text-align:center;position:relative}
-.st:before{content:"";position:absolute;top:29px;right:50%;width:100%;height:5px;background:var(--panel3);border-radius:3px}
-.st:first-child:before{display:none}
-.st.done:before,.st.now:before{background:linear-gradient(90deg,var(--gold),var(--gold2))}
-.st .node{position:relative;width:60px;height:60px;margin:0 auto 9px;border-radius:50%;display:grid;place-items:center;
-  background:var(--panel2);border:3px solid var(--edge);font-size:22px;color:var(--txt3)}
-.st.done .node{background:linear-gradient(180deg,var(--gold),var(--gold2));border-color:#ffd76b;color:#3a2600;
-  box-shadow:0 0 8px rgba(255,194,51,.3)}
-.st.now .node{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 0 5px rgba(60,224,208,.15)}
-.st.now .node:before{content:"";position:absolute;inset:-7px;border-radius:50%;border:2px solid var(--cyan);
-  opacity:.5;animation:beat 2s ease-out infinite;will-change:transform,opacity}
-@keyframes beat{0%{transform:scale(.94);opacity:.5}70%,100%{transform:scale(1.12);opacity:0}}
-.st .amtx{font-size:15px;font-weight:800}
-.st.lock .amtx{color:var(--txt3)}
-.st .sub{font-size:11.5px;color:var(--txt3);line-height:1.4;padding:0 6px}
-.st.now .sub{color:var(--cyan)}
-.st .ring{position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(var(--cyan) var(--p,0%),transparent 0)}
-.st .ring:after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--panel2)}
-.st .ring i{position:relative;font-size:13px;font-weight:800;color:var(--cyan);font-style:normal;display:grid;
-  place-items:center;height:100%}
-
 /* ── 主任務 ── */
 .quest{padding:24px;display:grid;grid-template-columns:1fr 190px;gap:24px;align-items:center}
 @media(max-width:760px){.quest{grid-template-columns:1fr}}
@@ -448,7 +424,11 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   background:var(--panel2);border:1px solid var(--edge);color:var(--txt3);cursor:pointer;
   transition:color .14s,border-color .14s}
 .lvbtn:hover{color:var(--gold);border-color:var(--gold)}
-.lvrow{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:center;padding:9px 10px;border-radius:10px}
+.lvnow{font-size:14px;color:var(--txt2);padding:10px 12px;margin-bottom:8px;border-radius:10px;
+  background:rgba(255,194,51,.12);border:1px solid rgba(255,194,51,.35)}
+.lvnow b{color:var(--gold);font-size:16px}
+.lvgap{text-align:center;color:var(--txt3);font-size:12px;letter-spacing:4px;padding:2px 0}
+.lvrow{display:grid;grid-template-columns:58px 1fr auto;gap:12px;align-items:center;padding:9px 10px;border-radius:10px}
 .lvrow+.lvrow{border-top:1px solid var(--edge)}
 .lvrow.now{background:rgba(255,194,51,.12);border-radius:10px}
 .lvrow .n{font-size:13px;font-weight:800;color:var(--txt3)}
@@ -619,11 +599,6 @@ html[data-skin="light"] .logbar input{color-scheme:light}
     <div class="v n" id="amt">0</div>
     <div class="d" id="amtSub"></div>
   </div>
-</div>
-
-<div class="sec">
-  <div class="sechead"><h2><svg class="i"><use href="#i-map"/></svg>存款關卡</h2><span class="sub" id="mapSub"></span></div>
-  <div class="card mapbox"><div class="map" id="map"></div></div>
 </div>
 
 <div class="sec">
@@ -981,8 +956,14 @@ const SFX={
     if(n==='coin'){ this.beep(988,0,.07,'square',.11); this.beep(1319,.065,.17,'square',.11); }
     else if(n==='spend'){ this.beep(415,0,.09,'triangle',.12); this.beep(311,.075,.16,'triangle',.1); }
     else if(n==='set'){ this.beep(660,0,.08,'sine',.13); this.beep(880,.07,.15,'sine',.11); }
-    else if(n==='level'){ [523,659,784,1047].forEach((f,i)=>this.beep(f,i*.085,.2,'square',.11));
-      this.beep(1319,.34,.38,'triangle',.1); }
+    else if(n==='level'){
+      /* 上行音階 → 和弦 → 長尾音，整段約兩秒半 */
+      [523,587,659,784,880,1047].forEach((f,i)=>this.beep(f,i*.09,.2,'square',.1));
+      this.slide(880,1760,.62,.5,'square',.05);
+      [1047,1319,1568].forEach(f=>this.beep(f,.62,1.0,'triangle',.075));
+      [1319,1976].forEach(f=>this.beep(f,1.45,1.05,'triangle',.06));
+      this.beep(2093,1.5,1.15,'sine',.05);
+    }
     else if(n==='win'){ [659,784,1047,1319].forEach((f,i)=>this.beep(f,i*.07,.19,'triangle',.12)); }
     else if(n==='star'){ this.beep(1047,0,.06,'square',.09); this.beep(1568,.055,.12,'square',.09); }
     else if(n==='del'){ this.slide(320,110,0,.17,'sawtooth',.08); }
@@ -1069,55 +1050,52 @@ function targetAt(y,m){
   return v;
 }
 function targetNow(){ const d=new Date(); return targetAt(d.getFullYear(),d.getMonth()); }
-/* 固定的等級門檻。本來是依存款規模動態算間距，結果跨過 30 萬時等級會往回掉 */
-const LEVELS=[0,50000,100000,200000,300000,500000,750000,1000000,1500000,2000000,
-              3000000,5000000,7000000,10000000,15000000,20000000,25000000,30000000];
-const TITLES=['存錢新手','小豬撲滿','存錢學徒','小有積蓄','穩健存戶','存錢老手','理財達人',
-              '百萬俱樂部','存錢高手','資產新貴','存錢大師','資產玩家','財務自由預備',
-              '千萬俱樂部','財務自由','人生勝利組','準富豪','傳說級'];
-const OVER=10000000;                     /* 三千萬之後每一千萬一級 */
+/* 一百級，滿等三千萬。門檻走平方曲線：前期升得快，後面越來越硬 */
+const LVMAX=100, LVTOP=30000000;
+const TITLES=[
+  '存錢新手','撲滿見習','零錢收集者','銅板守衛','記帳學徒',
+  '節流練習生','儲蓄萌芽','存款養成中','小額儲蓄員','存錢入門',
+  '有紀律的人','月光終結者','帳本管理員','儲蓄穩定','小有積蓄',
+  '預備金達成','安全網成型','存款有感','儲蓄進行式','存錢常客',
+  '資產起步','複利入門','存款加速','理財有感','儲蓄老手',
+  '目標管理者','存款穩健','資產累積中','財務有序','存錢老手',
+  '資產成形','存款高手','財務穩健','儲蓄專家','開源節流',
+  '資產規劃師','現金流掌控','財務自律','資產穩守','理財達人',
+  '資產新貴','財富起飛','資產經理人','投資有成','財富累積者',
+  '資產操盤手','財務策略家','資產配置師','財富穩健','資產玩家',
+  '財富進階','資產專家','投資老手','財務自由預備','資產雄厚',
+  '財富管理者','資產策略家','財富菁英','資產大戶','財富高手',
+  '資產豐厚','財富領袖','資產巨擘','財富贏家','資產霸主',
+  '財富菁英族','資產統帥','財富巨頭','資產翹楚','財富大師',
+  '資產大師','財富宗師','資產權威','財富巨人','資產帝王',
+  '財富傳人','資產王者','財富尊者','資產至尊','財富宗主',
+  '富豪之路','資產傳奇','財富巔峰','資產名家','財富貴族',
+  '資產顯貴','財富望族','資產豪門','財富世家','準富豪',
+  '富豪認證','資產神話','財富之巔','資產無雙','財富無極',
+  '傳說在望','資產封神','財富封頂','巔峰前夕','傳說級',
+];
+function lvThreshold(n){
+  if(n<=1) return 0;
+  if(n>=LVMAX) return LVTOP;
+  const raw=LVTOP*Math.pow((n-1)/(LVMAX-1),2);
+  const unit = raw<100000?1000 : raw<1000000?10000 : 100000;   /* 取整成好看的數字 */
+  return Math.round(raw/unit)*unit;
+}
 function levelAt(cur){
-  const top=LEVELS[LEVELS.length-1];
-  if(cur>=top){
-    const extra=Math.floor((cur-top)/OVER);
-    const base=top+extra*OVER;
-    return {lv:LEVELS.length+extra,base,next:base+OVER};
+  if(cur>=LVTOP) return {lv:LVMAX,base:LVTOP,next:LVTOP};
+  for(let n=LVMAX-1;n>=1;n--){
+    const b=lvThreshold(n);
+    if(cur>=b) return {lv:n,base:b,next:lvThreshold(n+1)};
   }
-  for(let i=LEVELS.length-1;i>=0;i--) if(cur>=LEVELS[i]) return {lv:i+1,base:LEVELS[i],next:LEVELS[i+1]};
-  return {lv:1,base:0,next:LEVELS[1]};
+  return {lv:1,base:0,next:lvThreshold(2)};
 }
-function levelTitle(lv){
-  return lv<=TITLES.length?TITLES[lv-1]:'傳說級 '+'Ⅱ Ⅲ Ⅳ Ⅴ Ⅵ Ⅶ Ⅷ Ⅸ Ⅹ'.split(' ')[Math.min(8,lv-TITLES.length-1)];
-}
+const levelTitle=lv=>TITLES[Math.max(0,Math.min(TITLES.length-1,lv-1))];
 function levelInfo(){
-  const cur=assets(), L=levelAt(cur), step=L.next-L.base;   /* 現金＋股票 */
-  return {lv:L.lv,step,base:L.base,next:L.next,into:cur-L.base,pct:step?(cur-L.base)/step*100:0};
+  const cur=assets(), L=levelAt(cur), step=L.next-L.base;
+  return {lv:L.lv,step,base:L.base,next:L.next,into:cur-L.base,
+          pct:step>0?(cur-L.base)/step*100:100,max:L.lv>=LVMAX};
 }
-function stages(){
-  const r=recs(), cur=assets(), out=[];
-  const here=levelAt(cur).lv;
-  const marks=[];
-  for(let i=1;i<=Math.min(LEVELS.length-1,here+1);i++) marks.push(LEVELS[i]);
-  if(here>=LEVELS.length-1){                       /* 已經破表就往上再長幾關 */
-    const top=LEVELS[LEVELS.length-1];
-    for(let k=0;k<=here-LEVELS.length+1;k++) marks.push(top+(k+1)*OVER);
-  }
-  for(const lv of marks){
-    let hit=null;
-    for(let i=0;i<r.length;i++) if(r[i].bal>=lv){
-      if(i===0) hit=r[0].date;
-      else{
-        const a=r[i-1],b=r[i],sp=b.bal-a.bal;
-        const d=new Date(a.date); d.setDate(d.getDate()+Math.round(sp<=0?0:dayGap(a.date,b.date)*(lv-a.bal)/sp));
-        hit=iso(d);
-      }
-      break;
-    }
-    out.push({lv,date:hit,done:cur>=lv});
-  }
-  const nx=out.find(o=>!o.done); if(nx) nx.now=true;      /* 第一個還沒過的就是現在這關 */
-  return out;
-}
+
 /* 錢只有一份，要排隊分配：排前面的先吃飽，剩下的才輪到後面 */
 function queueGoals(){
   return db.goals.filter(g=>!g.done&&g.amount>0)
@@ -1256,32 +1234,7 @@ function renderHud(){
   $('amtSub').innerHTML=parts.join('　·　');
 }
 
-/* ── 關卡地圖 ── */
-function renderMap(){
-  const st=stages(), cur=now(), pm=perMonth();
-  if(!recs().length){
-    $('map').innerHTML='<div style="padding:14px 18px;color:var(--txt3)">記下第一筆存款，關卡就會亮起來。</div>';
-    $('mapSub').textContent=''; return;
-  }
-  const doneN=st.filter(s=>s.done).length;
-  $('mapSub').textContent='已過 '+doneN+' 關　目前 Lv.'+levelAt(cur).lv+' '+levelTitle(levelAt(cur).lv);
-  $('map').innerHTML=st.map(s=>{
-    if(s.done) return '<div class="st done"><div class="node"><svg class="i"><use href="#i-check"/></svg></div>'+
-      '<div class="amtx">'+short(s.lv)+'</div><div class="sub">'+(s.date?mdY(s.date):'')+'</div></div>';
-    if(s.now){
-      const L=levelAt(cur), p=L.next>L.base?(cur-L.base)/(L.next-L.base)*100:0;
-      let sub='還差 '+short(s.lv-cur);
-      if(pm&&pm>0){const d=new Date(); d.setMonth(d.getMonth()+Math.round((s.lv-cur)/pm)); sub+='　'+ymD(d);}
-      return '<div class="st now"><div class="node"><div class="ring" style="--p:'+p.toFixed(1)+'%"><i>'+p.toFixed(0)+'%</i></div></div>'+
-        '<div class="amtx">'+short(s.lv)+'</div><div class="sub">'+sub+'</div></div>';
-    }
-    return '<div class="st lock"><div class="node"><svg class="i"><use href="#i-lock"/></svg></div>'+
-      '<div class="amtx">'+short(s.lv)+'</div><div class="sub">還沒解鎖</div></div>';
-  }).join('');
-  const nowEl=$('map').querySelector('.st.now');
-  const key=nowEl?nowEl.querySelector('.amtx').textContent:'';
-  if(nowEl&&key!==renderMap.last){ renderMap.last=key; nowEl.scrollIntoView({block:'nearest',inline:'center'}); }
-}
+
 
 /* ── 主線任務 ── */
 function renderQuest(){
@@ -1836,7 +1789,7 @@ async function loadPrices(){
     if(d&&d.quotes){
       PRICES=d;
       try{ localStorage.setItem(PKEY,JSON.stringify(d)); }catch(e){}
-      renderStocks(); renderHud(); renderMap(); renderQuest(); renderQuests();
+      renderStocks(); renderHud(); renderQuest(); renderQuests();
     }
   }catch(e){ /* 沒網路就用上次存的 */ }
 }
@@ -2307,19 +2260,28 @@ $('saveLoan').onclick=()=>{
 $('btnAddLoan').onclick=()=>openLoan(null);
 
 function renderLevels(){
-  const cur=now(), here=levelAt(cur).lv, rows=[];
-  const top=LEVELS.length+Math.max(0,here-LEVELS.length+2);
-  for(let lv=1;lv<=Math.max(LEVELS.length,here+2);lv++){
-    const base=lv<=LEVELS.length?LEVELS[lv-1]:LEVELS[LEVELS.length-1]+(lv-LEVELS.length)*OVER;
-    rows.push('<div class="lvrow '+(lv===here?'now':(lv<here?'passed':''))+'">'+
-      '<span class="n">Lv.'+lv+'</span><span class="t">'+levelTitle(lv)+'</span>'+
-      '<span class="g">'+(base?money(base)+' 起':'0 起')+'</span></div>');
-  }
-  $('levelList').innerHTML=rows.join('')+
-    '<div class="say" style="margin-top:10px">Lv.'+LEVELS.length+' 之後每 '+short(OVER)+' 升一級。</div>';
+  const cur=assets(), L=levelInfo(), here=L.lv;
+  const marks=new Set([1,LVMAX]);
+  for(let n=10;n<LVMAX;n+=10) marks.add(n);
+  for(let n=here-2;n<=here+2;n++) if(n>=1&&n<=LVMAX) marks.add(n);
+  const list=[...marks].sort((a,b)=>a-b);
+  let html='<div class="lvnow">目前 <b>Lv.'+here+'</b> '+levelTitle(here)+
+    (L.max?'　已經滿等':'　距 Lv.'+(here+1)+' 還差 '+money(L.next-cur))+'</div>';
+  let prev=0;
+  html+=list.map(n=>{
+    const base=lvThreshold(n), gap=prev>0&&n-prev>1;
+    prev=n;
+    return (gap?'<div class="lvgap">⋯</div>':'')+
+      '<div class="lvrow '+(n===here?'now':(n<here?'passed':''))+'">'+
+      '<span class="n">Lv.'+n+'</span><span class="t">'+levelTitle(n)+'</span>'+
+      '<span class="g">'+(base?money(base)+' 起':'0 起')+'</span></div>';
+  }).join('');
+  $('levelList').innerHTML=html+
+    '<div class="say" style="margin-top:10px">共 '+LVMAX+' 級，滿等 '+short(LVTOP)+
+    '，看的是現金加資產的總額。</div>';
 }
 
-function render(){ renderStocks(); renderLoans(); renderMonthTable(); renderPie(); renderHud(); renderMap(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); }
+function render(){ renderStocks(); renderLoans(); renderMonthTable(); renderPie(); renderHud(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); }
 
 /* ── 互動 ── */
 const open=id=>{$(id).classList.add('on');const f=$(id).querySelector('input');setTimeout(()=>f&&f.focus(),120);};
