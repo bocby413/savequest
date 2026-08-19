@@ -758,17 +758,12 @@ html[data-skin="light"] .logbar input{color-scheme:light}
       <button data-dir="sub">減碼</button>
     </div>
     <div class="f"><label id="hSharesLabel">股數</label><input type="number" id="hShares" placeholder="1000" step="1" inputmode="decimal"></div>
-    <div class="kinds" id="aCostMode" style="grid-template-columns:1fr 1fr;margin:2px 0 12px">
-      <button data-cost="avg" class="on">填每股均價</button>
-      <button data-cost="total">填買入總成本</button>
-    </div>
-    <div class="f" id="aAvgWrap"><label>每股均價</label>
-      <input type="number" id="hAvg" placeholder="750" step="0.01" inputmode="decimal"></div>
-    <div class="f" id="aTotalWrap" style="display:none"><label>買入總成本</label>
-      <input type="number" id="hTotal" placeholder="750000" step="1" inputmode="decimal"></div>
-    <div class="f" id="aCashWrap" style="display:none"><label>賣出金額（可留白）</label>
+    <div class="f" id="aTotalWrap"><label>買入總成本</label>
+      <input type="number" id="hTotal" placeholder="750000" step="1" inputmode="decimal">
+      <div class="say" style="margin-top:6px">均價會用總成本除以股數自動算。</div></div>
+    <div class="f" id="aCashWrap" style="display:none"><label>賣出總金額</label>
       <input type="number" id="hCash" placeholder="扣完手續費實際入帳" step="1" inputmode="decimal">
-      <div class="say" style="margin-top:6px">填了會自動記一筆現金收入，並算出這次的已實現損益。</div></div>
+      <div class="say" style="margin-top:6px">會自動記一筆現金收入，並算出這次的已實現損益。</div></div>
   </div>
 
   <div id="aOther" style="display:none">
@@ -1879,7 +1874,7 @@ function renderStocks(){
 const others=()=>Array.isArray(db.settings.others)?db.settings.others:[];
 const othersValue=()=>others().reduce((s,o)=>s+(o.value||0),0);
 
-let editHold=null, aType='stock', aCostMode='avg', aDir='add';
+let editHold=null, aType='stock', aDir='add';
 /* 直接寫進 style，選在哪一個一眼看得出來 */
 function markPick(sel,attr,val){
   document.querySelectorAll(sel).forEach(b=>{
@@ -1897,15 +1892,7 @@ function setAType(t){
   $('aOther').style.display=t==='other'?'':'none';
   holdPrev();
 }
-function setCostMode(m){
-  aCostMode=m;
-  markPick('#aCostMode button','cost',m);
-  $('aAvgWrap').style.display=m==='avg'?'':'none';
-  $('aTotalWrap').style.display=m==='total'?'':'none';
-  holdPrev();
-}
 $('aKinds').addEventListener('click',e=>{const b=e.target.closest('button[data-atype]');if(b){SFX.play('tick');setAType(b.dataset.atype);}});
-$('aCostMode').addEventListener('click',e=>{const b=e.target.closest('button[data-cost]');if(b){SFX.play('tick');setCostMode(b.dataset.cost);}});
 function setDirQuiet(d){
   aDir=d;
   markPick('#aDir button','dir',d);
@@ -1934,15 +1921,14 @@ function holdPrev(){
     return;
   }
   const q=quoteOf($('hCode').value), sh=parseFloat($('hShares').value);
-  const av=aCostMode==='avg'?parseFloat($('hAvg').value):(parseFloat($('hTotal').value)/sh);
+  const tot0=parseFloat($('hTotal').value);
+  const av=(tot0>0&&sh>0)?tot0/sh:NaN;
   const own=!editHold&&$('hCode').value.trim()
     ? holdings().find(x=>x.code===$('hCode').value.trim().toUpperCase()) : null;
   $('aDir').style.display = own?'grid':'none';
   if(!own&&aDir!=='add') setDirQuiet('add');
   const cutting = !!own && aDir==='sub';
-  $('aCostMode').style.display = cutting?'none':'grid';
-  $('aAvgWrap').style.display  = (cutting||aCostMode!=='avg')?'none':'';
-  $('aTotalWrap').style.display= (cutting||aCostMode!=='total')?'none':'';
+  $('aTotalWrap').style.display= cutting?'none':'';
   $('aCashWrap').style.display = cutting?'':'none';
   if(cutting&&q&&sh>0&&!$('hCash').value) $('hCash').placeholder='參考市價 '+money(q.c*sh);
   $('hName').innerHTML = $('hCode').value.trim()
@@ -1978,9 +1964,9 @@ function holdPrev(){
     $('hPrev').innerHTML=(own?'加完後共 <b>'+money(tot)+'</b> 股　市值<b>':'市值<b>')+money(v)+'</b>'+
       (navg>0?'<span style="font-size:12.5px">　均價 '+navg.toLocaleString('en-US',{maximumFractionDigits:2})+'</span>':'')+
       (pl!==null?'<span style="font-size:12.5px" class="'+(pl>=0?'up':'down')+'">　損益 '+(pl>=0?'+':'-')+money(Math.abs(pl))+'</span>':'');
-  } else $('hPrev').innerHTML=cutting?'填要減幾股':'填代碼與股數後會算市值';
+  } else $('hPrev').innerHTML=cutting?'填要減幾股與賣出總金額':'填代碼、股數與總成本';
 }
-['hCode','hShares','hAvg','hTotal','hCash','oValue','oCost'].forEach(id=>$(id).addEventListener('input',holdPrev));
+['hCode','hShares','hTotal','hCash','oValue','oCost'].forEach(id=>$(id).addEventListener('input',holdPrev));
 
 function openHold(id,type){
   editHold=id||null;
@@ -1989,9 +1975,9 @@ function openHold(id,type){
   $('holdTitle').textContent=id?'修改資產':'新增資產';
   $('aKinds').style.display=id?'none':'';
   setAType(type||(o?'other':'stock'));
-  setCostMode('avg'); setDirQuiet('add');
-  $('hCode').value=h?h.code:''; $('hShares').value=h?h.shares:''; $('hAvg').value=h&&h.avg?h.avg:'';
-  $('hTotal').value=''; $('hCash').value=''; $('oName').value=o?o.name:''; $('oValue').value=o?o.value:''; $('oCost').value=o&&o.cost?o.cost:'';
+  setDirQuiet('add');
+  $('hCode').value=h?h.code:''; $('hShares').value=h?h.shares:'';
+  $('hTotal').value=(h&&h.avg&&h.shares)?Math.round(h.avg*h.shares):''; $('hCash').value=''; $('oName').value=o?o.name:''; $('oValue').value=o?o.value:''; $('oCost').value=o&&o.cost?o.cost:'';
   holdPrev(); open('vHold');
 }
 $('btnAddAsset').onclick=()=>openHold(null);
@@ -2010,9 +1996,8 @@ $('saveHold').onclick=()=>{
   const code=$('hCode').value.trim().toUpperCase(), sh=parseFloat($('hShares').value);
   if(!code){ toast('填股票代碼'); return; }
   if(isNaN(sh)||sh<=0){ toast('股數要大於 0'); return; }
-  let av;
-  if(aCostMode==='avg'){ av=parseFloat($('hAvg').value); }
-  else{ const t=parseFloat($('hTotal').value); av=(!isNaN(t)&&t>0)?t/sh:NaN; }
+  const t=parseFloat($('hTotal').value);
+  let av=(!isNaN(t)&&t>0)?t/sh:NaN;
   av=isNaN(av)?0:av;
   const hs=holdings().slice();
   let msg='加了 '+code;
@@ -2026,10 +2011,11 @@ $('saveHold').onclick=()=>{
       /* 減碼：股數扣掉，均價不動，減光就移除 */
       const h=hs[i], left=h.shares-sh;
       if(left<-0.0001){ SFX.play('err'); toast(code+' 只有 '+money(h.shares)+' 股，減不了這麼多'); return; }
+      if(!(parseFloat($('hCash').value)>0)){ SFX.play('err'); toast('要填賣出總金額'); return; }
       if(left<=0.0001){ hs.splice(i,1); msg=code+' 已出清'; }
       else{ hs[i]=Object.assign({},h,{shares:left,ts:Date.now()}); msg=code+' 減到 '+money(left)+' 股'; }
       const cash=parseFloat($('hCash').value);
-      if(cash>0){
+      {
         db.records.push({id:uid(),ts:Date.now(),date:todayStr(),kind:'in',amount:cash,
           cat:STOCK,code,shares:sh,asset:1,note:''});
         const rp=h.avg>0?cash-h.avg*sh:null;
