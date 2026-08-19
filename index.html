@@ -722,7 +722,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   </div>
   <div class="two">
     <div class="f"><label>日期</label><input type="date" id="rDate"></div>
-    <div class="f"><label id="rAmtLabel">存入多少</label><input type="number" id="rAmt" placeholder="金額" step="1" inputmode="decimal"></div>
+    <div class="f"><label id="rAmtLabel">存入多少</label><input type="number" id="rAmt" placeholder="" step="1" inputmode="decimal"></div>
   </div>
   <div class="f" id="rCatWrap"><label>類別</label><div class="cats" id="rCats"></div></div>
   <div class="f"><label>備註（可留白）</label><input type="text" id="rNote" placeholder="跟誰、買什麼…"></div>
@@ -770,19 +770,19 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   </div>
 
   <div id="aStock">
-    <div class="f"><label>股票代碼</label><input type="text" id="hCode" placeholder="2330" maxlength="6"></div>
+    <div class="f"><label>股票代碼</label><input type="text" id="hCode" placeholder="" maxlength="6"></div>
     <div class="quickpick" id="hQuick"></div>
     <div class="say" id="hName" style="margin:-6px 0 12px;min-height:20px"></div>
     <div class="kinds" id="aDir" style="grid-template-columns:1fr 1fr;display:none;margin:2px 0 12px">
       <button data-dir="add" class="on">加碼</button>
       <button data-dir="sub">減碼</button>
     </div>
-    <div class="f"><label id="hSharesLabel">股數</label><input type="number" id="hShares" placeholder="1000" step="1" inputmode="decimal"></div>
+    <div class="f"><label id="hSharesLabel">股數</label><input type="number" id="hShares" placeholder="" step="1" inputmode="decimal"></div>
     <div class="f" id="aTotalWrap"><label>買入總成本</label>
-      <input type="number" id="hTotal" placeholder="750000" step="1" inputmode="decimal">
+      <input type="number" id="hTotal" placeholder="" step="1" inputmode="decimal">
       <div class="say" style="margin-top:6px">均價會用總成本除以股數自動算。</div></div>
     <div class="f" id="aCashWrap" style="display:none"><label>賣出總金額</label>
-      <input type="number" id="hCash" placeholder="扣完手續費實際入帳" step="1" inputmode="decimal">
+      <input type="number" id="hCash" placeholder="" step="1" inputmode="decimal">
       <div class="say" style="margin-top:6px">會自動記一筆現金收入，並算出這次的已實現損益。</div></div>
   </div>
 
@@ -793,7 +793,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
     <label class="chk" id="oQtyChk"><input type="checkbox" id="oHasQty"><span></span>
       這筆有數量（黃金幾兩、幣幾顆、外幣幾元…）</label>
     <div class="two" id="oQtyWrap" style="display:none">
-      <div class="f"><label id="oQtyLabel">數量</label><input type="number" id="oQty" placeholder="10" step="any" inputmode="decimal"></div>
+      <div class="f"><label id="oQtyLabel">數量</label><input type="number" id="oQty" placeholder="" step="any" inputmode="decimal"></div>
       <div class="f"><label>單位（可留白）</label><input type="text" id="oUnit" placeholder="兩、顆、股…" maxlength="4"></div>
     </div>
     <div class="kinds" id="oDir" style="grid-template-columns:1fr 1fr;display:none;margin:2px 0 12px">
@@ -801,8 +801,8 @@ html[data-skin="light"] .logbar input{color-scheme:light}
       <button data-odir="sub">減碼</button>
     </div>
     <div class="two">
-      <div class="f"><label id="oValueLabel">目前價值</label><input type="number" id="oValue" placeholder="500000" step="1" inputmode="decimal"></div>
-      <div class="f" id="oCostWrap"><label id="oCostLabel">當初成本（可留白）</label><input type="number" id="oCost" placeholder="450000" step="1" inputmode="decimal"></div>
+      <div class="f"><label id="oValueLabel">目前價值</label><input type="number" id="oValue" placeholder="" step="1" inputmode="decimal"></div>
+      <div class="f" id="oCostWrap"><label id="oCostLabel">當初成本（可留白）</label><input type="number" id="oCost" placeholder="" step="1" inputmode="decimal"></div>
     </div>
     <div class="f" id="oCashWrap" style="display:none"><label>換回總金額</label>
       <input type="number" id="oCash" placeholder="實際入帳多少" step="1" inputmode="decimal">
@@ -820,12 +820,12 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   <div class="say">設好之後，記帳時類別選「貸款」再指定是哪一筆，已還金額就會自己累加。</div>
   <div class="f"><label>名稱</label><input type="text" id="lName" placeholder="房貸、車貸、信貸…" maxlength="10"></div>
   <div class="two">
-    <div class="f"><label>貸款總額</label><input type="number" id="lTotal" placeholder="1200000" step="1" inputmode="decimal"></div>
-    <div class="f"><label>每月應繳</label><input type="number" id="lMonthly" placeholder="20000" step="1" inputmode="decimal"></div>
+    <div class="f"><label>貸款總額</label><input type="number" id="lTotal" placeholder="" step="1" inputmode="decimal"></div>
+    <div class="f"><label>每月應繳</label><input type="number" id="lMonthly" placeholder="" step="1" inputmode="decimal"></div>
   </div>
   <div class="two">
     <div class="f"><label>開始還款</label><input type="month" id="lFrom"></div>
-    <div class="f"><label>已還金額（選填）</label><input type="number" id="lPaid" placeholder="0" step="1" inputmode="decimal"></div>
+    <div class="f"><label>已還金額（選填）</label><input type="number" id="lPaid" placeholder="" step="1" inputmode="decimal"></div>
   </div>
   <div class="say">「已還金額」是你在用這個 app 之前就還掉的部分，之後記帳的會自動加上去。</div>
   <div class="dfoot"><button class="btn ghost" data-close>取消</button><button class="btn go" id="saveLoan">儲存</button></div>
@@ -835,7 +835,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   <h3>設定每個月存款目標</h3>
   <div class="say">之後變寬裕想調高，直接設一個新的生效月份就好，以前的打卡紀錄不會被動到。</div>
   <div class="two">
-    <div class="f"><label>每個月要存</label><input type="number" id="tAmt" placeholder="20000" step="1" inputmode="decimal"></div>
+    <div class="f"><label>每個月要存</label><input type="number" id="tAmt" placeholder="" step="1" inputmode="decimal"></div>
     <div class="f"><label>從哪個月開始</label><input type="month" id="tFrom"></div>
   </div>
   <div class="say" id="tHint" style="margin:0 0 10px"></div>
@@ -925,9 +925,13 @@ function load(){
     if(d){
       const cut=Date.now()-180*86400000, del={};
       Object.entries(d.deleted||{}).forEach(([k,v])=>{ if(v>cut) del[k]=v; });  /* 半年前的刪除記號就不用留了 */
-      return {records:d.records||[],goals:d.goals||[],settings:d.settings||{},deleted:del};
+      const st=d.settings||{}, used=(d.records||[]).length>0;
+      /* 沒設定過的話：已經在記帳的人沿用原本開著的狀態，全新的人一律關起來 */
+      if(st.showLoan===undefined)   st.showLoan=used;
+      if(st.splitStock===undefined) st.splitStock=used;
+      return {records:d.records||[],goals:d.goals||[],settings:st,deleted:del};
     }}catch(e){}
-  return {records:[],goals:[],settings:{},deleted:{}};
+  return {records:[],goals:[],settings:{showLoan:false,splitStock:false},deleted:{}};
 }
 /* 存本機，順便推一份到雲端（沒開同步就只存本機） */
 function save(){
@@ -2044,7 +2048,6 @@ function holdPrev(){
   $('payChkWrap').style.display = (editHold||cutting)?'none':'flex';
   $('aTotalWrap').style.display= cutting?'none':'';
   $('aCashWrap').style.display = cutting?'':'none';
-  if(cutting&&q&&sh>0&&!$('hCash').value) $('hCash').placeholder='參考市價 '+money(q.c*sh);
   $('hName').innerHTML = $('hCode').value.trim()
     ? (q?'<b style="color:var(--cyan)">'+esc(q.n)+'</b>　收盤 '+q.c.toFixed(2)
         :'<span style="color:var(--gold)">查不到這個代碼，還是可以存，之後抓得到就會顯示</span>')
@@ -2509,7 +2512,7 @@ function setKind(k){
   $('rSay').textContent=k==='in'?'這次存進去多少，餘額自動加上去。'
     :k==='out'?'這次花掉多少，餘額自動扣掉。'
     :'直接把餘額改成銀行上看到的數字。';
-  $('rAmt').placeholder=k==='set'?'現在戶頭的總數':'金額';
+  $('rAmt').placeholder='';
   rCat=''; rCustom=false; renderCats();
   updatePrev();
 }
@@ -2753,7 +2756,7 @@ $('btnReset').onclick=()=>{
   const t=Date.now(), tomb=Object.assign({},db.deleted||{});
   db.records.forEach(x=>tomb[x.id]=t);
   db.goals.forEach(x=>tomb[x.id]=t);
-  db={records:[],goals:[],settings:{updatedAt:t},deleted:tomb};
+  db={records:[],goals:[],settings:{updatedAt:t,showLoan:false,splitStock:false},deleted:tomb};
   save();
   if(window.CLOUD&&CLOUD.user) CLOUD.push();   /* 立刻推，別等 900ms */
   shown=0; shut(); render(); toast('已清空');
