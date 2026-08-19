@@ -416,6 +416,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   background:rgba(255,194,51,.16);color:var(--gold);font-weight:700;font-size:12px;margin-right:6px}
 .fri .ops{display:flex;gap:6px;flex:none}
 .friempty{color:var(--txt3);font-size:13.5px;padding:14px 2px}
+.fridiag{margin-top:12px;padding-top:10px;border-top:1px dashed var(--edge);font-size:11.5px;color:var(--txt3);line-height:1.6}
 .grantrow{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--edge)}
 .grantrow .gi{flex:1}
 .grantrow b{display:block;font-size:14.5px;font-weight:600}
@@ -2390,7 +2391,13 @@ function renderFriends(){
         '<button class="iq del" data-unfri="'+f.uid+'" title="移除好友"><svg class="i"><use href="#i-x"/></svg></button>'+
       '</span></div>';
   }).join('');
-  box.innerHTML=html+'</div>';
+  const me=CLOUD.user?(CLOUD.user.email||CLOUD.user.uid):'（未登入）';
+  box.innerHTML=html+'</div>'+
+    '<div class="fridiag">目前登入：'+esc(me)+
+    '　收到的邀請：'+REQS.length+' 筆'+
+    '　好友：'+FRIENDS.length+' 位'+
+    (CLOUD.err?'<br><span style="color:var(--red)">雲端錯誤：'+esc(CLOUD.err)+'</span>':'　狀態正常')+
+    '</div>';
 }
 let grantFor=null;
 function openGrant(uid){
@@ -2834,24 +2841,30 @@ window.CLOUD={
     const {F}=this.api;
     const q=F.query(F.collection(this.api.fs,'publicProfiles'),
                     F.where('email','==',String(email).trim().toLowerCase()));
-    const snap=await F.getDocs(q);
+    let snap;
+    try{ snap=await F.getDocs(q); }
+    catch(e){ throw new Error('查名冊失敗：'+(e.code||e.message)); }
     let hit=null; snap.forEach(d=>{ if(!hit) hit=d.data(); });
     return hit;
   },
   async sendRequest(email){
     const me=this.user;
     if(!me) return {err:'還沒登入'};
-    const target=await this.findByEmail(email);
+    let target;
+    try{ target=await this.findByEmail(email); }
+    catch(e){ return {err:e.message}; }
     if(!target) return {err:'找不到這個信箱，請對方先登入一次'};
     if(target.uid===me.uid) return {err:'這是你自己'};
     if(FRIENDS.some(f=>f.uid===target.uid)) return {err:'你們已經是好友了'};
     const {F}=this.api;
     const id=[me.uid,target.uid].sort().join('__');
+    try{
     await F.setDoc(F.doc(this.api.fs,'friendRequests',id),{
       from:me.uid, fromEmail:(me.email||'').toLowerCase(), fromName:db.settings.name||me.displayName||'某人',
       to:target.uid, toEmail:target.email, toName:target.name||'',
       status:'pending', ts:Date.now()
     });
+    }catch(e){ return {err:'寫入失敗：'+(e.code||e.message)}; }
     return {ok:target.name||target.email};
   },
   watchRequests(){
