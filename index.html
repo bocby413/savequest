@@ -91,6 +91,12 @@ svg.i{width:1em;height:1em;fill:currentColor;vertical-align:-.13em}
   background:linear-gradient(180deg,var(--gold),var(--gold2));color:#3a2600;font-weight:800;font-size:14px;
   border:3px solid var(--panel);box-shadow:0 2px 6px rgba(0,0,0,.3)}
 .lvchip small{font-size:9px;letter-spacing:.5px}
+.titlepick{display:flex;flex-wrap:wrap;gap:7px;max-height:150px;overflow-y:auto;padding:2px}
+.titlepick button{font:inherit;font-size:13px;padding:6px 12px;border-radius:99px;cursor:pointer;
+  background:var(--panel2);border:1.5px solid var(--edge);color:var(--txt2);
+  transition:color .14s,border-color .14s,background-color .14s}
+.titlepick button:hover{color:var(--txt)}
+.titlepick button.on{border-color:var(--gold);background:rgba(255,194,51,.16);color:var(--gold);font-weight:700}
 .avapick{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:6px}
 .avapick button{aspect-ratio:1;border-radius:50%;border:2.5px solid var(--edge);background:var(--panel2);cursor:pointer;
   display:grid;place-items:center;padding:5px;transition:color .15s,background-color .15s,border-color .15s,opacity .15s,transform .15s,box-shadow .15s,filter .15s}
@@ -748,17 +754,12 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   <h3>換頭貼</h3>
   <div class="say">挑一個角色，或上傳自己的照片。</div>
   <div class="f"><label>暱稱</label><input type="text" id="aName" placeholder="想怎麼稱呼自己" maxlength="12"></div>
+  <div class="f"><label>稱號</label><div class="titlepick" id="titlePick"></div>
+    <div class="say" id="titleHint" style="margin-top:6px"></div></div>
   <div class="f"><label>選一個角色</label><div class="avapick" id="avaPick"></div></div>
   <button class="btn sm" id="btnPhoto" style="width:100%"><svg class="i"><use href="#i-cam"/></svg> 上傳照片（存在這台電腦）</button>
   <input type="file" id="filePhoto" accept="image/*" hidden>
   <div class="dfoot"><button class="btn ghost" data-close>取消</button><button class="btn go" id="saveAva">好了</button></div>
-</div></div>
-
-<div class="veil" id="vLevels"><div class="dlg">
-  <h3>等級表</h3>
-  <div class="say">看的是「目前總存款」，跨過門檻就升級，不會往回掉。</div>
-  <div id="levelList" style="max-height:52vh;overflow:auto"></div>
-  <div class="dfoot"><button class="btn ghost" data-close>關閉</button></div>
 </div></div>
 
 <div class="veil" id="vHold"><div class="dlg">
@@ -850,8 +851,6 @@ html[data-skin="light"] .logbar input{color-scheme:light}
     <button class="sw" id="swLoan" role="switch"><i></i></button></div>
   <div class="setrow"><div class="lb"><b>股票當沖分開算</b><span>關掉的話當沖併進日常收支，也不用選 1～5 號策略</span></div>
     <button class="sw" id="swStock" role="switch"><i></i></button></div>
-  <div class="setrow"><div class="lb"><b>等級表</b><span>一百級的門檻與稱號</span></div>
-    <button class="btn sm ghost" id="btnLevels">看等級表</button></div>
   <div class="setrow"><div class="lb"><b>音效</b><span>記帳、升級、完成任務的聲音</span></div>
     <button class="btn sm ghost" id="btnSfx"><svg class="i" id="sfxIcon"><use href="#i-vol"/></svg></button></div>
   <div class="setrow"><div class="lb"><b>畫面</b><span>深色或亮色</span></div>
@@ -1140,6 +1139,12 @@ function levelAt(cur){
   return {lv:1,base:0,next:lvThreshold(2)};
 }
 const levelTitle=lv=>TITLES[Math.max(0,Math.min(TITLES.length-1,lv-1))];
+/* 自己挑的稱號，只有已經解鎖的才算數，沒挑就用目前等級的 */
+function myTitle(){
+  const lv=levelAt(assets()).lv, t=db.settings.title;
+  if(t){ const i=TITLES.indexOf(t); if(i>=0&&i<lv) return t; }
+  return levelTitle(lv);
+}
 function levelInfo(){
   const cur=assets(), L=levelAt(cur), step=L.next-L.base;
   return {lv:L.lv,step,base:L.base,next:L.next,into:cur-L.base,
@@ -1232,9 +1237,30 @@ function renderPick(){
   if(cur.type==='photo'&&cur.data) h+='<button class="photo sel" data-ava="photo"><img src="'+cur.data+'" alt=""></button>';
   $('avaPick').innerHTML=h;
 }
+let titleOrder=[], tempTitle=null;
+function shuffle(a){
+  const r=a.slice();
+  for(let i=r.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [r[i],r[j]]=[r[j],r[i]]; }
+  return r;
+}
+function renderTitlePick(){
+  const cur=tempTitle||myTitle();
+  $('titlePick').innerHTML=titleOrder.map(t=>
+    '<button type="button" data-title="'+esc(t)+'" class="'+(t===cur?'on':'')+'">'+esc(t)+'</button>').join('');
+  $('titleHint').textContent='已經解鎖 '+titleOrder.length+' 個稱號，挑一個掛在名字旁邊，好友也會看到這個。';
+}
+$('titlePick').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-title]'); if(!b) return;
+  tempTitle=b.dataset.title;
+  $('titlePick').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+  SFX.play('tick');
+});
 function openAva(){
   tempAva=db.settings.avatar?JSON.parse(JSON.stringify(db.settings.avatar)):null;
   $('aName').value=db.settings.name||'';
+  tempTitle=null;
+  titleOrder=shuffle(TITLES.slice(0,levelAt(assets()).lv));   /* 每次打亂，看不出誰值多少錢 */
+  renderTitlePick();
   renderPick(); open('vAva');
 }
 $('ava').onclick=openAva;
@@ -1253,6 +1279,7 @@ $('filePhoto').onchange=e=>{
 $('saveAva').onclick=()=>{
   const back=db.settings.avatar;
   db.settings.name=$('aName').value.trim();
+  if(tempTitle) db.settings.title=tempTitle;
   if(tempAva) db.settings.avatar=tempAva;
   try{ save(); }
   catch(err){ db.settings.avatar=back; toast('照片太大存不下，換一張小一點的'); return; }
@@ -1269,7 +1296,7 @@ function renderHud(){
   $('avaRing').style.setProperty('--p',L.pct.toFixed(1)+'%');
   $('avaPic').innerHTML=avaHTML(db.settings.avatar);
   const nick=db.settings.name?esc(db.settings.name)+'　':'';
-  $('lvWho').innerHTML=nick+'<b>'+levelTitle(L.lv)+'</b>';
+  $('lvWho').innerHTML=nick+'<b>'+esc(myTitle())+'</b>';
   $('lvNext').textContent=cur>=L.next?'':'距 Lv.'+(L.lv+1)+' 還差 '+money(L.next-cur);
   $('xp').innerHTML=cellBar(L.pct,20,'',5,'xp');
   $('xpL').innerHTML='<b>'+money(L.base)+'</b>';
@@ -2318,27 +2345,7 @@ $('saveLoan').onclick=()=>{
 };
 $('btnAddLoan').onclick=()=>openLoan(null);
 
-function renderLevels(){
-  const cur=assets(), L=levelInfo(), here=L.lv;
-  const marks=new Set([1,LVMAX]);
-  for(let n=10;n<LVMAX;n+=10) marks.add(n);
-  for(let n=here-2;n<=here+2;n++) if(n>=1&&n<=LVMAX) marks.add(n);
-  const list=[...marks].sort((a,b)=>a-b);
-  let html='<div class="lvnow">目前 <b>Lv.'+here+'</b> '+levelTitle(here)+
-    (L.max?'　已經滿等':'　距 Lv.'+(here+1)+' 還差 '+money(L.next-cur))+'</div>';
-  let prev=0;
-  html+=list.map(n=>{
-    const base=lvThreshold(n), gap=prev>0&&n-prev>1;
-    prev=n;
-    return (gap?'<div class="lvgap">⋯</div>':'')+
-      '<div class="lvrow '+(n===here?'now':(n<here?'passed':''))+'">'+
-      '<span class="n">Lv.'+n+'</span><span class="t">'+levelTitle(n)+'</span>'+
-      '<span class="g">'+(base?money(base)+' 起':'0 起')+'</span></div>';
-  }).join('');
-  $('levelList').innerHTML=html+
-    '<div class="say" style="margin-top:10px">共 '+LVMAX+' 級，滿等 '+short(LVTOP)+
-    '，看的是現金加資產的總額。</div>';
-}
+
 
 /* 打卡統計，分享給好友時會用到 */
 function calStats(){
@@ -2355,6 +2362,17 @@ function calStats(){
   const yr=d.getFullYear(), list=ms.filter(x=>x.y===yr&&x.real);
   return {streak, hit:list.filter(x=>x.delta>=targetAt(x.y,x.m)).length, has:list.length,
           monthDelta:cur?cur.delta:0};
+}
+/* 最後一次上線：剛剛、幾分鐘前、幾小時前、幾天前 */
+function seenText(ts){
+  const m=Math.floor((Date.now()-ts)/60000);
+  if(m<5) return '剛剛在線';
+  if(m<60) return m+' 分鐘前上線';
+  const h=Math.floor(m/60);
+  if(h<24) return h+' 小時前上線';
+  const dd=Math.floor(h/24);
+  if(dd<30) return dd+' 天前上線';
+  return new Date(ts).toLocaleDateString('zh-TW')+' 上線';
 }
 function friAvatar(a){
   if(a&&a.type==='photo'&&a.data) return '<img src="'+a.data+'" alt="">';
@@ -2390,6 +2408,7 @@ function renderFriends(){
     if(!bits.length) bits.push('<span style="color:var(--txt3)">'+
       (d?'對方沒有分享其他資訊':'等對方開啟 app 後才會同步進度')+'</span>');
     const p=PROFILES[f.uid]||{};
+    if(p.lastSeen) bits.push('<span style="color:var(--txt3)">'+seenText(p.lastSeen)+'</span>');
     return '<div class="fri"><div class="pic">'+friAvatar((d&&d.avatar)||p.avatar)+'</div>'+
       '<div class="info"><div class="nm">'+esc((d&&d.name)||p.name||f.name||f.email)+'</div>'+
       '<div class="sub">'+bits.join('　')+'</div></div>'+
@@ -2616,7 +2635,6 @@ document.body.addEventListener('click',e=>{
   if(b.id==='btnAddGoal'||b.id==='btnAddGoal2') return open('vGoal');
   if(b.id==='btnTarget2') return openTarget();
   if(b.id==='btnMore'){ SFX.play('tick'); return open('vMore'); }
-  if(b.id==='btnLevels'){ renderLevels(); return open('vLevels'); }
   if(b.dataset.lp){ logPage=+b.dataset.lp; renderLog();
     document.querySelector('.logbar').scrollIntoView({block:'nearest'}); return; }
   if(b.dataset.lq){
@@ -2850,6 +2868,7 @@ window.CLOUD={
         email:(this.user.email||'').toLowerCase(),
         name:db.settings.name||this.user.displayName||'某人',
         avatar:db.settings.avatar||null,
+        lastSeen:Date.now(),
         updatedAt:Date.now()
       });                       /* 等級屬於授權內容，放在 shares 裡，不放名冊 */
     }catch(e){ this.err=e.code||'名冊寫入失敗'; this.paint(); }
@@ -2953,7 +2972,7 @@ window.CLOUD={
       const data={owner:me,viewer:f.uid,updatedAt:Date.now(),
         name:db.settings.name||'某人', avatar:db.settings.avatar||null,
         grant:g};
-      if(g.lv) data.title=levelTitle(L.lv);      /* 只給稱號，等級數字不外流 */
+      if(g.lv) data.title=myTitle();             /* 只給稱號，等級數字不外流 */
       if(g.streak){ const c=calStats(); data.streak=c.streak; data.hit=c.hit; data.has=c.has; }
       if(g.goals){ data.goalsDone=db.goals.filter(x=>x.done).length; data.goalsAll=db.goals.length; }
       if(g.month){ const c=calStats(); data.monthDelta=c.monthDelta; data.target=targetNow(); }
@@ -3059,7 +3078,13 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
           }
         });
       });
-      const check=()=>{ if(document.visibilityState==='visible') reg.update().catch(()=>{}); };
+      const check=()=>{
+        if(document.visibilityState!=='visible') return;
+        reg.update().catch(()=>{});
+        if(window.CLOUD&&CLOUD.user&&Date.now()-(CLOUD.seenAt||0)>600000){   /* 十分鐘更新一次上線時間 */
+          CLOUD.seenAt=Date.now(); CLOUD.publishProfile();
+        }
+      };
       document.addEventListener('visibilitychange',check);   /* 每次切回來看一下有沒有新版 */
       setInterval(check,30*60*1000);
     }).catch(()=>{});
