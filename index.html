@@ -403,6 +403,27 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .empty{padding:30px 22px;color:var(--txt3);font-size:14px}
 .empty b{display:block;color:var(--txt2);font-size:15.5px;font-weight:700;margin-bottom:4px}
 
+/* ── 這個月的聲音：舞台上的動物 ── */
+.stage{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:10px;padding:6px 0 10px;
+  border-radius:14px;background:radial-gradient(ellipse at 50% 72%,var(--panel2) 0%,transparent 66%)}
+.stage>svg{width:150px;height:150px;overflow:visible;flex:none}
+.breathe{animation:chBreathe 3.4s ease-in-out infinite;transform-origin:60px 108px}
+.playing .breathe{animation:none}
+@keyframes chBreathe{0%,100%{transform:scaleY(1) translateY(0)}50%{transform:scaleY(1.025) translateY(-2px)}}
+.ch{transform-origin:60px 108px;transition:transform .09s cubic-bezier(.3,1.5,.5,1)}
+.armL,.armR{transition:transform .11s cubic-bezier(.3,1.5,.5,1)}
+.armL{transform-origin:33px 74px} .armR{transform-origin:87px 74px}
+.chpick{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.chpick button{width:34px;height:34px;border-radius:50%;padding:0;cursor:pointer;
+  background:var(--panel2);border:2px solid var(--edge);display:grid;place-items:center;
+  transition:border-color .14s,background-color .14s,transform .14s}
+.chpick button:hover{transform:translateY(-2px)}
+.chpick button.on{border-color:var(--gold);background:rgba(255,194,51,.18)}
+.chpick svg{width:26px;height:26px;overflow:visible}
+.zz{font:700 15px system-ui;fill:var(--txt3)}
+@media(max-width:560px){ .stage>svg{width:126px;height:126px}
+  .chpick button{width:32px;height:32px} .chpick svg{width:24px;height:24px} }
+
 /* ── 這個月的聲音 ── */
 .tune{display:flex;align-items:stretch;gap:2px;height:132px;margin:16px 0 6px;position:relative}
 .tune::before{content:'';position:absolute;left:0;right:0;top:50%;border-top:1px dashed var(--edge);pointer-events:none}
@@ -1437,6 +1458,81 @@ function renderQuest(){
 const PENTA=[130.81,146.83,164.81,196.00,220.00,
              261.63,293.66,329.63,392.00,440.00,
              523.25,587.33,659.25,783.99,880.00,1046.50];
+/* ── 舞台上的動物：共用同一副骨架，只換輪廓與五官位置 ── */
+const TCHARS=[
+  {k:'cat',  n:'貓',   c:'#ffc98a', d:'#f2a65a', ink:'#3a2a1a', bel:'#fff0d8', ey:62, gap:12, my:80},
+  {k:'shiba',n:'柴犬', c:'#e8b877', d:'#cf9a55', ink:'#3a2a1a', bel:'#fff6e6', ey:62, gap:12, my:80},
+  {k:'peng', n:'企鵝', c:'#3b4370', d:'#2a3058', ink:'#12142a', bel:'#f7f4ec', ey:56, gap:11, my:72},
+  {k:'rab',  n:'兔子', c:'#efe4f7', d:'#ffb6c9', ink:'#4a3550', bel:'#fffaff', ey:62, gap:12, my:80},
+  {k:'panda',n:'熊貓', c:'#f5f3ef', d:'#2b2b33', ink:'#2b2b33', bel:'#ffffff', ey:62, gap:13, my:81},
+  {k:'frog', n:'青蛙', c:'#7ed957', d:'#5aa83c', ink:'#22501b', bel:'#d8f5c0', ey:41, gap:16, my:78}
+];
+const tchar=()=>TCHARS.find(x=>x.k===db.settings.tuneChar)||TCHARS[0];
+/* 身體後面的東西：耳朵、尾巴、花紋 */
+function chBack(a){
+  if(a.k==='cat')   return '<path d="M32 44 27 20l19 11zM88 44 93 20 74 31z" fill="'+a.d+'"/>';
+  if(a.k==='shiba') return '<ellipse cx="30" cy="52" rx="10" ry="15" fill="'+a.d+'"/>'+
+                           '<ellipse cx="90" cy="52" rx="10" ry="15" fill="'+a.d+'"/>'+
+                           '<path d="M96 88q16-4 12-20" stroke="'+a.d+'" stroke-width="9" fill="none" stroke-linecap="round"/>';
+  if(a.k==='peng')  return '';                       /* 鰭放在手的群組裡才揮得動 */
+  if(a.k==='rab')   return '<ellipse cx="45" cy="26" rx="8" ry="22" fill="'+a.c+'"/>'+
+                           '<ellipse cx="75" cy="26" rx="8" ry="22" fill="'+a.c+'"/>'+
+                           '<ellipse cx="45" cy="28" rx="4" ry="15" fill="'+a.d+'"/>'+
+                           '<ellipse cx="75" cy="28" rx="4" ry="15" fill="'+a.d+'"/>';
+  if(a.k==='panda') return '<circle cx="33" cy="44" r="12" fill="'+a.d+'"/><circle cx="87" cy="44" r="12" fill="'+a.d+'"/>';
+  return '<circle cx="42" cy="42" r="15" fill="'+a.c+'"/><circle cx="78" cy="42" r="15" fill="'+a.c+'"/>';  /* 青蛙眼球包 */
+}
+/* 身體前面的花紋 */
+function chFront(a){
+  if(a.k==='peng')  return '<ellipse cx="60" cy="76" rx="21" ry="26" fill="'+a.bel+'"/>';
+  if(a.k==='panda') return '<ellipse cx="49" cy="62" rx="10" ry="12" fill="'+a.d+'"/>'+
+                           '<ellipse cx="71" cy="62" rx="10" ry="12" fill="'+a.d+'"/>';
+  if(a.k==='frog')  return '<ellipse cx="60" cy="84" rx="20" ry="14" fill="'+a.bel+'"/>';
+  return '<ellipse cx="60" cy="84" rx="16" ry="13" fill="'+a.bel+'"/>';
+}
+/* 五官：一個表情換一組 */
+function chFace(a,e){
+  const L=60-a.gap, R=60+a.gap, y=a.ey, ink=a.ink, sw=' stroke="'+ink+'" fill="none" stroke-linecap="round"';
+  let eyes;
+  if(e==='joy'||e==='up')      eyes='<path d="M'+(L-6)+' '+(y+2)+'q6-8 12 0M'+(R-6)+' '+(y+2)+'q6-8 12 0"'+sw+' stroke-width="3"/>';
+  else if(e==='sleep'||e==='blink') eyes='<path d="M'+(L-6)+' '+y+'h12M'+(R-6)+' '+y+'h12"'+sw+' stroke-width="3"/>';
+  else if(e==='bad')           eyes='<path d="M'+(L-5)+' '+(y-5)+'l10 10M'+(L+5)+' '+(y-5)+'l-10 10'+
+                                    'M'+(R-5)+' '+(y-5)+'l10 10M'+(R+5)+' '+(y-5)+'l-10 10"'+sw+' stroke-width="3"/>';
+  else if(e==='down')          eyes='<circle cx="'+L+'" cy="'+(y+1)+'" r="4" fill="'+ink+'"/>'+
+                                    '<circle cx="'+R+'" cy="'+(y+1)+'" r="4" fill="'+ink+'"/>'+
+                                    '<path d="M'+(L-7)+' '+(y-7)+'q7-3 13 1M'+(R-6)+' '+(y-6)+'q6-4 13-1"'+sw+' stroke-width="2.4"/>';
+  else if(e==='win')           eyes=[L,R].map(x=>'<path d="M'+x+' '+(y-8)+'l2.6 5.4 5.8.8-4.2 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.2-4.1 5.8-.8z" fill="'+ink+'"/>').join('');
+  else                         eyes='<circle cx="'+L+'" cy="'+y+'" r="4.5" fill="'+ink+'"/>'+
+                                    '<circle cx="'+R+'" cy="'+y+'" r="4.5" fill="'+ink+'"/>';
+  const m=a.my;
+  let mouth;
+  if(a.k==='peng')             mouth='<path d="M60 '+(m-6)+'l-8 6 8 5 8-5z" fill="#f5a623"/>';
+  else if(e==='joy'||e==='win')mouth='<ellipse cx="60" cy="'+(m+2)+'" rx="8" ry="'+(e==='win'?9:7)+'" fill="'+ink+'"/>'+
+                                     '<ellipse cx="60" cy="'+(m+6)+'" rx="4.5" ry="3" fill="#ff7a9c"/>';
+  else if(e==='up')            mouth='<path d="M52 '+m+'q8 8 16 0"'+sw+' stroke-width="3"/>';
+  else if(e==='down'||e==='sad')mouth='<path d="M52 '+(m+4)+'q8-8 16 0"'+sw+' stroke-width="3"/>';
+  else if(e==='bad')           mouth='<ellipse cx="60" cy="'+(m+1)+'" rx="5.5" ry="6" fill="'+ink+'"/>';
+  else if(e==='sleep')         mouth='<ellipse cx="60" cy="'+(m+1)+'" rx="4" ry="5" fill="'+ink+'"/>'+
+                                     '<text class="zz" x="86" y="'+(a.ey-14)+'">z</text>'+
+                                     '<text class="zz" x="96" y="'+(a.ey-26)+'" style="font-size:11px">z</text>';
+  else if(e==='meh')           mouth='<path d="M52 '+(m+1)+'h16"'+sw+' stroke-width="3"/>';
+  else                         mouth='<path d="M54 '+m+'q6 5 12 0"'+sw+' stroke-width="2.8"/>';
+  return eyes+mouth;
+}
+function chSVG(a,e,small){
+  const big=a.k==='peng';
+  const arm ='<ellipse cx="'+(big?26:27)+'" cy="'+(big?80:82)+'" rx="'+(big?9:7.5)+'" ry="'+(big?17:11)+'" fill="'+a.d+'"/>';
+  const armR='<ellipse cx="'+(big?94:93)+'" cy="'+(big?80:82)+'" rx="'+(big?9:7.5)+'" ry="'+(big?17:11)+'" fill="'+a.d+'"/>';
+  return '<svg viewBox="0 0 120 120">'+
+    '<g class="breathe"><g class="ch">'+
+      chBack(a)+
+      '<ellipse cx="46" cy="107" rx="9" ry="6" fill="'+a.d+'"/><ellipse cx="74" cy="107" rx="9" ry="6" fill="'+a.d+'"/>'+
+      '<g class="armL">'+arm+'</g><g class="armR">'+armR+'</g>'+
+      '<ellipse cx="60" cy="70" rx="35" ry="36" fill="'+a.c+'"/>'+
+      chFront(a)+
+      '<g class="face">'+chFace(a,e)+'</g>'+
+    '</g></g></svg>';
+}
 let tuneYM=null, tunePlaying=false, tuneTimers=[];
 function dailyOf(y,m){
   const pre=y+'-'+pad(m+1)+'-', days=new Date(y,m+1,0).getDate();
@@ -1460,6 +1556,7 @@ function dailyOf(y,m){
 }
 function tuneMonths(ms){ return (ms||monthly()).filter(x=>x.real).map(x=>x.y+'-'+pad(x.m+1)); }
 function renderTune(){
+  if(tunePlaying) return;                 /* 演出中不重繪，不然角色會被砍掉重生 */
   const box=$('tuneCard'), ms=monthly(), keys=tuneMonths(ms);
   if(!keys.length){
     box.innerHTML='<div class="setup"><p>記滿一個月，這裡會把那個月的收支變成一段可以播放的旋律。<br>'+
@@ -1483,25 +1580,81 @@ function renderTune(){
     return '<span class="'+(w===1?'wk':'')+'">'+(o.d===1||o.d%5===0?o.d:'')+'</span>';
   }).join('');
   const played=ds.filter(o=>o.n>0).length;
-  box.innerHTML='<div class="calhead tunehead">'+
+  const a=tchar();
+  /* 舞台跟六隻選鈕加起來是七個 SVG，每次重繪都重建會拖慢整個 render()，
+     所以拆成幾塊，角色沒換就整塊留著不動 */
+  if(!$('tuneStage')) box.innerHTML=
+    '<div class="calhead tunehead" id="tuneHead"></div>'+
+    '<div class="stage" id="tuneStage"></div>'+
+    '<div class="tune" id="tuneBars"></div>'+
+    '<div class="tunedays" id="tuneDays"></div>'+
+    '<div class="tunefoot" id="tuneFoot"></div>';
+  const stg=$('tuneStage');
+  if(stg.dataset.char!==a.k){
+    stg.dataset.char=a.k;
+    stg.innerHTML=chSVG(a,'idle')+
+      '<div class="chpick">'+TCHARS.map(x=>
+        '<button data-char="'+x.k+'" class="'+(x.k===a.k?'on':'')+'" title="'+x.n+'">'+
+        chSVG(x,'up',1)+'</button>').join('')+'</div>';
+  }
+  $('tuneHead').innerHTML=
       '<button class="arw" id="tunePrev" '+(i<=0?'disabled':'')+'>◀</button>'+
       '<span class="y">'+y+' / '+(m+1)+'</span>'+
       '<button class="arw" id="tuneNext" '+(i>=keys.length-1?'disabled':'')+'>▶</button>'+
       '<button class="btn sm go" id="btnTune" style="margin-left:auto">'+
-        (tunePlaying?'停止':'播放這個月')+'</button></div>'+
-    '<div class="tune">'+bars+'</div>'+
-    '<div class="tunedays">'+dow+'</div>'+
-    '<div class="tunefoot">'+
+        (tunePlaying?'停止':'播放這個月')+'</button>';
+  $('tuneBars').innerHTML=bars;
+  $('tuneDays').innerHTML=dow;
+  $('tuneFoot').innerHTML=
       '<span>有聲音的日子<b>'+played+' / '+ds.length+' 天</b></span>'+
       '<span>這個月<b class="'+(mrec.delta>=0?'':'down')+'">'+(mrec.delta>=0?'+':'-')+short(Math.abs(mrec.delta))+'</b></span>'+
-      '<span>收尾<b>'+(ok?'完滿和弦':mrec.delta>=0?'停在半空':'下行')+'</b></span>'+
-    '</div>';
+      '<span>收尾<b>'+(ok?'完滿和弦':mrec.delta>=0?'停在半空':'下行')+'</b></span>';
   $('tuneSub').textContent=played?'一天一個音，共 '+ds.length+' 個音':'這個月沒有紀錄';
 }
+/* 一個音對應一個表情與一個姿勢 */
+function exprOf(o){
+  if(o.n===0) return 'sleep';
+  if(o.r>=.55) return 'joy';
+  if(o.r>0)    return 'up';
+  if(o.r===0)  return 'idle';
+  if(o.r>-.55) return 'down';
+  return 'bad';
+}
+const POSE={
+  joy  :{b:'translateY(-15px) scale(1.07,1.09)', l:-138, r:138},
+  up   :{b:'translateY(-8px) scale(1.03,1.04)',  l:-58,  r:58},
+  idle :{b:'translateY(0) scale(1,1)',           l:0,    r:0},
+  down :{b:'translateY(4px) scale(1.03,.95)',    l:22,   r:-22},
+  bad  :{b:'translateY(7px) scale(1.12,.85)',    l:46,   r:-46},
+  sleep:{b:'translateY(2px) scale(1.01,.98)',    l:6,    r:-6},
+  win  :{b:'translateY(-20px) scale(1.05,1.12)', l:-155, r:155},
+  meh  :{b:'translateY(0) scale(1,1)',           l:30,   r:-30},
+  sad  :{b:'translateY(9px) scale(1.14,.8)',     l:52,   r:-52}
+};
+function chPose(name,tilt){
+  const st=$('tuneStage'); if(!st) return;
+  const p=POSE[name]||POSE.idle;
+  const ch=st.querySelector('.ch'), L=st.querySelector('.armL'), R=st.querySelector('.armR');
+  if(ch) ch.style.transform=p.b+(tilt?' rotate('+tilt+'deg)':'');
+  if(L) L.style.transform='rotate('+p.l+'deg)';
+  if(R) R.style.transform='rotate('+p.r+'deg)';
+}
+function chFaceSet(name){
+  const st=$('tuneStage'); if(!st) return;
+  const f=st.querySelector('.face'); if(f) f.innerHTML=chFace(tchar(),name);
+}
+/* 沒在演出的時候偶爾眨一下眼 */
+setInterval(()=>{
+  if(tunePlaying||document.hidden) return;
+  const st=$('tuneStage'); if(!st||!st.querySelector('.face')) return;
+  chFaceSet('blink'); setTimeout(()=>{ if(!tunePlaying) chFaceSet('idle'); },140);
+}, 4200);
 function tuneStop(){
   tuneTimers.forEach(clearTimeout); tuneTimers=[];
   tunePlaying=false;
   document.querySelectorAll('.tn.hit').forEach(e=>e.classList.remove('hit'));
+  const st=$('tuneStage'); if(st) st.classList.remove('playing');
+  chPose('idle'); chFaceSet('idle');
   const b=$('btnTune'); if(b) b.textContent='播放這個月';
 }
 function tunePlay(){
@@ -1512,20 +1665,34 @@ function tunePlay(){
   const tgt=targetAt(y,m), ok=tgt>0&&mrec.delta>=tgt;
   const STEP=.155;
   tunePlaying=true; $('btnTune').textContent='停止';
+  const st=$('tuneStage'); if(st) st.classList.add('playing');
   ds.forEach((o,i)=>{
-    const t=i*STEP;
-    if(new Date(y,m,o.d).getDay()===1) SFX.beep(65.41,t,.2,'sine',.055);   /* 每週一打一下拍子 */
+    const t=i*STEP, mon=new Date(y,m,o.d).getDay()===1, ex=exprOf(o);
+    if(mon) SFX.beep(65.41,t,.2,'sine',.055);                              /* 每週一打一下拍子 */
     if(o.n>0) SFX.beep(PENTA[o.idx],t,STEP*1.7,o.net>=0?'triangle':'square',o.vol);
     tuneTimers.push(setTimeout(()=>{
       document.querySelectorAll('.tn.hit').forEach(e=>e.classList.remove('hit'));
       const el=document.querySelector('.tn[data-d="'+o.d+'"]'); if(el) el.classList.add('hit');
+      chFaceSet(ex);
+      chPose(ex,(i%2?4:-4)*(mon?1.6:1));      /* 左右交替搖，週一那拍搖得大一點 */
     },t*1000));
+    /* 音符後半放鬆回中間，每個音才看得出是一個獨立動作 */
+    tuneTimers.push(setTimeout(()=>chPose(ex==='sleep'?'sleep':'idle',0),(t+STEP*.62)*1000));
   });
   const end=ds.length*STEP+.1;
+  const fin=ok?'win':mrec.delta>=0?'meh':'sad';
   if(ok)                    [523.25,659.25,783.99,1046.50].forEach((f,i)=>SFX.beep(f,end+i*.075,.9,'triangle',.085));
   else if(mrec.delta>=0)    [523.25,587.33].forEach((f,i)=>SFX.beep(f,end+i*.08,.7,'triangle',.075));
   else                      [392.00,311.13,261.63].forEach((f,i)=>SFX.beep(f,end+i*.13,.6,'square',.075));
-  tuneTimers.push(setTimeout(tuneStop,(end+1.4)*1000));
+  tuneTimers.push(setTimeout(()=>{
+    document.querySelectorAll('.tn.hit').forEach(e=>e.classList.remove('hit'));
+    chFaceSet(fin); chPose(fin,0);
+    if(ok){ const st2=$('tuneStage'); if(st2){ const r=st2.getBoundingClientRect();
+      burst(r.left+r.width/2,r.top+r.height*.45); } }
+  },end*1000));
+  /* 達標的話多跳兩下 */
+  if(ok) [.42,.84].forEach((dt,j)=>tuneTimers.push(setTimeout(()=>chPose('win',j?5:-5),(end+dt)*1000)));
+  tuneTimers.push(setTimeout(tuneStop,(end+1.6)*1000));
 }
 function renderCal(){
   const box=$('calCard'), ms=monthly(), tgt=targetNow(), pm=perMonth();
@@ -2910,6 +3077,14 @@ document.body.addEventListener('click',e=>{
   if(b.dataset.prof) return openProf(b.dataset.prof);
   if(b.id==='btnSignIn') return CLOUD.signIn();
   if(b.id==='btnSignOut') return CLOUD.signOut();
+  if(b.dataset.char){
+    db.settings.tuneChar=b.dataset.char; save(); SFX.play('tick');
+    tuneStop(); renderTune();
+    const st=$('tuneStage');
+    if(st){ chFaceSet('joy'); chPose('joy',0);
+      setTimeout(()=>{ if(!tunePlaying){ chFaceSet('idle'); chPose('idle',0); } },420); }
+    return;
+  }
   if(b.id==='btnTune') return tunePlay();
   if(b.id==='tunePrev'||b.id==='tuneNext'){
     const ks=tuneMonths(), i=ks.indexOf(tuneYM);
