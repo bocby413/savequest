@@ -1869,6 +1869,81 @@ const ANIM={
     this.start();
   }
 };
+/* 達標時的收尾表演，每隻不一樣。t 是從收尾開始算的毫秒。
+   snap 是把旋轉角度就地歸零，不然轉完一圈之後會倒著轉回來。 */
+const FINALE={
+  'a-cat':[   /* 後空翻 */
+    {t:0,   y:-34,sx:1.02,sy:1.07,aL:-150,aR:150,rot:0},
+    {t:110, y:-46,rot:-170},
+    {t:280, y:-26,rot:-330},
+    {t:420, y:0,  rot:-360,sx:1.14,sy:.86},
+    {t:560, y:-12,sx:1,sy:1.04,snap:0},
+    {t:760, y:0,  sx:1,sy:1,aL:-130,aR:130},
+    {t:980, y:-16,aL:-155,aR:155}],
+  'a-dog':[   /* 追著自己的尾巴轉兩圈 */
+    {t:0,   y:-10,sx:1.04,sy:1.02,aL:-120,aR:120,rot:0},
+    {t:140, rot:250},
+    {t:340, rot:520},
+    {t:540, rot:720,y:-6},
+    {t:660, y:0,sx:1.1,sy:.9,snap:0},
+    {t:800, y:-22,sx:1,sy:1.06,aL:-150,aR:150},
+    {t:1000,y:0,sx:1,sy:1}],
+  'a-bear':[  /* 站直舉高，然後重重落地 */
+    {t:0,   y:-8, sx:.94,sy:1.14,aL:-165,aR:165},
+    {t:260, y:-26,sx:.92,sy:1.18},
+    {t:430, y:14, sx:1.26,sy:.74},          /* 踏一下 */
+    {t:560, y:-6, sx:1.02,sy:1.04},
+    {t:720, y:12, sx:1.2,sy:.8},            /* 再踏一下 */
+    {t:880, y:-18,sx:1,sy:1.06,aL:-155,aR:155},
+    {t:1060,y:0,  sx:1,sy:1}],
+  'a-fox':[   /* 三連跳，一次比一次低 */
+    {t:0,   y:-40,sx:1,sy:1.1,aL:-145,aR:145},
+    {t:180, y:0,  sx:1.12,sy:.88},
+    {t:320, y:-30,sx:1,sy:1.08},
+    {t:480, y:0,  sx:1.1,sy:.9},
+    {t:610, y:-20,sx:1,sy:1.05},
+    {t:760, y:0,  sx:1.06,sy:.94},
+    {t:900, y:-10,sx:1,sy:1.02,aL:-155,aR:155}],
+  'a-peng':[  /* 肚子貼地滑一段再站起來 */
+    {t:0,   y:-18,sx:1.02,sy:1.06,aL:-150,aR:150},
+    {t:200, y:16, sx:1.34,sy:.66,rot:-12,xrel:-46},   /* 撲倒開滑 */
+    {t:520, rot:-16},
+    {t:700, y:6,  sx:1.16,sy:.86,rot:-6},
+    {t:860, y:-24,sx:.98,sy:1.1,rot:0,snap:0,aL:-160,aR:160},
+    {t:1040,y:0,  sx:1,sy:1}],
+  'a-bot':[   /* 推進器點火，浮空 */
+    {t:0,   y:-6, sx:1.06,sy:.96,aL:40,aR:-40},
+    {t:220, y:-30,sx:.96,sy:1.06,aL:150,aR:-150},     /* 手往下噴 */
+    {t:420, y:-44,rot:5},
+    {t:600, y:-40,rot:-5},
+    {t:780, y:-44,rot:4},
+    {t:960, y:-6, sx:1.14,sy:.88,rot:0,aL:60,aR:-60},
+    {t:1100,y:0,  sx:1,sy:1}],
+  'a-frog':[  /* 一次超高彈跳 */
+    {t:0,   y:10, sx:1.24,sy:.74,aL:30,aR:-30},       /* 先蹲 */
+    {t:170, y:-64,sx:.9,sy:1.18,aL:-160,aR:160},
+    {t:430, y:-58,sx:.94,sy:1.12},
+    {t:600, y:8,  sx:1.22,sy:.78},
+    {t:740, y:-24,sx:1,sy:1.06,aL:-150,aR:150},
+    {t:930, y:0,  sx:1,sy:1}],
+  'a-owl':[   /* 拍翅膀飛起來 */
+    {t:0,   y:-14,aL:-160,aR:160},
+    {t:130, y:-28,aL:-40,aR:40},
+    {t:260, y:-20,aL:-160,aR:160},
+    {t:390, y:-38,aL:-40,aR:40},
+    {t:520, y:-30,aL:-160,aR:160},
+    {t:650, y:-44,aL:-40,aR:40},
+    {t:800, y:-36,aL:-150,aR:150},
+    {t:980, y:0,  sx:1.08,sy:.94},
+    {t:1120,y:0,  sx:1,sy:1}]
+};
+function chSet(o){
+  const g=ANIM.tgt;
+  ['y','sx','sy','rot','aL','aR','st'].forEach(k=>{ if(o[k]!==undefined) g[k]=o[k]; });
+  if(o.xrel!==undefined) g.x=ANIM.cur.x+o.xrel;
+  if(o.snap!==undefined){ ANIM.cur.rot=o.snap; g.rot=o.snap; }
+  ANIM.start();
+}
 function chPose(name,tilt,step){
   const p=POSE[name]||POSE.idle, m=p.b.match(/translateY\((-?[\d.]+)px\).*?scale\(([\d.]+),([\d.]+)\)/);
   const g=ANIM.tgt;
@@ -1905,7 +1980,7 @@ function tuneStop(){
     st.classList.remove('playing');
     chWalk(0);                                  /* 演完自己走回中間 */
   }
-  chPose('idle',0); chFaceSet('idle'); ANIM.clearPs();
+  ANIM.cur.rot=0; chPose('idle',0); chFaceSet('idle'); ANIM.clearPs();
   const b=$('btnTune'); if(b) b.textContent='播放這個月';
 }
 function tunePlay(){
@@ -1916,7 +1991,7 @@ function tunePlay(){
   const tgt=targetAt(y,m), ok=tgt>0&&mrec.delta>=tgt;
   const STEP=.155;
   tunePlaying=true; $('btnTune').textContent='停止';
-  const st=$('tuneStage'); if(st) st.classList.add('playing');
+  const st=$('tuneStage'), a=tchar(); if(st) st.classList.add('playing');
   /* 角色一路走過這個月：走到當天那根長條的正上方，等於是播放頭 */
   const sv=st&&st.querySelector('.who');
   let walkX=[];
@@ -1964,8 +2039,11 @@ function tunePlay(){
     if(ok){ const st2=$('tuneStage'); if(st2){ const r=st2.getBoundingClientRect();
       burst(r.left+r.width/2,r.top+r.height*.45); } }
   },end*1000));
-  /* 達標的話多跳兩下 */
-  if(ok) [.42,.84].forEach((dt,j)=>tuneTimers.push(setTimeout(()=>chPose('win',j?5:-5),(end+dt)*1000)));
+  /* 達標的話跑這隻自己的收尾表演 */
+  if(ok){
+    const seq=FINALE[a.k]||FINALE['a-cat'];
+    seq.forEach(p=>tuneTimers.push(setTimeout(()=>chSet(p),end*1000+p.t)));
+  }
   tuneTimers.push(setTimeout(tuneStop,(end+1.6)*1000));
 }
 function renderCal(){
