@@ -407,12 +407,9 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .stage{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:10px;padding:6px 0 10px;
   border-radius:14px;background:radial-gradient(ellipse at 50% 72%,var(--panel2) 0%,transparent 66%)}
 .stage>svg{width:150px;height:150px;overflow:visible;flex:none}
-.breathe{animation:chBreathe 3.4s ease-in-out infinite;transform-origin:60px 108px}
-.playing .breathe{animation:none}
-@keyframes chBreathe{0%,100%{transform:scaleY(1) translateY(0)}50%{transform:scaleY(1.025) translateY(-2px)}}
-.ch{transform-origin:60px 108px;transition:transform .09s cubic-bezier(.3,1.5,.5,1)}
-.armL,.armR{transition:transform .11s cubic-bezier(.3,1.5,.5,1)}
-.armL{transform-origin:33px 74px} .armR{transform-origin:87px 74px}
+/* 動作一律用 requestAnimationFrame 寫 SVG 的 transform 屬性。
+   CSS transition 掛在 SVG 元素上時 transform 不會被繪製，只有 computed 值會變。 */
+
 .chpick{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
 .chpick button{width:34px;height:34px;border-radius:50%;padding:0;cursor:pointer;
   background:var(--panel2);border:2px solid var(--edge);display:grid;place-items:center;
@@ -1459,38 +1456,57 @@ const PENTA=[130.81,146.83,164.81,196.00,220.00,
              261.63,293.66,329.63,392.00,440.00,
              523.25,587.33,659.25,783.99,880.00,1046.50];
 /* ── 舞台上的動物：共用同一副骨架，只換輪廓與五官位置 ── */
+/* 主角就是頭貼那八隻，共用同一副骨架，只換輪廓、配色與五官位置 */
 const TCHARS=[
-  {k:'cat',  n:'貓',   c:'#ffc98a', d:'#f2a65a', ink:'#3a2a1a', bel:'#fff0d8', ey:62, gap:12, my:80},
-  {k:'shiba',n:'柴犬', c:'#e8b877', d:'#cf9a55', ink:'#3a2a1a', bel:'#fff6e6', ey:62, gap:12, my:80},
-  {k:'peng', n:'企鵝', c:'#3b4370', d:'#2a3058', ink:'#12142a', bel:'#f7f4ec', ey:56, gap:11, my:72},
-  {k:'rab',  n:'兔子', c:'#efe4f7', d:'#ffb6c9', ink:'#4a3550', bel:'#fffaff', ey:62, gap:12, my:80},
-  {k:'panda',n:'熊貓', c:'#f5f3ef', d:'#2b2b33', ink:'#2b2b33', bel:'#ffffff', ey:62, gap:13, my:81},
-  {k:'frog', n:'青蛙', c:'#7ed957', d:'#5aa83c', ink:'#22501b', bel:'#d8f5c0', ey:41, gap:16, my:78}
+  {k:'a-cat', n:'貓',     c:'#ffc98a', d:'#f2a65a', ink:'#3a2a1a', ey:62, gap:12, my:80},
+  {k:'a-dog', n:'狗',     c:'#c99168', d:'#8a5a3c', ink:'#2e1f14', ey:62, gap:12, my:80},
+  {k:'a-bear',n:'熊',     c:'#a97b5c', d:'#7d5a44', ink:'#2b1a12', ey:62, gap:12, my:80},
+  {k:'a-fox', n:'狐狸',   c:'#f07a3c', d:'#d8622e', ink:'#2b1a12', ey:60, gap:12, my:78},
+  {k:'a-peng',n:'企鵝',   c:'#2d3350', d:'#242a44', ink:'#12142a', ey:58, gap:11, my:74, beak:'#f5a623'},
+  {k:'a-bot', n:'機器人', c:'#8fa3c8', d:'#6c7fa8', ink:'#3ce0d0', ey:60, gap:12, my:74, sq:1},
+  {k:'a-frog',n:'青蛙',   c:'#7ed957', d:'#5aa83c', ink:'#1d2b17', ey:41, gap:16, my:78},
+  {k:'a-owl', n:'貓頭鷹', c:'#a879ff', d:'#8a5ce0', ink:'#2a1a4a', ey:60, gap:14, my:82, beak:'#ffc233'}
 ];
-const tchar=()=>TCHARS.find(x=>x.k===db.settings.tuneChar)||TCHARS[0];
-/* 身體後面的東西：耳朵、尾巴、花紋 */
+function tchar(){
+  let k=db.settings.tuneChar;
+  if(k&&k.slice(0,2)!=='a-') k='a-'+k;                       /* 舊版存的名字 */
+  if(!k){ const av=db.settings.avatar; if(av&&av.id) k=av.id; }  /* 沒挑過就跟頭貼同一隻 */
+  return TCHARS.find(x=>x.k===k)||TCHARS[0];
+}
+/* 身體後面的東西：耳朵、尾巴 */
 function chBack(a){
-  if(a.k==='cat')   return '<path d="M32 44 27 20l19 11zM88 44 93 20 74 31z" fill="'+a.d+'"/>';
-  if(a.k==='shiba') return '<ellipse cx="30" cy="52" rx="10" ry="15" fill="'+a.d+'"/>'+
-                           '<ellipse cx="90" cy="52" rx="10" ry="15" fill="'+a.d+'"/>'+
-                           '<path d="M96 88q16-4 12-20" stroke="'+a.d+'" stroke-width="9" fill="none" stroke-linecap="round"/>';
-  if(a.k==='peng')  return '';                       /* 鰭放在手的群組裡才揮得動 */
-  if(a.k==='rab')   return '<ellipse cx="45" cy="26" rx="8" ry="22" fill="'+a.c+'"/>'+
-                           '<ellipse cx="75" cy="26" rx="8" ry="22" fill="'+a.c+'"/>'+
-                           '<ellipse cx="45" cy="28" rx="4" ry="15" fill="'+a.d+'"/>'+
-                           '<ellipse cx="75" cy="28" rx="4" ry="15" fill="'+a.d+'"/>';
-  if(a.k==='panda') return '<circle cx="33" cy="44" r="12" fill="'+a.d+'"/><circle cx="87" cy="44" r="12" fill="'+a.d+'"/>';
-  return '<circle cx="42" cy="42" r="15" fill="'+a.c+'"/><circle cx="78" cy="42" r="15" fill="'+a.c+'"/>';  /* 青蛙眼球包 */
+  const E=x=>'<g class="ears">'+x+'</g>';
+  if(a.k==='a-cat')  return E('<path d="M32 44 27 20l19 11zM88 44 93 20 74 31z" fill="'+a.d+'"/>');
+  if(a.k==='a-dog')  return '<g class="tail"><path d="M96 88q16-4 12-20" stroke="'+a.d+'" stroke-width="9" fill="none" stroke-linecap="round"/></g>'+
+                            E('<ellipse cx="28" cy="54" rx="10" ry="16" fill="'+a.d+'"/><ellipse cx="92" cy="54" rx="10" ry="16" fill="'+a.d+'"/>');
+  if(a.k==='a-bear') return E('<circle cx="33" cy="43" r="12" fill="'+a.d+'"/><circle cx="87" cy="43" r="12" fill="'+a.d+'"/>');
+  if(a.k==='a-fox')  return '<g class="tail"><path d="M92 92q22-2 16-24" stroke="'+a.d+'" stroke-width="12" fill="none" stroke-linecap="round"/></g>'+
+                            E('<path d="M30 46 24 18l22 12zM90 46 96 18 74 30z" fill="'+a.d+'"/>');
+  if(a.k==='a-bot')  return '<g class="ears"><path d="M60 34V16" stroke="'+a.d+'" stroke-width="4"/>'+
+                            '<circle cx="60" cy="13" r="7" fill="#3ce0d0"/></g>';
+  if(a.k==='a-frog') return '<circle cx="42" cy="42" r="15" fill="'+a.c+'"/><circle cx="78" cy="42" r="15" fill="'+a.c+'"/>';
+  if(a.k==='a-owl')  return E('<path d="M30 44 26 20l20 10zM90 44 94 20 74 30z" fill="'+a.d+'"/>');
+  return '';                                                  /* 企鵝的鰭在手的群組裡 */
 }
-/* 身體前面的花紋 */
+/* 身體本身：機器人是方頭，其他都是圓的 */
+function chBody(a){
+  return a.sq ? '<rect x="24" y="36" width="72" height="68" rx="20" fill="'+a.c+'"/>'
+              : '<ellipse cx="60" cy="70" rx="35" ry="36" fill="'+a.c+'"/>';
+}
+/* 身體前面的花紋，畫在五官底下 */
 function chFront(a){
-  if(a.k==='peng')  return '<ellipse cx="60" cy="76" rx="21" ry="26" fill="'+a.bel+'"/>';
-  if(a.k==='panda') return '<ellipse cx="49" cy="62" rx="10" ry="12" fill="'+a.d+'"/>'+
-                           '<ellipse cx="71" cy="62" rx="10" ry="12" fill="'+a.d+'"/>';
-  if(a.k==='frog')  return '<ellipse cx="60" cy="84" rx="20" ry="14" fill="'+a.bel+'"/>';
-  return '<ellipse cx="60" cy="84" rx="16" ry="13" fill="'+a.bel+'"/>';
+  if(a.k==='a-peng') return '<ellipse cx="60" cy="80" rx="23" ry="25" fill="#f7f4ec"/>';
+  if(a.k==='a-bot')  return '<rect x="32" y="46" width="56" height="38" rx="18" fill="#1b2340"/>';
+  if(a.k==='a-fox')  return '<path d="M60 68c11 0 20 7 20 16-5 9-13 14-20 14s-15-5-20-14c0-9 9-16 20-16z" fill="#fff0e2"/>';
+  if(a.k==='a-owl')  return '<circle cx="'+(60-a.gap)+'" cy="'+a.ey+'" r="14" fill="#fff"/>'+
+                            '<circle cx="'+(60+a.gap)+'" cy="'+a.ey+'" r="14" fill="#fff"/>';
+  if(a.k==='a-frog') return '<ellipse cx="60" cy="86" rx="20" ry="13" fill="#d8f5c0"/>';
+  if(a.k==='a-bear') return '<ellipse cx="60" cy="84" rx="16" ry="12" fill="#e7cdb8"/>';
+  if(a.k==='a-dog')  return '<ellipse cx="60" cy="84" rx="14" ry="11" fill="#f3ddd0"/>';
+  if(a.k==='a-cat')  return '<path d="M20 74h16M20 82h16M84 74h16M84 82h16" stroke="'+a.ink+
+                            '" stroke-width="2" stroke-linecap="round" opacity=".65"/>';
+  return '';
 }
-/* 五官：一個表情換一組 */
 function chFace(a,e){
   const L=60-a.gap, R=60+a.gap, y=a.ey, ink=a.ink, sw=' stroke="'+ink+'" fill="none" stroke-linecap="round"';
   let eyes;
@@ -1506,7 +1522,11 @@ function chFace(a,e){
                                     '<circle cx="'+R+'" cy="'+y+'" r="4.5" fill="'+ink+'"/>';
   const m=a.my;
   let mouth;
-  if(a.k==='peng')             mouth='<path d="M60 '+(m-6)+'l-8 6 8 5 8-5z" fill="#f5a623"/>';
+  if(a.beak){                                     /* 有喙的就張喙代替嘴型 */
+    const open=(e==='joy'||e==='win')?7:(e==='bad'||e==='sad')?1:3;
+    mouth='<path d="M60 '+(m-7)+'l-8 7 8 '+(1+open)+' 8-'+(1+open)+'z" fill="'+a.beak+'"/>'+
+          (open>5?'<path d="M52 '+m+'l8 8 8-8z" fill="#c25c12"/>':'');
+  }
   else if(e==='joy'||e==='win')mouth='<ellipse cx="60" cy="'+(m+2)+'" rx="8" ry="'+(e==='win'?9:7)+'" fill="'+ink+'"/>'+
                                      '<ellipse cx="60" cy="'+(m+6)+'" rx="4.5" ry="3" fill="#ff7a9c"/>';
   else if(e==='up')            mouth='<path d="M52 '+m+'q8 8 16 0"'+sw+' stroke-width="3"/>';
@@ -1523,15 +1543,20 @@ function chSVG(a,e,small){
   const big=a.k==='peng';
   const arm ='<ellipse cx="'+(big?26:27)+'" cy="'+(big?80:82)+'" rx="'+(big?9:7.5)+'" ry="'+(big?17:11)+'" fill="'+a.d+'"/>';
   const armR='<ellipse cx="'+(big?94:93)+'" cy="'+(big?80:82)+'" rx="'+(big?9:7.5)+'" ry="'+(big?17:11)+'" fill="'+a.d+'"/>';
+  /* 影子留在 walk 層，只跟著左右移動，不跟著跳 */
   return '<svg viewBox="0 0 120 120">'+
-    '<g class="breathe"><g class="ch">'+
-      chBack(a)+
-      '<ellipse cx="46" cy="107" rx="9" ry="6" fill="'+a.d+'"/><ellipse cx="74" cy="107" rx="9" ry="6" fill="'+a.d+'"/>'+
-      '<g class="armL">'+arm+'</g><g class="armR">'+armR+'</g>'+
-      '<ellipse cx="60" cy="70" rx="35" ry="36" fill="'+a.c+'"/>'+
-      chFront(a)+
-      '<g class="face">'+chFace(a,e)+'</g>'+
-    '</g></g></svg>';
+    '<g class="walk">'+
+      (small?'':'<ellipse class="shd" cx="60" cy="113" rx="26" ry="5.5" fill="#000" opacity=".18"/>')+
+      '<g class="breathe"><g class="ch">'+
+        chBack(a)+
+        '<g class="footL"><ellipse cx="46" cy="107" rx="9" ry="6" fill="'+a.d+'"/></g>'+
+        '<g class="footR"><ellipse cx="74" cy="107" rx="9" ry="6" fill="'+a.d+'"/></g>'+
+        '<g class="armL">'+arm+'</g><g class="armR">'+armR+'</g>'+
+        chBody(a)+
+        chFront(a)+
+        '<g class="face">'+chFace(a,e)+'</g>'+
+      '</g></g>'+
+    '</g></svg>';
 }
 let tuneYM=null, tunePlaying=false, tuneTimers=[];
 function dailyOf(y,m){
@@ -1592,10 +1617,11 @@ function renderTune(){
   const stg=$('tuneStage');
   if(stg.dataset.char!==a.k){
     stg.dataset.char=a.k;
+    ANIM.el=null;
     stg.innerHTML=chSVG(a,'idle')+
       '<div class="chpick">'+TCHARS.map(x=>
         '<button data-char="'+x.k+'" class="'+(x.k===a.k?'on':'')+'" title="'+x.n+'">'+
-        chSVG(x,'up',1)+'</button>').join('')+'</div>';
+        '<svg viewBox="0 0 64 64"><use href="#'+x.k+'"/></svg></button>').join('')+'</div>';
   }
   $('tuneHead').innerHTML=
       '<button class="arw" id="tunePrev" '+(i<=0?'disabled':'')+'>◀</button>'+
@@ -1605,6 +1631,7 @@ function renderTune(){
         (tunePlaying?'停止':'播放這個月')+'</button>';
   $('tuneBars').innerHTML=bars;
   $('tuneDays').innerHTML=dow;
+  ANIM.watch(); ANIM.start();
   $('tuneFoot').innerHTML=
       '<span>有聲音的日子<b>'+played+' / '+ds.length+' 天</b></span>'+
       '<span>這個月<b class="'+(mrec.delta>=0?'':'down')+'">'+(mrec.delta>=0?'+':'-')+short(Math.abs(mrec.delta))+'</b></span>'+
@@ -1631,30 +1658,100 @@ const POSE={
   meh  :{b:'translateY(0) scale(1,1)',           l:30,   r:-30},
   sad  :{b:'translateY(9px) scale(1.14,.8)',     l:52,   r:-52}
 };
-function chPose(name,tilt){
-  const st=$('tuneStage'); if(!st) return;
-  const p=POSE[name]||POSE.idle;
-  const ch=st.querySelector('.ch'), L=st.querySelector('.armL'), R=st.querySelector('.armR');
-  if(ch) ch.style.transform=p.b+(tilt?' rotate('+tilt+'deg)':'');
-  if(L) L.style.transform='rotate('+p.l+'deg)';
-  if(R) R.style.transform='rotate('+p.r+'deg)';
+/* 動作引擎：每一格畫面直接寫 SVG 的 transform 屬性。
+   CSS transition／animation 掛在 SVG 元素上時 transform 不會真的被繪製，
+   所以呼吸、搖尾巴、跳躍、揮手、走路全部走這一套。 */
+const ANIM={
+  cur:{x:0,y:0,sx:1,sy:1,rot:0,aL:0,aR:0,st:0},
+  tgt:{x:0,y:0,sx:1,sy:1,rot:0,aL:0,aR:0,st:0},
+  raf:0, last:0, el:null, live:true, io:null,
+  watch(){
+    const st=$('tuneStage');
+    if(!st||this.io||!window.IntersectionObserver) return;
+    this.io=new IntersectionObserver(es=>{
+      this.live=es[0].isIntersecting;
+      if(this.live){ this.last=0; this.start(); }
+    },{rootMargin:'80px'});
+    this.io.observe(st);
+  },
+  grab(){
+    const st=$('tuneStage');
+    if(!st||!st.querySelector('.walk')){ this.el=null; return false; }
+    if(this.el&&this.el.root===st) return true;
+    this.el={root:st, walk:st.querySelector('.walk'), ch:st.querySelector('.ch'),
+      aL:st.querySelector('.armL'), aR:st.querySelector('.armR'),
+      fL:st.querySelector('.footL'), fR:st.querySelector('.footR'),
+      shd:st.querySelector('.shd'), tail:st.querySelector('.tail'), ears:st.querySelector('.ears')};
+    return true;
+  },
+  start(){ if(!this.raf) this.raf=requestAnimationFrame(t=>this.frame(t)); },
+  frame(now){
+    this.raf=0;
+    if(!this.live||document.hidden) return;       /* 捲出畫面就停，等重新進來再啟動 */
+    const dt=Math.min(.05,(now-(this.last||now))/1000); this.last=now;
+    if(!this.grab()) return;
+    const c=this.cur, g=this.tgt, k=Math.min(1,dt*16);
+    for(const p in c) c[p]+=(g[p]-c[p])*k;
+    const e=this.el, br=Math.sin(now/1550);
+    /* 呼吸：沒在演出的時候起伏大一點 */
+    const amp=tunePlaying?.008:.022, by=tunePlaying?-.6:-1.6;
+    const sx=c.sx*(1-amp*br*.4), sy=c.sy*(1+amp*br), y=c.y+by*br;
+    e.walk.setAttribute('transform','translate('+c.x.toFixed(1)+',0)');
+    e.ch.setAttribute('transform',
+      'translate(60,108) rotate('+c.rot.toFixed(2)+') scale('+sx.toFixed(4)+','+sy.toFixed(4)+') translate(-60,-108)'+
+      ' translate(0,'+y.toFixed(2)+')');
+    e.aL.setAttribute('transform','rotate('+c.aL.toFixed(1)+',33,74)');
+    e.aR.setAttribute('transform','rotate('+c.aR.toFixed(1)+',87,74)');
+    const s=c.st;                                   /* -1 ～ 1，兩腳交替 */
+    e.fL.setAttribute('transform','translate('+(3.5*s).toFixed(2)+','+(-5*Math.abs(s)*(s>0?1:0)).toFixed(2)+')');
+    e.fR.setAttribute('transform','translate('+(-3.5*s).toFixed(2)+','+(-5*Math.abs(s)*(s<0?1:0)).toFixed(2)+')');
+    if(e.shd){
+      const up=Math.max(0,-y)/20, sc=(1-up*.42).toFixed(3);
+      e.shd.setAttribute('transform','translate(60,113) scale('+sc+',1) translate(-60,-113)');
+      e.shd.setAttribute('opacity',(.18-up*.09).toFixed(3));
+    }
+    if(e.tail) e.tail.setAttribute('transform','rotate('+(Math.sin(now/(tunePlaying?230:520))*13).toFixed(1)+',96,88)');
+    if(e.ears) e.ears.setAttribute('transform','rotate('+(Math.sin(now/900)*2.6+c.rot*.35).toFixed(2)+',60,48)');
+    this.start();
+  }
+};
+function chPose(name,tilt,step){
+  const p=POSE[name]||POSE.idle, m=p.b.match(/translateY\((-?[\d.]+)px\).*?scale\(([\d.]+),([\d.]+)\)/);
+  const g=ANIM.tgt;
+  g.y=m?+m[1]:0; g.sx=m?+m[2]:1; g.sy=m?+m[3]:1;
+  g.rot=tilt||0; g.aL=p.l; g.aR=p.r;
+  g.st=step===undefined?0:(step?1:-1);
+  ANIM.start();
 }
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ ANIM.last=0; ANIM.start(); } });
+function chWalk(x){ ANIM.tgt.x=x; ANIM.start(); }
 function chFaceSet(name){
   const st=$('tuneStage'); if(!st) return;
   const f=st.querySelector('.face'); if(f) f.innerHTML=chFace(tchar(),name);
 }
-/* 沒在演出的時候偶爾眨一下眼 */
+/* 沒在演出的時候偶爾眨一下眼、偶爾自己跳一下，畫面才不會死掉 */
+let idleTick=0;
 setInterval(()=>{
   if(tunePlaying||document.hidden) return;
   const st=$('tuneStage'); if(!st||!st.querySelector('.face')) return;
-  chFaceSet('blink'); setTimeout(()=>{ if(!tunePlaying) chFaceSet('idle'); },140);
-}, 4200);
+  idleTick++;
+  if(idleTick%3===0){                                  /* 每三次換成小跳 */
+    chFaceSet('up'); chPose('up',idleTick%6?3:-3,1);
+    setTimeout(()=>{ if(!tunePlaying){ chPose('idle',0); chFaceSet('idle'); } },300);
+  }else{
+    chFaceSet('blink');
+    setTimeout(()=>{ if(!tunePlaying) chFaceSet('idle'); },140);
+  }
+}, 3000);
 function tuneStop(){
   tuneTimers.forEach(clearTimeout); tuneTimers=[];
   tunePlaying=false;
   document.querySelectorAll('.tn.hit').forEach(e=>e.classList.remove('hit'));
-  const st=$('tuneStage'); if(st) st.classList.remove('playing');
-  chPose('idle'); chFaceSet('idle');
+  const st=$('tuneStage'); if(st){
+    st.classList.remove('playing');
+    chWalk(0);                                  /* 演完自己走回中間 */
+  }
+  chPose('idle',0); chFaceSet('idle');
   const b=$('btnTune'); if(b) b.textContent='播放這個月';
 }
 function tunePlay(){
@@ -1666,6 +1763,19 @@ function tunePlay(){
   const STEP=.155;
   tunePlaying=true; $('btnTune').textContent='停止';
   const st=$('tuneStage'); if(st) st.classList.add('playing');
+  /* 角色一路走過這個月：走到當天那根長條的正上方，等於是播放頭 */
+  const sv=st&&st.querySelector('svg');
+  let walkX=[];
+  if(sv){
+    const c0=sv.getBoundingClientRect(), mid=c0.left+c0.width/2;
+    const u=120/(c0.width||150);            /* 螢幕 px 換算成 viewBox 單位 */
+    walkX=ds.map(o=>{
+      const el=document.querySelector('.tn[data-d="'+o.d+'"]');
+      if(!el) return 0;
+      const r=el.getBoundingClientRect();
+      return +((r.left+r.width/2-mid)*u).toFixed(1);
+    });
+  }
   ds.forEach((o,i)=>{
     const t=i*STEP, mon=new Date(y,m,o.d).getDay()===1, ex=exprOf(o);
     if(mon) SFX.beep(65.41,t,.2,'sine',.055);                              /* 每週一打一下拍子 */
@@ -1673,11 +1783,12 @@ function tunePlay(){
     tuneTimers.push(setTimeout(()=>{
       document.querySelectorAll('.tn.hit').forEach(e=>e.classList.remove('hit'));
       const el=document.querySelector('.tn[data-d="'+o.d+'"]'); if(el) el.classList.add('hit');
+      chWalk(walkX[i]||0);
       chFaceSet(ex);
-      chPose(ex,(i%2?4:-4)*(mon?1.6:1));      /* 左右交替搖，週一那拍搖得大一點 */
+      chPose(ex,(i%2?4:-4)*(mon?1.6:1),i%2);   /* 左右交替搖、兩腳交替踏，週一那拍搖得大一點 */
     },t*1000));
     /* 音符後半放鬆回中間，每個音才看得出是一個獨立動作 */
-    tuneTimers.push(setTimeout(()=>chPose(ex==='sleep'?'sleep':'idle',0),(t+STEP*.62)*1000));
+    tuneTimers.push(setTimeout(()=>chPose(ex==='sleep'?'sleep':'idle',0,i%2),(t+STEP*.62)*1000));
   });
   const end=ds.length*STEP+.1;
   const fin=ok?'win':mrec.delta>=0?'meh':'sad';
