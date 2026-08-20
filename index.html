@@ -407,7 +407,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .stage{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:10px;padding:0 0 10px}
 .scene{position:relative;width:100%;height:158px;border-radius:14px;overflow:hidden;
   background:linear-gradient(180deg,transparent 0%,var(--panel2) 88%)}
-.who{position:absolute;left:50%;bottom:0;margin-left:-75px;width:150px;height:150px;
+.actor{position:absolute;left:50%;bottom:0;margin-left:-75px;width:150px;height:150px;
   overflow:visible;z-index:2}
 /* 天上飄的雲 */
 .sky{position:absolute;inset:0;pointer-events:none}
@@ -426,7 +426,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .fx i.coin{width:11px;height:11px;border-radius:50%;background:radial-gradient(circle at 35% 32%,#ffe58a,var(--gold) 62%,var(--gold2));
   box-shadow:0 0 7px rgba(255,194,51,.55)}
 .fx i.flake{width:8px;height:8px;border-radius:2px;background:var(--pink);opacity:.9}
-@media(max-width:560px){ .scene{height:132px} .who{width:126px;height:126px;margin-left:-63px}
+@media(max-width:560px){ .scene{height:132px} .actor{width:126px;height:126px;margin-left:-63px}
   .ground{bottom:7px} }
 /* 動作一律用 requestAnimationFrame 寫 SVG 的 transform 屬性。
    CSS transition 掛在 SVG 元素上時 transform 不會被繪製，只有 computed 值會變。 */
@@ -1670,7 +1670,7 @@ function chSVG(a,e,small){
   const arm ='<ellipse cx="'+(big?26:27)+'" cy="'+(big?80:82)+'" rx="'+(big?9:7.5)+'" ry="'+(big?17:11)+'" fill="'+a.d+'"/>';
   const armR='<ellipse cx="'+(big?94:93)+'" cy="'+(big?80:82)+'" rx="'+(big?9:7.5)+'" ry="'+(big?17:11)+'" fill="'+a.d+'"/>';
   /* 影子留在 walk 層，只跟著左右移動，不跟著跳 */
-  return '<svg class="who" viewBox="0 0 120 120">'+
+  return '<svg class="actor" viewBox="0 0 120 120">'+
     '<g class="walk">'+
       (small?'':'<ellipse class="shd" cx="60" cy="113" rx="26" ry="5.5" fill="#000" opacity=".18"/>')+
       '<g class="breathe"><g class="ch">'+
@@ -1817,7 +1817,7 @@ const ANIM={
       shd:st.querySelector('.shd'), tail:st.querySelector('.tail'), ears:st.querySelector('.ears'),
       fx:st.querySelector('.fx'), sky:[...st.querySelectorAll('.sky i')],
       sw:(st.querySelector('.scene')||{clientWidth:0}).clientWidth,
-      u:(st.querySelector('.who')||{clientWidth:150}).clientWidth/120};
+      u:(st.querySelector('.actor')||{clientWidth:150}).clientWidth/120};
     return true;
   },
   start(){ if(!this.raf) this.raf=requestAnimationFrame(t=>this.frame(t)); },
@@ -2045,7 +2045,7 @@ function tunePlay(){
   tunePlaying=true; $('btnTune').textContent='停止';
   const st=$('tuneStage'), a=tchar(); if(st) st.classList.add('playing');
   /* 角色一路走過這個月：走到當天那根長條的正上方，等於是播放頭 */
-  const sv=st&&st.querySelector('.who');
+  const sv=st&&st.querySelector('.actor');
   let walkX=[];
   if(sv){
     const c0=sv.getBoundingClientRect(), mid=c0.left+c0.width/2;
