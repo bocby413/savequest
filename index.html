@@ -2425,6 +2425,11 @@ function seenText(ts){
   if(dd<30) return dd+' 天前上線';
   return new Date(ts).toLocaleDateString('zh-TW')+' 上線';
 }
+/* 名字以對方現在的為準，f.name 是加好友當下的舊值，只當最後備援 */
+function friName(f){
+  const d=SHARED[f.uid], p=PROFILES[f.uid]||{};
+  return (d&&d.name)||p.name||f.name||f.email||'這位好友';
+}
 function friAvatar(a){
   if(a&&a.type==='photo'&&a.data) return '<img src="'+a.data+'" alt="">';
   return '<svg viewBox="0 0 64 64"><use href="#'+((a&&a.id)||AVATARS[0])+'"/></svg>';
@@ -2462,7 +2467,7 @@ function renderFriends(){
     return '<div class="fri">'+
       '<button class="friopen" data-prof="'+f.uid+'">'+
         '<span class="pic">'+friAvatar((d&&d.avatar)||p.avatar)+'</span>'+
-        '<span class="info"><span class="nm"><b>'+esc((d&&d.name)||p.name||f.name||f.email)+'</b>'+
+        '<span class="info"><span class="nm"><b>'+esc(friName(f))+'</b>'+
           (p.lastSeen?'<i class="seen">'+seenText(p.lastSeen)+'</i>':'')+'</span>'+
         '<span class="sub">'+bits.join('　')+'</span></span>'+
         '<svg class="chev"><use href="#i-down"/></svg>'+
@@ -2494,7 +2499,7 @@ function renderProf(){
   const f=profFor; if(!f||!$('vProf').classList.contains('on')) return;
   const d=SHARED[f.uid], g=(d&&d.grant)||{}, p=PROFILES[f.uid]||{};
   $('profPic').innerHTML=friAvatar((d&&d.avatar)||p.avatar);
-  $('profNm').textContent=(d&&d.name)||p.name||f.name||f.email;
+  $('profNm').textContent=friName(f);
   const tt=$('profTt'), has=g.lv&&d&&d.title;
   tt.textContent=has?d.title:'沒有分享稱號';
   tt.className='ptt'+(has?'':' none');
@@ -2533,7 +2538,7 @@ function openGrant(uid){
   const f=FRIENDS.find(x=>x.uid===uid); if(!f) return;
   grantFor=f;
   const g=Object.assign({},DEFAULT_GRANT,f.grant||{});
-  $('grantTitle').textContent='分享給 '+(f.name||f.email);
+  $('grantTitle').textContent='分享給 '+friName(f);
   $('grantBody').innerHTML=GRANTS.map(x=>
     '<label class="grantrow"><div class="gi"><b>'+x.t+'</b><span>'+x.d+'</span></div>'+
     '<input type="checkbox" class="gchk" data-g="'+x.k+'" '+(g[x.k]?'checked':'')+' hidden>'+
@@ -2558,7 +2563,7 @@ $('profBack').onclick=()=>{ $('vProf').classList.remove('on'); profFor=null; };
 $('profGrant').onclick=()=>{ if(profFor) openGrant(profFor.uid); };
 $('profDel').onclick=()=>{
   const f=profFor; if(!f) return;
-  if(!confirm('移除好友「'+(f.name||f.email)+'」？')) return;
+  if(!confirm('移除好友「'+friName(f)+'」？')) return;
   CLOUD.removeFriend(f).then(()=>{ SFX.play('del'); toast('已移除'); $('profBack').onclick(); });
 };
 $('btnFriAdd').onclick=async()=>{
