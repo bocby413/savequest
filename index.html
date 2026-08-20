@@ -1688,8 +1688,7 @@ function renderTune(){
   }
   if(keys.indexOf(tuneYM)<0) tuneYM=keys[keys.length-1];
   const i=keys.indexOf(tuneYM), y=+tuneYM.slice(0,4), m=+tuneYM.slice(5,7)-1;
-  const ds=dailyOf(y,m), mrec=ms.find(x=>x.y===y&&x.m===m)||{delta:0,n:0};
-  const tgt=targetAt(y,m), ok=tgt>0&&mrec.delta>=tgt;
+  const ds=dailyOf(y,m);
   const H=132, half=H/2-4;
   const bars=ds.map(o=>{
     const cls=o.n===0?'rest':o.net>0?'up':o.net<0?'dn':'zero';
@@ -1747,9 +1746,7 @@ function renderTune(){
   $('tuneDays').innerHTML=dow;
   ANIM.watch(); ANIM.start();
   $('tuneFoot').innerHTML=
-      '<span>有聲音的日子<b>'+played+' / '+ds.length+' 天</b></span>'+
-      '<span>這個月<b class="'+(mrec.delta>=0?'':'down')+'">'+(mrec.delta>=0?'+':'-')+short(Math.abs(mrec.delta))+'</b></span>'+
-      '<span>收尾<b>'+(ok?'完滿和弦':mrec.delta>=0?'停在半空':'下行')+'</b></span>';
+      '<span>有聲音的日子<b>'+played+' / '+ds.length+' 天</b></span>';
   $('tuneSub').textContent=played?'一天一個音，共 '+ds.length+' 個音':'這個月沒有紀錄';
 }
 /* 一個音對應一個表情與一個姿勢 */
