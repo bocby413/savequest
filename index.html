@@ -530,6 +530,13 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .pcard.lock{opacity:.5}
 .pcard.lock .pv{font-size:14px;font-weight:600;color:var(--txt3);margin-top:7px}
 @media(max-width:420px){ .pgrid{grid-template-columns:1fr} }
+.tgtedit{flex:1;min-width:0;text-align:left;background:none;border:0;padding:0;font:inherit;
+  color:inherit;cursor:pointer;display:block}
+.tgtedit b{display:block;font-size:14.5px;font-weight:700;transition:color .14s}
+.tgtedit span{display:block;font-size:12px;color:var(--txt3);margin-top:2px}
+.tgtedit:hover b{color:var(--gold)}
+.setrow.editing{background:rgba(255,194,51,.10);border-radius:10px;padding-left:9px!important;padding-right:9px!important}
+.setrow.editing .tgtedit b{color:var(--gold)}
 .grantrow{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--edge)}
 .grantrow .gi{flex:1}
 .grantrow b{display:block;font-size:14.5px;font-weight:600}
@@ -948,7 +955,9 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   </div>
   <div class="say" id="tHint" style="margin:0 0 10px"></div>
   <div id="tList"></div>
-  <div class="dfoot"><button class="btn ghost" data-close>關閉</button><button class="btn go" id="saveTarget">設定</button></div>
+  <div class="dfoot"><button class="btn ghost" data-close>關閉</button>
+    <button class="btn ghost" id="tCancelEdit" style="display:none">取消修改</button>
+    <button class="btn go" id="saveTarget">設定</button></div>
 </div></div>
 
 <div class="veil" id="vMore"><div class="dlg">
@@ -2141,8 +2150,8 @@ function renderCal(){
   /* 連續達標：從最新往回數，碰到沒記帳的月份就停（那個月是推的，算不得數） */
   let streak=0;
   for(let i=ms.length-1;i>=0;i--){
-    const x=ms[i], mt=targetAt(x.y,x.m);
-    if(!x.real||!mt) break;         /* 沒記帳、或當時還沒設目標，到此為止 */
+    const x=ms[i], mt=targetAt(x.y,x.m)||tgt;   /* 跟格子上的星星同一套判定 */
+    if(!x.real||!mt) break;         /* 沒記帳就到此為止，那個月是推的 */
     if(x.delta>=mt){ streak++; continue; }
     if(x.partial) continue;         /* 這個月還沒過完，先不算失敗 */
     break;
@@ -3100,14 +3109,14 @@ function calStats(){
   const cur=ms.find(x=>x.y===d.getFullYear()&&x.m===d.getMonth());
   let streak=0;
   for(let i=ms.length-1;i>=0;i--){
-    const x=ms[i], mt=targetAt(x.y,x.m);
+    const x=ms[i], mt=targetAt(x.y,x.m)||targetNow();
     if(!x.real||!mt) break;
     if(x.delta>=mt){ streak++; continue; }
     if(x.partial) continue;
     break;
   }
   const yr=d.getFullYear(), list=ms.filter(x=>x.y===yr&&x.real);
-  return {streak, hit:list.filter(x=>x.delta>=targetAt(x.y,x.m)).length, has:list.length,
+  return {streak, hit:list.filter(x=>x.delta>=(targetAt(x.y,x.m)||targetNow())).length, has:list.length,
           monthDelta:cur?cur.delta:0};
 }
 /* 最後一次上線：剛剛、幾分鐘前、幾小時前、幾天前 */
@@ -3403,15 +3412,17 @@ $('saveGoal').onclick=()=>{
   db.goals.push({id:uid(),ts:Date.now(),name,amount:isNaN(amt)?0:amt,date:$('gDate').value,cat:$('gCat').value,done:false});
   save(); $('gName').value='';$('gAmt').value='';$('gDate').value=''; shut(); render(); toast('任務已加入');
 };
+let tEdit=null;                    /* 正在改哪一段，null 就是新增 */
 function renderTargetList(){
   const ts=targets();
   if(!ts.length){ $('tList').innerHTML=''; return; }
-  $('tList').innerHTML='<div class="say" style="margin-bottom:6px">目前設定</div>'+
+  $('tList').innerHTML='<div class="say" style="margin-bottom:6px">目前設定　點一列可以改，右邊的叉叉是刪掉</div>'+
     ts.map((t,i)=>{
       const till=ts[i+1]?'到 '+ymLabel(prevMonth(ts[i+1].from)):'到現在';
-      return '<div class="setrow" style="padding:9px 0"><div class="lb"><b>'+money(t.amount)+'</b>'+
-        '<span>'+(t.from==='0000-00'?'一開始':ymLabel(t.from)+' 起')+'　'+till+'</span></div>'+
-        (ts.length>1?'<button class="iq del" data-deltgt="'+t.from+'"><svg class="i"><use href="#i-x"/></svg></button>':'')+
+      return '<div class="setrow'+(tEdit===t.from?' editing':'')+'" style="padding:9px 0">'+
+        '<button class="tgtedit" data-edittgt="'+t.from+'"><b>'+money(t.amount)+'</b>'+
+        '<span>'+(t.from==='0000-00'?'一開始':ymLabel(t.from)+' 起')+'　'+till+'</span></button>'+
+        '<button class="iq del" data-deltgt="'+t.from+'" title="刪掉這段"><svg class="i"><use href="#i-x"/></svg></button>'+
       '</div>';
     }).join('');
 }
@@ -3425,15 +3436,21 @@ $('saveTarget').onclick=()=>{
   const v=parseFloat($('tAmt').value), from=$('tFrom').value;
   if(isNaN(v)||v<=0){toast('填一個大於 0 的數字');return;}
   if(!from){toast('選一個開始的月份');return;}
-  const list=targets().filter(t=>t.from!==from);
+  const list=targets().filter(t=>t.from!==from&&t.from!==tEdit);
   list.push({from,amount:v});
   db.settings.targets=list.sort((a,b)=>a.from<b.from?-1:1);
   delete db.settings.monthlyTarget;          /* 舊欄位轉過來之後就不留了 */
+  const was=tEdit; tEdit=null; tgtMode();
   save(); render(); renderTargetList();
-  toast(ymLabel(from)+'起 每月目標 '+money(v));
+  toast((was?'改成 ':'')+ymLabel(from)+'起 每月目標 '+money(v));
 };
+function tgtMode(){
+  $('saveTarget').textContent=tEdit?'更新這段':'設定';
+  $('tCancelEdit').style.display=tEdit?'':'none';
+}
 function openTarget(){
   const d=new Date(), cur=targetNow();
+  tEdit=null; tgtMode();
   $('tAmt').value=cur||'';
   $('tFrom').value=d.getFullYear()+'-'+pad(d.getMonth()+1);
   $('tHint').textContent = cur?'目前每月目標 '+money(cur)+'。':'';
@@ -3464,9 +3481,22 @@ document.body.addEventListener('click',e=>{
     b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
     SFX.play('tick'); renderPie(); return;
   }
+  if(b.dataset.edittgt){
+    const t=targets().find(x=>x.from===b.dataset.edittgt); if(!t) return;
+    tEdit=t.from;
+    $('tAmt').value=t.amount;
+    $('tFrom').value=t.from==='0000-00'?'':t.from;
+    tgtMode(); renderTargetList(); SFX.play('tick');
+    $('tAmt').focus();
+    return;
+  }
+  if(b.id==='tCancelEdit'){ tEdit=null; tgtMode(); renderTargetList(); return; }
   if(b.dataset.deltgt){
+    const only=targets().length<=1;
+    if(only&&!confirm('這是唯一一段目標，刪掉之後打卡表會停止計算，確定嗎？')) return;
     db.settings.targets=targets().filter(t=>t.from!==b.dataset.deltgt);
     delete db.settings.monthlyTarget;
+    if(tEdit===b.dataset.deltgt){ tEdit=null; tgtMode(); }
     save(); render(); renderTargetList(); SFX.play('del'); toast('刪掉這段目標');
     return;
   }
