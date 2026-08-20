@@ -1937,11 +1937,34 @@ const FINALE={
     {t:980, y:0,  sx:1.08,sy:.94},
     {t:1120,y:0,  sx:1,sy:1}]
 };
+/* 另外兩種收尾。f 是換表情，sp 是噴東西。
+   停在半空：跳到一半凝住，跟那個沒有解決的和弦對在一起。
+   下行：一階一階往下沉，跟著三個下行音走。 */
+const ENDING={
+  meh:[
+    {t:0,   y:10, sx:1.16,sy:.84,aL:24,aR:-24,f:'idle'},   /* 先蹲，看起來要跳了 */
+    {t:150, y:-32,sx:.96,sy:1.1, aL:-140,aR:140,f:'up'},
+    {t:330, y:-27,sx:.98,sy:1.06},                          /* 懸在半空，動作卡住 */
+    {t:640, y:-25,rot:7,aL:26,aR:-26,f:'meh'},              /* 手放下、頭一歪 */
+    {t:830, y:2,  sx:1.12,sy:.9,rot:0},                     /* 落地 */
+    {t:1000,y:-5, sx:1,sy:1.02,aL:34,aR:-34},               /* 聳個肩 */
+    {t:1180,y:0,  sx:1,sy:1}],
+  sad:[
+    {t:0,   y:-10,sx:1,sy:1.04,aL:-40,aR:40,f:'down'},      /* 還抬了一下頭 */
+    {t:140, y:4,  sx:1.05,sy:.95,rot:-4,aL:10,aR:-10},      /* 第一階 */
+    {t:280, y:11, sx:1.11,sy:.88,rot:4,aL:28,aR:-28,sp:['flake',2]},
+    {t:420, y:17, sx:1.17,sy:.8, rot:-3,aL:44,aR:-44,sp:['flake',2],f:'sad'},
+    {t:600, y:23, sx:1.26,sy:.68,rot:0,aL:56,aR:-56,sp:['flake',3]},  /* 整隻攤掉 */
+    {t:950, y:21, sx:1.24,sy:.71},                          /* 趴在地上起伏 */
+    {t:1200,y:9,  sx:1.07,sy:.9, aL:40,aR:-40}]             /* 勉強撐起來一點 */
+};
 function chSet(o){
   const g=ANIM.tgt;
   ['y','sx','sy','rot','aL','aR','st'].forEach(k=>{ if(o[k]!==undefined) g[k]=o[k]; });
   if(o.xrel!==undefined) g.x=ANIM.cur.x+o.xrel;
   if(o.snap!==undefined){ ANIM.cur.rot=o.snap; g.rot=o.snap; }
+  if(o.f) chFaceSet(o.f);
+  if(o.sp) ANIM.spawn(o.sp[0],o.sp[1]);
   ANIM.start();
 }
 function chPose(name,tilt,step){
@@ -2039,12 +2062,11 @@ function tunePlay(){
     if(ok){ const st2=$('tuneStage'); if(st2){ const r=st2.getBoundingClientRect();
       burst(r.left+r.width/2,r.top+r.height*.45); } }
   },end*1000));
-  /* 達標的話跑這隻自己的收尾表演 */
-  if(ok){
-    const seq=FINALE[a.k]||FINALE['a-cat'];
-    seq.forEach(p=>tuneTimers.push(setTimeout(()=>chSet(p),end*1000+p.t)));
-  }
-  tuneTimers.push(setTimeout(tuneStop,(end+1.6)*1000));
+  /* 三種收尾各跑各的：達標是這隻專屬的表演，另外兩種是共用的動作 */
+  const seq = ok ? (FINALE[a.k]||FINALE['a-cat'])
+                 : (mrec.delta>=0 ? ENDING.meh : ENDING.sad);
+  seq.forEach(p=>tuneTimers.push(setTimeout(()=>chSet(p),end*1000+p.t)));
+  tuneTimers.push(setTimeout(tuneStop,(end+2.1)*1000));
 }
 function renderCal(){
   const box=$('calCard'), ms=monthly(), tgt=targetNow(), pm=perMonth();
