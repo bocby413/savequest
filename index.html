@@ -415,7 +415,8 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   display:grid;place-items:center}
 .fri .pic img{width:100%;height:100%;object-fit:cover}
 .fri .pic svg{width:82%;height:82%}
-.fri .info{flex:1;min-width:0}
+.fri .info{flex:1;min-width:0;display:block}
+.fri .sub{display:block}
 .fri .nm{font-size:15px;font-weight:700;display:flex;align-items:baseline;gap:8px}
 .fri .nm b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
 .fri .seen{flex:none;font-size:11.5px;font-weight:500;color:var(--txt3);font-style:normal}
@@ -425,6 +426,36 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .fri .ops{display:flex;gap:6px;flex:none}
 .friempty{color:var(--txt3);font-size:13.5px;padding:14px 2px}
 .fridiag{margin-top:12px;padding-top:10px;border-top:1px dashed var(--edge);font-size:11.5px;color:var(--txt3);line-height:1.6}
+/* 好友個人主頁 */
+.friopen{display:flex;align-items:center;gap:12px;flex:1;min-width:0;text-align:left;
+  background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer}
+.friopen .chev{flex:none;width:16px;height:16px;color:var(--txt3);transform:rotate(-90deg);
+  transition:transform .16s,color .16s}
+.friopen:hover .chev{color:var(--gold);transform:rotate(-90deg) translateY(3px)}
+.phead{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.ppic{width:72px;height:72px;border-radius:50%;overflow:hidden;background:var(--panel3);flex:none;
+  display:grid;place-items:center;border:2.5px solid var(--edge2)}
+.ppic img{width:100%;height:100%;object-fit:cover}
+.ppic svg{width:82%;height:82%}
+.pwho{min-width:0;flex:1}
+.pnm{font-size:20px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ptt{display:inline-block;margin-top:5px;padding:2px 10px;border-radius:99px;font-size:12.5px;font-weight:700;
+  background:rgba(255,194,51,.16);color:var(--gold)}
+.ptt.none{background:var(--panel2);color:var(--txt3);font-weight:500}
+.pseen{font-size:11.5px;color:var(--txt3);margin-top:6px}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.pcard{background:var(--panel2);border:1.5px solid var(--edge);border-radius:13px;padding:12px 13px}
+.pcard .ph{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--txt3);font-weight:700;letter-spacing:.6px}
+.pcard .ph svg{width:13px;height:13px}
+.pcard .pv{font-size:21px;font-weight:800;margin-top:5px;line-height:1.15}
+.pcard .pv small{font-size:13px;font-weight:600;color:var(--txt2);margin-left:3px}
+.pcard .ps{font-size:11.5px;color:var(--txt3);margin-top:4px;line-height:1.5}
+.pcard .pb{height:6px;border-radius:99px;background:var(--panel3);margin-top:8px;overflow:hidden}
+.pcard .pb i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--gold2),var(--gold));
+  transform-origin:left;transition:transform .5s cubic-bezier(.2,.9,.3,1)}
+.pcard.lock{opacity:.5}
+.pcard.lock .pv{font-size:14px;font-weight:600;color:var(--txt3);margin-top:7px}
+@media(max-width:420px){ .pgrid{grid-template-columns:1fr} }
 .grantrow{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--edge)}
 .grantrow .gi{flex:1}
 .grantrow b{display:block;font-size:14.5px;font-weight:600}
@@ -877,11 +908,29 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   <div class="dfoot"><button class="btn ghost" data-close>關閉</button></div>
 </div></div>
 
+<div class="veil" id="vProf"><div class="dlg">
+  <div class="phead">
+    <div class="ppic" id="profPic"></div>
+    <div class="pwho">
+      <div class="pnm" id="profNm"></div>
+      <div class="ptt" id="profTt"></div>
+      <div class="pseen" id="profSeen"></div>
+    </div>
+  </div>
+  <div class="pgrid" id="profBody"></div>
+  <div class="say" id="profFoot" style="margin-top:12px"></div>
+  <div class="dfoot">
+    <button class="btn ghost" id="profBack">返回</button>
+    <button class="btn ghost" id="profGrant">我分享給他什麼</button>
+    <button class="btn ghost del" id="profDel">移除好友</button>
+  </div>
+</div></div>
+
 <div class="veil" id="vGrant"><div class="dlg">
   <h3 id="grantTitle">分享設定</h3>
   <div class="say">勾起來的項目，這位好友才看得到。頭貼和暱稱一律看得到。</div>
   <div id="grantBody"></div>
-  <div class="dfoot"><button class="btn ghost" data-close>取消</button><button class="btn go" id="saveGrant">儲存</button></div>
+  <div class="dfoot"><button class="btn ghost" id="grantCancel">取消</button><button class="btn go" id="saveGrant">儲存</button></div>
 </div></div>
 
 <div class="veil" id="vSync"><div class="dlg">
@@ -2410,22 +2459,74 @@ function renderFriends(){
     if(!bits.length) bits.push('<span style="color:var(--txt3)">'+
       (d?'對方沒有分享其他資訊':'等對方開啟 app 後才會同步進度')+'</span>');
     const p=PROFILES[f.uid]||{};
-    return '<div class="fri"><div class="pic">'+friAvatar((d&&d.avatar)||p.avatar)+'</div>'+
-      '<div class="info"><div class="nm"><b>'+esc((d&&d.name)||p.name||f.name||f.email)+'</b>'+
-        (p.lastSeen?'<i class="seen">'+seenText(p.lastSeen)+'</i>':'')+'</div>'+
-      '<div class="sub">'+bits.join('　')+'</div></div>'+
-      '<span class="ops">'+
-        '<button class="iq" data-grant="'+f.uid+'" title="我要分享什麼"><svg class="i"><use href="#i-gear"/></svg></button>'+
-        '<button class="iq del" data-unfri="'+f.uid+'" title="移除好友"><svg class="i"><use href="#i-x"/></svg></button>'+
-      '</span></div>';
+    return '<div class="fri">'+
+      '<button class="friopen" data-prof="'+f.uid+'">'+
+        '<span class="pic">'+friAvatar((d&&d.avatar)||p.avatar)+'</span>'+
+        '<span class="info"><span class="nm"><b>'+esc((d&&d.name)||p.name||f.name||f.email)+'</b>'+
+          (p.lastSeen?'<i class="seen">'+seenText(p.lastSeen)+'</i>':'')+'</span>'+
+        '<span class="sub">'+bits.join('　')+'</span></span>'+
+        '<svg class="chev"><use href="#i-down"/></svg>'+
+      '</button></div>';
   }).join('');
   const me=CLOUD.user?(CLOUD.user.email||CLOUD.user.uid):'（未登入）';
+  renderProf();
   box.innerHTML=html+'</div>'+
     '<div class="fridiag">目前登入：'+esc(me)+
     '　收到的邀請：'+REQS.length+' 筆'+
     '　好友：'+FRIENDS.length+' 位'+
     (CLOUD.err?'<br><span style="color:var(--red)">雲端錯誤：'+esc(CLOUD.err)+'</span>':'　狀態正常')+
     '</div>';
+}
+/* 個人主頁：看得到什麼完全由對方的分享設定決定 */
+let profFor=null;
+function pcard(icon,head,val,sub,pct){
+  return '<div class="pcard"><div class="ph"><svg><use href="#'+icon+'"/></svg>'+head+'</div>'+
+    '<div class="pv">'+val+'</div>'+
+    (sub?'<div class="ps">'+sub+'</div>':'')+
+    (pct===undefined?'':'<div class="pb"><i style="transform:scaleX('+
+      (Math.max(0,Math.min(1,pct))).toFixed(3)+')"></i></div>')+'</div>';
+}
+function plock(icon,head){
+  return '<div class="pcard lock"><div class="ph"><svg><use href="#'+icon+'"/></svg>'+head+'</div>'+
+    '<div class="pv">沒有分享</div></div>';
+}
+function renderProf(){
+  const f=profFor; if(!f||!$('vProf').classList.contains('on')) return;
+  const d=SHARED[f.uid], g=(d&&d.grant)||{}, p=PROFILES[f.uid]||{};
+  $('profPic').innerHTML=friAvatar((d&&d.avatar)||p.avatar);
+  $('profNm').textContent=(d&&d.name)||p.name||f.name||f.email;
+  const tt=$('profTt'), has=g.lv&&d&&d.title;
+  tt.textContent=has?d.title:'沒有分享稱號';
+  tt.className='ptt'+(has?'':' none');
+  $('profSeen').textContent=p.lastSeen?seenText(p.lastSeen):'還沒有上線紀錄';
+  let h='';
+  h+=(g.streak&&d.streak!==undefined)
+    ? pcard('i-check','連續達標',d.streak+'<small>個月</small>',
+        d.has?'今年 '+d.has+' 個月裡達標 '+d.hit+' 次':'今年還沒有紀錄',
+        d.has?d.hit/d.has:0)
+    : plock('i-check','連續達標');
+  h+=(g.goals&&d.goalsAll!==undefined)
+    ? pcard('i-flag','任務進度',d.goalsDone+'<small>/ '+d.goalsAll+'</small>',
+        d.goalsAll?(d.goalsAll-d.goalsDone)+' 個還在進行':'還沒有設任務',
+        d.goalsAll?d.goalsDone/d.goalsAll:0)
+    : plock('i-flag','任務進度');
+  h+=(g.month&&d.monthDelta!==undefined)
+    ? pcard('i-cal','這個月',(d.monthDelta>=0?'+':'')+short(d.monthDelta),
+        d.target?'目標 '+short(d.target)+(d.monthDelta>=d.target?'　已達標':''):'沒有設每月目標',
+        d.target?d.monthDelta/d.target:undefined)
+    : plock('i-cal','這個月');
+  h+=(g.assets&&d.assets!==undefined)
+    ? pcard('i-coin','總資產',short(d.assets),
+        '現金 '+short(d.cash||0)+'　股票 '+short(d.stock||0))
+    : plock('i-coin','總資產');
+  $('profBody').innerHTML=h;
+  $('profFoot').textContent=d
+    ? '資料更新於 '+new Date(d.updatedAt).toLocaleString('zh-TW')+'，對方開啟 app 時才會重新整理。'
+    : '對方還沒開啟過 app，所以這裡還沒有資料。';
+}
+function openProf(uid){
+  const f=FRIENDS.find(x=>x.uid===uid); if(!f) return;
+  profFor=f; open('vProf'); renderProf(); SFX.play('tick');
 }
 let grantFor=null;
 function openGrant(uid){
@@ -2450,7 +2551,15 @@ $('saveGrant').onclick=async()=>{
   const g={};
   $('grantBody').querySelectorAll('.gchk').forEach(c=>g[c.dataset.g]=c.checked);
   await CLOUD.setGrant(grantFor,g);
-  shut(); toast('分享設定已更新');
+  $('vGrant').classList.remove('on'); toast('分享設定已更新');
+};
+$('grantCancel').onclick=()=>$('vGrant').classList.remove('on');   /* 只關這層，回到上一頁 */
+$('profBack').onclick=()=>{ $('vProf').classList.remove('on'); profFor=null; };
+$('profGrant').onclick=()=>{ if(profFor) openGrant(profFor.uid); };
+$('profDel').onclick=()=>{
+  const f=profFor; if(!f) return;
+  if(!confirm('移除好友「'+(f.name||f.email)+'」？')) return;
+  CLOUD.removeFriend(f).then(()=>{ SFX.play('del'); toast('已移除'); $('profBack').onclick(); });
 };
 $('btnFriAdd').onclick=async()=>{
   const m=$('friMail').value.trim();
@@ -2671,10 +2780,7 @@ document.body.addEventListener('click',e=>{
   if(b.dataset.rej){ const r=REQS.find(x=>x.id===b.dataset.rej);
     if(r) CLOUD.reject(r).then(res=>toast(res&&res.err?'拒絕失敗：'+res.err:'已拒絕'));
     return; }
-  if(b.dataset.grant) return openGrant(b.dataset.grant);
-  if(b.dataset.unfri){ const f=FRIENDS.find(x=>x.uid===b.dataset.unfri);
-    if(f&&confirm('移除好友「'+(f.name||f.email)+'」？')) CLOUD.removeFriend(f).then(()=>{SFX.play('del');toast('已移除');});
-    return; }
+  if(b.dataset.prof) return openProf(b.dataset.prof);
   if(b.id==='btnSignIn') return CLOUD.signIn();
   if(b.id==='btnSignOut') return CLOUD.signOut();
   if(b.id==='calPrev'||b.id==='calNext'){
