@@ -403,6 +403,27 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .empty{padding:30px 22px;color:var(--txt3);font-size:14px}
 .empty b{display:block;color:var(--txt2);font-size:15.5px;font-weight:700;margin-bottom:4px}
 
+/* ── 這個月的聲音 ── */
+.tune{display:flex;align-items:stretch;gap:2px;height:132px;margin:16px 0 6px;position:relative}
+.tune::before{content:'';position:absolute;left:0;right:0;top:50%;border-top:1px dashed var(--edge);pointer-events:none}
+.tn{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;position:relative}
+.tn i{display:block;border-radius:3px;background:var(--edge);transform-origin:center;
+  transition:background-color .12s,box-shadow .12s,transform .12s}
+.tn.up i{background:linear-gradient(180deg,var(--lime),#5aa832);margin-bottom:auto}
+.tn.dn i{background:linear-gradient(0deg,var(--pink),#c33463);margin-top:auto}
+.tn.zero i{background:var(--edge2);align-self:center}
+.tn.rest i{background:var(--panel3);height:3px!important;align-self:center;margin:auto 0}
+.tn.hit i{background:var(--gold);box-shadow:0 0 14px var(--gold);transform:scaleX(1.55)}
+.tunehead{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.tunefoot{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--txt3);
+  border-top:1px solid var(--edge);padding-top:12px;margin-top:10px}
+.tunefoot b{color:var(--txt);font-weight:700;margin-left:5px}
+.tunedays{display:flex;gap:2px;font-size:10px;color:var(--txt3);margin-bottom:2px}
+.tunedays span{flex:1;min-width:0;text-align:center}
+.tunedays span.wk{color:var(--gold);font-weight:700}
+#btnTune{min-width:104px}
+@media(max-width:560px){ .tune{height:104px} .tunedays{font-size:9px} }
+
 /* ── 好友 ── */
 .dot{width:8px;height:8px;border-radius:50%;background:var(--pink);display:none;margin-left:6px}
 .dot.on{display:inline-block;animation:beat2 1.6s infinite}
@@ -718,6 +739,11 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 <div class="sec">
   <div class="sechead"><h2><svg class="i"><use href="#i-cal"/></svg>每月打卡</h2><span class="sub" id="calSub"></span></div>
   <div class="card" style="padding:20px" id="calCard"></div>
+</div>
+
+<div class="sec">
+  <div class="sechead"><h2><svg class="i"><use href="#i-vol"/></svg>這個月的聲音</h2><span class="sub" id="tuneSub"></span></div>
+  <div class="card" style="padding:20px" id="tuneCard"></div>
 </div>
 
 <div class="sec">
@@ -1405,6 +1431,102 @@ function renderQuest(){
 }
 
 /* ── 每月打卡 ── */
+/* ── 這個月的聲音 ──
+   一天一個音，沒記帳的日子是休止符，所以有沒有認真記帳直接聽得出來。
+   音階固定用五聲音階，怎麼排都不會刺耳。 */
+const PENTA=[130.81,146.83,164.81,196.00,220.00,
+             261.63,293.66,329.63,392.00,440.00,
+             523.25,587.33,659.25,783.99,880.00,1046.50];
+let tuneYM=null, tunePlaying=false, tuneTimers=[];
+function dailyOf(y,m){
+  const pre=y+'-'+pad(m+1)+'-', days=new Date(y,m+1,0).getDate();
+  const out=Array.from({length:days},(_,i)=>({d:i+1,net:0,n:0}));
+  recs().forEach((x,i)=>{
+    if(x.date.slice(0,8)!==pre) return;
+    const v = x.kind==='in' ? x.amount : x.kind==='out' ? -x.amount : (i===0?0:x.delta);
+    const t=out[+x.date.slice(8,10)-1]; if(t){ t.net+=v; t.n++; }
+  });
+  const top=Math.max(1,...out.map(o=>Math.abs(o.net)));
+  out.forEach(o=>{
+    /* 壓縮過再映射：發薪日金額比日常大一兩個數量級，直接照比例的話
+       其他日子會全部擠在同一個音上，整段聽起來是平的 */
+    const a=Math.abs(o.net)/top;
+    o.r=(o.net<0?-1:1)*Math.pow(a,.45);
+    o.raw=o.net/top;
+    o.idx=Math.max(0,Math.min(PENTA.length-1,Math.round(7.5+o.r*7.5)));
+    o.vol=.045+Math.abs(o.r)*.085;
+  });
+  return out;
+}
+function tuneMonths(ms){ return (ms||monthly()).filter(x=>x.real).map(x=>x.y+'-'+pad(x.m+1)); }
+function renderTune(){
+  const box=$('tuneCard'), ms=monthly(), keys=tuneMonths(ms);
+  if(!keys.length){
+    box.innerHTML='<div class="setup"><p>記滿一個月，這裡會把那個月的收支變成一段可以播放的旋律。<br>'+
+      '存進去的日子音高，花掉的日子音低，沒記帳的日子是休止符。</p></div>';
+    $('tuneSub').textContent=''; return;
+  }
+  if(keys.indexOf(tuneYM)<0) tuneYM=keys[keys.length-1];
+  const i=keys.indexOf(tuneYM), y=+tuneYM.slice(0,4), m=+tuneYM.slice(5,7)-1;
+  const ds=dailyOf(y,m), mrec=ms.find(x=>x.y===y&&x.m===m)||{delta:0,n:0};
+  const tgt=targetAt(y,m), ok=tgt>0&&mrec.delta>=tgt;
+  const H=132, half=H/2-4;
+  const bars=ds.map(o=>{
+    const cls=o.n===0?'rest':o.net>0?'up':o.net<0?'dn':'zero';
+    const h=o.n===0?3:Math.max(5,Math.abs(o.r)*half);
+    const tip=(m+1)+'/'+o.d+'　'+(o.n===0?'沒記帳'
+      :(o.net>=0?'+':'-')+money(Math.abs(o.net))+'　'+o.n+' 筆');
+    return '<div class="tn '+cls+'" data-d="'+o.d+'" title="'+tip+'"><i style="height:'+h.toFixed(1)+'px"></i></div>';
+  }).join('');
+  const dow=ds.map(o=>{
+    const w=new Date(y,m,o.d).getDay();
+    return '<span class="'+(w===1?'wk':'')+'">'+(o.d===1||o.d%5===0?o.d:'')+'</span>';
+  }).join('');
+  const played=ds.filter(o=>o.n>0).length;
+  box.innerHTML='<div class="calhead tunehead">'+
+      '<button class="arw" id="tunePrev" '+(i<=0?'disabled':'')+'>◀</button>'+
+      '<span class="y">'+y+' / '+(m+1)+'</span>'+
+      '<button class="arw" id="tuneNext" '+(i>=keys.length-1?'disabled':'')+'>▶</button>'+
+      '<button class="btn sm go" id="btnTune" style="margin-left:auto">'+
+        (tunePlaying?'停止':'播放這個月')+'</button></div>'+
+    '<div class="tune">'+bars+'</div>'+
+    '<div class="tunedays">'+dow+'</div>'+
+    '<div class="tunefoot">'+
+      '<span>有聲音的日子<b>'+played+' / '+ds.length+' 天</b></span>'+
+      '<span>這個月<b class="'+(mrec.delta>=0?'':'down')+'">'+(mrec.delta>=0?'+':'-')+short(Math.abs(mrec.delta))+'</b></span>'+
+      '<span>收尾<b>'+(ok?'完滿和弦':mrec.delta>=0?'停在半空':'下行')+'</b></span>'+
+    '</div>';
+  $('tuneSub').textContent=played?'一天一個音，共 '+ds.length+' 個音':'這個月沒有紀錄';
+}
+function tuneStop(){
+  tuneTimers.forEach(clearTimeout); tuneTimers=[];
+  tunePlaying=false;
+  document.querySelectorAll('.tn.hit').forEach(e=>e.classList.remove('hit'));
+  const b=$('btnTune'); if(b) b.textContent='播放這個月';
+}
+function tunePlay(){
+  if(tunePlaying) return tuneStop();
+  const c=SFX.wake(); if(!c){ toast('這台裝置放不出聲音'); return; }
+  const y=+tuneYM.slice(0,4), m=+tuneYM.slice(5,7)-1;
+  const ds=dailyOf(y,m), mrec=monthly().find(x=>x.y===y&&x.m===m)||{delta:0};
+  const tgt=targetAt(y,m), ok=tgt>0&&mrec.delta>=tgt;
+  const STEP=.155;
+  tunePlaying=true; $('btnTune').textContent='停止';
+  ds.forEach((o,i)=>{
+    const t=i*STEP;
+    if(new Date(y,m,o.d).getDay()===1) SFX.beep(65.41,t,.2,'sine',.055);   /* 每週一打一下拍子 */
+    if(o.n>0) SFX.beep(PENTA[o.idx],t,STEP*1.7,o.net>=0?'triangle':'square',o.vol);
+    tuneTimers.push(setTimeout(()=>{
+      document.querySelectorAll('.tn.hit').forEach(e=>e.classList.remove('hit'));
+      const el=document.querySelector('.tn[data-d="'+o.d+'"]'); if(el) el.classList.add('hit');
+    },t*1000));
+  });
+  const end=ds.length*STEP+.1;
+  if(ok)                    [523.25,659.25,783.99,1046.50].forEach((f,i)=>SFX.beep(f,end+i*.075,.9,'triangle',.085));
+  else if(mrec.delta>=0)    [523.25,587.33].forEach((f,i)=>SFX.beep(f,end+i*.08,.7,'triangle',.075));
+  else                      [392.00,311.13,261.63].forEach((f,i)=>SFX.beep(f,end+i*.13,.6,'square',.075));
+  tuneTimers.push(setTimeout(tuneStop,(end+1.4)*1000));
+}
 function renderCal(){
   const box=$('calCard'), ms=monthly(), tgt=targetNow(), pm=perMonth();
   if(!tgt){
@@ -2581,7 +2703,7 @@ $('btnFriAdd').onclick=async()=>{
         $('friMail').value=''; SFX.play('coin'); }
 };
 
-function render(){ renderStocks(); renderLoans(); renderMonthTable(); renderPie(); renderHud(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); }
+function render(){ renderTune(); renderStocks(); renderLoans(); renderMonthTable(); renderPie(); renderHud(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); }
 
 /* ── 互動 ── */
 const open=id=>{$(id).classList.add('on');const f=$(id).querySelector('input');setTimeout(()=>f&&f.focus(),120);};
@@ -2788,6 +2910,13 @@ document.body.addEventListener('click',e=>{
   if(b.dataset.prof) return openProf(b.dataset.prof);
   if(b.id==='btnSignIn') return CLOUD.signIn();
   if(b.id==='btnSignOut') return CLOUD.signOut();
+  if(b.id==='btnTune') return tunePlay();
+  if(b.id==='tunePrev'||b.id==='tuneNext'){
+    const ks=tuneMonths(), i=ks.indexOf(tuneYM);
+    tuneStop();
+    tuneYM=ks[Math.max(0,Math.min(ks.length-1,i+(b.id==='tuneNext'?1:-1)))];
+    SFX.play('tick'); renderTune(); return;
+  }
   if(b.id==='calPrev'||b.id==='calNext'){
     const years=[...new Set(monthly().map(m=>m.y))], i=years.indexOf(calYear);
     calYear=years[Math.max(0,Math.min(years.length-1,i+(b.id==='calNext'?1:-1)))];
