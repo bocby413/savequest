@@ -460,7 +460,21 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .tunedays{display:flex;gap:2px;font-size:10px;color:var(--txt3);margin-bottom:2px}
 .tunedays span{flex:1;min-width:0;text-align:center}
 .tunedays span.wk{color:var(--gold);font-weight:700}
-#btnTune{min-width:104px}
+.dlg.wide{width:min(560px,100%)}
+.chgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:4px}
+.chgrid button{display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 4px;
+  border-radius:14px;background:var(--panel2);border:2px solid var(--edge);color:var(--txt2);
+  font:inherit;font-size:12px;font-weight:600;cursor:pointer;
+  transition:color .14s,border-color .14s,background-color .14s,transform .14s}
+.chgrid button:hover{transform:translateY(-3px);color:var(--txt);border-color:var(--edge2)}
+.chgrid button svg{width:40px;height:40px}
+.monplay{position:absolute;left:50%;top:50%;width:30px;height:30px;margin:-15px 0 0 -15px;
+  border-radius:50%;border:2px solid var(--gold);background:rgba(18,15,46,.72);color:var(--gold);
+  display:grid;place-items:center;cursor:pointer;padding:0;font-size:11px;line-height:1;
+  opacity:0;transition:opacity .16s,transform .16s;z-index:3}
+.mon:hover .monplay,.monplay:focus{opacity:1}
+.monplay:hover{transform:scale(1.14)}
+@media(hover:none){ .monplay{opacity:.92} }
 @media(max-width:560px){ .tune{height:104px} .tunedays{font-size:9px} }
 
 /* ── 好友 ── */
@@ -781,11 +795,6 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 </div>
 
 <div class="sec">
-  <div class="sechead"><h2><svg class="i"><use href="#i-vol"/></svg>這個月的聲音</h2><span class="sub" id="tuneSub"></span></div>
-  <div class="card" style="padding:20px" id="tuneCard"></div>
-</div>
-
-<div class="sec">
   <div class="sechead"><h2><svg class="i"><use href="#i-stock"/></svg>資產</h2>
     <span class="sub" id="stkSub"></span>
   </div>
@@ -971,6 +980,25 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   <div class="say" id="friMsg" style="min-height:20px;margin-top:8px"></div>
   <div id="friBody"></div>
   <div class="dfoot"><button class="btn ghost" data-close>關閉</button></div>
+</div></div>
+
+<div class="veil" id="vTune"><div class="dlg wide">
+  <h3 id="tuneTitle">這個月的聲音</h3>
+  <div id="tunePickPane">
+    <div class="say">一天一個音，存進去的日子音高，花掉的日子音低，沒記帳的日子是休止符。<br>挑一隻主角來演這個月。</div>
+    <div class="chgrid" id="tuneChoose"></div>
+  </div>
+  <div id="tuneShowPane" style="display:none">
+    <div class="stage" id="tuneStage"></div>
+    <div class="tune" id="tuneBars"></div>
+    <div class="tunedays" id="tuneDays"></div>
+    <div class="tunefoot" id="tuneFoot"></div>
+  </div>
+  <div class="dfoot">
+    <button class="btn ghost" data-close>關閉</button>
+    <button class="btn ghost" id="tuneBack" style="display:none">換一隻</button>
+    <button class="btn go" id="btnTune" style="display:none">播放</button>
+  </div>
 </div></div>
 
 <div class="veil" id="vProf"><div class="dlg">
@@ -1677,17 +1705,9 @@ function dailyOf(y,m){
   });
   return out;
 }
-function tuneMonths(ms){ return (ms||monthly()).filter(x=>x.real).map(x=>x.y+'-'+pad(x.m+1)); }
 function renderTune(){
-  if(tunePlaying) return;                 /* 演出中不重繪，不然角色會被砍掉重生 */
-  const box=$('tuneCard'), ms=monthly(), keys=tuneMonths(ms);
-  if(!keys.length){
-    box.innerHTML='<div class="setup"><p>記滿一個月，這裡會把那個月的收支變成一段可以播放的旋律。<br>'+
-      '存進去的日子音高，花掉的日子音低，沒記帳的日子是休止符。</p></div>';
-    $('tuneSub').textContent=''; return;
-  }
-  if(keys.indexOf(tuneYM)<0) tuneYM=keys[keys.length-1];
-  const i=keys.indexOf(tuneYM), y=+tuneYM.slice(0,4), m=+tuneYM.slice(5,7)-1;
+  if(tunePlaying||!tuneYM) return;        /* 演出中不重繪，不然角色會被砍掉重生 */
+  const y=+tuneYM.slice(0,4), m=+tuneYM.slice(5,7)-1;
   const ds=dailyOf(y,m);
   const H=132, half=H/2-4;
   const bars=ds.map(o=>{
@@ -1703,14 +1723,6 @@ function renderTune(){
   }).join('');
   const played=ds.filter(o=>o.n>0).length;
   const a=tchar();
-  /* 舞台跟六隻選鈕加起來是七個 SVG，每次重繪都重建會拖慢整個 render()，
-     所以拆成幾塊，角色沒換就整塊留著不動 */
-  if(!$('tuneStage')) box.innerHTML=
-    '<div class="calhead tunehead" id="tuneHead"></div>'+
-    '<div class="stage" id="tuneStage"></div>'+
-    '<div class="tune" id="tuneBars"></div>'+
-    '<div class="tunedays" id="tuneDays"></div>'+
-    '<div class="tunefoot" id="tuneFoot"></div>';
   const stg=$('tuneStage');
   const sceneKey=a.k+'|'+ds.length;
   if(stg.dataset.scene!==sceneKey){
@@ -1731,23 +1743,13 @@ function renderTune(){
           sc.props.map(p=>'<b style="left:'+p.l+'">'+p.svg+'</b>').join('')+'</div>'+
         '<div class="fx" id="tuneFx"></div>'+
         chSVG(a,'idle')+
-      '</div>'+
-      '<div class="chpick">'+TCHARS.map(x=>
-        '<button data-char="'+x.k+'" class="'+(x.k===a.k?'on':'')+'" title="'+x.n+'">'+
-        '<svg viewBox="0 0 64 64"><use href="#'+x.k+'"/></svg></button>').join('')+'</div>';
+      '</div>';
   }
-  $('tuneHead').innerHTML=
-      '<button class="arw" id="tunePrev" '+(i<=0?'disabled':'')+'>◀</button>'+
-      '<span class="y">'+y+' / '+(m+1)+'</span>'+
-      '<button class="arw" id="tuneNext" '+(i>=keys.length-1?'disabled':'')+'>▶</button>'+
-      '<button class="btn sm go" id="btnTune" style="margin-left:auto">'+
-        (tunePlaying?'停止':'播放這個月')+'</button>';
   $('tuneBars').innerHTML=bars;
   $('tuneDays').innerHTML=dow;
   ANIM.watch(); ANIM.start();
   $('tuneFoot').innerHTML=
       '<span>有聲音的日子<b>'+played+' / '+ds.length+' 天</b></span>';
-  $('tuneSub').textContent=played?'一天一個音，共 '+ds.length+' 個音':'這個月沒有紀錄';
 }
 /* 一個音對應一個表情與一個姿勢 */
 function exprOf(o){
@@ -1994,6 +1996,34 @@ setInterval(()=>{
     setTimeout(()=>{ if(!tunePlaying) chFaceSet('idle'); },140);
   }
 }, 3000);
+/* 從打卡表某個月按下去：先選主角，選完才演 */
+function openTune(key){
+  tuneStop(); tuneYM=key;
+  const y=+key.slice(0,4), m=+key.slice(5,7)-1;
+  $('tuneTitle').textContent=y+' 年 '+(m+1)+' 月的聲音';
+  const cur=tchar();
+  $('tuneChoose').innerHTML=TCHARS.map(x=>
+    '<button data-char="'+x.k+'"'+(x.k===cur.k?' class="on"':'')+'>'+
+    '<svg viewBox="0 0 64 64"><use href="#'+x.k+'"/></svg>'+esc(x.n)+'</button>').join('');
+  tunePick(true);
+  open('vTune');
+}
+function tunePick(on){
+  if(on){                                   /* 回到選主角頁時要標出剛才選的那隻 */
+    const k=tchar().k;
+    $('tuneChoose').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.char===k));
+  }
+  $('tunePickPane').style.display=on?'':'none';
+  $('tuneShowPane').style.display=on?'none':'';
+  $('tuneBack').style.display=on?'none':'';
+  $('btnTune').style.display=on?'none':'';
+}
+function tuneShow(k){
+  db.settings.tuneChar=k; save();
+  tunePick(false);
+  renderTune();
+  setTimeout(tunePlay,220);          /* 等版面定位好再量長條位置 */
+}
 function tuneStop(){
   tuneTimers.forEach(clearTimeout); tuneTimers=[];
   tunePlaying=false;
@@ -2003,7 +2033,7 @@ function tuneStop(){
     chWalk(0);                                  /* 演完自己走回中間 */
   }
   ANIM.cur.rot=0; chPose('idle',0); chFaceSet('idle'); ANIM.clearPs();
-  const b=$('btnTune'); if(b) b.textContent='播放這個月';
+  const b=$('btnTune'); if(b) b.textContent='再播一次';
 }
 function tunePlay(){
   if(tunePlaying) return tuneStop();
@@ -2102,7 +2132,10 @@ function renderCal(){
       (!rec.real?'<span class="tagn est">沒記帳</span>':rec.partial&&!ok?'<span class="tagn">進行中</span>':'')+
       '<span class="mo">'+(m+1)+' 月</span>'+
       '<span class="v '+(rec.delta>=0?'':'down')+'">'+(rec.real?(rec.delta>=0?'+':'-')+short(Math.abs(rec.delta)):'—')+'</span>'+
-      (rec.real?'<span class="cnt">'+rec.n+' 筆</span>':'')+'</div>');
+      (rec.real?'<span class="cnt">'+rec.n+' 筆</span>':'')+
+      /* 過完的月份才聽得到，還沒過完的沒有完整的一個月 */
+      (rec.real&&!rec.partial?'<button class="monplay" data-play="'+calYear+'-'+pad(m+1)+
+        '" title="聽這個月的聲音">▶</button>':'')+'</div>');
   }
   /* 連續達標：從最新往回數，碰到沒記帳的月份就停（那個月是推的，算不得數） */
   let streak=0;
@@ -3243,7 +3276,7 @@ $('btnFriAdd').onclick=async()=>{
         $('friMail').value=''; SFX.play('coin'); }
 };
 
-function render(){ renderTune(); renderStocks(); renderLoans(); renderMonthTable(); renderPie(); renderHud(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); }
+function render(){ renderStocks(); renderLoans(); renderMonthTable(); renderPie(); renderHud(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); }
 
 /* ── 互動 ── */
 const open=id=>{$(id).classList.add('on');const f=$(id).querySelector('input');setTimeout(()=>f&&f.focus(),120);};
@@ -3450,21 +3483,10 @@ document.body.addEventListener('click',e=>{
   if(b.dataset.prof) return openProf(b.dataset.prof);
   if(b.id==='btnSignIn') return CLOUD.signIn();
   if(b.id==='btnSignOut') return CLOUD.signOut();
-  if(b.dataset.char){
-    db.settings.tuneChar=b.dataset.char; save(); SFX.play('tick');
-    tuneStop(); renderTune();
-    const st=$('tuneStage');
-    if(st){ chFaceSet('joy'); chPose('joy',0);
-      setTimeout(()=>{ if(!tunePlaying){ chFaceSet('idle'); chPose('idle',0); } },420); }
-    return;
-  }
+  if(b.dataset.play) return openTune(b.dataset.play);
+  if(b.dataset.char){ SFX.play('tick'); return tuneShow(b.dataset.char); }
+  if(b.id==='tuneBack'){ tuneStop(); tunePick(true); SFX.play('tick'); return; }
   if(b.id==='btnTune') return tunePlay();
-  if(b.id==='tunePrev'||b.id==='tuneNext'){
-    const ks=tuneMonths(), i=ks.indexOf(tuneYM);
-    tuneStop();
-    tuneYM=ks[Math.max(0,Math.min(ks.length-1,i+(b.id==='tuneNext'?1:-1)))];
-    SFX.play('tick'); renderTune(); return;
-  }
   if(b.id==='calPrev'||b.id==='calNext'){
     const years=[...new Set(monthly().map(m=>m.y))], i=years.indexOf(calYear);
     calYear=years[Math.max(0,Math.min(years.length-1,i+(b.id==='calNext'?1:-1)))];
