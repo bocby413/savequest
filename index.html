@@ -75,7 +75,8 @@ svg.i{width:1em;height:1em;fill:currentColor;vertical-align:-.13em}
 .tag.lime{background:rgba(142,230,90,.14);color:var(--lime);border-color:rgba(142,230,90,.4)}
 
 /* ── 頂部狀態列 ── */
-.hud{display:grid;grid-template-columns:auto 1fr auto;gap:22px;align-items:center;padding:20px 24px;margin-bottom:18px}
+.hud{position:relative;display:grid;grid-template-columns:auto 1fr auto;gap:22px;align-items:center;padding:20px 24px;margin-bottom:18px}
+
 @media(max-width:900px){.hud{grid-template-columns:1fr;gap:16px}}
 .ava{position:relative;width:104px;height:104px;flex:none;padding:0;border:none;background:none;cursor:pointer}
 .ava .ring{position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--gold) var(--p,0%),var(--panel3) 0)}
@@ -116,6 +117,22 @@ svg.i{width:1em;height:1em;fill:currentColor;vertical-align:-.13em}
 .hudright .d{font-size:13px;color:var(--txt2)}
 .up{color:var(--lime)} .down{color:var(--red)}
 .acts{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px;align-items:center}
+/* 桌機照舊排成一列；手機分兩行，上面是常用的三顆，下面是其他 */
+.actrow{display:contents}
+@media(max-width:640px){
+  .acts{flex-direction:column;align-items:stretch;gap:9px}
+  .actrow{display:flex;gap:7px;flex-wrap:nowrap;align-items:stretch}
+  .actrow .btn{flex:1 1 0;min-width:0;padding-left:6px;padding-right:6px;font-size:13px;
+    white-space:nowrap;justify-content:center}
+  .actrow .btn svg{flex:none}
+  /* 第二排的顆數會變（登入、可以加到主畫面時會多），擠不下就換行，不要把字切掉 */
+  #actRow2{flex-wrap:wrap}
+  #actRow2 .btn{flex:1 1 auto;min-width:70px}
+  /* 手機把齒輪吸到卡片右上角，桌機維持在按鈕列裡 */
+  #actRow2 #btnMore{position:absolute;top:12px;right:12px;z-index:4;flex:none;
+    width:36px;height:36px;min-width:0;padding:0;border-radius:11px}
+  #actRow2 #btnMore svg{width:19px;height:19px}
+}
 
 /* ── 格子條 ── */
 .cells{display:flex;gap:4px}
@@ -771,13 +788,17 @@ html[data-skin="light"] .logbar input{color-scheme:light}
     <div class="cells" id="xp"></div>
     <div class="cellrow"><span id="xpL"></span><span id="xpR"></span></div>
     <div class="acts">
-      <button class="btn go" id="btnAddRec"><svg class="i"><use href="#i-plus"/></svg> 記一筆</button>
-      <button class="btn" id="btnAddAsset"><svg class="i"><use href="#i-stock"/></svg> 新增資產</button>
-      <button class="btn sm" id="btnTarget">每月存款目標</button>
-      <button class="btn sm ghost" id="btnSync" style="display:none">雲端同步</button>
-      <button class="btn sm ghost" id="btnFriends" style="display:none">好友<span class="dot" id="friDot"></span></button>
-      <button class="btn sm" id="btnWheel">轉盤<span class="dot" id="wheelDot"></span></button>
-      <button class="btn sm ghost" id="btnMore" title="設定"><svg class="i"><use href="#i-gear"/></svg></button>
+      <div class="actrow">
+        <button class="btn go" id="btnAddRec"><svg class="i"><use href="#i-plus"/></svg> 記一筆</button>
+        <button class="btn" id="btnAddAsset"><svg class="i"><use href="#i-stock"/></svg> 新增資產</button>
+        <button class="btn sm" id="btnTarget">每月存款目標</button>
+      </div>
+      <div class="actrow" id="actRow2">
+        <button class="btn sm ghost" id="btnSync" style="display:none">雲端同步</button>
+        <button class="btn sm ghost" id="btnFriends" style="display:none">好友<span class="dot" id="friDot"></span></button>
+        <button class="btn sm" id="btnWheel">轉盤<span class="dot" id="wheelDot"></span></button>
+        <button class="btn sm ghost" id="btnMore" title="設定"><svg class="i"><use href="#i-gear"/></svg></button>
+      </div>
       <input type="file" id="fileImport" accept=".json" hidden>
     </div>
   </div>
@@ -4220,7 +4241,7 @@ window.addEventListener('beforeinstallprompt',e=>{
     installEvt=null; b.remove();
     if(r.outcome==='accepted'){ SFX.play('win'); toast('裝好了，回桌面找圖示'); }
   };
-  document.querySelector('.acts').appendChild(b);
+  (document.getElementById('actRow2')||document.querySelector('.acts')).appendChild(b);
 });
 window.addEventListener('appinstalled',()=>{
   const b=$('btnInstall'); if(b) b.remove();
