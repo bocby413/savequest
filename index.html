@@ -530,6 +530,23 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .pcard.lock{opacity:.5}
 .pcard.lock .pv{font-size:14px;font-weight:600;color:var(--txt3);margin-top:7px}
 @media(max-width:420px){ .pgrid{grid-template-columns:1fr} }
+/* 每日轉盤 */
+.coinbar{margin-top:8px;display:inline-flex;align-items:center;gap:6px;padding:3px 11px 3px 8px;
+  border-radius:99px;background:rgba(255,194,51,.14);border:1.5px solid rgba(255,194,51,.35);
+  font-size:13px;font-weight:700;color:var(--gold)}
+.coinbar svg{width:15px;height:15px}
+.wheelbox{position:relative;width:min(300px,100%);aspect-ratio:1;margin:6px auto 4px}
+.wheelspin{width:100%;height:100%;border-radius:50%;overflow:hidden;
+  box-shadow:0 0 0 6px var(--panel2),0 0 0 8px var(--edge2),0 8px 0 var(--deep)}
+.wheelspin svg{width:100%;height:100%;display:block}
+.needle{position:absolute;left:50%;top:-9px;margin-left:-11px;width:22px;height:30px;z-index:3;
+  background:var(--gold);clip-path:polygon(50% 100%,0 0,100% 0);filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
+.hubcap{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;
+  background:var(--panel);border:3px solid var(--edge2);display:grid;place-items:center;z-index:2}
+.hubcap svg{width:22px;height:22px;color:var(--gold)}
+.wheelres{min-height:52px;display:grid;place-items:center;text-align:center;font-size:15px;color:var(--txt2)}
+.wheelres b{font-size:24px;font-weight:800;color:var(--gold);display:block;margin-bottom:2px}
+.wheelres.none b{color:var(--txt3);font-size:19px}
 /* 管理分類 */
 .catrow{border:1.5px solid var(--edge);border-radius:13px;background:var(--panel2);margin-bottom:8px;overflow:hidden}
 .catrow>.hd{display:flex;align-items:center;gap:8px;padding:11px 12px}
@@ -759,6 +776,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
       <button class="btn sm" id="btnTarget">每月存款目標</button>
       <button class="btn sm ghost" id="btnSync" style="display:none">雲端同步</button>
       <button class="btn sm ghost" id="btnFriends" style="display:none">好友<span class="dot" id="friDot"></span></button>
+      <button class="btn sm" id="btnWheel">轉盤<span class="dot" id="wheelDot"></span></button>
       <button class="btn sm ghost" id="btnMore" title="設定"><svg class="i"><use href="#i-gear"/></svg></button>
       <input type="file" id="fileImport" accept=".json" hidden>
     </div>
@@ -767,6 +785,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
     <div class="k" id="amtK">目前存款</div>
     <div class="v n" id="amt">0</div>
     <div class="d" id="amtSub"></div>
+    <div class="coinbar" id="coinBar"></div>
   </div>
 </div>
 
@@ -1018,6 +1037,19 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   <div class="say" id="friMsg" style="min-height:20px;margin-top:8px"></div>
   <div id="friBody"></div>
   <div class="dfoot"><button class="btn ghost" data-close>關閉</button></div>
+</div></div>
+
+<div class="veil" id="vWheel"><div class="dlg">
+  <h3>每日轉盤</h3>
+  <div class="say" id="wheelSay"></div>
+  <div class="wheelbox">
+    <div class="needle"></div>
+    <div class="wheelspin" id="wheelSpin"></div>
+    <div class="hubcap"><svg class="i"><use href="#i-coin"/></svg></div>
+  </div>
+  <div class="wheelres" id="wheelRes"></div>
+  <div class="dfoot"><button class="btn ghost" data-close>關閉</button>
+    <button class="btn go" id="btnSpin">轉一次</button></div>
 </div></div>
 
 <div class="veil" id="vCats"><div class="dlg wide">
@@ -3367,7 +3399,7 @@ $('btnFriAdd').onclick=async()=>{
         $('friMail').value=''; SFX.play('coin'); }
 };
 
-function render(){ renderStocks(); renderLoans(); renderMonthTable(); renderPie(); renderHud(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); }
+function render(){ renderWheel(); renderStocks(); renderLoans(); renderMonthTable(); renderPie(); renderHud(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); }
 
 /* ── 互動 ── */
 const open=id=>{$(id).classList.add('on');const f=$(id).querySelector('input');setTimeout(()=>f&&f.focus(),120);};
@@ -3539,6 +3571,89 @@ $('saveGoal').onclick=()=>{
   db.goals.push({id:uid(),ts:Date.now(),name,amount:isNaN(amt)?0:amt,date:$('gDate').value,cat:$('gCat').value,done:false});
   save(); $('gName').value='';$('gAmt').value='';$('gDate').value=''; shut(); render(); toast('任務已加入');
 };
+/* ── 每日轉盤：當天記過一筆就能轉一次 ── */
+const WHEEL=[10,0,20,10,50,0,20,100];      /* 0 是再接再厲 */
+const WCOL=['#ffc233','#3a3273','#3ce0d0','#e39b12','#ff5c8a','#3a3273','#2bb5a8','#a879ff'];
+const coins=()=>db.settings.coins||0;
+/* 今天有沒有記過帳：看的是哪天記下去的，補登以前的日期也算 */
+function recordedToday(){
+  const t=todayStr();
+  return db.records.some(r=>r.ts&&iso(new Date(r.ts))===t);
+}
+const spunToday=()=>db.settings.spunOn===todayStr();
+const canSpin=()=>recordedToday()&&!spunToday();
+function wheelSVG(){
+  const n=WHEEL.length, step=360/n, R=100;
+  let out='<svg viewBox="0 0 200 200">';
+  WHEEL.forEach((v,i)=>{
+    const a0=(i*step-90-step/2)*Math.PI/180, a1=((i+1)*step-90-step/2)*Math.PI/180;
+    const x0=100+R*Math.cos(a0), y0=100+R*Math.sin(a0);
+    const x1=100+R*Math.cos(a1), y1=100+R*Math.sin(a1);
+    out+='<path d="M100 100 L'+x0.toFixed(2)+' '+y0.toFixed(2)+
+         ' A'+R+' '+R+' 0 0 1 '+x1.toFixed(2)+' '+y1.toFixed(2)+' Z" fill="'+WCOL[i]+'"/>';
+    const am=(i*step-90)*Math.PI/180, tr=64;
+    const tx=100+tr*Math.cos(am), ty=100+tr*Math.sin(am);
+    out+='<g transform="translate('+tx.toFixed(2)+','+ty.toFixed(2)+') rotate('+(i*step)+')">'+
+      (v? '<text y="6" text-anchor="middle" font-size="26" font-weight="800" fill="#1a1633">'+v+'</text>'
+        : '<text y="-2" text-anchor="middle" font-size="13" font-weight="700" fill="#b6aae2">再接</text>'+
+          '<text y="13" text-anchor="middle" font-size="13" font-weight="700" fill="#b6aae2">再厲</text>')+
+      '</g>';
+  });
+  return out+'<circle cx="100" cy="100" r="99" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="2"/></svg>';
+}
+let spinning=false, wheelAngle=0;
+function renderWheel(){
+  const b=$('btnWheel'); if(!b) return;
+  $('wheelDot').className='dot'+(canSpin()?' on':'');
+  const cb=$('coinBar');
+  if(cb) cb.innerHTML='<svg class="i"><use href="#i-coin"/></svg>'+money(coins())+' Bo士幣';
+}
+function openWheel(){
+  if(!$('wheelSpin').innerHTML) $('wheelSpin').innerHTML=wheelSVG();
+  paintWheel(); $('wheelRes').innerHTML=''; $('wheelRes').className='wheelres';
+  open('vWheel');
+}
+function paintWheel(){
+  const ok=canSpin();
+  $('btnSpin').disabled=!ok||spinning;
+  $('btnSpin').style.opacity=(ok&&!spinning)?1:.45;
+  $('wheelSay').innerHTML = spunToday()
+    ? '今天轉過了，明天記一筆再來。目前有 <b style="color:var(--gold)">'+money(coins())+'</b> 枚 Bo士幣。'
+    : ok ? '今天記過帳了，可以轉一次。目前有 <b style="color:var(--gold)">'+money(coins())+'</b> 枚 Bo士幣。'
+         : '今天還沒記帳。記一筆之後就能轉一次。目前有 <b style="color:var(--gold)">'+money(coins())+'</b> 枚 Bo士幣。';
+}
+function spin(){
+  if(spinning||!canSpin()) return;
+  spinning=true; paintWheel();
+  const i=Math.floor(Math.random()*WHEEL.length), got=WHEEL[i];
+  const step=360/WHEEL.length;
+  /* 指針在正上方，所以要把那一格轉到 0 度，再多繞幾圈 */
+  const target=360*5-i*step+wheelAngle-(wheelAngle%360);
+  wheelAngle=target;
+  const el=$('wheelSpin');
+  el.style.transition='transform 4.2s cubic-bezier(.16,.84,.28,1)';
+  el.style.transform='rotate('+target+'deg)';
+  SFX.play('tick');
+  /* 轉得越慢，喀噠聲間隔越長 */
+  for(let t=0;t<28;t++) setTimeout(()=>SFX.play('tick'), 120+t*t*4.6);
+  setTimeout(()=>{
+    spinning=false;
+    db.settings.spunOn=todayStr();
+    if(got>0){
+      db.settings.coins=coins()+got;
+      $('wheelRes').className='wheelres';
+      $('wheelRes').innerHTML='<div><b>+'+got+' Bo士幣</b>現在總共 '+money(coins())+' 枚</div>';
+      SFX.play(got>=50?'level':'coin');
+      const r=$('wheelSpin').getBoundingClientRect();
+      burst(r.left+r.width/2,r.top+r.height/2);
+    }else{
+      $('wheelRes').className='wheelres none';
+      $('wheelRes').innerHTML='<div><b>再接再厲</b>明天再來一次</div>';
+      SFX.play('err');
+    }
+    save(); render(); paintWheel();
+  },4300);
+}
 /* ── 管理分類 ── */
 let catKind='out', catOpen=null, catNewFor=null, catNewMain=false;
 function renderCatEdit(){
@@ -3759,6 +3874,8 @@ $('catMode').addEventListener('click',e=>{
   toast(want?'改成詳細，記一筆時可以選細項':'改成精簡，分類只有一層');
 });
 $('btnCatEdit').onclick=()=>{ SFX.play('tick'); openCatEdit(); };
+$('btnWheel').onclick=()=>{ SFX.play('tick'); openWheel(); };
+$('btnSpin').onclick=spin;
 $('catKind').addEventListener('click',e=>{
   const b=e.target.closest('button[data-ck]'); if(!b) return;
   catKind=b.dataset.ck; catOpen=null; catNewFor=null; catNewMain=false;
