@@ -1747,16 +1747,21 @@ function tchar(){
 /* 身體後面的東西：耳朵、尾巴 */
 function chBack(a){
   const E=x=>'<g class="ears">'+x+'</g>';
-  if(a.k==='a-cat')  return E('<path d="M32 44 27 20l19 11zM88 44 93 20 74 31z" fill="'+a.d+'"/>');
+  /* 貓：立起來的尖耳，帶粉紅內耳 */
+  if(a.k==='a-cat')  return E('<path d="M30 50 27 21l23 14zM90 50 93 21 70 35z" fill="'+a.d+'"/>'+
+                              '<path d="M33 45 31 29l12 8zM87 45 89 29 77 37z" fill="#ff9ec4" opacity=".75"/>');
   if(a.k==='a-dog')  return '<g class="tail"><path d="M96 88q16-4 12-20" stroke="'+a.d+'" stroke-width="9" fill="none" stroke-linecap="round"/></g>'+
                             E('<ellipse cx="28" cy="54" rx="10" ry="16" fill="'+a.d+'"/><ellipse cx="92" cy="54" rx="10" ry="16" fill="'+a.d+'"/>');
   if(a.k==='a-bear') return E('<circle cx="33" cy="43" r="12" fill="'+a.d+'"/><circle cx="87" cy="43" r="12" fill="'+a.d+'"/>');
+  /* 狐狸：又大又外傾的耳朵，從外上角往內下掃，內耳是奶白色 */
   if(a.k==='a-fox')  return '<g class="tail"><path d="M92 92q22-2 16-24" stroke="'+a.d+'" stroke-width="12" fill="none" stroke-linecap="round"/></g>'+
-                            E('<path d="M30 46 24 18l22 12zM90 46 96 18 74 30z" fill="'+a.d+'"/>');
+                            E('<path d="M22 28 41 51 27 61zM98 28 79 51 93 61z" fill="'+a.d+'"/>'+
+                              '<path d="M28 35 39 51 31 55zM92 35 81 51 89 55z" fill="#fff0e2" opacity=".8"/>');
   if(a.k==='a-bot')  return '<g class="ears"><path d="M60 34V16" stroke="'+a.d+'" stroke-width="4"/>'+
                             '<circle cx="60" cy="13" r="7" fill="#3ce0d0"/></g>';
   if(a.k==='a-frog') return '<circle cx="42" cy="41" r="16" fill="#6cc24a"/><circle cx="78" cy="41" r="16" fill="#6cc24a"/>';
-  if(a.k==='a-owl')  return E('<path d="M30 44 26 20l20 10zM90 44 94 20 74 30z" fill="'+a.d+'"/>');
+  /* 貓頭鷹：不是耳朵是角羽，小小兩撮長在頭頂偏中間 */
+  if(a.k==='a-owl')  return E('<path d="M31 47 41 29l10 13zM89 47 79 29 69 42z" fill="'+a.d+'"/>');
   return '';                                                  /* 企鵝的鰭在手的群組裡 */
 }
 /* 身體本身：機器人是方頭，其他都是圓的 */
