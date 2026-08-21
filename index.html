@@ -1659,25 +1659,188 @@ const PENTA=[130.81,146.83,164.81,196.00,220.00,
              523.25,587.33,659.25,783.99,880.00,1046.50];
 /* ── 舞台上的動物：共用同一副骨架，只換輪廓與五官位置 ── */
 /* 主角就是頭貼那八隻，共用同一副骨架，只換輪廓、配色與五官位置 */
-/* st 是身形：[橫向, 縱向] 的縮放，支點在腳底，所以怎麼調都還是踩在地上。
-   fw 是腳掌寬。每隻的比例不一樣，之後配件才掛得出差別。 */
+/* ── 角色骨架：頭跟身體是分開的兩塊，不是一顆球拉來拉去 ──
+   座標系 120x120，地面在 y=112。每隻靠「頭多大、身體多寬多高、腿多長」
+   來拉開差別，五官一律掛在頭上，所以調身體不會把臉扯歪。 */
 const TCHARS=[
-  {k:'a-cat', n:'貓',     c:'#ffc98a', d:'#f2a65a', ink:'#3a2a1a', ey:62, gap:12, my:80, st:[.97,1.04],
-   tailC:'#f0b46f'},
-  {k:'a-dog', n:'狗',     c:'#c99168', d:'#8a5a3c', ink:'#2e1f14', ey:62, gap:12, my:80, st:[1.07,.93], fw:10,
-   tailC:'#ad7449'},
-  {k:'a-bear',n:'熊',     c:'#a97b5c', d:'#7d5a44', ink:'#2b1a12', ey:62, gap:12, my:80, st:[1.13,1.06], fw:11},
-  {k:'a-fox', n:'狐狸',   c:'#f07a3c', d:'#d8622e', ink:'#2b1a12', ey:60, gap:12, my:78, st:[.92,1.06],
-   tailC:'#f59a5e'},
-  {k:'a-peng',n:'企鵝',   c:'#4a5885', d:'#36406b', ink:'#12142a', ey:56, gap:12, my:70, beak:'#f5a623',
-   foot:'#f5a623', armW:7, armH:21, pup:4, st:[.93,1.09], fw:11},
-  {k:'a-bot', n:'機器人', c:'#8fa3c8', d:'#6c7fa8', ink:'#3ce0d0', ey:60, gap:12, my:74, sq:1, base:1, st:[1,1]},
-  {k:'a-frog',n:'青蛙',   c:'#7ed957', d:'#5aa83c', ink:'#1d2b17', ey:32, gap:22, my:78, pup:4,
-   st:[.85,1.18], fw:12, legs:1},
-  {k:'a-owl', n:'貓頭鷹', c:'#a879ff', d:'#8a5ce0', ink:'#2a1a4a', ey:60, gap:14, my:82, beak:'#ffc233',
-   pup:7, st:[1.11,.89], fw:8}
+  {k:'a-cat', n:'貓',     c:'#ffc98a', d:'#f2a65a', ink:'#3a2a1a', tailC:'#f0b46f',
+   hr:27, hy:44, bw:18, bh:20, by:84, gap:11, eo:2, mo:13, fx:13, fy:106},
+  {k:'a-dog', n:'狗',     c:'#c99168', d:'#8a5a3c', ink:'#2e1f14', tailC:'#ad7449',
+   hr:30, hy:47, bw:23, bh:16, by:88, gap:12, eo:2, mo:13, fx:15, fy:107, fw:10},
+  {k:'a-bear',n:'熊',     c:'#a97b5c', d:'#7d5a44', ink:'#2b1a12',
+   hr:30, hy:43, bw:27, bh:21, by:82, gap:12, eo:2, mo:13, fx:17, fy:106, fw:11},
+  {k:'a-fox', n:'狐狸',   c:'#f07a3c', d:'#d8622e', ink:'#2b1a12', tailC:'#f59a5e',
+   hr:26, hy:43, bw:17, bh:22, by:82, gap:11, eo:2, mo:12, fx:12, fy:106},
+  {k:'a-peng',n:'企鵝',   c:'#4a5885', d:'#36406b', ink:'#12142a', beak:'#f5a623', foot:'#f5a623',
+   hr:25, hy:48, bw:26, bh:36, by:72, gap:11, eo:2, mo:14, pup:4.2,
+   armW:7, armH:20, apy:70, fx:13, fy:109, fw:11, egg:1},
+  {k:'a-bot', n:'機器人', c:'#8fa3c8', d:'#6c7fa8', ink:'#3ce0d0',
+   hr:27, hy:43, hry:23, bw:19, bh:17, by:82, gap:11, eo:1, mo:12, sq:1, base:1},
+  {k:'a-frog',n:'青蛙',   c:'#7ed957', d:'#5aa83c', ink:'#1d2b17',
+   hr:24, hy:44, bw:19, bh:19, by:78, gap:15, eo:-14, mo:11, pup:4,
+   fx:14, fy:108, fw:12, legs:1},
+  {k:'a-owl', n:'貓頭鷹', c:'#a879ff', d:'#8a5ce0', ink:'#2a1a4a', beak:'#ffc233',
+   hr:31, hy:46, bw:21, bh:16, by:88, gap:13, eo:1, mo:15, pup:7, fx:12, fy:106, fw:8}
 ];
-/* 每隻動物有自己的場景：天上飄的、地上擺的、演奏時噴出來的 */
+const eyeY=a=>a.hy+a.eo, mouY=a=>a.hy+a.mo;
+
+/* 身體後面的東西：耳朵、角羽、尾巴、青蛙的眼球包 */
+function chBack(a){
+  const E=x=>'<g class="ears" data-p="60,'+(a.hy-a.hr*.2).toFixed(0)+'">'+x+'</g>', hy=a.hy, hr=a.hr;
+  if(a.k==='a-cat')
+    return '<g class="tail" data-p="'+(60+a.bw-2)+','+(a.by+8)+'"><path d="M'+(60+a.bw-2)+' '+(a.by+8)+'q18 3 13-19" stroke="'+a.tailC+
+             '" stroke-width="7" fill="none" stroke-linecap="round"/></g>'+
+           E('<path d="M'+(60-hr+3)+' '+(hy-6)+' '+(60-hr+1)+' '+(hy-hr-4)+'l19 11z'+
+              'M'+(60+hr-3)+' '+(hy-6)+' '+(60+hr-1)+' '+(hy-hr-4)+'l-19 11z" fill="'+a.d+'"/>'+
+             '<path d="M'+(60-hr+7)+' '+(hy-9)+' '+(60-hr+5)+' '+(hy-hr+3)+'l10 6z'+
+              'M'+(60+hr-7)+' '+(hy-9)+' '+(60+hr-5)+' '+(hy-hr+3)+'l-10 6z" fill="#ff9ec4" opacity=".7"/>');
+  if(a.k==='a-dog')
+    return '<g class="tail" data-p="'+(60+a.bw-1)+','+(a.by-2)+'"><path d="M'+(60+a.bw-1)+' '+(a.by-2)+'q15-3 11-17" stroke="'+a.tailC+
+             '" stroke-width="8" fill="none" stroke-linecap="round"/></g>'+
+           E('<ellipse cx="'+(60-hr-1)+'" cy="'+(hy+4)+'" rx="9" ry="15" fill="'+a.d+'"/>'+
+             '<ellipse cx="'+(60+hr+1)+'" cy="'+(hy+4)+'" rx="9" ry="15" fill="'+a.d+'"/>');
+  if(a.k==='a-bear')
+    return E('<circle cx="'+(60-hr+5)+'" cy="'+(hy-hr+9)+'" r="10" fill="'+a.d+'"/>'+
+             '<circle cx="'+(60+hr-5)+'" cy="'+(hy-hr+9)+'" r="10" fill="'+a.d+'"/>');
+  if(a.k==='a-fox')
+    return '<g class="tail" data-p="'+(60+a.bw)+','+(a.by+6)+'"><path d="M'+(60+a.bw)+' '+(a.by+6)+'q22-1 16-22" stroke="'+a.tailC+
+             '" stroke-width="12" fill="none" stroke-linecap="round"/>'+
+             '<circle cx="'+(60+a.bw+15)+'" cy="'+(a.by-15)+'" r="6" fill="#fff0e2"/></g>'+
+           E('<path d="M'+(60-hr-2)+' '+(hy-hr-2)+' '+(60-hr+16)+' '+(hy+3)+' '+(60-hr+3)+' '+(hy+13)+'z'+
+              'M'+(60+hr+2)+' '+(hy-hr-2)+' '+(60+hr-16)+' '+(hy+3)+' '+(60+hr-3)+' '+(hy+13)+'z" fill="'+a.d+'"/>'+
+             '<path d="M'+(60-hr+3)+' '+(hy-hr+5)+' '+(60-hr+14)+' '+(hy+3)+' '+(60-hr+7)+' '+(hy+7)+'z'+
+              'M'+(60+hr-3)+' '+(hy-hr+5)+' '+(60+hr-14)+' '+(hy+3)+' '+(60+hr-7)+' '+(hy+7)+'z" fill="#fff0e2" opacity=".8"/>');
+  if(a.k==='a-bot')
+    return '<g class="ears" data-p="60,'+(hy-a.hry)+'"><path d="M60 '+(hy-a.hry-9)+'V'+(hy-a.hry+2)+'" stroke="'+a.d+'" stroke-width="4"/>'+
+           '<circle cx="60" cy="'+(hy-a.hry-11)+'" r="6" fill="#3ce0d0"/></g>';
+  if(a.k==='a-frog')                                   /* 兩顆凸在頭頂的眼球包 */
+    return '<circle cx="'+(60-a.gap)+'" cy="'+eyeY(a)+'" r="13" fill="#6cc24a"/>'+
+           '<circle cx="'+(60+a.gap)+'" cy="'+eyeY(a)+'" r="13" fill="#6cc24a"/>';
+  if(a.k==='a-owl')
+    return E('<path d="M'+(60-hr+6)+' '+(hy-hr+9)+' '+(60-hr+15)+' '+(hy-hr-2)+'l9 10z'+
+              'M'+(60+hr-6)+' '+(hy-hr+9)+' '+(60+hr-15)+' '+(hy-hr-2)+'l-9 10z" fill="'+a.d+'"/>');
+  return '';
+}
+/* 身體：企鵝是一顆蛋，機器人是方的，其他是圓潤的梯形身 */
+function chBody(a){
+  if(a.egg) return '<ellipse cx="60" cy="'+a.by+'" rx="'+a.bw+'" ry="'+a.bh+'" fill="'+a.c+'"/>';
+  if(a.sq)  return '<rect x="'+(60-a.bw)+'" y="'+(a.by-a.bh)+'" width="'+(a.bw*2)+'" height="'+(a.bh*2)+
+                   '" rx="7" fill="'+a.d+'"/>';
+  /* 肩膀窄、屁股寬，才有身體的感覺，不是一顆球 */
+  const t=a.by-a.bh, b=a.by+a.bh, w1=a.bw*.72, w2=a.bw;
+  return '<path d="M'+(60-w1)+' '+t+'q'+w1+' -6 '+(w1*2)+' 0'+
+         'c'+(w2-w1+3)+' '+(a.bh*1.1)+' '+(w2-w1+3)+' '+(a.bh*1.6)+' '+(w2-w1)+' '+(a.bh*2)+
+         'q'+(-w2)+' 7 '+(-w2*2)+' 0'+
+         'c'+(-(w2-w1))+' '+(-a.bh*.4)+' '+(-(w2-w1))+' '+(-a.bh*.9)+' '+(w1-w2)+' '+(-a.bh*2)+'z" fill="'+a.c+'"/>';
+}
+/* 頭 */
+function chHead(a){
+  if(a.sq) return '<rect x="'+(60-a.hr)+'" y="'+(a.hy-a.hry)+'" width="'+(a.hr*2)+'" height="'+(a.hry*2)+
+                  '" rx="12" fill="'+a.c+'"/>';
+  if(a.egg) return '';                       /* 企鵝的頭跟身體是同一顆蛋 */
+  return '<ellipse cx="60" cy="'+a.hy+'" rx="'+a.hr+'" ry="'+(a.hry||a.hr*.94)+'" fill="'+a.c+'"/>';
+}
+/* 頭上與身上的花紋，畫在五官底下 */
+function chFront(a){
+  const L=60-a.gap, R=60+a.gap, ey=eyeY(a), my=mouY(a);
+  if(a.k==='a-cat')
+    return '<ellipse cx="60" cy="'+(a.by+2)+'" rx="'+(a.bw*.62)+'" ry="'+(a.bh*.6)+'" fill="#fff0e2" opacity=".55"/>'+
+           '<path d="M'+(60-a.hr-4)+' '+(my-4)+'h11M'+(60-a.hr-4)+' '+(my+3)+'h11'+
+             'M'+(60+a.hr+4)+' '+(my-4)+'h-11M'+(60+a.hr+4)+' '+(my+3)+'h-11" stroke="'+a.ink+
+             '" stroke-width="1.8" stroke-linecap="round" opacity=".6"/>'+
+           '<path d="M60 '+(my-7)+'l-3.5 3.5h7z" fill="#e8736f"/>';
+  if(a.k==='a-dog')
+    return '<ellipse cx="60" cy="'+(my+1)+'" rx="13" ry="10" fill="#f3ddd0"/>'+
+           '<circle cx="60" cy="'+(my-5)+'" r="3.6" fill="'+a.ink+'"/>';
+  if(a.k==='a-bear')
+    return '<ellipse cx="60" cy="'+(a.by+3)+'" rx="'+(a.bw*.55)+'" ry="'+(a.bh*.55)+'" fill="#e7cdb8" opacity=".65"/>'+
+           '<ellipse cx="60" cy="'+(my+1)+'" rx="14" ry="11" fill="#e7cdb8"/>'+
+           '<ellipse cx="60" cy="'+(my-5)+'" rx="4.6" ry="3.6" fill="'+a.ink+'"/>';
+  if(a.k==='a-fox')
+    return '<path d="M60 '+(a.hy-2)+'c10 0 17 7 17 15 0 8-8 13-17 13s-17-5-17-13c0-8 7-15 17-15z" fill="#fff0e2"/>'+
+           '<ellipse cx="60" cy="'+(a.by+4)+'" rx="'+(a.bw*.6)+'" ry="'+(a.bh*.55)+'" fill="#fff0e2" opacity=".6"/>'+
+           '<circle cx="60" cy="'+(my-5)+'" r="3.8" fill="'+a.ink+'"/>';
+  if(a.k==='a-peng')                                  /* 白肚子＋白眼圈 */
+    return '<ellipse cx="60" cy="'+(a.by+6)+'" rx="'+(a.bw*.72)+'" ry="'+(a.bh*.72)+'" fill="#f7f4ec"/>'+
+           '<ellipse cx="'+L+'" cy="'+ey+'" rx="8.5" ry="10" fill="#f7f4ec"/>'+
+           '<ellipse cx="'+R+'" cy="'+ey+'" rx="8.5" ry="10" fill="#f7f4ec"/>';
+  if(a.k==='a-bot')
+    return '<rect x="'+(60-a.hr+6)+'" y="'+(a.hy-a.hry+6)+'" width="'+((a.hr-6)*2)+'" height="'+((a.hry-6)*2)+
+             '" rx="10" fill="#1b2340"/>'+
+           '<rect x="52" y="'+(a.by-6)+'" width="16" height="9" rx="3" fill="#3ce0d0" opacity=".85"/>';
+  if(a.k==='a-frog')
+    return '<circle cx="'+L+'" cy="'+ey+'" r="6.5" fill="#fff"/>'+
+           '<circle cx="'+R+'" cy="'+ey+'" r="6.5" fill="#fff"/>'+
+           '<ellipse cx="60" cy="'+(a.by+5)+'" rx="'+(a.bw*.65)+'" ry="'+(a.bh*.5)+'" fill="#d8f5c0" opacity=".8"/>';
+  if(a.k==='a-owl')
+    return '<circle cx="'+L+'" cy="'+ey+'" r="13" fill="#fff"/>'+
+           '<circle cx="'+R+'" cy="'+ey+'" r="13" fill="#fff"/>'+
+           '<path d="M54 '+(a.by-6)+'h4v4h-4zM62 '+(a.by)+'h4v4h-4zM56 '+(a.by+6)+'h4v4h-4z'+
+             'M66 '+(a.by-6)+'h4v4h-4z" fill="'+a.d+'" opacity=".7"/>';
+  return '';
+}
+/* 五官：一個表情換一組，位置全部掛在頭上 */
+function chFace(a,e){
+  const L=60-a.gap, R=60+a.gap, y=eyeY(a), m=mouY(a), ink=a.ink;
+  const sw=' stroke="'+ink+'" fill="none" stroke-linecap="round"';
+  let eyes;
+  if(e==='joy'||e==='up')      eyes='<path d="M'+(L-6)+' '+(y+2)+'q6-8 12 0M'+(R-6)+' '+(y+2)+'q6-8 12 0"'+sw+' stroke-width="3"/>';
+  else if(e==='sleep'||e==='blink') eyes='<path d="M'+(L-6)+' '+y+'h12M'+(R-6)+' '+y+'h12"'+sw+' stroke-width="3"/>';
+  else if(e==='bad')           eyes='<path d="M'+(L-5)+' '+(y-5)+'l10 10M'+(L+5)+' '+(y-5)+'l-10 10'+
+                                    'M'+(R-5)+' '+(y-5)+'l10 10M'+(R+5)+' '+(y-5)+'l-10 10"'+sw+' stroke-width="3"/>';
+  else if(e==='down')          eyes='<circle cx="'+L+'" cy="'+(y+1)+'" r="'+((a.pup||4.5)*.9)+'" fill="'+ink+'"/>'+
+                                    '<circle cx="'+R+'" cy="'+(y+1)+'" r="'+((a.pup||4.5)*.9)+'" fill="'+ink+'"/>'+
+                                    '<path d="M'+(L-7)+' '+(y-7)+'q7-3 13 1M'+(R-6)+' '+(y-6)+'q6-4 13-1"'+sw+' stroke-width="2.4"/>';
+  else if(e==='win')           eyes=[L,R].map(x=>'<path d="M'+x+' '+(y-8)+'l2.6 5.4 5.8.8-4.2 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.2-4.1 5.8-.8z" fill="'+ink+'"/>').join('');
+  else                         eyes='<circle cx="'+L+'" cy="'+y+'" r="'+(a.pup||4.5)+'" fill="'+ink+'"/>'+
+                                    '<circle cx="'+R+'" cy="'+y+'" r="'+(a.pup||4.5)+'" fill="'+ink+'"/>';
+  let mouth;
+  if(a.beak){                                     /* 有喙的就張喙代替嘴型 */
+    const open=(e==='joy'||e==='win')?7:(e==='bad'||e==='sad')?1:3;
+    mouth='<path d="M60 '+(m-6)+'l-7 6 7 '+(1+open)+' 7-'+(1+open)+'z" fill="'+a.beak+'"/>'+
+          (open>5?'<path d="M53 '+m+'l7 7 7-7z" fill="#c25c12"/>':'');
+  }
+  else if(e==='joy'||e==='win')mouth='<ellipse cx="60" cy="'+(m+2)+'" rx="7.5" ry="'+(e==='win'?8.5:6.5)+'" fill="'+ink+'"/>'+
+                                     '<ellipse cx="60" cy="'+(m+5)+'" rx="4" ry="2.6" fill="#ff7a9c"/>';
+  else if(e==='up')            mouth='<path d="M53 '+m+'q7 7 14 0"'+sw+' stroke-width="3"/>';
+  else if(e==='down'||e==='sad')mouth='<path d="M53 '+(m+4)+'q7-7 14 0"'+sw+' stroke-width="3"/>';
+  else if(e==='bad')           mouth='<ellipse cx="60" cy="'+(m+1)+'" rx="5" ry="5.5" fill="'+ink+'"/>';
+  else if(e==='sleep')         mouth='<ellipse cx="60" cy="'+(m+1)+'" rx="3.6" ry="4.5" fill="'+ink+'"/>'+
+                                     '<text class="zz" x="88" y="44">z</text>'+
+                                     '<text class="zz" x="98" y="33" style="font-size:11px">z</text>';
+  else if(e==='meh')           mouth='<path d="M53 '+(m+1)+'h14"'+sw+' stroke-width="3"/>';
+  else                         mouth='<path d="M55 '+m+'q5 5 10 0"'+sw+' stroke-width="2.8"/>';
+  return eyes+mouth;
+}
+function chSVG(a,e,small){
+  const aw=a.armW||7, ah=a.armH||12;
+  const apx=a.bw+aw-2, apy=a.apy||(a.by-a.bh*.45);         /* 肩膀 */
+  const arm=(x)=>'<ellipse cx="'+x+'" cy="'+(apy+ah-2)+'" rx="'+aw+'" ry="'+ah+'" fill="'+a.d+'"/>';
+  const ft=a.foot||a.d, fw=a.fw||9, fx=a.fx||13, fy=a.fy||107;
+  /* 青蛙的後腿露出來，身體才有離地的高度 */
+  const leg=x=>a.legs?'<path d="M'+x+' '+(a.by+a.bh-4)+'V'+(fy-2)+'" stroke="'+a.d+
+                      '" stroke-width="7" stroke-linecap="round"/>':'';
+  const feet=a.base
+    ? '<rect x="45" y="'+(a.by+a.bh)+'" width="30" height="10" rx="5" fill="'+ft+'"/>'+
+      '<g class="footL"></g><g class="footR"></g>'
+    : '<g class="footL">'+leg(60-fx)+'<ellipse cx="'+(60-fx)+'" cy="'+fy+'" rx="'+fw+'" ry="5.5" fill="'+ft+'"/></g>'+
+      '<g class="footR">'+leg(60+fx)+'<ellipse cx="'+(60+fx)+'" cy="'+fy+'" rx="'+fw+'" ry="5.5" fill="'+ft+'"/></g>';
+  /* 影子留在 walk 層，只跟著左右移動，不跟著跳 */
+  return '<svg class="actor" viewBox="0 0 120 120">'+
+    '<g class="walk">'+
+      (small?'':'<ellipse class="shd" cx="60" cy="113" rx="24" ry="5" fill="#000" opacity=".18"/>')+
+      '<g class="breathe"><g class="ch">'+
+        chBack(a)+
+        feet+
+        '<g class="armL" data-p="'+(60-apx)+','+apy+'">'+arm(60-apx)+'</g>'+
+        '<g class="armR" data-p="'+(60+apx)+','+apy+'">'+arm(60+apx)+'</g>'+
+        chBody(a)+
+        chHead(a)+
+        chFront(a)+
+        '<g class="face">'+chFace(a,e)+'</g>'+
+      '</g></g>'+
+    '</g></svg>';
+}
 const SVGB=(w,h,d)=>'<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'">'+d+'</svg>';
 const SCENE={
   'a-cat':{ bg:'rgba(255,201,138,.10)',
@@ -1751,125 +1914,6 @@ function tchar(){
   if(k&&k.slice(0,2)!=='a-') k='a-'+k;                       /* 舊版存的名字 */
   if(!k){ const av=db.settings.avatar; if(av&&av.id) k=av.id; }  /* 沒挑過就跟頭貼同一隻 */
   return TCHARS.find(x=>x.k===k)||TCHARS[0];
-}
-/* 身體後面的東西：耳朵、尾巴 */
-function chBack(a){
-  const E=x=>'<g class="ears">'+x+'</g>';
-  /* 貓：立起來的尖耳配粉紅內耳，尾巴細細長長翹起來 */
-  if(a.k==='a-cat')  return '<g class="tail"><path d="M94 96q20 2 14-22" stroke="'+(a.tailC||a.d)+
-                              '" stroke-width="7" fill="none" stroke-linecap="round"/></g>'+
-                            E('<path d="M30 50 27 21l23 14zM90 50 93 21 70 35z" fill="'+a.d+'"/>'+
-                              '<path d="M33 45 31 29l12 8zM87 45 89 29 77 37z" fill="#ff9ec4" opacity=".75"/>');
-  if(a.k==='a-dog')  return '<g class="tail"><path d="M96 88q16-4 12-20" stroke="'+(a.tailC||a.d)+'" stroke-width="9" fill="none" stroke-linecap="round"/></g>'+
-                            E('<ellipse cx="28" cy="54" rx="10" ry="16" fill="'+a.d+'"/><ellipse cx="92" cy="54" rx="10" ry="16" fill="'+a.d+'"/>');
-  if(a.k==='a-bear') return E('<circle cx="33" cy="43" r="12" fill="'+a.d+'"/><circle cx="87" cy="43" r="12" fill="'+a.d+'"/>');
-  /* 狐狸：又大又外傾的耳朵，從外上角往內下掃，內耳是奶白色 */
-  if(a.k==='a-fox')  return '<g class="tail"><path d="M92 92q22-2 16-24" stroke="'+(a.tailC||a.d)+'" stroke-width="12" fill="none" stroke-linecap="round"/>'+
-                            '<circle cx="108" cy="69" r="6" fill="#fff0e2"/></g>'+
-                            E('<path d="M22 28 41 51 27 61zM98 28 79 51 93 61z" fill="'+a.d+'"/>'+
-                              '<path d="M28 35 39 51 31 55zM92 35 81 51 89 55z" fill="#fff0e2" opacity=".8"/>');
-  if(a.k==='a-bot')  return '<g class="ears"><path d="M60 34V16" stroke="'+a.d+'" stroke-width="4"/>'+
-                            '<circle cx="60" cy="13" r="7" fill="#3ce0d0"/></g>';
-  /* 青蛙的眼睛是兩顆凸出頭頂的球，位置與大小照頭貼的比例換算 */
-  if(a.k==='a-frog') return '<circle cx="38" cy="32" r="15" fill="#6cc24a"/><circle cx="82" cy="32" r="15" fill="#6cc24a"/>';
-  /* 貓頭鷹：不是耳朵是角羽，小小兩撮長在頭頂偏中間 */
-  if(a.k==='a-owl')  return E('<path d="M31 47 41 29l10 13zM89 47 79 29 69 42z" fill="'+a.d+'"/>');
-  return '';                                                  /* 企鵝的鰭在手的群組裡 */
-}
-/* 身體本身：機器人是方頭，其他都是圓的 */
-function chBody(a){
-  return a.sq ? '<rect x="24" y="36" width="72" height="68" rx="20" fill="'+a.c+'"/>'
-              : '<ellipse cx="60" cy="70" rx="35" ry="36" fill="'+a.c+'"/>';
-}
-/* 身體前面的花紋，畫在五官底下。以頭貼上看得到的為準：
-   頭貼沒有的不要自己加，頭貼有的也不要漏掉。 */
-function chFront(a){
-  const L=60-a.gap, R=60+a.gap;
-  /* 企鵝：深色的頭配白眼圈，白肚子只到胸口以下 */
-  if(a.k==='a-peng') return '<ellipse cx="60" cy="86" rx="22" ry="19" fill="#f7f4ec"/>'+
-                            '<ellipse cx="48" cy="56" rx="8" ry="9.5" fill="#f7f4ec"/>'+
-                            '<ellipse cx="72" cy="56" rx="8" ry="9.5" fill="#f7f4ec"/>';
-  if(a.k==='a-bot')  return '<rect x="32" y="46" width="56" height="38" rx="18" fill="#1b2340"/>';
-  if(a.k==='a-fox')  return '<path d="M60 60c11 0 20 7 20 16-5 9-13 14-20 14s-15-5-20-14c0-9 9-16 20-16z" fill="#fff0e2"/>'+
-                            '<circle cx="60" cy="'+(a.my-8)+'" r="4" fill="'+a.ink+'"/>';
-  /* 貓頭鷹：大白眼盤加胸前的斑點 */
-  if(a.k==='a-owl')  return '<path d="M48 88h4v4h-4zM56 94h4v4h-4zM64 88h4v4h-4zM72 94h4v4h-4z'+
-                            'M52 100h4v4h-4zM68 100h4v4h-4z" fill="#8a5ce0" opacity=".75"/>'+
-                            '<circle cx="'+L+'" cy="'+a.ey+'" r="14" fill="#fff"/>'+
-                            '<circle cx="'+R+'" cy="'+a.ey+'" r="14" fill="#fff"/>';
-  /* 頭貼的青蛙眼睛是白眼球加黑瞳，身上沒有任何白色肚子 */
-  if(a.k==='a-frog') return '<circle cx="'+L+'" cy="'+a.ey+'" r="7.5" fill="#fff"/>'+
-                            '<circle cx="'+R+'" cy="'+a.ey+'" r="7.5" fill="#fff"/>';
-  /* 口鼻要包住鼻頭跟嘴巴，原本畫太低，鼻頭浮在外面 */
-  /* 熊：胸口一撮淺色的毛，看起來更厚實 */
-  if(a.k==='a-bear') return '<path d="M60 96q-13-3-15-14 8 5 15 5t15-5q-2 11-15 14z" fill="#e7cdb8" opacity=".8"/>'+
-                            '<ellipse cx="60" cy="'+(a.my-2)+'" rx="16" ry="12" fill="#e7cdb8"/>'+
-                            '<ellipse cx="60" cy="'+(a.my-8)+'" rx="4.6" ry="3.6" fill="'+a.ink+'"/>';
-  if(a.k==='a-dog')  return '<ellipse cx="60" cy="'+(a.my-2)+'" rx="14" ry="11" fill="#f3ddd0"/>'+
-                            '<circle cx="60" cy="'+(a.my-8)+'" r="3.6" fill="'+a.ink+'"/>';
-  if(a.k==='a-cat')  return '<path d="M20 74h16M20 82h16M84 74h16M84 82h16" stroke="'+a.ink+
-                            '" stroke-width="2" stroke-linecap="round" opacity=".65"/>'+
-                            '<path d="M60 '+(a.my-11)+'l-4 4h8z" fill="#e8736f"/>';
-  return '';
-}
-function chFace(a,e){
-  const L=60-a.gap, R=60+a.gap, y=a.ey, ink=a.ink, sw=' stroke="'+ink+'" fill="none" stroke-linecap="round"';
-  let eyes;
-  if(e==='joy'||e==='up')      eyes='<path d="M'+(L-6)+' '+(y+2)+'q6-8 12 0M'+(R-6)+' '+(y+2)+'q6-8 12 0"'+sw+' stroke-width="3"/>';
-  else if(e==='sleep'||e==='blink') eyes='<path d="M'+(L-6)+' '+y+'h12M'+(R-6)+' '+y+'h12"'+sw+' stroke-width="3"/>';
-  else if(e==='bad')           eyes='<path d="M'+(L-5)+' '+(y-5)+'l10 10M'+(L+5)+' '+(y-5)+'l-10 10'+
-                                    'M'+(R-5)+' '+(y-5)+'l10 10M'+(R+5)+' '+(y-5)+'l-10 10"'+sw+' stroke-width="3"/>';
-  else if(e==='down')          eyes='<circle cx="'+L+'" cy="'+(y+1)+'" r="4" fill="'+ink+'"/>'+
-                                    '<circle cx="'+R+'" cy="'+(y+1)+'" r="4" fill="'+ink+'"/>'+
-                                    '<path d="M'+(L-7)+' '+(y-7)+'q7-3 13 1M'+(R-6)+' '+(y-6)+'q6-4 13-1"'+sw+' stroke-width="2.4"/>';
-  else if(e==='win')           eyes=[L,R].map(x=>'<path d="M'+x+' '+(y-8)+'l2.6 5.4 5.8.8-4.2 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.2-4.1 5.8-.8z" fill="'+ink+'"/>').join('');
-  else                         eyes='<circle cx="'+L+'" cy="'+y+'" r="'+(a.pup||4.5)+'" fill="'+ink+'"/>'+
-                                    '<circle cx="'+R+'" cy="'+y+'" r="'+(a.pup||4.5)+'" fill="'+ink+'"/>';
-  const m=a.my;
-  let mouth;
-  if(a.beak){                                     /* 有喙的就張喙代替嘴型 */
-    const open=(e==='joy'||e==='win')?7:(e==='bad'||e==='sad')?1:3;
-    mouth='<path d="M60 '+(m-7)+'l-8 7 8 '+(1+open)+' 8-'+(1+open)+'z" fill="'+a.beak+'"/>'+
-          (open>5?'<path d="M52 '+m+'l8 8 8-8z" fill="#c25c12"/>':'');
-  }
-  else if(e==='joy'||e==='win')mouth='<ellipse cx="60" cy="'+(m+2)+'" rx="8" ry="'+(e==='win'?9:7)+'" fill="'+ink+'"/>'+
-                                     '<ellipse cx="60" cy="'+(m+6)+'" rx="4.5" ry="3" fill="#ff7a9c"/>';
-  else if(e==='up')            mouth='<path d="M52 '+m+'q8 8 16 0"'+sw+' stroke-width="3"/>';
-  else if(e==='down'||e==='sad')mouth='<path d="M52 '+(m+4)+'q8-8 16 0"'+sw+' stroke-width="3"/>';
-  else if(e==='bad')           mouth='<ellipse cx="60" cy="'+(m+1)+'" rx="5.5" ry="6" fill="'+ink+'"/>';
-  else if(e==='sleep')         mouth='<ellipse cx="60" cy="'+(m+1)+'" rx="4" ry="5" fill="'+ink+'"/>'+
-                                     '<text class="zz" x="88" y="44">z</text>'+
-                                     '<text class="zz" x="98" y="33" style="font-size:11px">z</text>';
-  else if(e==='meh')           mouth='<path d="M52 '+(m+1)+'h16"'+sw+' stroke-width="3"/>';
-  else                         mouth='<path d="M54 '+m+'q6 5 12 0"'+sw+' stroke-width="2.8"/>';
-  return eyes+mouth;
-}
-function chSVG(a,e,small){
-  const aw=a.armW||7.5, ah=a.armH||11, ay=a.armH?80:82, ax=a.armH?25:27;
-  const arm ='<ellipse cx="'+ax+'" cy="'+ay+'" rx="'+aw+'" ry="'+ah+'" fill="'+a.d+'"/>';
-  const armR='<ellipse cx="'+(120-ax)+'" cy="'+ay+'" rx="'+aw+'" ry="'+ah+'" fill="'+a.d+'"/>';
-  const ft=a.foot||a.d, fw=a.fw||9;
-  /* 青蛙的後腿要露出來，身體才拉得高 */
-  const leg=x=>a.legs?'<path d="M'+x+' 92v13" stroke="'+a.d+'" stroke-width="7" stroke-linecap="round"/>':'';
-  const st=a.st||[1,1];
-  /* 影子留在 walk 層，只跟著左右移動，不跟著跳 */
-  return '<svg class="actor" viewBox="0 0 120 120">'+
-    '<g class="walk">'+
-      (small?'':'<ellipse class="shd" cx="60" cy="113" rx="26" ry="5.5" fill="#000" opacity=".18"/>')+
-      '<g class="breathe"><g class="ch">'+
-        '<g transform="translate(60,110) scale('+st[0]+','+st[1]+') translate(-60,-110)">'+
-        chBack(a)+
-        (a.base                                     /* 機器人底下是一根底座，不是兩隻腳 */
-          ? '<rect x="45" y="103" width="30" height="10" rx="5" fill="'+ft+'"/><g class="footL"></g><g class="footR"></g>'
-          : '<g class="footL">'+leg(46)+'<ellipse cx="46" cy="107" rx="'+fw+'" ry="6" fill="'+ft+'"/></g>'+
-            '<g class="footR">'+leg(74)+'<ellipse cx="74" cy="107" rx="'+fw+'" ry="6" fill="'+ft+'"/></g>')+
-        '<g class="armL">'+arm+'</g><g class="armR">'+armR+'</g>'+
-        chBody(a)+
-        chFront(a)+
-        '<g class="face">'+chFace(a,e)+'</g>'+
-        '</g>'+
-      '</g></g>'+
-    '</g></svg>';
 }
 let tuneYM=null, tunePlaying=false, tuneTimers=[];
 function dailyOf(y,m){
@@ -2023,8 +2067,8 @@ const ANIM={
     e.ch.setAttribute('transform',
       'translate(60,108) rotate('+c.rot.toFixed(2)+') scale('+sx.toFixed(4)+','+sy.toFixed(4)+') translate(-60,-108)'+
       ' translate(0,'+y.toFixed(2)+')');
-    e.aL.setAttribute('transform','rotate('+c.aL.toFixed(1)+',33,74)');
-    e.aR.setAttribute('transform','rotate('+c.aR.toFixed(1)+',87,74)');
+    e.aL.setAttribute('transform','rotate('+c.aL.toFixed(1)+','+(e.aL.dataset.p||'33,74')+')');
+    e.aR.setAttribute('transform','rotate('+c.aR.toFixed(1)+','+(e.aR.dataset.p||'87,74')+')');
     const s=c.st;                                   /* -1 ～ 1，兩腳交替 */
     e.fL.setAttribute('transform','translate('+(3.5*s).toFixed(2)+','+(-5*Math.abs(s)*(s>0?1:0)).toFixed(2)+')');
     e.fR.setAttribute('transform','translate('+(-3.5*s).toFixed(2)+','+(-5*Math.abs(s)*(s<0?1:0)).toFixed(2)+')');
@@ -2050,8 +2094,8 @@ const ANIM={
       p.el.style.transform='translate('+p.x.toFixed(1)+'px,'+p.y.toFixed(1)+'px) rotate('+p.rot.toFixed(0)+'deg)';
       p.el.style.opacity=Math.min(1,p.life/p.fade).toFixed(2);
     }
-    if(e.tail) e.tail.setAttribute('transform','rotate('+(Math.sin(now/(tunePlaying?67:167))*13).toFixed(1)+',96,88)');
-    if(e.ears) e.ears.setAttribute('transform','rotate('+(Math.sin(now/446)*2.6+c.rot*.35).toFixed(2)+',60,48)');
+    if(e.tail) e.tail.setAttribute('transform','rotate('+(Math.sin(now/(tunePlaying?67:167))*13).toFixed(1)+','+(e.tail.dataset.p||'96,88')+')');
+    if(e.ears) e.ears.setAttribute('transform','rotate('+(Math.sin(now/446)*2.6+c.rot*.35).toFixed(2)+','+(e.ears.dataset.p||'60,48')+')');
     this.start();
   }
 };
@@ -3683,15 +3727,15 @@ const PET={
     e.ch.setAttribute('transform',
       'translate(60,108) rotate('+c.rot.toFixed(2)+') scale('+sx.toFixed(4)+','+sy.toFixed(4)+') translate(-60,-108)'+
       ' translate(0,'+y.toFixed(2)+')');
-    e.aL.setAttribute('transform','rotate('+c.aL.toFixed(1)+',33,74)');
-    e.aR.setAttribute('transform','rotate('+c.aR.toFixed(1)+',87,74)');
+    e.aL.setAttribute('transform','rotate('+c.aL.toFixed(1)+','+(e.aL.dataset.p||'33,74')+')');
+    e.aR.setAttribute('transform','rotate('+c.aR.toFixed(1)+','+(e.aR.dataset.p||'87,74')+')');
     if(e.shd){
       const up=Math.max(0,-y)/16, sc=(1-up*.38).toFixed(3);
       e.shd.setAttribute('transform','translate(60,113) scale('+sc+',1) translate(-60,-113)');
       e.shd.setAttribute('opacity',(.18-up*.08).toFixed(3));
     }
-    if(e.tail) e.tail.setAttribute('transform','rotate('+(Math.sin(now/167)*12).toFixed(1)+',96,88)');
-    if(e.ears) e.ears.setAttribute('transform','rotate('+(Math.sin(now/446)*2.4+c.rot*.4).toFixed(2)+',60,48)');
+    if(e.tail) e.tail.setAttribute('transform','rotate('+(Math.sin(now/167)*12).toFixed(1)+','+(e.tail.dataset.p||'96,88')+')');
+    if(e.ears) e.ears.setAttribute('transform','rotate('+(Math.sin(now/446)*2.4+c.rot*.4).toFixed(2)+','+(e.ears.dataset.p||'60,48')+')');
     this.start();
   },
   pose(t,face,back){
