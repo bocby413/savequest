@@ -587,6 +587,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .setrow.danger .lb b{color:var(--red)}
 .setrow.danger .btn:hover{border-color:var(--red);color:var(--red)}
 .setrow .btn{flex:none;min-width:82px}
+.setrow .segs{flex:none}
 .lvbtn{margin-left:10px;font:inherit;font-size:11.5px;font-weight:600;padding:2px 10px;border-radius:99px;
   background:var(--panel2);border:1px solid var(--edge);color:var(--txt3);cursor:pointer;
   transition:color .14s,border-color .14s}
@@ -987,8 +988,10 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   <div class="say">平常用不到的東西都收在這裡。</div>
   <div class="setrow"><div class="lb"><b>貸款進度</b><span>顯示貸款 road map 區塊</span></div>
     <button class="sw" id="swLoan" role="switch"><i></i></button></div>
-  <div class="setrow"><div class="lb"><b>詳細分類</b><span>記一筆時主分類底下再選細項，例如飲食→午餐。關掉就是現在這種精簡的</span></div>
-    <button class="sw" id="swDetail" role="switch"><i></i></button></div>
+  <div class="setrow"><div class="lb"><b>記帳方式</b><span>精簡：直接選一層分類。詳細：主分類底下再選細項，例如飲食→午餐</span></div>
+    <div class="segs" id="catMode">
+      <button data-cm="0">精簡</button><button data-cm="1">詳細</button>
+    </div></div>
   <div class="setrow" id="rowCatEdit"><div class="lb"><b>編輯分類</b><span>主分類跟細項都可以自己加、自己刪</span></div>
     <button class="btn sm ghost" id="btnCatEdit">管理分類</button></div>
   <div class="setrow"><div class="lb"><b>股票當沖分開算</b><span>沒在做當沖就不用開。開了才會有 1～5 號策略跟獨立的損益圖</span></div>
@@ -1115,7 +1118,7 @@ const DETAILCATS={
     {n:'其他',s:[]}
   ]
 };
-const detailOn=()=>db.settings.detailCat===true;
+const detailOn=()=>db.settings.detailCat!==false;   /* 預設詳細 */
 /* 使用者改過就用他的，沒改過就用預設 */
 function catTree(kind){
   const c=db.settings.cats;
@@ -1159,9 +1162,11 @@ function load(){
       /* 沒設定過的話：已經在記帳的人沿用原本開著的狀態，全新的人一律關起來 */
       if(st.showLoan===undefined)   st.showLoan=used;
       if(st.splitStock===undefined) st.splitStock=used;
+      /* 記帳方式預設是詳細；已經在記帳的人本來就是精簡，維持原樣不要突然換掉 */
+      if(st.detailCat===undefined)  st.detailCat=!used;
       return {records:d.records||[],goals:d.goals||[],settings:st,deleted:del};
     }}catch(e){}
-  return {records:[],goals:[],settings:{showLoan:false,splitStock:false},deleted:{}};
+  return {records:[],goals:[],settings:{showLoan:false,splitStock:false,detailCat:true},deleted:{}};
 }
 /* 存本機，順便推一份到雲端（沒開同步就只存本機） */
 function save(){
@@ -3736,16 +3741,20 @@ $('btnSkin').onclick=()=>{SFX.play('tick'); skin(document.documentElement.datase
 function swPaint(){
   $('swLoan').classList.toggle('on',db.settings.showLoan!==false);
   $('swStock').classList.toggle('on',db.settings.splitStock!==false);
-  $('swDetail').classList.toggle('on',detailOn());
+  $('catMode').querySelectorAll('button').forEach(b=>
+    b.classList.toggle('on',(b.dataset.cm==='1')===detailOn()));
   $('rowCatEdit').style.display=detailOn()?'':'none';   /* 精簡模式沒有分類樹可以管 */
 }
-$('swDetail').onclick=()=>{
-  db.settings.detailCat=!detailOn();
-  if(detailOn()) ensureTree();
+$('catMode').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-cm]'); if(!b) return;
+  const want=b.dataset.cm==='1';
+  if(want===detailOn()) return;
+  db.settings.detailCat=want;
+  if(want) ensureTree();
   rCat=''; rSub=''; rCustom=false; catAdd=false; subAdd=false;
   save(); swPaint(); render(); SFX.play('tick');
-  toast(detailOn()?'改成詳細分類，記一筆時可以選細項':'改回精簡分類');
-};
+  toast(want?'改成詳細，記一筆時可以選細項':'改成精簡，分類只有一層');
+});
 $('btnCatEdit').onclick=()=>{ SFX.play('tick'); openCatEdit(); };
 $('catKind').addEventListener('click',e=>{
   const b=e.target.closest('button[data-ck]'); if(!b) return;
