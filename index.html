@@ -1585,6 +1585,7 @@ $('saveAva').onclick=()=>{
 
 /* ── HUD ── */
 function renderHud(){
+  renderPet();                       /* 牠站在 HUD 上，換頭貼也要跟著換 */
   const r=recs(), cash=now(), sv=stockValue(), ov=othersValue(), cur=cash+sv+ov, L=levelInfo();
   roll($('amt'),cur);
   $('amtK').textContent=(sv||ov)?'總資產':'目前存款';
@@ -3429,7 +3430,7 @@ $('btnFriAdd').onclick=async()=>{
         $('friMail').value=''; SFX.play('coin'); }
 };
 
-function render(){ renderPet(); renderWheel(); renderStocks(); renderLoans(); renderMonthTable(); renderPie(); renderHud(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); }
+function render(){ renderWheel(); renderStocks(); renderLoans(); renderMonthTable(); renderPie(); renderHud(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); }
 
 /* ── 互動 ── */
 const open=id=>{$(id).classList.add('on');const f=$(id).querySelector('input');setTimeout(()=>f&&f.focus(),120);};
