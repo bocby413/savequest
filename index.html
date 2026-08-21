@@ -530,6 +530,28 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .pcard.lock{opacity:.5}
 .pcard.lock .pv{font-size:14px;font-weight:600;color:var(--txt3);margin-top:7px}
 @media(max-width:420px){ .pgrid{grid-template-columns:1fr} }
+/* 管理分類 */
+.catrow{border:1.5px solid var(--edge);border-radius:13px;background:var(--panel2);margin-bottom:8px;overflow:hidden}
+.catrow>.hd{display:flex;align-items:center;gap:8px;padding:11px 12px}
+.catrow>.hd>button.nm{flex:1;min-width:0;text-align:left;background:none;border:0;padding:0;font:inherit;
+  font-size:14.5px;font-weight:700;color:var(--txt);cursor:pointer;display:flex;align-items:center;gap:7px}
+.catrow>.hd>button.nm i{width:8px;height:8px;border-radius:2px;flex:none}
+.catrow>.hd .cnt{font-size:11.5px;color:var(--txt3);flex:none}
+.catrow.open{border-color:var(--edge2)}
+.catsubs{display:flex;flex-wrap:wrap;gap:7px;padding:0 12px 12px}
+.catsubs .sb{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;padding:4px 6px 4px 11px;
+  border-radius:99px;background:var(--panel3);color:var(--txt2)}
+.catsubs .sb button{background:none;border:0;padding:0;width:16px;height:16px;border-radius:50%;
+  color:var(--txt3);cursor:pointer;display:grid;place-items:center;font-size:13px;line-height:1}
+.catsubs .sb button:hover{color:var(--red)}
+.catsubs .addsb{font:inherit;font-size:12.5px;padding:4px 11px;border-radius:99px;cursor:pointer;
+  background:none;border:1.5px dashed var(--edge2);color:var(--txt3)}
+.catsubs input{flex:1;min-width:120px;background:var(--panel3);border:1.5px solid var(--cyan);
+  border-radius:99px;padding:5px 12px;color:var(--txt);font:inherit;font-size:12.5px;outline:none}
+.catadd{width:100%;font:inherit;font-size:13.5px;padding:11px;border-radius:13px;cursor:pointer;
+  background:none;border:2px dashed var(--edge2);color:var(--txt3);margin-top:2px}
+.catadd:hover{color:var(--gold);border-color:var(--gold)}
+.cats button.add,.subs button.add{border-style:dashed;color:var(--txt3)}
 .tgtedit{flex:1;min-width:0;text-align:left;background:none;border:0;padding:0;font:inherit;
   color:inherit;cursor:pointer;display:block}
 .tgtedit b{display:block;font-size:14.5px;font-weight:700;transition:color .14s}
@@ -965,6 +987,10 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   <div class="say">平常用不到的東西都收在這裡。</div>
   <div class="setrow"><div class="lb"><b>貸款進度</b><span>顯示貸款 road map 區塊</span></div>
     <button class="sw" id="swLoan" role="switch"><i></i></button></div>
+  <div class="setrow"><div class="lb"><b>詳細分類</b><span>記一筆時主分類底下再選細項，例如飲食→午餐。關掉就是現在這種精簡的</span></div>
+    <button class="sw" id="swDetail" role="switch"><i></i></button></div>
+  <div class="setrow" id="rowCatEdit"><div class="lb"><b>編輯分類</b><span>主分類跟細項都可以自己加、自己刪</span></div>
+    <button class="btn sm ghost" id="btnCatEdit">管理分類</button></div>
   <div class="setrow"><div class="lb"><b>股票當沖分開算</b><span>沒在做當沖就不用開。開了才會有 1～5 號策略跟獨立的損益圖</span></div>
     <button class="sw" id="swStock" role="switch"><i></i></button></div>
   <div class="setrow"><div class="lb"><b>音效</b><span>記帳、升級、完成任務的聲音</span></div>
@@ -989,6 +1015,17 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   <div class="say" id="friMsg" style="min-height:20px;margin-top:8px"></div>
   <div id="friBody"></div>
   <div class="dfoot"><button class="btn ghost" data-close>關閉</button></div>
+</div></div>
+
+<div class="veil" id="vCats"><div class="dlg wide">
+  <h3>管理分類</h3>
+  <div class="say">點主分類展開細項。已經記過的紀錄不會被動到，刪掉分類只是之後選不到。</div>
+  <div class="segs" id="catKind">
+    <button data-ck="out" class="on">支出</button><button data-ck="in">收入</button>
+  </div>
+  <div id="catBody" style="margin-top:14px"></div>
+  <div class="dfoot"><button class="btn ghost" data-close>關閉</button>
+    <button class="btn ghost" id="catReset">回復預設</button></div>
 </div></div>
 
 <div class="veil" id="vTune"><div class="dlg wide">
@@ -1056,6 +1093,45 @@ const CATS={
   out:['現金','卡費','貸款',STOCK,'其他'],
   in :['薪水','獎金','投資','副業',STOCK,'其他']
 };
+/* 詳細模式的預設分類樹，n 是主分類、s 是底下的子分類。使用者可以自己加自己刪。 */
+const DETAILCATS={
+  out:[
+    {n:'飲食',s:['早餐','午餐','晚餐','宵夜','飲料','食材']},
+    {n:'交通',s:['加油','停車','大眾運輸','計程車','維修']},
+    {n:'居家',s:['房租','水電','瓦斯','網路','家用品']},
+    {n:'生活',s:['日用品','衣物','美髮','保養']},
+    {n:'娛樂',s:['看電影','旅遊','遊戲','訂閱']},
+    {n:'醫療',s:['看診','藥品','保健']},
+    {n:'人情',s:['紅包','禮物','聚餐']},
+    {n:'卡費',s:[]},
+    {n:'貸款',s:[]},
+    {n:'其他',s:[]}
+  ],
+  in:[
+    {n:'薪水',s:['本薪','加班費','年終']},
+    {n:'獎金',s:['績效獎金','三節獎金']},
+    {n:'投資',s:['股利','利息','價差']},
+    {n:'副業',s:['接案','兼職']},
+    {n:'其他',s:[]}
+  ]
+};
+const detailOn=()=>db.settings.detailCat===true;
+/* 使用者改過就用他的，沒改過就用預設 */
+function catTree(kind){
+  const c=db.settings.cats;
+  if(c&&Array.isArray(c[kind])) return c[kind];
+  return DETAILCATS[kind]||[];
+}
+function ensureTree(){
+  if(!db.settings.cats)
+    db.settings.cats=JSON.parse(JSON.stringify({out:DETAILCATS.out,in:DETAILCATS.in}));
+  return db.settings.cats;
+}
+function treeNames(kind){ return catTree(kind).map(x=>x.n); }
+function treeSubs(kind,name){
+  const t=catTree(kind).find(x=>x.n===name);
+  return t?t.s.slice():[];
+}
 const CATCOLOR=['#ffc233','#3ce0d0','#ff5c8a','#a879ff','#8ee65a','#ff9f45','#5aa9ff','#e06be0','#8a93a8'];
 /* 固定類別照順序配色；自己填的用名稱去挑後面幾個顏色，才不會全部同色 */
 function catColor(name,list){
@@ -3295,14 +3371,19 @@ document.addEventListener('click',e=>{if(e.target.classList.contains('veil')||e.
 document.addEventListener('keydown',e=>{if(e.key==='Escape')shut();});
 
 let rKind='in', rCat='', rCustom=false, rSub='';
+let catAdd=false, subAdd=false;   /* 正在打新的分類／細項 */
 function renderCats(){
-  const base=CATS[rKind];
-  if(!base){ $('rCatWrap').style.display='none'; return; }
+  const detail=detailOn();
+  const base=detail?treeNames(rKind):CATS[rKind];
+  if(!base||(detail&&!CATS[rKind])){ $('rCatWrap').style.display='none'; return; }
   const split=db.settings.splitStock!==false;
-  const list=split?base:base.filter(c=>c!==STOCK);     /* 當沖不分開算就不用選股票 */
+  let list=base.slice();
+  if(detail&&split&&list.indexOf(STOCK)<0) list.push(STOCK);   /* 當沖分開算就補一個股票 */
+  if(!split) list=list.filter(c=>c!==STOCK);
   if(!split&&rCat===STOCK) rCat='';
   $('rCatWrap').style.display='';
-  const chips=list.filter(c=>c!=='其他').concat(usedCats(rKind));
+  const chips=detail?list.filter(c=>c!=='其他')
+                   :list.filter(c=>c!=='其他').concat(usedCats(rKind));
   if(!rCustom&&chips.indexOf(rCat)<0) rCat=chips[0]||'其他';
   const btn=c=>{
     const col=catColor(c,base), on=!rCustom&&c===rCat;
@@ -3320,22 +3401,63 @@ function renderCats(){
     subRow='<div class="subs"><span class="subl">哪一筆貸款</span>'+
       loans().map(l=>'<button data-sub="'+esc(l.name)+'" class="'+(rSub===l.name?'on':'')+'">'+esc(l.name)+'</button>').join('')+
       '<button data-sub="" class="'+(rSub?'':'on')+'">不指定</button></div>';
+  } else if(detail&&!rCustom&&rCat){
+    const subs=treeSubs(rKind,rCat);
+    if(subs.indexOf(rSub)<0&&!subAdd) rSub='';
+    subRow='<div class="subs"><span class="subl">細項</span>'+
+      subs.map(x=>'<button data-sub="'+esc(x)+'" class="'+(rSub===x?'on':'')+'">'+esc(x)+'</button>').join('')+
+      '<button data-sub="" class="'+(rSub?'':'on')+'">不指定</button>'+
+      (subAdd?'<input id="rSubNew" placeholder="新的細項，打完按 Enter" maxlength="10">'
+             :'<button data-subadd="1" class="add">＋ 新增細項</button>')+
+      '</div>';
   }
-  $('rCats').innerHTML=chips.map(btn).join('')+
-    '<button data-other="1" class="'+(rCustom?'on':'')+'"'+
-      (rCustom?' style="border-color:var(--cyan);background:rgba(60,224,208,.13);color:var(--cyan)"':'')+
-      '>＋ 其他</button>'+
-    (rCustom?'<input id="rCatOther" placeholder="自己打，例如 醫療、旅遊" maxlength="8">':'')+
-    subRow;
+  const tail = detail
+    ? (catAdd?'<input id="rCatNew" placeholder="新的分類，打完按 Enter" maxlength="8">'
+             :'<button data-catadd="1" class="add">＋ 新增分類</button>')
+    : '<button data-other="1" class="'+(rCustom?'on':'')+'"'+
+        (rCustom?' style="border-color:var(--cyan);background:rgba(60,224,208,.13);color:var(--cyan)"':'')+
+        '>＋ 其他</button>'+
+      (rCustom?'<input id="rCatOther" placeholder="自己打，例如 醫療、旅遊" maxlength="8">':'');
+  $('rCats').innerHTML=chips.map(btn).join('')+tail+subRow;
   if(rCustom){ const i=$('rCatOther'); if(i){ i.value=rCat; setTimeout(()=>i.focus(),40);
     i.oninput=()=>{ rCat=i.value.trim(); }; } }
+  if(catAdd) hookNew('rCatNew',v=>{ addCat(rKind,v); rCat=v; rSub=''; catAdd=false; },()=>{catAdd=false;});
+  if(subAdd) hookNew('rSubNew',v=>{ addSub(rKind,rCat,v); rSub=v; subAdd=false; },()=>{subAdd=false;});
+}
+/* 新增分類／細項那格輸入框：Enter 送出，Esc 或空白離開就取消 */
+function hookNew(id,done,cancel,redraw){
+  const i=$(id); if(!i) return;
+  const paint=redraw||renderCats;
+  let closed=false;
+  const fin=ok=>{ if(closed) return; closed=true;
+    const v=i.value.trim();
+    if(ok&&v) done(v); else cancel();
+    paint(); };
+  setTimeout(()=>i.focus(),40);
+  i.onkeydown=e=>{ if(e.key==='Enter') fin(true); else if(e.key==='Escape') fin(false); };
+  i.onblur=()=>fin(true);
+}
+function addCat(kind,name){
+  const t=ensureTree();
+  if(!t[kind].some(x=>x.n===name)){
+    const i=t[kind].findIndex(x=>x.n==='其他');       /* 其他永遠留在最後 */
+    const item={n:name,s:[]};
+    if(i>=0) t[kind].splice(i,0,item); else t[kind].push(item);
+    save();
+  }
+}
+function addSub(kind,cat,name){
+  const t=ensureTree(), c=t[kind].find(x=>x.n===cat);
+  if(c&&c.s.indexOf(name)<0){ c.s.push(name); save(); }
 }
 
 $('rCats').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
+  if(b.dataset.catadd){ catAdd=true; subAdd=false; SFX.play('tick'); return renderCats(); }
+  if(b.dataset.subadd){ subAdd=true; catAdd=false; SFX.play('tick'); return renderCats(); }
   if(b.dataset.sub!==undefined) rSub=b.dataset.sub;
   else if(b.dataset.other){ rCustom=true; rCat=''; }
-  else if(b.dataset.cat){ rCustom=false; rCat=b.dataset.cat; }
+  else if(b.dataset.cat){ rCustom=false; rCat=b.dataset.cat; if(detailOn()) rSub=''; }
   else return;
   renderCats(); updatePrev(); SFX.play('tick');
 });
@@ -3354,7 +3476,7 @@ function setKind(k){
     :k==='out'?'這次花掉多少，餘額自動扣掉。'
     :'直接把餘額改成銀行上看到的數字。';
   $('rAmt').placeholder='';
-  rCat=''; rCustom=false; renderCats();
+  rCat=''; rSub=''; rCustom=false; catAdd=false; subAdd=false; renderCats();
   updatePrev();
 }
 function updatePrev(){
@@ -3385,7 +3507,7 @@ $('saveRec').onclick=()=>{
   const mBefore=thisMon();
   const cat = rKind==='set' ? '' : ((rCustom?($('rCatOther')?$('rCatOther').value.trim():''):rCat)||'其他');
   const rec={id:uid(),ts:Date.now(),date,kind:rKind,amount:v,cat,note:$('rNote').value.trim()};
-  if((cat===STOCK||cat===LOAN)&&rSub) rec.sub=rSub;
+  if(((cat===STOCK||cat===LOAN)||detailOn())&&rSub) rec.sub=rSub;
 
   db.records.push(rec);
   /* 剛記的那筆一定要看得到：跳回第一頁，範圍外就把篩選清掉 */
@@ -3412,6 +3534,35 @@ $('saveGoal').onclick=()=>{
   db.goals.push({id:uid(),ts:Date.now(),name,amount:isNaN(amt)?0:amt,date:$('gDate').value,cat:$('gCat').value,done:false});
   save(); $('gName').value='';$('gAmt').value='';$('gDate').value=''; shut(); render(); toast('任務已加入');
 };
+/* ── 管理分類 ── */
+let catKind='out', catOpen=null, catNewFor=null, catNewMain=false;
+function renderCatEdit(){
+  const t=ensureTree()[catKind]||[];
+  $('catBody').innerHTML=t.map(c=>{
+    const on=catOpen===c.n;
+    return '<div class="catrow'+(on?' open':'')+'">'+
+      '<div class="hd">'+
+        '<button class="nm" data-catopen="'+esc(c.n)+'">'+
+          '<i style="background:'+catColor(c.n,t.map(x=>x.n))+'"></i>'+esc(c.n)+'</button>'+
+        '<span class="cnt">'+(c.s.length?c.s.length+' 個細項':'沒有細項')+'</span>'+
+        '<button class="iq del" data-catdel="'+esc(c.n)+'" title="刪掉這個分類">'+
+          '<svg class="i"><use href="#i-x"/></svg></button>'+
+      '</div>'+
+      (on?'<div class="catsubs">'+
+        c.s.map(x=>'<span class="sb">'+esc(x)+
+          '<button data-subdel="'+esc(c.n)+'|'+esc(x)+'" title="刪掉">×</button></span>').join('')+
+        (catNewFor===c.n?'<input id="catNewSub" placeholder="新的細項，打完按 Enter" maxlength="10">'
+                        :'<button class="addsb" data-subnew="'+esc(c.n)+'">＋ 加細項</button>')+
+      '</div>':'')+
+    '</div>';
+  }).join('')+
+  (catNewMain?'<input class="catadd" id="catNewMain" placeholder="新的主分類，打完按 Enter" maxlength="8" style="border-style:solid;border-color:var(--cyan)">'
+             :'<button class="catadd" data-mainnew="1">＋ 新增主分類</button>');
+  if(catNewFor) hookNew('catNewSub',v=>{ addSub(catKind,catNewFor,v); },()=>{catNewFor=null;},renderCatEdit);
+  if(catNewMain) hookNew('catNewMain',v=>{ addCat(catKind,v); catOpen=v; catNewMain=false; },
+                         ()=>{catNewMain=false;},renderCatEdit);
+}
+function openCatEdit(){ catOpen=null; catNewFor=null; catNewMain=false; renderCatEdit(); open('vCats'); }
 let tEdit=null;                    /* 正在改哪一段，null 就是新增 */
 function renderTargetList(){
   const ts=targets();
@@ -3480,6 +3631,23 @@ document.body.addEventListener('click',e=>{
     if(b.dataset.pk) pieKind=b.dataset.pk; else pieRange=b.dataset.pr;
     b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
     SFX.play('tick'); renderPie(); return;
+  }
+  if(b.dataset.catopen){ catOpen=catOpen===b.dataset.catopen?null:b.dataset.catopen;
+    catNewFor=null; SFX.play('tick'); renderCatEdit(); return; }
+  if(b.dataset.subnew){ catNewFor=b.dataset.subnew; renderCatEdit(); return; }
+  if(b.dataset.mainnew){ catNewMain=true; renderCatEdit(); return; }
+  if(b.dataset.catdel){
+    const n=b.dataset.catdel;
+    if(!confirm('刪掉分類「'+n+'」？已經記過的紀錄不會被動到，只是之後選不到。')) return;
+    const t=ensureTree(); t[catKind]=t[catKind].filter(x=>x.n!==n);
+    if(catOpen===n) catOpen=null;
+    save(); render(); renderCatEdit(); SFX.play('del'); return;
+  }
+  if(b.dataset.subdel){
+    const [cn,sn]=b.dataset.subdel.split('|');
+    const c=ensureTree()[catKind].find(x=>x.n===cn);
+    if(c){ c.s=c.s.filter(x=>x!==sn); save(); render(); renderCatEdit(); SFX.play('del'); }
+    return;
   }
   if(b.dataset.edittgt){
     const t=targets().find(x=>x.from===b.dataset.edittgt); if(!t) return;
@@ -3568,7 +3736,28 @@ $('btnSkin').onclick=()=>{SFX.play('tick'); skin(document.documentElement.datase
 function swPaint(){
   $('swLoan').classList.toggle('on',db.settings.showLoan!==false);
   $('swStock').classList.toggle('on',db.settings.splitStock!==false);
+  $('swDetail').classList.toggle('on',detailOn());
+  $('rowCatEdit').style.display=detailOn()?'':'none';   /* 精簡模式沒有分類樹可以管 */
 }
+$('swDetail').onclick=()=>{
+  db.settings.detailCat=!detailOn();
+  if(detailOn()) ensureTree();
+  rCat=''; rSub=''; rCustom=false; catAdd=false; subAdd=false;
+  save(); swPaint(); render(); SFX.play('tick');
+  toast(detailOn()?'改成詳細分類，記一筆時可以選細項':'改回精簡分類');
+};
+$('btnCatEdit').onclick=()=>{ SFX.play('tick'); openCatEdit(); };
+$('catKind').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-ck]'); if(!b) return;
+  catKind=b.dataset.ck; catOpen=null; catNewFor=null; catNewMain=false;
+  $('catKind').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+  SFX.play('tick'); renderCatEdit();
+});
+$('catReset').onclick=()=>{
+  if(!confirm('把'+(catKind==='out'?'支出':'收入')+'的分類回復成預設？自己加的會不見。')) return;
+  ensureTree()[catKind]=JSON.parse(JSON.stringify(DETAILCATS[catKind]));
+  catOpen=null; save(); render(); renderCatEdit(); SFX.play('del'); toast('回復預設了');
+};
 $('swLoan').onclick=()=>{
   db.settings.showLoan=db.settings.showLoan===false; save(); swPaint(); render(); SFX.play('tick');
   toast(db.settings.showLoan?'貸款進度打開了':'貸款進度收起來了');
