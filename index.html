@@ -75,9 +75,15 @@ svg.i{width:1em;height:1em;fill:currentColor;vertical-align:-.13em}
 .tag.lime{background:rgba(142,230,90,.14);color:var(--lime);border-color:rgba(142,230,90,.4)}
 
 /* ── 頂部狀態列 ── */
-.hud{position:relative;display:grid;grid-template-columns:auto 1fr auto;gap:22px;align-items:center;padding:20px 24px;margin-bottom:18px}
-
-@media(max-width:900px){.hud{grid-template-columns:1fr;gap:16px}}
+.hud{position:relative;display:grid;grid-template-columns:auto auto 1fr auto;gap:22px;align-items:center;padding:20px 24px;margin-bottom:18px}
+/* 桌機站在頭貼左邊那塊空白；手機版面疊成一欄，改成貼在頭貼右邊 */
+.pet{width:96px;height:96px;flex:none;order:-1;align-self:end}
+.pet .actor{position:static;width:100%;height:100%;margin:0;overflow:visible}
+@media(max-width:900px){
+  .hud{grid-template-columns:1fr;gap:16px}
+  .pet{position:absolute;left:138px;top:14px;width:88px;height:88px;order:0;z-index:3}
+}
+@media(max-width:400px){.pet{left:126px;width:78px;height:78px}}
 .ava{position:relative;width:104px;height:104px;flex:none;padding:0;border:none;background:none;cursor:pointer}
 .ava .ring{position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--gold) var(--p,0%),var(--panel3) 0)}
 .ava .pic{position:absolute;inset:6px;border-radius:50%;overflow:hidden;background:var(--panel2);
@@ -426,7 +432,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .stage{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:10px;padding:0 0 10px}
 .scene{position:relative;width:100%;height:158px;border-radius:14px;overflow:hidden;
   background:linear-gradient(180deg,transparent 0%,var(--panel2) 88%)}
-.actor{position:absolute;left:50%;bottom:0;margin-left:-75px;width:150px;height:150px;
+.scene>.actor{position:absolute;left:50%;bottom:0;margin-left:-75px;width:150px;height:150px;
   overflow:visible;z-index:2}
 /* 天上飄的雲 */
 .sky{position:absolute;inset:0;pointer-events:none}
@@ -445,7 +451,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .fx i.coin{width:11px;height:11px;border-radius:50%;background:radial-gradient(circle at 35% 32%,#ffe58a,var(--gold) 62%,var(--gold2));
   box-shadow:0 0 7px rgba(255,194,51,.55)}
 .fx i.flake{width:8px;height:8px;border-radius:2px;background:var(--pink);opacity:.9}
-@media(max-width:560px){ .scene{height:132px} .actor{width:126px;height:126px;margin-left:-63px}
+@media(max-width:560px){ .scene{height:132px} .scene>.actor{width:126px;height:126px;margin-left:-63px}
   .ground{bottom:7px} }
 /* 動作一律用 requestAnimationFrame 寫 SVG 的 transform 屬性。
    CSS transition 掛在 SVG 元素上時 transform 不會被繪製，只有 computed 值會變。 */
@@ -776,6 +782,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 <div class="wrap">
 
 <div class="card hud">
+  <div class="pet" id="hudPet"></div>
   <button class="ava" id="ava" title="換頭貼">
     <span class="ring" id="avaRing"></span>
     <span class="pic" id="avaPic"></span>
@@ -1973,7 +1980,7 @@ const ANIM={
     if(!this.grab()) return;
     const c=this.cur, g=this.tgt, k=Math.min(1,dt*16);
     for(const p in c) c[p]+=(g[p]-c[p])*k;
-    const e=this.el, br=Math.sin(now/1550);
+    const e=this.el, br=Math.sin(now/541);        /* 3.4 秒一次呼吸 */
     /* 呼吸：沒在演出的時候起伏大一點 */
     const amp=tunePlaying?.008:.022, by=tunePlaying?-.6:-1.6;
     const sx=c.sx*(1-amp*br*.4), sy=c.sy*(1+amp*br), y=c.y+by*br;
@@ -1996,7 +2003,7 @@ const ANIM={
       for(let i=0;i<e.sky.length;i++){
         const sp=[9,15,6][i], yy=[14,34,52][i];
         const x=e.sw+40-((now/1000*sp+i*e.sw/3)%(e.sw+80));
-        e.sky[i].style.transform='translate('+x.toFixed(1)+'px,'+(yy+Math.sin(now/1400+i)*4).toFixed(1)+'px)';
+        e.sky[i].style.transform='translate('+x.toFixed(1)+'px,'+(yy+Math.sin(now/700+i)*4).toFixed(1)+'px)';
       }
     }
     /* 音符、金幣、碎片 */
@@ -2008,8 +2015,8 @@ const ANIM={
       p.el.style.transform='translate('+p.x.toFixed(1)+'px,'+p.y.toFixed(1)+'px) rotate('+p.rot.toFixed(0)+'deg)';
       p.el.style.opacity=Math.min(1,p.life/p.fade).toFixed(2);
     }
-    if(e.tail) e.tail.setAttribute('transform','rotate('+(Math.sin(now/(tunePlaying?230:520))*13).toFixed(1)+',96,88)');
-    if(e.ears) e.ears.setAttribute('transform','rotate('+(Math.sin(now/900)*2.6+c.rot*.35).toFixed(2)+',60,48)');
+    if(e.tail) e.tail.setAttribute('transform','rotate('+(Math.sin(now/(tunePlaying?67:167))*13).toFixed(1)+',96,88)');
+    if(e.ears) e.ears.setAttribute('transform','rotate('+(Math.sin(now/446)*2.6+c.rot*.35).toFixed(2)+',60,48)');
     this.start();
   }
 };
@@ -3422,7 +3429,7 @@ $('btnFriAdd').onclick=async()=>{
         $('friMail').value=''; SFX.play('coin'); }
 };
 
-function render(){ renderWheel(); renderStocks(); renderLoans(); renderMonthTable(); renderPie(); renderHud(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); }
+function render(){ renderPet(); renderWheel(); renderStocks(); renderLoans(); renderMonthTable(); renderPie(); renderHud(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); }
 
 /* ── 互動 ── */
 const open=id=>{$(id).classList.add('on');const f=$(id).querySelector('input');setTimeout(()=>f&&f.focus(),120);};
@@ -3594,6 +3601,84 @@ $('saveGoal').onclick=()=>{
   db.goals.push({id:uid(),ts:Date.now(),name,amount:isNaN(amt)?0:amt,date:$('gDate').value,cat:$('gCat').value,done:false});
   save(); $('gName').value='';$('gAmt').value='';$('gDate').value=''; shut(); render(); toast('任務已加入');
 };
+/* ── HUD 上那隻：只有閒置動作，跟轉盤那隻各跑各的 ── */
+const PET={
+  el:null, raf:0, last:0, live:true, io:null, t:0,
+  cur:{y:0,sx:1,sy:1,rot:0,aL:0,aR:0}, tgt:{y:0,sx:1,sy:1,rot:0,aL:0,aR:0},
+  nextBlink:2600, nextAct:7000,
+  grab(){
+    const box=$('hudPet');
+    if(!box||!box.querySelector('.ch')){ this.el=null; return false; }
+    if(this.el&&this.el.box===box&&box.contains(this.el.ch)) return true;
+    this.el={box, ch:box.querySelector('.ch'), face:box.querySelector('.face'),
+      aL:box.querySelector('.armL'), aR:box.querySelector('.armR'),
+      shd:box.querySelector('.shd'), tail:box.querySelector('.tail'), ears:box.querySelector('.ears')};
+    return true;
+  },
+  watch(){
+    const box=$('hudPet');
+    if(!box||this.io||!window.IntersectionObserver) return;
+    this.io=new IntersectionObserver(es=>{ this.live=es[0].isIntersecting; if(this.live){this.last=0;this.start();} },
+      {rootMargin:'60px'});
+    this.io.observe(box);
+  },
+  start(){ if(!this.raf) this.raf=requestAnimationFrame(t=>this.frame(t)); },
+  face(n){ if(this.el&&this.el.face) this.el.face.innerHTML=chFace(petChar(),n); },
+  frame(now){
+    this.raf=0;
+    if(!this.live||document.hidden) return;
+    const dt=Math.min(.05,(now-(this.last||now))/1000); this.last=now;
+    if(!this.grab()) return;
+    this.t+=dt*1000;
+    /* 偶爾眨眼、偶爾自己動一下 */
+    if(this.t>this.nextBlink){
+      this.nextBlink=this.t+3200+Math.random()*2600;
+      this.face('blink'); setTimeout(()=>this.face('idle'),140);
+    }
+    if(this.t>this.nextAct){
+      this.nextAct=this.t+6500+Math.random()*5000;
+      const pick=Math.random();
+      if(pick<.45){ this.pose({y:-13,sx:.98,sy:1.06,rot:0,aL:-110,aR:110},'joy',480); }   /* 跳一下 */
+      else if(pick<.75){ this.pose({y:0,sx:1,sy:1,rot:7,aL:14,aR:-14},'up',700); }        /* 歪頭 */
+      else { this.pose({y:2,sx:1.03,sy:.97,rot:-5,aL:-30,aR:30},'up',620); }              /* 伸個懶腰 */
+    }
+    const c=this.cur, g=this.tgt, k=Math.min(1,dt*13), e=this.el, br=Math.sin(now/541);   /* 3.4 秒一次呼吸 */
+    for(const p in c) c[p]+=(g[p]-c[p])*k;
+    const sx=c.sx*(1-.02*br*.4), sy=c.sy*(1+.02*br), y=c.y-1.5*br;
+    e.ch.setAttribute('transform',
+      'translate(60,108) rotate('+c.rot.toFixed(2)+') scale('+sx.toFixed(4)+','+sy.toFixed(4)+') translate(-60,-108)'+
+      ' translate(0,'+y.toFixed(2)+')');
+    e.aL.setAttribute('transform','rotate('+c.aL.toFixed(1)+',33,74)');
+    e.aR.setAttribute('transform','rotate('+c.aR.toFixed(1)+',87,74)');
+    if(e.shd){
+      const up=Math.max(0,-y)/16, sc=(1-up*.38).toFixed(3);
+      e.shd.setAttribute('transform','translate(60,113) scale('+sc+',1) translate(-60,-113)');
+      e.shd.setAttribute('opacity',(.18-up*.08).toFixed(3));
+    }
+    if(e.tail) e.tail.setAttribute('transform','rotate('+(Math.sin(now/167)*12).toFixed(1)+',96,88)');
+    if(e.ears) e.ears.setAttribute('transform','rotate('+(Math.sin(now/446)*2.4+c.rot*.4).toFixed(2)+',60,48)');
+    this.start();
+  },
+  pose(t,face,back){
+    Object.assign(this.tgt,t); this.face(face);
+    setTimeout(()=>{ Object.assign(this.tgt,{y:0,sx:1,sy:1,rot:0,aL:0,aR:0}); this.face('idle'); },back);
+    this.start();
+  }
+};
+/* HUD 上那隻跟著頭貼走；頭貼是照片就用轉盤那隻 */
+function petChar(){
+  const av=db.settings.avatar;
+  return (av&&av.id&&TCHARS.find(x=>x.k===av.id))||tchar();
+}
+function renderPet(){
+  const box=$('hudPet'); if(!box) return;
+  const a=petChar();
+  if(box.dataset.k!==a.k){
+    box.dataset.k=a.k; PET.el=null;
+    box.innerHTML=chSVG(a,'idle');
+  }
+  PET.watch(); PET.start();
+}
 /* ── 每日轉盤：當天記過一筆就能轉一次 ── */
 const WHEEL=[10,0,20,10,50,0,20,100];      /* 0 是再接再厲 */
 const WCOL=['#ffc233','#3a3273','#3ce0d0','#e39b12','#ff5c8a','#3a3273','#2bb5a8','#a879ff'];
