@@ -2547,8 +2547,10 @@ function wearSVG(a,mode){
     const it=itemById(id); if(!it) return '';
     if(mode==='back') return it.back?it.d(a):'';
     if(it.back) return '';
-    if(mode==='head'&&['body','hand','foot'].indexOf(it.slot)>=0) return '';
-    return it.d(a);
+    if(mode==='head') return ['body','hand','foot'].indexOf(it.slot)>=0?'':it.d(a);
+    /* 衣服畫在頭的下面，不然領口會把下巴切掉 */
+    if(mode==='mid')  return it.slot==='body'?it.d(a):'';
+    return it.slot==='body'?'':it.d(a);
   }).join('');
 }
 /* 這隻買得到的東西：通用的加上自己的專屬品 */
@@ -2582,6 +2584,7 @@ function chSVG(a,e,small){
         '<g class="armR" data-p="'+(60+apx)+','+apy+'">'+arm(60+apx,-1)+'</g>'+
         chBody(a)+
         chBodyMark(a)+
+        wearSVG(a,'mid')+          /* 衣服：在身體上面、頭下面 */
         chHead(a)+
         chFaceMark(a)+
         '<g class="face">'+chFace(a,e)+'</g>'+
