@@ -1279,8 +1279,9 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 
 <div class="veil" id="vWork"><div class="dlg">
   <h3>打工</h3>
-  <div class="say">一天可以開始兩份工。抽到幾小時是隨機的，要真的等那麼久才領得到錢，
-  時間越長領得越多。開工之後可以關掉視窗去做別的事。</div>
+  <div class="say">牠一天可以出門打兩次工。班表是老闆隨機排的：
+  <b>2 小時</b> 20～40 枚、<b>4 小時</b> 45～70 枚、<b>8 小時</b> 90～130 枚。
+  派出去之後你就關掉去忙自己的，牠會乖乖做完在這裡等你發薪水。</div>
   <div class="workstage" id="workStage"></div>
   <div class="workcard" id="workCard"></div>
   <div class="wleft" id="workLeft"></div>
@@ -5314,7 +5315,7 @@ function renderWork(){
   }
   else if(shiftDone()){
     card.innerHTML='<div class="wjob"><b>'+WALLET.shiftH+' 小時</b>'+esc(WALLET.shiftJob)+'</div>'+
-      '<div class="wsay">下班了，去把錢領回來</div>'+
+      '<div class="wsay">下班囉，薪水還沒領</div>'+
       '<div class="wpay">可以領 <b>'+WALLET.shiftPay+'</b> 枚</div>';
   }
   else if(onShift()){
@@ -5322,15 +5323,16 @@ function renderWork(){
       '<div class="wcount">還要 <b>'+hms(shiftLeftMs())+'</b></div>'+
       '<div class="wbar"><i style="width:'+
         Math.max(2,Math.min(100,100*(1-shiftLeftMs()/(WALLET.shiftH*3600000)))).toFixed(1)+'%"></i></div>'+
-      '<div class="wsay">做完再回來領 '+WALLET.shiftPay+' 枚</div>';
+      '<div class="wsay">做完這班可以領 '+WALLET.shiftPay+' 枚</div>';
   }
   else card.innerHTML='';
   $('workLeft').textContent = onShift()&&!shiftDone()
-    ? '關掉視窗也沒關係，時間到再回來'
-    : left>0 ? '今天還可以開始 '+left+' 份工' : '今天的兩份都開過了，明天再來';
+    ? '牠正在上班，你先去忙別的吧'
+    : left>0 ? (left===2?'牠今天還沒出過門，精神很好':'牠還想再打一份工')
+             : '今天兩份都打完了，讓牠回家休息';
   b.disabled=workBusy||(!shiftDone()&&(onShift()||left<=0));
   b.style.opacity=b.disabled?.45:1;
-  b.textContent=workBusy?'處理中…':shiftDone()?'領錢':onShift()?'工作中':left>0?'去打工':'明天再來';
+  b.textContent=workBusy?'處理中…':shiftDone()?'領薪水':onShift()?'上班中':left>0?'派牠去打工':'今天收工了';
   clearInterval(workTick); workTick=0;
   if(onShift()&&!shiftDone()&&$('vWork').classList.contains('on')) workTick=setInterval(tickWork,1000);
 }
@@ -5338,7 +5340,7 @@ function renderWork(){
 function tickWork(){
   if(!$('vWork').classList.contains('on')||!onShift()){ clearInterval(workTick); workTick=0; return; }
   if(shiftDone()){ clearInterval(workTick); workTick=0; renderWork(); SFX.play('win');
-    toast('工作結束了，回打工那邊領錢'); return; }
+    toast('下班了，快去把薪水領回來'); return; }
   const c=document.querySelector('#workCard .wcount b'); if(c) c.textContent=hms(shiftLeftMs());
   const bar=document.querySelector('#workCard .wbar i');
   if(bar) bar.style.width=Math.max(2,Math.min(100,100*(1-shiftLeftMs()/(WALLET.shiftH*3600000)))).toFixed(1)+'%';
@@ -5374,7 +5376,7 @@ async function doWork(){
     renderWork(); return; }
   SFX.play('tick');
   WORKPET.pose({y:2,sx:1.04,sy:.96,rot:0,aL:-42,aR:42},'up',900);
-  toast('開工了：'+sh.h+' 小時「'+job[0]+'」');
+  toast('出門了，'+sh.h+' 小時的「'+job[0]+'」');
   renderWork();
 }
 /* ── 每日轉盤：當天記過一筆就能轉一次 ── */
