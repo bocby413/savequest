@@ -533,6 +533,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .ppic img{width:100%;height:100%;object-fit:cover}
 .ppic svg{width:82%;height:82%}
 .ppic.full{width:96px;height:96px;border-radius:18px;place-items:end center;border-color:var(--edge);
+  overflow:visible;
   background:radial-gradient(ellipse at 50% 90%,var(--panel2) 0%,transparent 68%)}
 .ppic.full svg{width:106%;height:106%;overflow:visible}
 .pwear{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
@@ -3900,8 +3901,13 @@ function renderProf(){
   const f=profFor; if(!f||!$('vProf').classList.contains('on')) return;
   const d=SHARED[f.uid], g=(d&&d.grant)||{}, p=PROFILES[f.uid]||{};
   const pk=(d&&d.ch)||p.ch, pw=(d&&d.wear)||p.wear||[];
-  $('profPic').innerHTML=knownCh(pk)?charPortrait(pk,pw,1):friAvatar((d&&d.avatar)||p.avatar);
-  $('profPic').classList.toggle('full',knownCh(pk));
+  const full=knownCh(pk);
+  $('profPic').innerHTML=full?charPortrait(pk,pw,1):friAvatar((d&&d.avatar)||p.avatar);
+  $('profPic').classList.toggle('full',full);
+  if(full){                              /* 跟自己那隻一樣會眨眼、歪頭、跳一下 */
+    PROFPET.who=()=>TCHARS.find(x=>x.k===pk)||petChar();
+    PROFPET.watch(); PROFPET.start();
+  }
   $('profNm').textContent=friName(f);
   const tt=$('profTt'), has=g.lv&&d&&d.title;
   tt.textContent=has?d.title:'沒有分享稱號';
@@ -4210,7 +4216,7 @@ const PET={
     this.io.observe(box);
   },
   start(){ if(!this.raf) this.raf=requestAnimationFrame(t=>this.frame(t)); },
-  face(n){ if(this.el&&this.el.face) this.el.face.innerHTML=chFace(petChar(),n); },
+  face(n){ if(this.el&&this.el.face) this.el.face.innerHTML=chFace(this.who?this.who():petChar(),n); },
   frame(now){
     this.raf=0;
     if(!this.live||document.hidden) return;
@@ -4264,6 +4270,7 @@ function makePet(boxId){
   });
 }
 const SHOPPET=makePet('shopStage');
+const PROFPET=makePet('profPic');        /* 好友主頁上的那隻，畫的是他的角色 */
 function pushLook(){ if(window.CLOUD&&CLOUD.user){ CLOUD.publishProfile(); CLOUD.pushShares(); } }
 function petChar(){
   const av=db.settings.avatar;
