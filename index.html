@@ -588,13 +588,21 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .glog .r .x:hover{color:var(--red)}
 .mchips{display:flex;flex-wrap:wrap;gap:6px}
 .mchips button{border:1.5px solid var(--edge2);background:var(--panel2);color:var(--txt2);
-  border-radius:99px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+  border-radius:99px;padding:4px 12px 4px 5px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;
+  display:inline-flex;align-items:center;gap:6px}
+.cpic{width:22px;height:22px;flex:none;border-radius:50%;overflow:hidden;background:var(--panel3);
+  display:grid;place-items:center}
+.cpic svg{width:100%;height:100%}
 .mchips button.on{border-color:var(--gold);background:rgba(255,194,51,.16);color:var(--gold)}
 .mchips button.off{opacity:.42;text-decoration:line-through}
 .f label .hint{display:block;font-style:normal;font-size:11.5px;color:var(--txt3);font-weight:500;margin-top:2px}
 .splitrows{display:flex;flex-direction:column;gap:6px}
 .srow{display:flex;align-items:center;gap:9px;background:var(--panel2);border-radius:11px;padding:6px 10px}
-.srow .nm{flex:1;min-width:0;font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow .nm{flex:1;min-width:0;font-size:13.5px;font-weight:700;color:var(--txt);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow .mpic{width:26px;height:26px;flex:none;border-radius:50%;overflow:hidden;background:var(--panel3);
+  display:grid;place-items:center}
+.srow .mpic svg{width:100%;height:100%}
 .srow .eq{font-size:12px;color:var(--txt3);flex:none}
 .srow input{width:62px;flex:none;text-align:center;padding:5px 4px;font-size:14px;font-weight:700;
   border-radius:9px;border:1.5px solid var(--edge2);background:var(--panel3);color:var(--txt);font-family:inherit}
@@ -4327,7 +4335,19 @@ function renderPet(){
   PET.watch(); PET.start();
 }
 /* ── 揪團 ── */
-const gMemName=(g,uid)=>((g.info||{})[uid]||{}).n||'成員';
+function gMemName(g,uid){
+  const i=((g&&g.info)||{})[uid]||{};
+  if(i.n) return i.n;
+  if(CLOUD.user&&uid===CLOUD.user.uid) return db.settings.name||'我';
+  const f=FRIENDS.find(x=>x.uid===uid); if(f) return friName(f);
+  const p=PROFILES[uid]; if(p&&p.name) return p.name;
+  return '成員';
+}
+const gMemPic=(g,uid)=>{
+  const i=((g&&g.info)||{})[uid]||{};
+  if(CLOUD.user&&uid===CLOUD.user.uid) return friPic(null,{ch:petChar().k,wear:wornList(petChar().k)});
+  return friPic(null,PROFILES[uid]||{avatar:i.a});
+};
 /* 每筆記錄記下當時是誰付的、哪些人要分。後來才加入的人不會被回頭算進舊帳 */
 function recPart(g,r){
   if(Array.isArray(r.part)&&r.part.length) return r.part;
@@ -4476,11 +4496,12 @@ function renderGPick(){
   if(mem.indexOf(grPayer)<0) grPayer=mem.indexOf(me)>=0?me:mem[0];
   grExcl=grExcl.filter(u=>mem.indexOf(u)>=0);
   const nm=u=>esc(gMemName(g,u))+(u===me?'（我）':'');
+  const chip=u=>'<span class="cpic">'+gMemPic(g,u)+'</span>'+nm(u);
   $('grPayLb').textContent=grKind==='in'?'誰收的':'誰先付的';
   $('grPayer').innerHTML=mem.map(u=>
-    '<button type="button" data-gpay="'+u+'" class="'+(u===grPayer?'on':'')+'">'+nm(u)+'</button>').join('');
+    '<button type="button" data-gpay="'+u+'" class="'+(u===grPayer?'on':'')+'">'+chip(u)+'</button>').join('');
   $('grExcl').innerHTML=mem.map(u=>
-    '<button type="button" data-gex="'+u+'" class="'+(grExcl.indexOf(u)>=0?'off':'')+'">'+nm(u)+'</button>').join('');
+    '<button type="button" data-gex="'+u+'" class="'+(grExcl.indexOf(u)>=0?'off':'')+'">'+chip(u)+'</button>').join('');
   $('grMode').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.sm===grMode));
   $('grExclWrap').style.display=grMode==='even'?'':'none';
   $('grRowsWrap').style.display=grMode==='even'?'none':'';
@@ -4488,7 +4509,8 @@ function renderGPick(){
     const share=grMode==='share';
     $('grRowsLb').textContent=share?'每個人幾份':'每個人各出多少';
     $('grRows').innerHTML=mem.map(u=>
-      '<div class="srow"><span class="nm">'+nm(u)+'</span><span class="eq"></span>'+
+      '<div class="srow"><span class="mpic">'+gMemPic(g,u)+'</span>'+
+      '<span class="nm">'+nm(u)+'</span><span class="eq"></span>'+
       '<input type="number" inputmode="decimal" min="0"'+(share?' step="1"':'')+
       ' placeholder="0" data-su="'+u+'" value="'+grVal(u)+'">'+
       '<span class="unit">'+(share?'份':'元')+'</span></div>').join('');
