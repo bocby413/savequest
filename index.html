@@ -127,9 +127,9 @@ svg.i{width:1em;height:1em;fill:currentColor;vertical-align:-.13em}
   .actrow .btn{flex:1 1 0;min-width:0;padding-left:6px;padding-right:6px;font-size:13px;
     white-space:nowrap;justify-content:center}
   .actrow .btn svg{flex:none}
-  /* 第二排的顆數會變（登入、可以加到主畫面時會多），擠不下就換行，不要把字切掉 */
-  #actRow2{flex-wrap:wrap}
-  #actRow2 .btn{flex:1 1 auto;min-width:70px}
+  /* 第二排四顆要擠在同一行，所以不換行、平分寬度 */
+  #actRow2{flex-wrap:nowrap;gap:6px}
+  #actRow2 .btn{flex:1 1 0;min-width:0;padding-left:4px;padding-right:4px;font-size:12.5px}
   /* 手機把齒輪吸到卡片右上角，桌機維持在按鈕列裡 */
   /* 圖示原本靠文字基線對齊，會偏下 4px，改成格線置中 */
   #actRow2 #btnMore{position:absolute;top:12px;right:12px;z-index:4;flex:none;
@@ -551,6 +551,27 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .pcard.lock{opacity:.5}
 .pcard.lock .pv{font-size:14px;font-weight:600;color:var(--txt3);margin-top:7px}
 @media(max-width:420px){ .pgrid{grid-template-columns:1fr} }
+/* 商店 */
+.shopgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+@media(max-width:520px){.shopgrid{grid-template-columns:repeat(2,1fr)}}
+.sitem{background:var(--panel2);border:2px solid var(--edge);border-radius:14px;padding:8px 6px 9px;
+  text-align:center;cursor:pointer;font:inherit;color:inherit;position:relative;
+  transition:border-color .14s,transform .14s,background-color .14s}
+.sitem:hover{transform:translateY(-3px);border-color:var(--edge2)}
+.sitem svg{width:100%;height:auto;max-width:88px;overflow:visible;pointer-events:none}
+.sitem .nm{font-size:12.5px;font-weight:700;margin-top:2px}
+.sitem .pr{font-size:11.5px;color:var(--gold);font-weight:700;display:flex;align-items:center;
+  justify-content:center;gap:3px;margin-top:1px}
+.sitem .pr svg{width:12px;height:12px}
+.sitem.own{border-color:var(--edge2)}
+.sitem.own .pr{color:var(--txt3)}
+.sitem.on{border-color:var(--gold);background:rgba(255,194,51,.12)}
+.sitem.on .pr{color:var(--gold)}
+.sitem .tag{position:absolute;left:6px;top:6px;font-size:10px;padding:1px 6px;border-radius:99px;
+  background:var(--panel3);color:var(--txt3);font-weight:700}
+.sitem.on .tag{background:var(--gold);color:#3a2600}
+.sitem.poor{opacity:.5}
+.shopempty{grid-column:1/-1;color:var(--txt3);font-size:13.5px;padding:20px 2px;text-align:center}
 /* 每日轉盤 */
 .coinbar{margin-top:8px;display:inline-flex;align-items:center;gap:6px;padding:3px 11px 3px 8px;
   border-radius:99px;background:rgba(255,194,51,.14);border:1.5px solid rgba(255,194,51,.35);
@@ -790,9 +811,10 @@ html[data-skin="light"] .logbar input{color-scheme:light}
         <button class="btn sm" id="btnTarget">每月存款目標</button>
       </div>
       <div class="actrow" id="actRow2">
-        <button class="btn sm ghost" id="btnSync" style="display:none">雲端同步</button>
-        <button class="btn sm ghost" id="btnFriends" style="display:none">好友<span class="dot" id="friDot"></span></button>
         <button class="btn sm" id="btnWheel">轉盤<span class="dot" id="wheelDot"></span></button>
+        <button class="btn sm" id="btnShop">商店</button>
+        <button class="btn sm ghost" id="btnSync" style="display:none">同步</button>
+        <button class="btn sm ghost" id="btnFriends" style="display:none">好友<span class="dot" id="friDot"></span></button>
         <button class="btn sm ghost" id="btnMore" title="設定"><svg class="i"><use href="#i-gear"/></svg></button>
       </div>
       <input type="file" id="fileImport" accept=".json" hidden>
@@ -1051,6 +1073,16 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   <button class="btn go" id="btnFriAdd" style="width:100%">送出好友邀請</button>
   <div class="say" id="friMsg" style="min-height:20px;margin-top:8px"></div>
   <div id="friBody"></div>
+  <div class="dfoot"><button class="btn ghost" data-close>關閉</button></div>
+</div></div>
+
+<div class="veil" id="vShop"><div class="dlg wide">
+  <h3>商店</h3>
+  <div class="say" id="shopSay"></div>
+  <div class="segs" id="shopTab">
+    <button data-st="all" class="on">全部</button><button data-st="own">已擁有</button>
+  </div>
+  <div class="shopgrid" id="shopBody"></div>
   <div class="dfoot"><button class="btn ghost" data-close>關閉</button></div>
 </div></div>
 
@@ -1769,7 +1801,7 @@ function chBodyMark(a){
 function avaBody(a){
   const k=(a.egg?18/a.bw:20/a.hr), cy=(a.egg?a.hy+4:a.hy);
   return '<g transform="translate(32,34) scale('+k.toFixed(3)+') translate(-60,'+(-cy)+')">'+
-    chBack(a,1)+(a.egg?chBody(a)+chBodyMark(a):'')+chHead(a)+chFaceMark(a)+chFace(a,'idle')+'</g>';
+    chBack(a,1)+(a.egg?chBody(a)+chBodyMark(a):'')+chHead(a)+chFaceMark(a)+chFace(a,'idle')+wearSVG(a,1)+'</g>';
 }
 function buildAvatars(){
   const box=$('avaDefs'); if(!box) return;
@@ -1809,6 +1841,144 @@ function chFace(a,e){
   else                         mouth='<path d="M55 '+m+'q5 5 10 0"'+sw+' stroke-width="2.8"/>';
   return eyes+mouth;
 }
+/* ── 配件 ──
+   slot 同一格只能穿一件。only 有填就是那隻的專屬品，別隻買不到。
+   畫的時候拿角色自己的頭圍、身寬去算，所以八隻穿起來都合身。 */
+const HT=a=>a.hy-(a.hry||a.hr*.94);        /* 頭頂 */
+const HB=a=>a.hy+(a.hry||a.hr*.94);        /* 頭底 */
+const ITEMS=[
+  /* ── 通用 ── */
+  {id:'cap', n:'鴨舌帽', p:60, slot:'head', d:a=>{
+    const t=HT(a), r=a.hr;
+    return '<path d="M'+(60-r*.82)+' '+(t+7)+'a'+(r*.82)+' '+(r*.78)+' 0 0 1 '+(r*1.64)+' 0z" fill="#3ce0d0"/>'+
+      '<path d="M'+(60+r*.5)+' '+(t+5)+'h'+(r*.62)+'a3.5 3.5 0 0 1 0 6h-'+(r*.62)+'z" fill="#1b8f85"/>'+
+      '<rect x="'+(60-r*.86)+'" y="'+(t+4)+'" width="'+(r*1.72)+'" height="5" rx="2.5" fill="#1b8f85"/>';}},
+  {id:'glass', n:'圓框眼鏡', p:50, slot:'face', d:a=>{
+    const y=eyeY(a), g=a.gap, r=Math.max(6,g*.72);
+    return '<g fill="none" stroke="#2a2440" stroke-width="2.4" opacity=".9">'+
+      '<circle cx="'+(60-g)+'" cy="'+y+'" r="'+r+'"/><circle cx="'+(60+g)+'" cy="'+y+'" r="'+r+'"/>'+
+      '<path d="M'+(60-g+r)+' '+y+'h'+((g-r)*2)+'"/></g>';}},
+  {id:'scarf', n:'圍巾', p:70, slot:'neck', d:a=>{
+    const y=HB(a)-4, w=a.bw*.9;
+    return '<path d="M'+(60-w)+' '+y+'q'+w+' 10 '+(w*2)+' 0v9q-'+w+' 10 -'+(w*2)+' 0z" fill="#ff5c8a"/>'+
+      '<path d="M'+(60+w*.42)+' '+(y+8)+'l7 19-9 2.5-4.5-19z" fill="#e8447a"/>';}},
+  {id:'halo', n:'天使光環', p:150, slot:'head', d:a=>
+    '<ellipse cx="60" cy="'+(HT(a)-7)+'" rx="'+(a.hr*.6)+'" ry="4.5" fill="none" stroke="#ffe58a" stroke-width="4"/>'},
+  /* ── 貓 ── */
+  {id:'bell', n:'鈴鐺項圈', p:80, slot:'neck', only:'a-cat', d:a=>{
+    const y=HB(a)-2, w=a.bw*.8;
+    return '<path d="M'+(60-w)+' '+y+'q'+w+' 9 '+(w*2)+' 0v6q-'+w+' 9 -'+(w*2)+' 0z" fill="#e8447a"/>'+
+      '<circle cx="60" cy="'+(y+9)+'" r="6" fill="#ffc233"/><path d="M56 '+(y+9)+'h8" stroke="#a86f00" stroke-width="1.6"/>'+
+      '<circle cx="60" cy="'+(y+11)+'" r="1.6" fill="#a86f00"/>';}},
+  {id:'yarn', n:'毛線球', p:90, slot:'hand', only:'a-cat', d:a=>{
+    const x=60-(a.bw+5), y=a.by+a.bh*.5;
+    return '<circle cx="'+x+'" cy="'+y+'" r="10" fill="#e86a9e"/>'+
+      '<path d="M'+(x-8)+' '+(y-3)+'q8 5 16 0M'+(x-7)+' '+(y+4)+'q7-7 14-2" stroke="#b34477" stroke-width="1.6" fill="none"/>';}},
+  /* ── 狗 ── */
+  {id:'bone', n:'骨頭項圈', p:80, slot:'neck', only:'a-dog', d:a=>{
+    const y=HB(a)-2, w=a.bw*.8;
+    return '<path d="M'+(60-w)+' '+y+'q'+w+' 9 '+(w*2)+' 0v6q-'+w+' 9 -'+(w*2)+' 0z" fill="#5aa9ff"/>'+
+      '<g transform="translate(60,'+(y+10)+')"><rect x="-7" y="-2" width="14" height="4" rx="2" fill="#f3ddd0"/>'+
+      '<circle cx="-7" cy="-2.5" r="3" fill="#f3ddd0"/><circle cx="-7" cy="2.5" r="3" fill="#f3ddd0"/>'+
+      '<circle cx="7" cy="-2.5" r="3" fill="#f3ddd0"/><circle cx="7" cy="2.5" r="3" fill="#f3ddd0"/></g>';}},
+  {id:'disc', n:'飛盤', p:90, slot:'hand', only:'a-dog', d:a=>{
+    const x=60-(a.bw+6), y=a.by+a.bh*.4;
+    return '<ellipse cx="'+x+'" cy="'+y+'" rx="12" ry="5" fill="#3ce0d0"/>'+
+      '<ellipse cx="'+x+'" cy="'+(y-1.5)+'" rx="7" ry="2.6" fill="#1b8f85"/>';}},
+  /* ── 熊 ── */
+  {id:'honey', n:'蜂蜜罐', p:100, slot:'hand', only:'a-bear', d:a=>{
+    const x=60-(a.bw+5), y=a.by+a.bh*.45;
+    return '<path d="M'+(x-8)+' '+(y-5)+'h16l-2 16h-12z" fill="#e39b12"/>'+
+      '<rect x="'+(x-10)+'" y="'+(y-9)+'" width="20" height="5" rx="2.5" fill="#c98209"/>'+
+      '<path d="M'+(x-4)+' '+(y+3)+'h8" stroke="#8a5a05" stroke-width="2"/>';}},
+  {id:'plaid', n:'樵夫格子衫', p:130, slot:'body', only:'a-bear', d:a=>{
+    const t=a.by-a.bh*.75, w=a.bw*.82, h=a.bh*1.5;
+    return '<path d="M'+(60-w)+' '+t+'h'+(w*2)+'v'+h+'q-'+w+' 7 -'+(w*2)+' 0z" fill="#c94a1e"/>'+
+      '<path d="M'+(60-w*.4)+' '+t+'v'+h+'M'+(60+w*.4)+' '+t+'v'+h+
+      'M'+(60-w)+' '+(t+h*.35)+'h'+(w*2)+'M'+(60-w)+' '+(t+h*.7)+'h'+(w*2)+
+      '" stroke="#7d2a0e" stroke-width="2" fill="none" opacity=".8"/>';}},
+  /* ── 狐狸 ── */
+  {id:'cape', n:'披風', p:120, slot:'body', only:'a-fox', d:a=>{
+    const t=HB(a)-6, w=a.bw*1.05, h=a.bh*1.7;
+    return '<path d="M'+(60-w*.55)+' '+t+'q'+(w*.55)+' 7 '+(w*1.1)+' 0l'+(w*.5)+' '+h+
+      'q-'+w+' 9 -'+(w*2)+' 0z" fill="#7b4ce0" opacity=".92"/>'+
+      '<path d="M'+(60-w*.55)+' '+t+'q'+(w*.55)+' 7 '+(w*1.1)+' 0" stroke="#ffc233" stroke-width="3" fill="none"/>';}},
+  {id:'mask', n:'狐狸面具', p:110, slot:'face', only:'a-fox', d:a=>{
+    const y=eyeY(a), g=a.gap;
+    return '<path d="M'+(60-g-9)+' '+(y-7)+'q'+(g+9)+' -6 '+((g+9)*2)+' 0q-2 15 -'+(g+9)+' 19q-'+(g+7)+' -4 -'+((g+9))+' -19z" fill="#fff0e2" opacity=".95"/>'+
+      '<path d="M'+(60-g-4)+' '+(y-1)+'h8M'+(60+g-4)+' '+(y-1)+'h8" stroke="#c94a1e" stroke-width="3" stroke-linecap="round"/>'+
+      '<path d="M'+(60-g-9)+' '+(y-7)+'l4-9 7 6M'+(60+g+9)+' '+(y-7)+'l-4-9-7 6" fill="#c94a1e"/>';}},
+  /* ── 企鵝 ── */
+  {id:'bowtie', n:'領結', p:70, slot:'neck', only:'a-peng', d:a=>{
+    const y=HB(a)+2;
+    return '<path d="M60 '+y+'l-13-7v14zM60 '+y+'l13-7v14z" fill="#ff5c8a"/>'+
+      '<circle cx="60" cy="'+y+'" r="4" fill="#e8447a"/>';}},
+  {id:'beanie', n:'毛線帽', p:80, slot:'head', only:'a-peng', d:a=>{
+    const t=HT(a), r=a.hr;
+    return '<path d="M'+(60-r*.8)+' '+(t+8)+'a'+(r*.8)+' '+(r*.85)+' 0 0 1 '+(r*1.6)+' 0z" fill="#ff5c8a"/>'+
+      '<rect x="'+(60-r*.85)+'" y="'+(t+6)+'" width="'+(r*1.7)+'" height="6" rx="3" fill="#f7f4ec"/>'+
+      '<circle cx="60" cy="'+(t-4)+'" r="6" fill="#f7f4ec"/>';}},
+  /* ── 機器人 ── */
+  {id:'jet', n:'噴射底座', p:140, slot:'foot', only:'a-bot', d:a=>{
+    const y=a.by+a.bh+8;
+    return '<path d="M50 '+y+'h20l-4 12h-12z" fill="#8fa3c8"/>'+
+      '<path d="M54 '+(y+12)+'q6 12 12 0z" fill="#ff9f45"/>'+
+      '<path d="M57 '+(y+12)+'q3 7 6 0z" fill="#ffe58a"/>';}},
+  {id:'dish', n:'雷達天線', p:110, slot:'head', only:'a-bot', d:a=>{
+    const t=HT(a);
+    return '<path d="M60 '+(t-4)+'l-11-9q11-7 22 0z" fill="#cdd7ee"/>'+
+      '<path d="M60 '+(t-13)+'v-7" stroke="#8fa3c8" stroke-width="3"/>'+
+      '<circle cx="60" cy="'+(t-22)+'" r="4" fill="#ff5c8a"/>';}},
+  /* ── 青蛙 ── */
+  {id:'aloha', n:'花襯衫', p:120, slot:'body', only:'a-frog', d:a=>{
+    const t=a.by-a.bh*.8, w=a.bw*.85, h=a.bh*1.55;
+    return '<path d="M'+(60-w)+' '+t+'h'+(w*2)+'v'+h+'q-'+w+' 7 -'+(w*2)+' 0z" fill="#3ce0d0"/>'+
+      '<circle cx="'+(60-w*.5)+'" cy="'+(t+h*.3)+'" r="3.4" fill="#ff5c8a"/>'+
+      '<circle cx="'+(60+w*.45)+'" cy="'+(t+h*.55)+'" r="3.4" fill="#ffc233"/>'+
+      '<circle cx="'+(60-w*.2)+'" cy="'+(t+h*.72)+'" r="3" fill="#fff"/>'+
+      '<path d="M60 '+t+'v'+h+'" stroke="#1b8f85" stroke-width="2"/>';}},
+  {id:'goggle', n:'蛙鏡', p:90, slot:'face', only:'a-frog', d:a=>{
+    const y=eyeY(a), g=a.gap;
+    return '<g fill="none" stroke="#5aa9ff" stroke-width="3.4">'+
+      '<circle cx="'+(60-g)+'" cy="'+y+'" r="9"/><circle cx="'+(60+g)+'" cy="'+y+'" r="9"/></g>'+
+      '<circle cx="'+(60-g)+'" cy="'+y+'" r="8" fill="#bfe9f7" opacity=".55"/>'+
+      '<circle cx="'+(60+g)+'" cy="'+y+'" r="8" fill="#bfe9f7" opacity=".55"/>'+
+      '<path d="M'+(60-g+9)+' '+y+'h'+((g-9)*2)+'" stroke="#5aa9ff" stroke-width="3"/>';}},
+  /* ── 貓頭鷹 ── */
+  {id:'grad', n:'學士帽', p:130, slot:'head', only:'a-owl', d:a=>{
+    const t=HT(a), r=a.hr;
+    return '<path d="M'+(60-r*.6)+' '+(t+4)+'h'+(r*1.2)+'v9h-'+(r*1.2)+'z" fill="#2a1a4a"/>'+
+      '<path d="M60 '+(t-6)+'l'+(r*.95)+' 8-'+(r*.95)+' 8-'+(r*.95)+'-8z" fill="#3a2560"/>'+
+      '<path d="M'+(60+r*.9)+' '+(t+2)+'v14" stroke="#ffc233" stroke-width="2.4"/>'+
+      '<circle cx="'+(60+r*.9)+'" cy="'+(t+17)+'" r="3.4" fill="#ffc233"/>';}},
+  {id:'mono', n:'單片眼鏡', p:70, slot:'face', only:'a-owl', d:a=>{
+    const y=eyeY(a), g=a.gap;
+    return '<circle cx="'+(60+g)+'" cy="'+y+'" r="11" fill="none" stroke="#ffc233" stroke-width="2.6"/>'+
+      '<path d="M'+(60+g+9)+' '+(y+7)+'l7 13" stroke="#ffc233" stroke-width="2"/>';}}
+];
+const itemById=id=>ITEMS.find(x=>x.id===id);
+const coinsOwned=()=>db.settings.owned||(db.settings.owned=[]);
+const hasItem=id=>coinsOwned().indexOf(id)>=0;
+function wearMap(){ return db.settings.wear||(db.settings.wear={}); }
+function wornList(k){ const w=wearMap()[k]; return Array.isArray(w)?w:[]; }
+function isWorn(k,id){ return wornList(k).indexOf(id)>=0; }
+/* 同一格只能穿一件 */
+function toggleWear(k,id){
+  const it=itemById(id); if(!it) return;
+  const cur=wornList(k).filter(x=>{ const o=itemById(x); return o&&o.slot!==it.slot; });
+  if(!isWorn(k,id)) cur.push(id);
+  wearMap()[k]=cur; save();
+}
+/* 角色身上穿的東西，畫在最上層 */
+function wearSVG(a,headOnly){
+  return wornList(a.k).map(id=>{
+    const it=itemById(id); if(!it) return '';
+    if(headOnly&&['body','hand','foot'].indexOf(it.slot)>=0) return '';
+    return it.d(a);
+  }).join('');
+}
+/* 這隻買得到的東西：通用的加上自己的專屬品 */
+const shopFor=k=>ITEMS.filter(x=>!x.only||x.only===k);
 function chSVG(a,e,small){
   const aw=a.armW||7, ah=a.armH||12;
   const apx=a.bw+aw-2, apy=a.apy||(a.by-a.bh*.45);         /* 肩膀 */
@@ -1840,6 +2010,7 @@ function chSVG(a,e,small){
         chHead(a)+
         chFaceMark(a)+
         '<g class="face">'+chFace(a,e)+'</g>'+
+        wearSVG(a)+
       '</g></g>'+
     '</g></svg>';
 }
@@ -3753,12 +3924,59 @@ function petChar(){
 }
 function renderPet(){
   const box=$('petBox'); if(!box) return;
-  const a=petChar();
-  if(box.dataset.k!==a.k){
-    box.dataset.k=a.k; PET.el=null;
+  const a=petChar(), key=a.k+'|'+wornList(a.k).join(',');   /* 換角色或換配件都要重畫 */
+  if(box.dataset.k!==key){
+    box.dataset.k=key; PET.el=null;
     box.innerHTML=chSVG(a,'idle');
   }
   PET.watch(); PET.start();
+}
+/* ── 商店 ── */
+let shopTab='all';
+const SLOTN={head:'頭',face:'臉',neck:'脖子',body:'身體',hand:'手上',foot:'腳下'};
+function renderShop(){
+  const box=$('shopBody'); if(!box) return;
+  const a=petChar(), list=shopFor(a.k).filter(x=>shopTab!=='own'||hasItem(x.id));
+  $('shopSay').innerHTML='幫 <b style="color:var(--gold)">'+esc(a.n)+
+    '</b> 買配件。目前有 <b style="color:var(--gold)">'+money(coins())+'</b> 枚 Bo士幣，'+
+    '每個部位只能穿一件，買過的可以隨時換。';
+  if(!list.length){ box.innerHTML='<div class="shopempty">還沒有買過東西</div>'; return; }
+  box.innerHTML=list.map(it=>{
+    const own=hasItem(it.id), on=isWorn(a.k,it.id), poor=!own&&coins()<it.p;
+    return '<button class="sitem'+(on?' on':own?' own':'')+(poor?' poor':'')+'" data-item="'+it.id+'">'+
+      '<span class="tag">'+(on?'穿著中':own?'已擁有':SLOTN[it.slot])+'</span>'+
+      itemPreview(a,it)+
+      '<div class="nm">'+esc(it.n)+'</div>'+
+      '<div class="pr">'+(own?(on?'點一下脫下':'點一下穿上')
+        :'<svg><use href="#i-coin"/></svg>'+it.p)+'</div></button>';
+  }).join('');
+}
+/* 預覽：角色穿上這一件的樣子 */
+function itemPreview(a,it){
+  const keep=wornList(a.k);
+  wearMap()[a.k]=keep.filter(x=>{const o=itemById(x);return o&&o.slot!==it.slot;}).concat([it.id]);
+  const svg=chSVG(a,'up');
+  wearMap()[a.k]=keep;
+  return svg;
+}
+function openShop(){ shopTab='all';
+  $('shopTab').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.st==='all'));
+  renderShop(); open('vShop'); }
+function buyOrWear(id){
+  const a=petChar(), it=itemById(id); if(!it) return;
+  if(!hasItem(id)){
+    if(coins()<it.p){ SFX.play('err'); toast('Bo士幣不夠，還差 '+money(it.p-coins())+' 枚'); return; }
+    db.settings.coins=coins()-it.p;
+    coinsOwned().push(id);
+    toggleWear(a.k,id);
+    save(); SFX.play('level');
+    const r=$('shopBody').getBoundingClientRect(); burst(r.left+r.width/2,r.top+60);
+    toast('買下「'+it.n+'」並穿上了');
+  }else{
+    toggleWear(a.k,id); SFX.play('tick');
+    toast(isWorn(a.k,id)?'穿上「'+it.n+'」':'脫下「'+it.n+'」');
+  }
+  buildAvatars(); renderShop(); renderHud(); renderWheel();
 }
 /* ── 每日轉盤：當天記過一筆就能轉一次 ── */
 const WHEEL=[10,0,20,10,50,0,20,100];      /* 0 是再接再厲 */
@@ -4064,6 +4282,16 @@ $('catMode').addEventListener('click',e=>{
 });
 $('btnCatEdit').onclick=()=>{ SFX.play('tick'); openCatEdit(); };
 $('btnWheel').onclick=()=>{ SFX.play('tick'); openWheel(); };
+$('btnShop').onclick=()=>{ SFX.play('tick'); openShop(); };
+$('shopTab').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-st]'); if(!b) return;
+  shopTab=b.dataset.st;
+  $('shopTab').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+  SFX.play('tick'); renderShop();
+});
+$('shopBody').addEventListener('click',e=>{
+  const b=e.target.closest('[data-item]'); if(b) buyOrWear(b.dataset.item);
+});
 $('btnSpin').onclick=spin;
 $('catKind').addEventListener('click',e=>{
   const b=e.target.closest('button[data-ck]'); if(!b) return;
