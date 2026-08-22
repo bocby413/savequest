@@ -592,7 +592,17 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .mchips button.on{border-color:var(--gold);background:rgba(255,194,51,.16);color:var(--gold)}
 .mchips button.off{opacity:.42;text-decoration:line-through}
 .f label .hint{display:block;font-style:normal;font-size:11.5px;color:var(--txt3);font-weight:500;margin-top:2px}
+.splitrows{display:flex;flex-direction:column;gap:6px}
+.srow{display:flex;align-items:center;gap:9px;background:var(--panel2);border-radius:11px;padding:6px 10px}
+.srow .nm{flex:1;min-width:0;font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow .eq{font-size:12px;color:var(--txt3);flex:none}
+.srow input{width:62px;flex:none;text-align:center;padding:5px 4px;font-size:14px;font-weight:700;
+  border-radius:9px;border:1.5px solid var(--edge2);background:var(--panel3);color:var(--txt);font-family:inherit}
+.srow input:focus{outline:none;border-color:var(--gold)}
+.srow.off{opacity:.5}
+.srow .unit{font-size:12px;color:var(--txt3);flex:none;width:14px}
 .splitnote{font-size:12.5px;color:var(--txt3);margin:-2px 0 10px;min-height:18px}
+.splitnote.bad b{color:var(--down)}
 .splitnote b{color:var(--txt2);font-weight:700}
 .owe{margin-top:10px;border-top:1px solid var(--edge);padding-top:9px}
 .owe .hd{font-size:12px;letter-spacing:1px;color:var(--gold);font-weight:800;margin-bottom:6px}
@@ -1261,8 +1271,16 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   </div>
   <div class="f"><label>項目（可留白）</label><input type="text" id="grNote" placeholder="買什麼、誰付的…"></div>
   <div class="f"><label id="grPayLb">誰先付的</label><div class="mchips" id="grPayer"></div></div>
-  <div class="f"><label>這筆不算誰<i class="hint">點一下就把他排除，剩下的人平分</i></label>
+  <div class="f"><label>怎麼分</label>
+    <div class="segs" id="grMode">
+      <button data-sm="even" class="on">平分</button>
+      <button data-sm="share">照份數</button>
+      <button data-sm="exact">各自金額</button>
+    </div></div>
+  <div class="f" id="grExclWrap"><label>這筆不算誰<i class="hint">點一下就把他排除，剩下的人平分</i></label>
     <div class="mchips" id="grExcl"></div></div>
+  <div class="f" id="grRowsWrap"><label id="grRowsLb">每個人幾份</label>
+    <div class="splitrows" id="grRows"></div></div>
   <div class="splitnote" id="grSplit"></div>
   <div class="dfoot"><button class="btn ghost" id="grCancel">取消</button>
     <button class="btn go" id="grSave">記下來</button></div>
@@ -3989,7 +4007,21 @@ $('profDel').onclick=()=>{
   if(!confirm('移除好友「'+friName(f)+'」？')) return;
   CLOUD.removeFriend(f).then(()=>{ SFX.play('del'); toast('已移除'); $('profBack').onclick(); });
 };
-$('grAmt').addEventListener('input',()=>{ if($('vGRec').classList.contains('on')) renderGPick(); });
+$('grAmt').addEventListener('input',()=>{ if($('vGRec').classList.contains('on')) gpNote(); });
+$('grMode').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-sm]'); if(!b) return;
+  const g=GROUPS.find(x=>x.id===grFor), mem=(g&&g.members)||[];
+  const was=grMode; grMode=b.dataset.sm;
+  /* 平分時排除掉的人，換成份數就直接是 0 份，不用再點一次 */
+  if(grMode==='share'&&was==='even')
+    mem.forEach(u=>{ if(grShares[u]===undefined) grShares[u]=grExcl.indexOf(u)>=0?0:1; });
+  renderGPick(); SFX.play('tick');
+});
+$('grRows').addEventListener('input',e=>{
+  const el=e.target.closest('input[data-su]'); if(!el) return;
+  if(grMode==='share') grShares[el.dataset.su]=el.value; else grOwes[el.dataset.su]=el.value;
+  gpNote();
+});
 $('grPayer').addEventListener('click',e=>{
   const b=e.target.closest('button[data-gpay]'); if(!b) return;
   grPayer=b.dataset.gpay; renderGPick(); SFX.play('tick');
@@ -4302,6 +4334,28 @@ function recPart(g,r){
   return (g.members||[]).filter(u=>ex.indexOf(u)<0);
 }
 const recPayer=(g,r)=>r.payer||r.by;
+/* 這一筆每個人各該出多少。三種分法：平分、照份數、各自填金額 */
+function recOwes(g,r){
+  const v=+r.amount||0, out={}, md=r.split||'even';
+  if(md==='exact'&&r.owes){
+    Object.keys(r.owes).forEach(u=>{ const n=+r.owes[u]||0; if(n>0) out[u]=n; });
+    return out;
+  }
+  if(md==='share'&&r.shares){
+    let tot=0;
+    Object.keys(r.shares).forEach(u=>{ tot+=Math.max(0,+r.shares[u]||0); });
+    if(tot>0){
+      Object.keys(r.shares).forEach(u=>{
+        const n=Math.max(0,+r.shares[u]||0); if(n>0) out[u]=v*n/tot;
+      });
+      return out;
+    }
+  }
+  const part=recPart(g,r);
+  if(part.length) part.forEach(u=>out[u]=v/part.length);
+  return out;
+}
+const SPLITN={even:'平分',share:'照份數',exact:'各自金額'};
 /* 每個人的淨額：正的代表他墊了錢別人要還他，負的代表他欠 */
 function settle(g,recs){
   const bal={};
@@ -4309,13 +4363,15 @@ function settle(g,recs){
   recs.forEach(r=>{
     const v=+r.amount||0; if(!v) return;
     const payer=recPayer(g,r); if(payer===undefined) return;
-    const part=recPart(g,r).filter(u=>bal[u]!==undefined);
-    if(!part.length) return;
+    const owes=recOwes(g,r);
+    let tot=0; Object.keys(owes).forEach(u=>{ if(bal[u]!==undefined) tot+=owes[u]; });
+    if(tot<=0) return;
     const sign=r.kind==='in'?-1:1;            /* 收入是反過來的：收錢的人反而欠大家 */
     if(bal[payer]===undefined) bal[payer]=0;
     bal[payer]+=sign*v;
-    const share=sign*v/part.length;
-    part.forEach(u=>bal[u]-=share);
+    /* 各自金額若跟總額對不上，照比例撐開，帳才會歸零 */
+    const fix=v/tot;
+    Object.keys(owes).forEach(u=>{ if(bal[u]!==undefined) bal[u]-=sign*owes[u]*fix; });
   });
   return bal;
 }
@@ -4380,8 +4436,9 @@ function renderGroups(){
           '<div class="r"><span class="d">'+md(r.date)+'</span>'+
           '<span class="t">'+esc(r.note||(r.kind==='in'?'收入':'支出'))+
             '<i>'+esc(gMemName(g,recPayer(g,r))||r.byName||'')+
-            (recPart(g,r).length<(g.members||[]).length
-              ? '　'+recPart(g,r).length+' 人分' : '')+'</i></span>'+
+            ((r.split&&r.split!=='even')?'　'+SPLITN[r.split]
+              :recPart(g,r).length<(g.members||[]).length
+                ? '　'+recPart(g,r).length+' 人分' : '')+'</i></span>'+
           '<span class="v '+(r.kind==='in'?'in':'out')+'">'+(r.kind==='in'?'+':'-')+money(r.amount)+'</span>'+
           (r.by===me?'<button class="x" data-gdel="'+r.id+'" title="刪掉">×</button>':'<span class="x"></span>')+
           '</div>').join(''):'<div class="gempty">還沒有紀錄，按上面那顆記第一筆。</div>')+'</div>'+
@@ -4406,6 +4463,10 @@ function renderGroups(){
   box.innerHTML=h;
 }
 let grKind='out', grFor=null, grPayer=null, grExcl=[];
+let grMode='even', grShares={}, grOwes={};
+const grVal=u=>grMode==='share'
+  ? (grShares[u]===undefined?1:grShares[u])
+  : (grOwes[u]===undefined?'':grOwes[u]);
 /* 兩排人名：上面單選誰付的，下面點掉不參與的 */
 function renderGPick(){
   const g=GROUPS.find(x=>x.id===grFor); if(!g) return;
@@ -4419,14 +4480,58 @@ function renderGPick(){
     '<button type="button" data-gpay="'+u+'" class="'+(u===grPayer?'on':'')+'">'+nm(u)+'</button>').join('');
   $('grExcl').innerHTML=mem.map(u=>
     '<button type="button" data-gex="'+u+'" class="'+(grExcl.indexOf(u)>=0?'off':'')+'">'+nm(u)+'</button>').join('');
-  const part=mem.filter(u=>grExcl.indexOf(u)<0);
-  const v=parseFloat($('grAmt').value);
-  $('grSplit').innerHTML= !part.length ? '至少要留一個人來分。'
-    : (isNaN(v)||v<=0) ? part.length+' 個人平分'
-    : '<b>'+part.length+' 個人</b>平分，一人 <b>'+money(Math.round(v/part.length))+'</b>';
+  $('grMode').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.sm===grMode));
+  $('grExclWrap').style.display=grMode==='even'?'':'none';
+  $('grRowsWrap').style.display=grMode==='even'?'none':'';
+  if(grMode!=='even'){
+    const share=grMode==='share';
+    $('grRowsLb').textContent=share?'每個人幾份':'每個人各出多少';
+    $('grRows').innerHTML=mem.map(u=>
+      '<div class="srow"><span class="nm">'+nm(u)+'</span><span class="eq"></span>'+
+      '<input type="number" inputmode="decimal" min="0"'+(share?' step="1"':'')+
+      ' placeholder="0" data-su="'+u+'" value="'+grVal(u)+'">'+
+      '<span class="unit">'+(share?'份':'元')+'</span></div>').join('');
+  }
+  gpNote();
+}
+/* 只更新提示跟每列右邊那個「= 多少」，不重畫輸入框，不然打字會被打斷 */
+function gpNote(){
+  const g=GROUPS.find(x=>x.id===grFor); if(!g) return;
+  const mem=g.members||[];
+  const v=parseFloat($('grAmt').value), has=!isNaN(v)&&v>0;
+  const note=$('grSplit'); note.className='splitnote';
+  if(grMode==='even'){
+    const part=mem.filter(u=>grExcl.indexOf(u)<0);
+    note.innerHTML= !part.length ? '至少要留一個人來分。'
+      : !has ? part.length+' 個人平分'
+      : '<b>'+part.length+' 個人</b>平分，一人 <b>'+money(Math.round(v/part.length))+'</b>';
+    return;
+  }
+  const share=grMode==='share';
+  let tot=0;
+  mem.forEach(u=>{ const n=parseFloat(grVal(u)); if(!isNaN(n)&&n>0) tot+=n; });
+  $('grRows').querySelectorAll('.srow').forEach(row=>{
+    const el=row.querySelector('input[data-su]'); if(!el) return;
+    const n=parseFloat(grVal(el.dataset.su)), zero=isNaN(n)||n<=0;
+    row.classList.toggle('off',zero);
+    const eq=row.querySelector('.eq');
+    if(eq) eq.textContent=(share&&has&&tot>0&&!zero)?'= '+money(Math.round(v*n/tot)):'';
+  });
+  if(share){
+    note.innerHTML= tot<=0 ? '至少要有一個人有份。'
+      : !has ? '共 <b>'+(Math.round(tot*100)/100)+'</b> 份'
+      : '共 <b>'+(Math.round(tot*100)/100)+'</b> 份，一份 <b>'+money(Math.round(v/tot))+'</b>';
+  }else{
+    const d=(has?v:0)-tot;
+    note.innerHTML= !has ? '先把上面的金額填了'
+      : Math.abs(d)<.5 ? '剛好分完 <b>'+money(Math.round(tot))+'</b>'
+      : '已分 <b>'+money(Math.round(tot))+'</b>，還差 <b>'+money(Math.round(d))+'</b>';
+    if(has&&Math.abs(d)>=.5) note.className='splitnote bad';
+  }
 }
 function openGRec(gid){
   grFor=gid; grKind='out'; grPayer=null; grExcl=[];
+  grMode='even'; grShares={}; grOwes={};
   $('grKinds').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.gk==='out'));
   $('grDate').value=todayStr(); $('grAmt').value=''; $('grNote').value='';
   renderGPick();
@@ -4812,11 +4917,25 @@ document.body.addEventListener('click',e=>{
   if(b.id==='grSave'){
     const d=$('grDate').value, v=parseFloat($('grAmt').value);
     if(!d||isNaN(v)||v<=0){ SFX.play('err'); toast('日期跟金額都要填'); return; }
-    const g=GROUPS.find(x=>x.id===grFor);
-    const part=(g&&g.members||[]).filter(u=>grExcl.indexOf(u)<0);
-    if(!part.length){ SFX.play('err'); toast('至少要留一個人來分'); return; }
-    CLOUD.addGroupRec(grFor,{date:d,kind:grKind,amount:v,note:$('grNote').value.trim(),
-      payer:grPayer, part:part}).then(r=>{
+    const g=GROUPS.find(x=>x.id===grFor), mem=(g&&g.members)||[];
+    const rec={date:d,kind:grKind,amount:v,note:$('grNote').value.trim(),payer:grPayer,split:grMode};
+    if(grMode==='even'){
+      rec.part=mem.filter(u=>grExcl.indexOf(u)<0);
+      if(!rec.part.length){ SFX.play('err'); toast('至少要留一個人來分'); return; }
+    }else if(grMode==='share'){
+      const sh={}; let tot=0;
+      mem.forEach(u=>{ const n=parseFloat(grVal(u)); if(!isNaN(n)&&n>0){ sh[u]=n; tot+=n; } });
+      if(tot<=0){ SFX.play('err'); toast('至少要有一個人有份'); return; }
+      rec.shares=sh; rec.part=Object.keys(sh);
+    }else{
+      const ow={}; let tot=0;
+      mem.forEach(u=>{ const n=parseFloat(grVal(u)); if(!isNaN(n)&&n>0){ ow[u]=n; tot+=n; } });
+      if(tot<=0){ SFX.play('err'); toast('至少要有一個人出錢'); return; }
+      if(Math.abs(tot-v)>=.5){ SFX.play('err');
+        toast(tot>v?'分掉的比總額多 '+money(Math.round(tot-v)):'還差 '+money(Math.round(v-tot))+' 沒分完'); return; }
+      rec.owes=ow; rec.part=Object.keys(ow);
+    }
+    CLOUD.addGroupRec(grFor,rec).then(r=>{
       if(r.err){ SFX.play('err'); toast('記帳失敗：'+r.err); return; }
       $('vGRec').classList.remove('on');
       SFX.play(grKind==='out'?'spend':'coin'); toast('記到團裡了');
