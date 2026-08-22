@@ -3866,7 +3866,8 @@ function renderFriends(){
   const btn=$('btnFriends'); if(!btn) return;
   const on=!!(CLOUD.ready()&&CLOUD.user);
   btn.style.display=on?'':'none';
-  $('friDot').className='dot'+(REQS.length?' on':'');
+  /* 揪團去那顆在這個視窗裡面，所以群組邀請也要讓外面這顆亮 */
+  $('friDot').className='dot'+((REQS.length||GINVS.length)?' on':'');
   const box=$('friBody'); if(!box) return;
   let html='';
   if(REQS.length){
