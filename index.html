@@ -2138,10 +2138,40 @@ const ITEMS=[
       '<path d="M'+(60+g+9)+' '+(y+7)+'l7 13" stroke="#ffc233" stroke-width="2"/>';}}
 ];
 const itemById=id=>ITEMS.find(x=>x.id===id);
-const coinsOwned=()=>db.settings.owned||(db.settings.owned=[]);
-const hasItem=id=>coinsOwned().indexOf(id)>=0;
+/* ── 錢包 ──
+   幣跟擁有的東西不放在 db 裡，因為 db 是整包備份、使用者想寫什麼都行。
+   登入之後錢包是雲端那份說了算，進出都要過 Firestore 規則：
+   一天只能轉一次盤、加的數字只能是獎項之一、買東西一次一件而且扣的錢等於標價。
+   沒登入就只留在這台裝置上玩，反正也沒有人看得到。 */
+const WKEY='life_goals_wallet_v1';
+const WELCOME=200;                       /* 第一次登入送的見面禮，規則那邊也寫死這個數 */
+let WALLET={coins:0,owned:[],spunOn:''};
+function normWallet(w){
+  return {coins:Math.max(0,Math.round(+(w&&w.coins)||0)),
+          owned:(w&&Array.isArray(w.owned)?w.owned:[]).filter(id=>itemById(id)),
+          spunOn:(w&&w.spunOn)||''};
+}
+function saveWallet(){ try{ localStorage.setItem(WKEY,JSON.stringify(WALLET)); }catch(e){} }
+function loadWallet(){
+  let raw=null;
+  try{ raw=JSON.parse(localStorage.getItem(WKEY)||'null'); }catch(e){}
+  /* 舊版把這三個放在 db.settings，搬過來一次 */
+  if(!raw&&db&&db.settings) raw={coins:db.settings.coins,owned:db.settings.owned,spunOn:db.settings.spunOn};
+  WALLET=normWallet(raw);
+  saveWallet();
+  /* 舊欄位清掉，免得看起來像有兩份真相 */
+  if(db&&db.settings){ delete db.settings.coins; delete db.settings.owned; delete db.settings.spunOn; }
+}
+const coinsOwned=()=>WALLET.owned;
+const hasItem=id=>WALLET.owned.indexOf(id)>=0;
 function wearMap(){ return db.settings.wear||(db.settings.wear={}); }
-function wornList(k){ const w=wearMap()[k]; return Array.isArray(w)?w:[]; }
+/* 只算真的買過的，免得改了本機資料就穿著沒買的東西去給好友看。
+   畫好友的時候要關掉這層（他有沒有買過是他那邊的規則在管，不是我的清單） */
+let wearRaw=0;
+function wornList(k){
+  const w=wearMap()[k]; if(!Array.isArray(w)) return [];
+  return wearRaw?w:w.filter(hasItem);
+}
 function isWorn(k,id){ return wornList(k).indexOf(id)>=0; }
 /* 同一格只能穿一件 */
 function toggleWear(k,id){
@@ -3722,7 +3752,9 @@ function charPortrait(k,wear,full){
   const a=TCHARS.find(x=>x.k===k); if(!a) return friAvatar(null);
   const m=wearMap(), had=m.hasOwnProperty(a.k), keep=m[a.k];
   m[a.k]=Array.isArray(wear)?wear.filter(id=>itemById(id)):[];
+  wearRaw=1;
   const h=full?chSVG(a,'idle',1):'<svg viewBox="0 0 64 64">'+avaBody(a)+'</svg>';
+  wearRaw=0;
   if(had) m[a.k]=keep; else delete m[a.k];
   return h;
 }
@@ -4306,30 +4338,20 @@ function renderShop(){
   $('shopReset').style.display=chg.length?'':'none';
 }
 function openShop(){ shopSlot='head'; shopTry={}; renderShop(); open('vShop'); }
-function buyOrWear(id){
-  const a=petChar(), it=itemById(id); if(!it) return;
-  if(!hasItem(id)){
-    if(coins()<it.p){ SFX.play('err'); toast('Bo士幣不夠，還差 '+money(it.p-coins())+' 枚'); return; }
-    db.settings.coins=coins()-it.p;
-    coinsOwned().push(id);
-    toggleWear(a.k,id);
-    save(); SFX.play('level');
-    const r=$('shopBody').getBoundingClientRect(); burst(r.left+r.width/2,r.top+60);
-    toast('買下「'+it.n+'」並穿上了');
-  }else{
-    toggleWear(a.k,id); SFX.play('tick');
-    toast(isWorn(a.k,id)?'穿上「'+it.n+'」':'脫下「'+it.n+'」');
-  }
-  buildAvatars(); renderShop(); renderHud(); renderWheel();
-  pushLook();                             /* 讓好友看得到新造型 */
-}
 /* 一次把試穿的都定下來：沒買過的先買，再整套換上 */
-function shopAction(){
+async function shopAction(){
   const a=petChar(), chg=tryDiff(a); if(!chg.length) return;
   const buy=chg.map(sl=>shopTry[sl]).filter(id=>id&&!hasItem(id));
   const cost=buy.reduce((n,id)=>n+itemById(id).p,0);
   if(cost>coins()){ SFX.play('err'); toast('Bo士幣不夠，還差 '+(cost-coins())+' 枚'); return; }
-  if(cost){ db.settings.coins=coins()-cost; buy.forEach(id=>coinsOwned().push(id)); }
+  const act=$('shopAct');
+  if(cost){
+    act.disabled=true; act.textContent='結帳中…';
+    const r=await walletBuy(buy);
+    act.disabled=false;
+    if(!r.ok){ SFX.play('err'); renderShop();
+      toast(r.e==='coins'?'Bo士幣不夠':'結帳沒過，等一下再試'); return; }
+  }
   wearMap()[a.k]=tryOutfit(a);
   shopTry={}; save();
   if(cost){ SFX.play('level');
@@ -4339,16 +4361,39 @@ function shopAction(){
   buildAvatars(); renderShop(); renderHud(); renderWheel();
   pushLook();                             /* 讓好友看得到新造型 */
 }
+/* ── 錢包進出 ──
+   登入了就交給雲端，本機這份只是畫面用的鏡子；沒登入就純本機。
+   回傳 {ok} 或 {ok:0,e:原因}。 */
+const onCloud=()=>!!(window.CLOUD&&CLOUD.user&&CLOUD.api);
+async function walletSpin(got){
+  if(onCloud()) return CLOUD.walletSpin(got,todayStr());
+  if(spunToday()) return {ok:0,e:'again'};
+  WALLET.spunOn=todayStr(); WALLET.coins+=got; saveWallet(); return {ok:1};
+}
+async function walletBuy(ids){
+  for(const id of ids){
+    const it=itemById(id); if(!it) continue;
+    if(hasItem(id)) continue;
+    if(coins()<it.p) return {ok:0,e:'coins'};
+    if(onCloud()){
+      const r=await CLOUD.walletBuy(id,it.p);
+      if(!r.ok) return r;
+    }else{
+      WALLET.coins-=it.p; WALLET.owned.push(id); saveWallet();
+    }
+  }
+  return {ok:1};
+}
 /* ── 每日轉盤：當天記過一筆就能轉一次 ── */
 const WHEEL=[10,0,20,10,50,0,20,100];      /* 0 是再接再厲 */
 const WCOL=['#ffc233','#3a3273','#3ce0d0','#e39b12','#ff5c8a','#3a3273','#2bb5a8','#a879ff'];
-const coins=()=>db.settings.coins||0;
+const coins=()=>WALLET.coins;
 /* 今天有沒有記過帳：看的是哪天記下去的，補登以前的日期也算 */
 function recordedToday(){
   const t=todayStr();
   return db.records.some(r=>r.ts&&iso(new Date(r.ts))===t);
 }
-const spunToday=()=>db.settings.spunOn===todayStr();
+const spunToday=()=>WALLET.spunOn===todayStr();
 const canSpin=()=>recordedToday()&&!spunToday();
 function wheelSVG(){
   const n=WHEEL.length, step=360/n, R=100;
@@ -4390,10 +4435,14 @@ function paintWheel(){
     : ok ? '今天記過帳了，可以轉一次。目前有 <b style="color:var(--gold)">'+money(coins())+'</b> 枚 Bo士幣。'
          : '今天還沒記帳。記一筆之後就能轉一次。目前有 <b style="color:var(--gold)">'+money(coins())+'</b> 枚 Bo士幣。';
 }
-function spin(){
+async function spin(){
   if(spinning||!canSpin()) return;
   spinning=true; paintWheel();
   const i=Math.floor(Math.random()*WHEEL.length), got=WHEEL[i];
+  /* 先跟伺服器登記，登記不成就不轉——不然轉完才說不算，很難看 */
+  const r=await walletSpin(got);
+  if(!r.ok){ spinning=false; paintWheel();
+    toast(r.e==='again'?'今天已經轉過了':'轉盤沒能記到雲端，等一下再試'); return; }
   const step=360/WHEEL.length;
   /* 指針在正上方，所以要把那一格轉到 0 度，再多繞幾圈 */
   const target=360*5-i*step+wheelAngle-(wheelAngle%360);
@@ -4406,9 +4455,7 @@ function spin(){
   for(let t=0;t<28;t++) setTimeout(()=>SFX.play('tick'), 120+t*t*4.6);
   setTimeout(()=>{
     spinning=false;
-    db.settings.spunOn=todayStr();
     if(got>0){
-      db.settings.coins=coins()+got;
       $('wheelRes').className='wheelres';
       $('wheelRes').innerHTML='<div><b>+'+got+' Bo士幣</b>現在總共 '+money(coins())+' 枚</div>';
       SFX.play(got>=50?'level':'coin');
@@ -4419,7 +4466,7 @@ function spin(){
       $('wheelRes').innerHTML='<div><b>再接再厲</b>明天再來一次</div>';
       SFX.play('err');
     }
-    save(); render(); paintWheel();
+    render(); paintWheel();
   },4300);
 }
 /* ── 管理分類 ── */
@@ -4787,16 +4834,20 @@ window.CLOUD={
       const app=A.initializeApp(this.cfg);
       /* 這個專案的資料庫 ID 叫 default，不是 Firebase 慣用的 (default)，要指名 */
       this.api={U,F,auth:U.getAuth(app),fs:F.getFirestore(app,'default')};
-      U.onAuthStateChanged(this.api.auth,u=>{
+      U.onAuthStateChanged(this.api.auth,async u=>{
         this.user=u; this.paint();
-        if(u){ this.watch(); this.publishProfile(); this.watchRequests(); this.watchFriends();
+        if(u){ this.watch();
+               /* 錢包要先開好，名冊寫入會去對「身上穿的有沒有買過」 */
+               await this.ensureWallet();
+               this.watchWallet();
+               this.publishProfile(); this.watchRequests(); this.watchFriends();
                this.watchGroups(); this.watchGInbox(); }
         else{
           if(this.unsub){ this.unsub(); this.unsub=null; }
           if(this.unsubReq){ this.unsubReq(); this.unsubReq=null; }
           if(this.unsubFri){ this.unsubFri(); this.unsubFri=null; }
-          [this.unsubG,this.unsubGI,this.unsubGR].forEach(f=>f&&f());
-          this.unsubG=this.unsubGI=this.unsubGR=null;
+          [this.unsubG,this.unsubGI,this.unsubGR,this.unsubW].forEach(f=>f&&f());
+          this.unsubG=this.unsubGI=this.unsubGR=this.unsubW=null;
           FRIENDS=[]; REQS=[]; SHARED={}; PROFILES={};
           GROUPS=[]; GINVS=[]; GRECS=[]; gOpen=null;
           renderFriends(); renderGroups();
@@ -4822,6 +4873,52 @@ window.CLOUD={
     toast('已登出，資料只留在這台裝置');
   },
   ref(){ return this.api.F.doc(this.api.fs,'users',this.user.uid); },
+  /* ── 錢包 ──
+     這份只有規則允許的動作寫得進去：一天一次轉盤、加的數字限獎項，
+     買東西一次一件而且扣的錢等於標價。所以幣是真的有稀缺性的。 */
+  wref(){ return this.api.F.doc(this.api.fs,'users',this.user.uid,'wallet','main'); },
+  async ensureWallet(){
+    if(!this.user||!this.api) return;
+    const {F}=this.api;
+    try{
+      const snap=await F.getDoc(this.wref());
+      if(snap.exists()){ WALLET=normWallet(snap.data()); saveWallet(); }
+      else{
+        /* 第一次登入：開戶送見面禮。規則那邊也寫死同一個數，多寫一塊都進不去 */
+        const w={coins:WELCOME,owned:[],spunOn:''};
+        await F.setDoc(this.wref(),w);
+        WALLET=normWallet(w); saveWallet();
+        toast('雲端錢包開好了，見面禮 '+WELCOME+' 枚 Bo士幣');
+      }
+      renderHud(); renderWheel(); renderShop();
+    }catch(e){ this.err=e.code||'錢包讀不到'; this.paint(); }
+  },
+  watchWallet(){
+    const {F}=this.api;
+    if(this.unsubW) this.unsubW();
+    this.unsubW=F.onSnapshot(this.wref(),s=>{
+      if(!s.exists()) return;
+      WALLET=normWallet(s.data()); saveWallet();
+      renderHud(); renderWheel(); renderShop();
+    },()=>{});
+  },
+  async walletSpin(got,day){
+    const {F}=this.api;
+    try{
+      await F.updateDoc(this.wref(),{coins:WALLET.coins+got,owned:WALLET.owned,spunOn:day});
+      WALLET.coins+=got; WALLET.spunOn=day; saveWallet();
+      return {ok:1};
+    }catch(e){ return {ok:0,e:e.code||'x'}; }
+  },
+  async walletBuy(id,price){
+    const {F}=this.api;
+    const owned=WALLET.owned.concat([id]);
+    try{
+      await F.updateDoc(this.wref(),{coins:WALLET.coins-price,owned:owned,spunOn:WALLET.spunOn});
+      WALLET.coins-=price; WALLET.owned=owned; saveWallet();
+      return {ok:1};
+    }catch(e){ return {ok:0,e:e.code||'x'}; }
+  },
   watch(){
     const {F}=this.api;
     if(this.unsub) this.unsub();
@@ -5175,6 +5272,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
 loadPrices();
 skin(localStorage.getItem(SKIN)||'dark');
 sfxIcon(); swPaint();
+loadWallet();            /* 幣跟擁有的東西自己一份，不跟著 db 備份走 */
 buildAvatars();          /* 頭貼從生物的畫法生出來，兩邊不會走鐘 */
 render();
 booted=true;
