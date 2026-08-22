@@ -3988,7 +3988,7 @@ function renderFriends(){
     '</div>';
 }
 /* 個人主頁：看得到什麼完全由對方的分享設定決定 */
-let profFor=null;
+let profFor=null, profBackTo=null;   /* 從哪個視窗進來的，返回要回得去 */
 function pcard(icon,head,val,sub,pct){
   return '<div class="pcard"><div class="ph"><svg><use href="#'+icon+'"/></svg>'+head+'</div>'+
     '<div class="pv">'+val+'</div>'+
@@ -4061,7 +4061,7 @@ function renderProf(){
 }
 function openProf(uid){
   const f=FRIENDS.find(x=>x.uid===uid); if(!f) return;
-  profFor=f; open('vProf'); renderProf(); SFX.play('tick');
+  profFor=f; profBackTo=null; open('vProf'); renderProf(); SFX.play('tick');
 }
 let grantFor=null;
 function openGrant(uid){
@@ -4097,7 +4097,10 @@ $('profAdd').onclick=async()=>{
   SENTREQ.add(f.uid); SFX.play('win'); toast('邀請送給「'+r.ok+'」了，等他答應');
   renderProf();
 };
-$('profBack').onclick=()=>{ $('vProf').classList.remove('on'); profFor=null; };
+$('profBack').onclick=()=>{
+  $('vProf').classList.remove('on'); profFor=null;
+  if(profBackTo){ const b=profBackTo; profBackTo=null; renderGroups(); open(b); }
+};
 $('profGrant').onclick=()=>{ if(profFor) openGrant(profFor.uid); };
 $('profDel').onclick=()=>{
   const f=profFor; if(!f) return;
@@ -5308,6 +5311,9 @@ document.body.addEventListener('click',e=>{
     const g=GROUPS.find(x=>x.id===gOpen)||{}, i=((g.info)||{})[uid]||{};
     const fri=FRIENDS.find(x=>x.uid===uid);
     profFor=fri||{uid, name:i.n, ch:i.ch, wear:i.wear, avatar:i.a};
+    /* 兩個視窗的 z-index 一樣，揪團在 DOM 裡又排在後面，
+       直接疊上去會被蓋住看起來像沒反應。先收起來，返回再開回來 */
+    profBackTo='vGroup'; shut();
     SFX.play('tick'); open('vProf'); renderProf(); return;
   }
   if(b.dataset.ghome){
