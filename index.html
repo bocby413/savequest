@@ -2400,9 +2400,10 @@ const ITEMS=[
       '<rect x="55" y="'+(y+9)+'" width="12" height="7" rx="3.5" fill="#ffc233"/>'+
       '<circle cx="66" cy="'+(y+12.5)+'" r="2" fill="#e39b12"/>';}},
   {id:'fins', n:'蛙鞋', p:100, slot:'foot', only:'a-frog', d:a=>{
-    const y=(a.fy||107)-2, x=a.fx||13, w=(a.fw||9)-2;
-    const one=cx=>'<path d="M'+(cx-w)+' '+y+'h'+(w*2)+'l'+(w*.35)+' 11h-'+(w*2+w*.7)+'z" fill="#5aa9ff"/>'+
-      '<rect x="'+(cx-w)+'" y="'+(y-2)+'" width="'+(w*2)+'" height="4.5" rx="2.25" fill="#3d7fd6"/>';
+    /* 要把整隻腳掌包進去，不然腳會從蛙鞋旁邊露出來 */
+    const y=(a.fy||107)-7, x=a.fx||13, w=(a.fw||9)+1;
+    const one=cx=>'<path d="M'+(cx-w)+' '+(y+5)+'h'+(w*2)+'l'+(w*.3)+' 12h-'+(w*2+w*.6)+'z" fill="#5aa9ff"/>'+
+      '<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="7" rx="3.5" fill="#3d7fd6"/>';
     return one(60-x)+one(60+x);}},
   {id:'lotus', n:'荷葉傘', p:100, slot:'hand', only:'a-frog', d:a=>{
     const x=60-(a.bw+6), y=a.by-6;
