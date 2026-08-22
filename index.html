@@ -732,6 +732,10 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .wpay{font-size:15px;color:var(--txt2);margin-top:2px}
 .wpay b{font-size:24px;font-weight:800;color:var(--lime)}
 .wdoing{font-size:13px;color:var(--txt3)}
+.wcount{font-size:14px;color:var(--txt2)}
+.wcount b{font-size:19px;font-weight:800;color:var(--cyan)}
+.wbar{width:210px;height:7px;border-radius:99px;background:var(--panel3);overflow:hidden;margin:2px 0}
+.wbar i{display:block;height:100%;border-radius:99px;background:var(--cyan)}
 .wleft{text-align:center;font-size:12.5px;color:var(--txt3);margin-top:8px}
 /* 每日轉盤 */
 .coinbar{margin-top:8px;display:inline-flex;align-items:center;gap:6px;padding:3px 11px 3px 8px;
@@ -1275,7 +1279,8 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 
 <div class="veil" id="vWork"><div class="dlg">
   <h3>打工</h3>
-  <div class="say">一天有兩次機會。抽到幾小時是隨機的，時間越長領得越多。</div>
+  <div class="say">一天可以開始兩份工。抽到幾小時是隨機的，要真的等那麼久才領得到錢，
+  時間越長領得越多。開工之後可以關掉視窗去做別的事。</div>
   <div class="workstage" id="workStage"></div>
   <div class="workcard" id="workCard"></div>
   <div class="wleft" id="workLeft"></div>
@@ -2351,7 +2356,15 @@ const itemById=id=>ITEMS.find(x=>x.id===id);
    一天只能轉一次盤、加的數字只能是獎項之一、買東西一次一件而且扣的錢等於標價。
    沒登入就只留在這台裝置上玩，反正也沒有人看得到。 */
 const WKEY='life_goals_wallet_v1';
-const WORKMAX=2;                         /* 一天可以打幾次工 */
+const WORKMAX=2;                         /* 一天可以開始幾班工 */
+/* 雲端存的是 Firestore 的時間戳，本機存的是數字，兩種都要接得住 */
+function msOf(v){
+  if(!v) return 0;
+  if(typeof v==='number') return v;
+  if(typeof v.toMillis==='function') return v.toMillis();
+  if(v.seconds) return v.seconds*1000;
+  return 0;
+}
 const WELCOME=0;                         /* 開戶不送，從零開始賺。規則那邊也寫死這個數 */
 let WALLET={coins:0,owned:[],spunOn:''};
 function normWallet(w){
@@ -2359,7 +2372,12 @@ function normWallet(w){
           owned:(w&&Array.isArray(w.owned)?w.owned:[]).filter(id=>itemById(id)),
           spunOn:(w&&w.spunOn)||'',
           workOn:(w&&w.workOn)||'',
-          workN:Math.max(0,Math.min(WORKMAX,Math.round(+(w&&w.workN)||0)))};
+          workN:Math.max(0,Math.min(WORKMAX,Math.round(+(w&&w.workN)||0))),
+          /* 這一班：開始的時間（毫秒）、幾小時、做完領多少。0 代表沒有在打工 */
+          shiftAt:msOf(w&&w.shiftAt),
+          shiftH:Math.max(0,Math.round(+(w&&w.shiftH)||0)),
+          shiftPay:Math.max(0,Math.round(+(w&&w.shiftPay)||0)),
+          shiftJob:(w&&w.shiftJob)||''};
 }
 function saveWallet(){ try{ localStorage.setItem(WKEY,JSON.stringify(WALLET)); }catch(e){} }
 function loadWallet(){
@@ -5251,54 +5269,113 @@ function jobOf(k,h){
   return list[Math.floor(Math.random()*list.length)];
 }
 const workLeft=()=>WORKMAX-(WALLET.workOn===todayStr()?WALLET.workN:0);
-async function walletWork(pay){
+const onShift=()=>WALLET.shiftH>0&&WALLET.shiftAt>0;
+const shiftEnd=()=>WALLET.shiftAt+WALLET.shiftH*3600000;
+const shiftLeftMs=()=>Math.max(0,shiftEnd()-Date.now());
+const shiftDone=()=>onShift()&&shiftLeftMs()<=0;
+/* 倒數用時分秒，看得到秒在跳才有在等的感覺 */
+function hms(ms){
+  const t=Math.max(0,Math.ceil(ms/1000));
+  const h=Math.floor(t/3600), m=Math.floor(t%3600/60), sec=t%60;
+  const p2=n=>(n<10?'0':'')+n;
+  return h+':'+p2(m)+':'+p2(sec);
+}
+/* 開工：把這一班寫下來。時間以伺服器為準，不然把手機時鐘調快就能秒領 */
+async function startShift(sh,pay,job){
+  if(onShift()||workLeft()<=0) return {ok:0,e:'busy'};
   const day=todayStr();
-  if(workLeft()<=0) return {ok:0,e:'none'};
-  if(onCloud()) return CLOUD.walletWork(pay,day);
+  if(onCloud()) return CLOUD.shiftStart(sh.h,pay,job,day);
   WALLET.workN=(WALLET.workOn===day?WALLET.workN:0)+1;
-  WALLET.workOn=day; WALLET.coins+=pay; saveWallet();
+  WALLET.workOn=day; WALLET.shiftAt=Date.now(); WALLET.shiftH=sh.h;
+  WALLET.shiftPay=pay; WALLET.shiftJob=job; saveWallet();
   return {ok:1};
 }
-let workBusy=false;
+/* 收工：時間到才領得到 */
+async function claimShift(){
+  if(!shiftDone()) return {ok:0,e:'early'};
+  if(onCloud()) return CLOUD.shiftClaim();
+  WALLET.coins+=WALLET.shiftPay;
+  WALLET.shiftAt=0; WALLET.shiftH=0; WALLET.shiftPay=0; WALLET.shiftJob='';
+  saveWallet();
+  return {ok:1};
+}
+let workBusy=false, workTick=0, workJust=null;
 function renderWork(){
+  const dot=$('workDot');
+  if(dot) dot.className='dot'+((shiftDone()||(!onShift()&&workLeft()>0))?' on':'');
   const box=$('workStage'); if(!box) return;
   const a=petChar(), left=workLeft();
   if(box.dataset.k!==a.k){ box.dataset.k=a.k; WORKPET.el=null; box.innerHTML=chSVG(a,'idle'); }
   WORKPET.watch(); WORKPET.start();
-  $('workLeft').textContent=left>0?'今天還可以打 '+left+' 次工':'今天的兩次都打完了，明天再來';
-  const b=$('workGo');
-  b.disabled=left<=0||workBusy;
+  const card=$('workCard'), b=$('workGo');
+  if(workJust){                                   /* 剛領完，先讓結果停一下 */
+    card.innerHTML='<div class="wjob"><b>'+workJust.h+' 小時</b>'+esc(workJust.job)+'</div>'+
+      '<div class="wpay">領到 <b>'+workJust.pay+'</b> 枚 Bo士幣</div>';
+  }
+  else if(shiftDone()){
+    card.innerHTML='<div class="wjob"><b>'+WALLET.shiftH+' 小時</b>'+esc(WALLET.shiftJob)+'</div>'+
+      '<div class="wsay">下班了，去把錢領回來</div>'+
+      '<div class="wpay">可以領 <b>'+WALLET.shiftPay+'</b> 枚</div>';
+  }
+  else if(onShift()){
+    card.innerHTML='<div class="wjob"><b>'+WALLET.shiftH+' 小時</b>'+esc(WALLET.shiftJob)+'</div>'+
+      '<div class="wcount">還要 <b>'+hms(shiftLeftMs())+'</b></div>'+
+      '<div class="wbar"><i style="width:'+
+        Math.max(2,Math.min(100,100*(1-shiftLeftMs()/(WALLET.shiftH*3600000)))).toFixed(1)+'%"></i></div>'+
+      '<div class="wsay">做完再回來領 '+WALLET.shiftPay+' 枚</div>';
+  }
+  else card.innerHTML='';
+  $('workLeft').textContent = onShift()&&!shiftDone()
+    ? '關掉視窗也沒關係，時間到再回來'
+    : left>0 ? '今天還可以開始 '+left+' 份工' : '今天的兩份都開過了，明天再來';
+  b.disabled=workBusy||(!shiftDone()&&(onShift()||left<=0));
   b.style.opacity=b.disabled?.45:1;
-  b.textContent=workBusy?'工作中…':left>0?'去打工':'明天再來';
-  const dot=$('workDot'); if(dot) dot.className='dot'+(left>0?' on':'');
+  b.textContent=workBusy?'處理中…':shiftDone()?'領錢':onShift()?'工作中':left>0?'去打工':'明天再來';
+  clearInterval(workTick); workTick=0;
+  if(onShift()&&!shiftDone()&&$('vWork').classList.contains('on')) workTick=setInterval(tickWork,1000);
 }
-function openWork(){ $('workCard').innerHTML=''; renderWork(); open('vWork'); }
+/* 每秒只改倒數那幾個字跟進度條，整塊重畫會閃 */
+function tickWork(){
+  if(!$('vWork').classList.contains('on')||!onShift()){ clearInterval(workTick); workTick=0; return; }
+  if(shiftDone()){ clearInterval(workTick); workTick=0; renderWork(); SFX.play('win');
+    toast('工作結束了，回打工那邊領錢'); return; }
+  const c=document.querySelector('#workCard .wcount b'); if(c) c.textContent=hms(shiftLeftMs());
+  const bar=document.querySelector('#workCard .wbar i');
+  if(bar) bar.style.width=Math.max(2,Math.min(100,100*(1-shiftLeftMs()/(WALLET.shiftH*3600000)))).toFixed(1)+'%';
+}
+function openWork(){ workJust=null; renderWork(); open('vWork'); }
 async function doWork(){
-  if(workBusy||workLeft()<=0) return;
+  if(workBusy) return;
   const a=petChar();
+  workJust=null;
+  if(shiftDone()){                                /* 收工領錢 */
+    const got={h:WALLET.shiftH, job:WALLET.shiftJob, pay:WALLET.shiftPay};
+    workBusy=true; renderWork();
+    const r=await claimShift();
+    workBusy=false;
+    if(!r.ok){ SFX.play('err'); toast(r.e==='early'?'還沒到時間':'雲端沒收到，等一下再試');
+      renderWork(); return; }
+    workJust=got;
+    SFX.play(got.pay>=90?'level':'coin');
+    const q=$('workStage').getBoundingClientRect(); burst(q.left+q.width/2,q.top+q.height/2);
+    WORKPET.pose({y:-13,sx:.98,sy:1.06,rot:0,aL:-115,aR:115},'joy',700);
+    renderWork(); renderHud();
+    return;
+  }
+  if(onShift()||workLeft()<=0) return;
   const sh=SHIFTS[Math.floor(Math.random()*SHIFTS.length)];
   const pay=sh.lo+Math.floor(Math.random()*(sh.hi-sh.lo+1));
   const job=jobOf(a.k,sh.h);
   workBusy=true; renderWork();
-  $('workCard').innerHTML='<div class="wjob"><b>'+sh.h+' 小時</b>'+esc(job[0])+'</div>'+
-    '<div class="wdoing">工作中…</div>';
-  WORKPET.pose({y:2,sx:1.04,sy:.96,rot:0,aL:-42,aR:42},'up',1500);
-  const r=await walletWork(pay);
-  setTimeout(()=>{
-    workBusy=false;
-    if(!r.ok){ SFX.play('err');
-      $('workCard').innerHTML='<div class="wjob"><b>沒領到</b>'+
-        (r.e==='none'?'今天的機會用完了':'雲端沒收到，等一下再試')+'</div>';
-      renderWork(); return;
-    }
-    $('workCard').innerHTML='<div class="wjob"><b>'+sh.h+' 小時</b>'+esc(job[0])+'</div>'+
-      '<div class="wsay">'+esc(job[1])+'</div>'+
-      '<div class="wpay">領到 <b>'+pay+'</b> 枚 Bo士幣</div>';
-    SFX.play(pay>=90?'level':'coin');
-    const q=$('workStage').getBoundingClientRect(); burst(q.left+q.width/2,q.top+q.height/2);
-    WORKPET.pose({y:-13,sx:.98,sy:1.06,rot:0,aL:-115,aR:115},'joy',700);
-    renderWork(); renderHud();
-  },1500);
+  const r=await startShift(sh,pay,job[0]);
+  workBusy=false;
+  if(!r.ok){ SFX.play('err');
+    toast(r.e==='busy'?'現在有工作在進行':'雲端沒收到，等一下再試');
+    renderWork(); return; }
+  SFX.play('tick');
+  WORKPET.pose({y:2,sx:1.04,sy:.96,rot:0,aL:-42,aR:42},'up',900);
+  toast('開工了：'+sh.h+' 小時「'+job[0]+'」');
+  renderWork();
 }
 /* ── 每日轉盤：當天記過一筆就能轉一次 ── */
 const WHEEL=[10,0,20,10,50,0,20,100];      /* 0 是再接再厲 */
@@ -5897,17 +5974,32 @@ window.CLOUD={
   async walletSpin(got,day){
     const {F}=this.api;
     const next={coins:WALLET.coins+got, owned:WALLET.owned, spunOn:day,
-                workOn:WALLET.workOn, workN:WALLET.workN};
+                workOn:WALLET.workOn, workN:WALLET.workN, shiftH:WALLET.shiftH,
+                shiftPay:WALLET.shiftPay, shiftJob:WALLET.shiftJob};
     try{
       await F.updateDoc(this.wref(),next);
       WALLET=normWallet(next); saveWallet();
       return {ok:1};
     }catch(e){ return {ok:0,e:e.code||'x'}; }
   },
-  async walletWork(pay,day){
+  /* 開工。時間用伺服器的，手機時鐘調快也沒用 */
+  async shiftStart(h,pay,job,day){
     const {F}=this.api;
-    const next={coins:WALLET.coins+pay, owned:WALLET.owned, spunOn:WALLET.spunOn,
-                workOn:day, workN:(WALLET.workOn===day?WALLET.workN:0)+1};
+    const next={coins:WALLET.coins, owned:WALLET.owned, spunOn:WALLET.spunOn,
+                workOn:day, workN:(WALLET.workOn===day?WALLET.workN:0)+1,
+                shiftAt:F.serverTimestamp(), shiftH:h, shiftPay:pay, shiftJob:job};
+    try{
+      await F.updateDoc(this.wref(),next);
+      WALLET=normWallet(Object.assign({},next,{shiftAt:Date.now()}));
+      saveWallet();
+      return {ok:1};
+    }catch(e){ return {ok:0,e:e.code||'x'}; }
+  },
+  async shiftClaim(){
+    const {F}=this.api;
+    const next={coins:WALLET.coins+WALLET.shiftPay, owned:WALLET.owned, spunOn:WALLET.spunOn,
+                workOn:WALLET.workOn, workN:WALLET.workN,
+                shiftAt:null, shiftH:0, shiftPay:0, shiftJob:''};
     try{
       await F.updateDoc(this.wref(),next);
       WALLET=normWallet(next); saveWallet();
@@ -5917,7 +6009,8 @@ window.CLOUD={
   async walletBuy(id,price){
     const {F}=this.api;
     const next={coins:WALLET.coins-price, owned:WALLET.owned.concat([id]), spunOn:WALLET.spunOn,
-                workOn:WALLET.workOn, workN:WALLET.workN};
+                workOn:WALLET.workOn, workN:WALLET.workN, shiftH:WALLET.shiftH,
+                shiftPay:WALLET.shiftPay, shiftJob:WALLET.shiftJob};
     try{
       await F.updateDoc(this.wref(),next);
       WALLET=normWallet(next); saveWallet();
