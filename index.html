@@ -720,6 +720,19 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .sitem.on .tag{background:var(--gold);color:#3a2600}
 .sitem.poor{opacity:.5}
 .shopempty{grid-column:1/-1;color:var(--txt3);font-size:13.5px;padding:20px 2px;text-align:center}
+/* 打工 */
+.workstage{width:150px;margin:4px auto 0;border-radius:14px;
+  background:radial-gradient(ellipse at 50% 92%,var(--panel2) 0%,transparent 70%)}
+.workstage svg{width:100%;height:auto;overflow:visible;display:block}
+.workcard{min-height:96px;display:flex;flex-direction:column;justify-content:center;
+  align-items:center;gap:5px;text-align:center;margin-top:6px}
+.wjob{font-size:14px;color:var(--txt2)}
+.wjob b{display:block;font-size:22px;font-weight:800;color:var(--gold);margin-bottom:2px}
+.wsay{font-size:12.5px;color:var(--txt3);max-width:280px;line-height:1.55}
+.wpay{font-size:15px;color:var(--txt2);margin-top:2px}
+.wpay b{font-size:24px;font-weight:800;color:var(--lime)}
+.wdoing{font-size:13px;color:var(--txt3)}
+.wleft{text-align:center;font-size:12.5px;color:var(--txt3);margin-top:8px}
 /* 每日轉盤 */
 .coinbar{margin-top:8px;display:inline-flex;align-items:center;gap:6px;padding:3px 11px 3px 8px;
   border-radius:99px;background:rgba(255,194,51,.14);border:1.5px solid rgba(255,194,51,.35);
@@ -969,7 +982,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
       <div class="actrow" id="actRow2">
         <button class="btn sm" id="btnWheel">轉盤<span class="dot" id="wheelDot"></span></button>
         <button class="btn sm" id="btnShop">商店</button>
-        <button class="btn sm" id="btnWork">打工</button>
+        <button class="btn sm" id="btnWork">打工<span class="dot" id="workDot"></span></button>
         <button class="btn sm ghost" id="btnFriends" style="display:none">好友<span class="dot" id="friDot"></span></button>
         <button class="btn sm ghost" id="btnSync" style="display:none">登入</button>
         <button class="btn sm ghost" id="btnMore" title="設定"><svg class="i"><use href="#i-gear"/></svg></button>
@@ -1258,6 +1271,16 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   <div class="segs slottabs" id="shopTabs"></div>
   <div class="shopgrid" id="shopBody"></div>
   <div class="dfoot"><button class="btn ghost" data-close>關閉</button></div>
+</div></div>
+
+<div class="veil" id="vWork"><div class="dlg">
+  <h3>打工</h3>
+  <div class="say">一天有兩次機會。抽到幾小時是隨機的，時間越長領得越多。</div>
+  <div class="workstage" id="workStage"></div>
+  <div class="workcard" id="workCard"></div>
+  <div class="wleft" id="workLeft"></div>
+  <div class="dfoot"><button class="btn ghost" data-close>關閉</button>
+    <button class="btn go" id="workGo">去打工</button></div>
 </div></div>
 
 <div class="veil" id="vWheel"><div class="dlg">
@@ -2328,12 +2351,15 @@ const itemById=id=>ITEMS.find(x=>x.id===id);
    一天只能轉一次盤、加的數字只能是獎項之一、買東西一次一件而且扣的錢等於標價。
    沒登入就只留在這台裝置上玩，反正也沒有人看得到。 */
 const WKEY='life_goals_wallet_v1';
+const WORKMAX=2;                         /* 一天可以打幾次工 */
 const WELCOME=0;                         /* 開戶不送，從零開始賺。規則那邊也寫死這個數 */
 let WALLET={coins:0,owned:[],spunOn:''};
 function normWallet(w){
   return {coins:Math.max(0,Math.round(+(w&&w.coins)||0)),
           owned:(w&&Array.isArray(w.owned)?w.owned:[]).filter(id=>itemById(id)),
-          spunOn:(w&&w.spunOn)||''};
+          spunOn:(w&&w.spunOn)||'',
+          workOn:(w&&w.workOn)||'',
+          workN:Math.max(0,Math.min(WORKMAX,Math.round(+(w&&w.workN)||0)))};
 }
 function saveWallet(){ try{ localStorage.setItem(WKEY,JSON.stringify(WALLET)); }catch(e){} }
 function loadWallet(){
@@ -2342,6 +2368,7 @@ function loadWallet(){
   /* 舊版把這三個放在 db.settings，搬過來一次 */
   if(!raw&&db&&db.settings) raw={coins:db.settings.coins,owned:db.settings.owned,spunOn:db.settings.spunOn};
   WALLET=normWallet(raw);
+  if(WALLET.workOn!==todayStr()){ WALLET.workOn=''; WALLET.workN=0; }   /* 隔天重新開始 */
   saveWallet();
   /* 舊欄位清掉，免得看起來像有兩份真相 */
   if(db&&db.settings){ delete db.settings.coins; delete db.settings.owned; delete db.settings.spunOn; }
@@ -4466,6 +4493,7 @@ function makePet(boxId){
   });
 }
 const SHOPPET=makePet('shopStage');
+const WORKPET=makePet('workStage');
 const PROFPET=makePet('profPic');        /* 好友主頁上的那隻，畫的是他的角色 */
 function pushLook(){
   if(!window.CLOUD||!CLOUD.user) return;
@@ -5078,6 +5106,91 @@ async function walletBuy(ids){
   }
   return {ok:1};
 }
+/* ── 打工 ──
+   點下去隨機抽到 2／4／8 小時，一天兩次。每隻角色的工作都不一樣，
+   同一隻在不同時數也是不同的工作。時薪都在 10～20 之間，抽到長的不吃虧。 */
+const SHIFTS=[
+  {h:2, lo:20,  hi:40},
+  {h:4, lo:45,  hi:70},
+  {h:8, lo:90,  hi:130}
+];
+const JOBS={
+  'a-cat':{2:['便利商店試吃推廣','站在門口發試吃，順便偷吃了三塊'],
+           4:['咖啡廳打奶泡','拉花拉出一隻魚，客人說很可愛'],
+           8:['寵物店顧店','跟倉鼠對看了一整天，牠先眨眼']},
+  'a-dog':{2:['幫鄰居遛狗','遛到最後是狗在遛牠'],
+           4:['外送','跑了十七單，聞到的比吃到的多'],
+           8:['搬家小工','搬到第四趟才發現電梯是好的']},
+  'a-bear':{2:['蜂蜜攤試吃','試吃的份量沒有控制好'],
+            4:['麵包店揉麵','力氣太大，麵團被揉成一片'],
+            8:['林場搬木頭','扛了一整天，肩膀有兩條紅痕']},
+  'a-fox':{2:['夜市套圈圈攤','偷偷把獎品往前挪了兩公分'],
+           4:['二手店挑貨','在一堆舊書裡翻到一張老唱片'],
+           8:['導遊帶團','講了八小時的冷笑話，沒有人笑']},
+  'a-peng':{2:['冰店挖冰','挖冰挖到手很酸，但心情很好'],
+            4:['水族館解說','被小朋友問「你也是魚嗎」'],
+            8:['冷凍倉庫理貨','全場最不怕冷的員工']},
+  'a-bot':{2:['幫人重灌電腦','重灌完順手把桌布換成自己'],
+           4:['工廠產線','八百個零件，一個都沒放錯'],
+           8:['資料中心值班','整晚盯著跑馬燈，一次都沒閃神']},
+  'a-frog':{2:['泳池救生員','其實只是想泡在水裡'],
+            4:['花店送花','跳過三個水窪，花一朵都沒掉'],
+            8:['稻田除草','蹲了一整天，站起來腿麻了']},
+  'a-owl':{2:['圖書館整理書','把書按顏色排好，館員說不行'],
+           4:['家教','教到一半學生睡著，自己也差點'],
+           8:['夜班警衛','天生適合這份工作']}
+};
+const jobOf=(k,h)=>((JOBS[k]||JOBS['a-cat'])[h])||['打工','做了一天'];
+const workLeft=()=>WORKMAX-(WALLET.workOn===todayStr()?WALLET.workN:0);
+async function walletWork(pay){
+  const day=todayStr();
+  if(workLeft()<=0) return {ok:0,e:'none'};
+  if(onCloud()) return CLOUD.walletWork(pay,day);
+  WALLET.workN=(WALLET.workOn===day?WALLET.workN:0)+1;
+  WALLET.workOn=day; WALLET.coins+=pay; saveWallet();
+  return {ok:1};
+}
+let workBusy=false;
+function renderWork(){
+  const box=$('workStage'); if(!box) return;
+  const a=petChar(), left=workLeft();
+  if(box.dataset.k!==a.k){ box.dataset.k=a.k; WORKPET.el=null; box.innerHTML=chSVG(a,'idle'); }
+  WORKPET.watch(); WORKPET.start();
+  $('workLeft').textContent=left>0?'今天還可以打 '+left+' 次工':'今天的兩次都打完了，明天再來';
+  const b=$('workGo');
+  b.disabled=left<=0||workBusy;
+  b.style.opacity=b.disabled?.45:1;
+  b.textContent=workBusy?'工作中…':left>0?'去打工':'明天再來';
+  const dot=$('workDot'); if(dot) dot.className='dot'+(left>0?' on':'');
+}
+function openWork(){ $('workCard').innerHTML=''; renderWork(); open('vWork'); }
+async function doWork(){
+  if(workBusy||workLeft()<=0) return;
+  const a=petChar();
+  const sh=SHIFTS[Math.floor(Math.random()*SHIFTS.length)];
+  const pay=sh.lo+Math.floor(Math.random()*(sh.hi-sh.lo+1));
+  const job=jobOf(a.k,sh.h);
+  workBusy=true; renderWork();
+  $('workCard').innerHTML='<div class="wjob"><b>'+sh.h+' 小時</b>'+esc(job[0])+'</div>'+
+    '<div class="wdoing">工作中…</div>';
+  WORKPET.pose({y:2,sx:1.04,sy:.96,rot:0,aL:-42,aR:42},'up',1500);
+  const r=await walletWork(pay);
+  setTimeout(()=>{
+    workBusy=false;
+    if(!r.ok){ SFX.play('err');
+      $('workCard').innerHTML='<div class="wjob"><b>沒領到</b>'+
+        (r.e==='none'?'今天的機會用完了':'雲端沒收到，等一下再試')+'</div>';
+      renderWork(); return;
+    }
+    $('workCard').innerHTML='<div class="wjob"><b>'+sh.h+' 小時</b>'+esc(job[0])+'</div>'+
+      '<div class="wsay">'+esc(job[1])+'</div>'+
+      '<div class="wpay">領到 <b>'+pay+'</b> 枚 Bo士幣</div>';
+    SFX.play(pay>=90?'level':'coin');
+    const q=$('workStage').getBoundingClientRect(); burst(q.left+q.width/2,q.top+q.height/2);
+    WORKPET.pose({y:-13,sx:.98,sy:1.06,rot:0,aL:-115,aR:115},'joy',700);
+    renderWork(); renderHud();
+  },1500);
+}
 /* ── 每日轉盤：當天記過一筆就能轉一次 ── */
 const WHEEL=[10,0,20,10,50,0,20,100];      /* 0 是再接再厲 */
 const WCOL=['#ffc233','#3a3273','#3ce0d0','#e39b12','#ff5c8a','#3a3273','#2bb5a8','#a879ff'];
@@ -5529,7 +5642,8 @@ $('volBar').addEventListener('input',e=>{
   clearTimeout(volTimer);                       /* 放手才試聽一次，不然拖動會一直叫 */
   volTimer=setTimeout(()=>{ if(SFX.on&&SFX.vol>0) SFX.play('coin'); },260);
 });
-$('btnWork').onclick=()=>{ SFX.play('tick'); toast('打工還在籌備，之後可以來這裡賺 Bo士幣'); };
+$('btnWork').onclick=()=>{ SFX.play('tick'); openWork(); };
+$('workGo').onclick=doWork;
 $('btnSfx').onclick=()=>{ const on=SFX.toggle(); sfxIcon(); toast(on?'音效開了':'音效關了'); };
 
 $('btnExport').onclick=()=>{
@@ -5650,12 +5764,12 @@ window.CLOUD={
       if(snap.exists()){ WALLET=normWallet(snap.data()); saveWallet(); }
       else{
         /* 第一次登入：開戶。規則那邊也寫死同一個數，多寫一塊都進不去 */
-        const w={coins:WELCOME,owned:[],spunOn:''};
+        const w={coins:WELCOME,owned:[],spunOn:'',workOn:'',workN:0};
         await F.setDoc(this.wref(),w);
         WALLET=normWallet(w); saveWallet();
         toast('雲端錢包開好了，每天記一筆帳就能轉一次盤');
       }
-      renderHud(); renderWheel(); renderShop();
+      renderHud(); renderWheel(); renderShop(); renderWork();
     }catch(e){ this.err=e.code||'錢包讀不到'; this.paint(); }
   },
   watchWallet(){
@@ -5664,7 +5778,7 @@ window.CLOUD={
     this.unsubW=F.onSnapshot(this.wref(),s=>{
       if(!s.exists()) return;
       WALLET=normWallet(s.data()); saveWallet();
-      renderHud(); renderWheel(); renderShop();
+      renderHud(); renderWheel(); renderShop(); renderWork();
     },()=>{});
   },
   /* 寫完之後一律「指定絕對值」，不要再加減一次。
@@ -5672,7 +5786,18 @@ window.CLOUD={
      再做一次 -= 就等於扣兩次（90 買 90 會變成 -90） */
   async walletSpin(got,day){
     const {F}=this.api;
-    const next={coins:WALLET.coins+got, owned:WALLET.owned, spunOn:day};
+    const next={coins:WALLET.coins+got, owned:WALLET.owned, spunOn:day,
+                workOn:WALLET.workOn, workN:WALLET.workN};
+    try{
+      await F.updateDoc(this.wref(),next);
+      WALLET=normWallet(next); saveWallet();
+      return {ok:1};
+    }catch(e){ return {ok:0,e:e.code||'x'}; }
+  },
+  async walletWork(pay,day){
+    const {F}=this.api;
+    const next={coins:WALLET.coins+pay, owned:WALLET.owned, spunOn:WALLET.spunOn,
+                workOn:day, workN:(WALLET.workOn===day?WALLET.workN:0)+1};
     try{
       await F.updateDoc(this.wref(),next);
       WALLET=normWallet(next); saveWallet();
@@ -5681,7 +5806,8 @@ window.CLOUD={
   },
   async walletBuy(id,price){
     const {F}=this.api;
-    const next={coins:WALLET.coins-price, owned:WALLET.owned.concat([id]), spunOn:WALLET.spunOn};
+    const next={coins:WALLET.coins-price, owned:WALLET.owned.concat([id]), spunOn:WALLET.spunOn,
+                workOn:WALLET.workOn, workN:WALLET.workN};
     try{
       await F.updateDoc(this.wref(),next);
       WALLET=normWallet(next); saveWallet();
@@ -6125,6 +6251,7 @@ loadPrices();
 skin(localStorage.getItem(SKIN)||'dark');
 sfxIcon(); swPaint();
 loadWallet();            /* 幣跟擁有的東西自己一份，不跟著 db 備份走 */
+setTimeout(renderWork,0);
 buildAvatars();          /* 頭貼從生物的畫法生出來，兩邊不會走鐘 */
 render();
 booted=true;
