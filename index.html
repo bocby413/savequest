@@ -5389,7 +5389,7 @@ function renderWork(){
       '<div class="wcount">還要 <b>'+hms(shiftLeftMs())+'</b></div>'+
       '<div class="wbar"><i style="width:'+
         Math.max(2,Math.min(100,100*(1-shiftLeftMs()/(WALLET.shiftH*3600000)))).toFixed(1)+'%"></i></div>'+
-      '<div class="wsay">做完就知道這班有多少了</div>';
+      '<div class="wsay">打工中⋯</div>';
   }
   else card.innerHTML='';
   $('workLeft').textContent = onShift()&&!shiftDone()
