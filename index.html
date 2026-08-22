@@ -1980,7 +1980,8 @@ const ITEMS=[
     return '<path d="M'+(60-w)+' '+y+'q'+w+' 10 '+(w*2)+' 0v9q-'+w+' 10 -'+(w*2)+' 0z" fill="#ff5c8a"/>'+
       '<path d="M'+(60+w*.42)+' '+(y+8)+'l7 19-9 2.5-4.5-19z" fill="#e8447a"/>';}},
   {id:'crown', n:'皇冠', p:300, slot:'head', d:a=>{
-    const y=HLINE(a), w=HATW(a)*.86, hh=HRY(a)*.5;
+    /* 這幾隻本來整頂陷在頭裡，各自往上提；沒列的維持原樣 */
+    const y=HLINE(a)-(CROWNUP[a.k]||0), w=HATW(a)*.86, hh=HRY(a)*.5;
     return '<path d="M'+(60-w)+' '+y+'l0-'+hh+' '+(w*.5)+' '+(hh*.45)+' '+(w*.5)+'-'+(hh*.8)+
       ' '+(w*.5)+' '+(hh*.8)+' '+(w*.5)+'-'+(hh*.45)+' 0 '+hh+'z" fill="#ffc233"/>'+
       '<circle cx="60" cy="'+(y-hh*.8)+'" r="3.2" fill="#ff5c8a"/>'+
@@ -2167,6 +2168,8 @@ const ITEMS=[
     return '<circle cx="'+(60+g)+'" cy="'+y+'" r="11" fill="none" stroke="#ffc233" stroke-width="2.6"/>'+
       '<path d="M'+(60+g+9)+' '+(y+7)+'l7 13" stroke="#ffc233" stroke-width="2"/>';}}
 ];
+/* 皇冠在這幾隻頭上戴得太低，各自往上提這麼多。數字上限是帽圈兩端還壓在頭上 */
+const CROWNUP={'a-cat':6,'a-dog':7,'a-bear':5,'a-bot':6,'a-owl':7};
 const itemById=id=>ITEMS.find(x=>x.id===id);
 /* ── 錢包 ──
    幣跟擁有的東西不放在 db 裡，因為 db 是整包備份、使用者想寫什麼都行。
