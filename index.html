@@ -4485,7 +4485,7 @@ function renderGroups(){
             '</button>'+
             (r.by===me?'<button class="x" data-gedit="'+r.id+'" title="改這筆">✎</button>'+
                        '<button class="x" data-gdel="'+r.id+'" title="刪掉">×</button>'
-                     :'<span class="x"></span><span class="x"></span>')+
+                     :'')+                       /* 別人記的沒有按鈕，也不用留位置 */
           '</div>'+(op?gDetail(g,r):'');
         }).join(''):'<div class="gempty">還沒有紀錄，按上面那顆記第一筆。</div>')+'</div>'+
         '<div class="gsum"><span>團裡花掉<b class="down">'+money(tout)+'</b></span>'+
