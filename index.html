@@ -2144,7 +2144,7 @@ const itemById=id=>ITEMS.find(x=>x.id===id);
    一天只能轉一次盤、加的數字只能是獎項之一、買東西一次一件而且扣的錢等於標價。
    沒登入就只留在這台裝置上玩，反正也沒有人看得到。 */
 const WKEY='life_goals_wallet_v1';
-const WELCOME=200;                       /* 第一次登入送的見面禮，規則那邊也寫死這個數 */
+const WELCOME=0;                         /* 開戶不送，從零開始賺。規則那邊也寫死這個數 */
 let WALLET={coins:0,owned:[],spunOn:''};
 function normWallet(w){
   return {coins:Math.max(0,Math.round(+(w&&w.coins)||0)),
@@ -4884,11 +4884,11 @@ window.CLOUD={
       const snap=await F.getDoc(this.wref());
       if(snap.exists()){ WALLET=normWallet(snap.data()); saveWallet(); }
       else{
-        /* 第一次登入：開戶送見面禮。規則那邊也寫死同一個數，多寫一塊都進不去 */
+        /* 第一次登入：開戶。規則那邊也寫死同一個數，多寫一塊都進不去 */
         const w={coins:WELCOME,owned:[],spunOn:''};
         await F.setDoc(this.wref(),w);
         WALLET=normWallet(w); saveWallet();
-        toast('雲端錢包開好了，見面禮 '+WELCOME+' 枚 Bo士幣');
+        toast('雲端錢包開好了，每天記一筆帳就能轉一次盤');
       }
       renderHud(); renderWheel(); renderShop();
     }catch(e){ this.err=e.code||'錢包讀不到'; this.paint(); }
