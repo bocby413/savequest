@@ -4292,10 +4292,12 @@ function tryDiff(a){
 function renderShop(){
   const box=$('shopBody'); if(!box) return;
   const a=petChar();
-  /* 試衣間 */
+  /* 試衣間。試穿的東西還沒買，所以要關掉「只能穿買過的」那層濾網 */
   const keep=wornList(a.k);
   wearMap()[a.k]=tryOutfit(a);
+  wearRaw=1;
   $('shopStage').innerHTML=chSVG(a,'up');
+  wearRaw=0;
   wearMap()[a.k]=keep;
   $('shopCoins').innerHTML='<svg class="i"><use href="#i-coin"/></svg>'+money(coins())+' Bo士幣';
   /* 分類橫幅：正在試穿的那格標星號，已經穿著的標點 */
