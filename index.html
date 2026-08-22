@@ -551,6 +551,41 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .pcard.lock{opacity:.5}
 .pcard.lock .pv{font-size:14px;font-weight:600;color:var(--txt3);margin-top:7px}
 @media(max-width:420px){ .pgrid{grid-template-columns:1fr} }
+/* 揪團 */
+.gcard{border:2px solid var(--edge);border-radius:14px;background:var(--panel2);margin-bottom:9px;overflow:hidden}
+.gcard.open{border-color:var(--gold)}
+.gcard>.hd{display:flex;align-items:center;gap:9px;padding:11px 12px}
+.gcard>.hd>button.nm{flex:1;min-width:0;text-align:left;background:none;border:0;padding:0;font:inherit;
+  font-size:15px;font-weight:700;color:var(--txt);cursor:pointer}
+.gcard>.hd .cnt{font-size:11.5px;color:var(--txt3);flex:none}
+.gin{padding:0 12px 12px}
+.gmem{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.gmem span{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 9px 3px 3px;
+  border-radius:99px;background:var(--panel3);color:var(--txt2)}
+.gmem span svg{width:19px;height:19px;border-radius:50%;background:var(--panel2)}
+.gmem span b{color:var(--gold);font-weight:700;margin-left:4px}
+.gsum{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--txt3);
+  border-top:1px solid var(--edge);padding-top:10px;margin-top:4px}
+.gsum b{color:var(--txt);font-weight:800;margin-left:5px}
+.glog{max-height:210px;overflow:auto;margin:10px 0 4px}
+.glog .r{display:flex;align-items:center;gap:9px;padding:7px 2px;border-top:1px solid var(--edge);font-size:13px}
+.glog .r:first-child{border-top:0}
+.glog .r .d{font-size:11.5px;color:var(--txt3);flex:none;width:42px}
+.glog .r .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.glog .r .t i{font-style:normal;color:var(--txt3);font-size:11.5px;margin-left:6px}
+.glog .r .v{font-weight:800;flex:none}
+.glog .r .v.out{color:var(--red)} .glog .r .v.in{color:var(--lime)}
+.glog .r .x{flex:none;width:20px;height:20px;border:0;background:none;color:var(--txt3);cursor:pointer;
+  border-radius:50%;line-height:1;font-size:14px}
+.glog .r .x:hover{color:var(--red)}
+.gempty{color:var(--txt3);font-size:13px;padding:14px 2px;text-align:center}
+.ginvsel{font:inherit;font-size:13px;padding:7px 10px;border-radius:10px;cursor:pointer;
+  background:var(--panel3);border:1.5px solid var(--edge);color:var(--txt2);width:100%}
+.ginv{display:flex;align-items:center;gap:9px;padding:10px;border-radius:12px;
+  background:rgba(255,194,51,.10);border:1.5px solid var(--gold);margin-bottom:8px}
+.ginv .info{flex:1;min-width:0}
+.ginv .nm{font-size:14.5px;font-weight:700}
+.ginv .sub{font-size:11.5px;color:var(--txt3)}
 /* 商店 */
 .shopgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
 @media(max-width:520px){.shopgrid{grid-template-columns:repeat(2,1fr)}}
@@ -1070,7 +1105,10 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   <div class="say">互相看得到什麼由你決定，每個好友可以分開設定。</div>
   <div class="f"><label>用 Gmail 加好友</label>
     <input type="email" id="friMail" placeholder="對方登入用的信箱" inputmode="email"></div>
-  <button class="btn go" id="btnFriAdd" style="width:100%">送出好友邀請</button>
+  <div class="two" style="gap:8px">
+    <button class="btn go" id="btnFriAdd">送出好友邀請</button>
+    <button class="btn" id="btnGroups">揪團去<span class="dot" id="gDot"></span></button>
+  </div>
   <div class="say" id="friMsg" style="min-height:20px;margin-top:8px"></div>
   <div id="friBody"></div>
   <div class="dfoot"><button class="btn ghost" data-close>關閉</button></div>
@@ -1145,6 +1183,33 @@ html[data-skin="light"] .logbar input{color-scheme:light}
     <button class="btn ghost" id="profGrant">我分享給他什麼</button>
     <button class="btn ghost del" id="profDel">移除好友</button>
   </div>
+</div></div>
+
+<div class="veil" id="vGroup"><div class="dlg wide">
+  <h3>揪團</h3>
+  <div class="say">揪朋友開一團，一起記同一本帳。誰記的都看得到，也算得出各自出了多少。</div>
+  <div class="two" style="gap:8px">
+    <input type="text" id="gName" placeholder="團名，例如 日本行、室友水電" maxlength="14">
+    <button class="btn go" id="btnGNew">開一團</button>
+  </div>
+  <div id="gBody"></div>
+  <div class="dfoot"><button class="btn ghost" data-close>關閉</button></div>
+</div></div>
+
+<div class="veil" id="vGRec"><div class="dlg">
+  <h3 id="grTitle">記一筆到團裡</h3>
+  <div class="say">這筆會出現在所有成員的團帳裡。</div>
+  <div class="kinds" id="grKinds" style="grid-template-columns:1fr 1fr">
+    <button data-gk="out" class="on">支出</button>
+    <button data-gk="in">收入</button>
+  </div>
+  <div class="two">
+    <div class="f"><label>日期</label><input type="date" id="grDate"></div>
+    <div class="f"><label>金額</label><input type="number" id="grAmt" placeholder="" inputmode="decimal"></div>
+  </div>
+  <div class="f"><label>項目（可留白）</label><input type="text" id="grNote" placeholder="買什麼、誰付的…"></div>
+  <div class="dfoot"><button class="btn ghost" id="grCancel">取消</button>
+    <button class="btn go" id="grSave">記下來</button></div>
 </div></div>
 
 <div class="veil" id="vGrant"><div class="dlg">
@@ -3008,6 +3073,8 @@ function yearRow(all,y){
    證交所與櫃買的 API 沒開跨網域，瀏覽器直接抓會被擋 */
 /* 好友：清單、待處理邀請、對方分享給我的快照 */
 let FRIENDS=[], REQS=[], SHARED={}, PROFILES={};
+/* 揪團：我加入的群組、收到的邀請、目前展開那一團的紀錄 */
+let GROUPS=[], GINVS=[], GRECS=[], gOpen=null;
 const GRANTS=[
   {k:'lv',    t:'稱號',       d:'像「存款加速」這樣的頭銜，不含等級數字'},
   {k:'streak',t:'打卡紀錄',   d:'這個月有沒有達標、連續達標幾個月'},
@@ -3666,6 +3733,21 @@ $('profDel').onclick=()=>{
   if(!confirm('移除好友「'+friName(f)+'」？')) return;
   CLOUD.removeFriend(f).then(()=>{ SFX.play('del'); toast('已移除'); $('profBack').onclick(); });
 };
+$('grKinds').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-gk]'); if(!b) return;
+  grKind=b.dataset.gk; SFX.play('tick');
+  $('grKinds').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+});
+$('gBody').addEventListener('change',e=>{
+  const sel=e.target.closest('[data-ginv]'); if(!sel||!sel.value) return;
+  const g=GROUPS.find(x=>x.id===sel.dataset.ginv), f=FRIENDS.find(x=>x.uid===sel.value);
+  sel.value='';
+  if(!g||!f) return;
+  CLOUD.inviteToGroup(g,f).then(r=>{
+    if(r.err){ SFX.play('err'); toast('邀請失敗：'+r.err); }
+    else{ SFX.play('coin'); toast('已邀請 '+friName(f)); }
+  });
+});
 $('btnFriAdd').onclick=async()=>{
   const m=$('friMail').value.trim();
   if(!m||m.indexOf('@')<0){ toast('填對方的 Gmail'); return; }
@@ -3930,6 +4012,72 @@ function renderPet(){
     box.innerHTML=chSVG(a,'idle');
   }
   PET.watch(); PET.start();
+}
+/* ── 揪團 ── */
+function renderGroups(){
+  const dot=$('gDot');
+  if(dot) dot.className='dot'+(GINVS.length?' on':'');
+  const box=$('gBody'); if(!box) return;
+  let h='';
+  if(GINVS.length) h+=GINVS.map(v=>
+    '<div class="ginv"><div class="info"><div class="nm">'+esc(v.name||'一個團')+'</div>'+
+    '<div class="sub">'+esc(v.fromName||'朋友')+' 找你一起記帳</div></div>'+
+    '<span class="ops"><button class="btn sm go" data-gyes="'+v.gid+'">加入</button>'+
+    '<button class="btn sm ghost" data-gno="'+v.gid+'">不了</button></span></div>').join('');
+  if(!GROUPS.length){
+    h+='<div class="gempty">還沒有團。取個名字按「開一團」，再從下面把好友找進來。</div>';
+    box.innerHTML=h; return;
+  }
+  h+=GROUPS.map(g=>{
+    const on=gOpen===g.id, me=CLOUD.user?CLOUD.user.uid:'';
+    const info=g.info||{};
+    let inner='';
+    if(on){
+      /* 每個人各出了多少 */
+      const per={}; let tin=0, tout=0;
+      GRECS.forEach(r=>{
+        const v=+r.amount||0;
+        if(r.kind==='in') tin+=v; else { tout+=v; per[r.by]=(per[r.by]||0)+v; }
+      });
+      inner='<div class="gin">'+
+        '<div class="gmem">'+(g.members||[]).map(uid=>{
+          const i=info[uid]||{};
+          return '<span>'+friAvatar(i.a)+esc(i.n||'成員')+
+            (per[uid]?'<b>'+short(per[uid])+'</b>':'')+'</span>';
+        }).join('')+'</div>'+
+        '<div class="two" style="gap:8px">'+
+          '<button class="btn sm go" data-gadd="'+g.id+'">記一筆到團裡</button>'+
+          '<select class="ginvsel" data-ginv="'+g.id+'"><option value="">找好友進來…</option>'+
+            FRIENDS.filter(f=>(g.members||[]).indexOf(f.uid)<0)
+              .map(f=>'<option value="'+f.uid+'">'+esc(friName(f))+'</option>').join('')+
+          '</select>'+
+        '</div>'+
+        '<div class="glog">'+(GRECS.length?GRECS.map(r=>
+          '<div class="r"><span class="d">'+md(r.date)+'</span>'+
+          '<span class="t">'+esc(r.note||(r.kind==='in'?'收入':'支出'))+
+            '<i>'+esc(r.byName||'')+'</i></span>'+
+          '<span class="v '+(r.kind==='in'?'in':'out')+'">'+(r.kind==='in'?'+':'-')+money(r.amount)+'</span>'+
+          (r.by===me?'<button class="x" data-gdel="'+r.id+'" title="刪掉">×</button>':'<span class="x"></span>')+
+          '</div>').join(''):'<div class="gempty">還沒有紀錄，按上面那顆記第一筆。</div>')+'</div>'+
+        '<div class="gsum"><span>團裡花掉<b class="down">'+money(tout)+'</b></span>'+
+          '<span>團裡收入<b>'+money(tin)+'</b></span>'+
+          '<span>幾筆<b>'+GRECS.length+'</b></span></div>'+
+        '<div style="margin-top:10px;text-align:right">'+
+          '<button class="btn sm ghost del" data-gout="'+g.id+'">退出這團</button></div>'+
+      '</div>';
+    }
+    return '<div class="gcard'+(on?' open':'')+'">'+
+      '<div class="hd"><button class="nm" data-gopen="'+g.id+'">'+esc(g.name||'一個團')+'</button>'+
+      '<span class="cnt">'+((g.members||[]).length)+' 人</span></div>'+inner+'</div>';
+  }).join('');
+  box.innerHTML=h;
+}
+let grKind='out', grFor=null;
+function openGRec(gid){
+  grFor=gid; grKind='out';
+  $('grKinds').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.gk==='out'));
+  $('grDate').value=todayStr(); $('grAmt').value=''; $('grNote').value='';
+  open('vGRec');
 }
 /* ── 商店 ── */
 let shopTab='all';
@@ -4197,6 +4345,42 @@ document.body.addEventListener('click',e=>{
   }
   if(b.id==='btnSync'){ open('vSync'); $('syncBody').innerHTML=CLOUD.body(); return; }
   if(b.id==='btnFriends'){ renderFriends(); $('friMsg').textContent=''; return open('vFri'); }
+  if(b.id==='btnGroups'){ renderGroups(); SFX.play('tick'); return open('vGroup'); }
+  if(b.id==='btnGNew'){
+    const n=$('gName').value.trim();
+    if(!n){ toast('先幫這團取個名字'); return; }
+    if(!CLOUD.user){ toast('要先登入才能揪團'); return; }
+    CLOUD.createGroup(n).then(r=>{
+      if(r.err){ SFX.play('err'); toast('開團失敗：'+r.err); return; }
+      $('gName').value=''; gOpen=r.ok; CLOUD.watchGRecs(); SFX.play('win'); toast('開好了，把好友找進來');
+    });
+    return;
+  }
+  if(b.dataset.gopen){ gOpen=gOpen===b.dataset.gopen?null:b.dataset.gopen;
+    CLOUD.watchGRecs(); GRECS=[]; SFX.play('tick'); renderGroups(); return; }
+  if(b.dataset.gadd) return openGRec(b.dataset.gadd);
+  if(b.dataset.gdel){ CLOUD.delGroupRec(gOpen,b.dataset.gdel); SFX.play('del'); return; }
+  if(b.dataset.gyes){ const v=GINVS.find(x=>x.gid===b.dataset.gyes);
+    if(v) CLOUD.joinGroup(v).then(r=>{ if(r&&r.err){SFX.play('err');toast('加入失敗：'+r.err);}
+      else{ SFX.play('win'); toast('加入「'+v.name+'」了'); } });
+    return; }
+  if(b.dataset.gno){ const v=GINVS.find(x=>x.gid===b.dataset.gno);
+    if(v) CLOUD.declineGroup(v).then(()=>toast('已婉拒')); return; }
+  if(b.dataset.gout){ const g=GROUPS.find(x=>x.id===b.dataset.gout);
+    if(g&&confirm('退出「'+(g.name||'這團')+'」？已經記過的紀錄會留在團裡。'))
+      CLOUD.leaveGroup(g).then(()=>{ gOpen=null; SFX.play('del'); toast('已退出'); });
+    return; }
+  if(b.id==='grCancel'){ $('vGRec').classList.remove('on'); return; }
+  if(b.id==='grSave'){
+    const d=$('grDate').value, v=parseFloat($('grAmt').value);
+    if(!d||isNaN(v)||v<=0){ SFX.play('err'); toast('日期跟金額都要填'); return; }
+    CLOUD.addGroupRec(grFor,{date:d,kind:grKind,amount:v,note:$('grNote').value.trim()}).then(r=>{
+      if(r.err){ SFX.play('err'); toast('記帳失敗：'+r.err); return; }
+      $('vGRec').classList.remove('on');
+      SFX.play(grKind==='out'?'spend':'coin'); toast('記到團裡了');
+    });
+    return;
+  }
   if(b.dataset.acc){ const r=REQS.find(x=>x.id===b.dataset.acc);
     if(r) CLOUD.accept(r).then(res=>{
       if(res&&res.err){ SFX.play('err'); toast('接受失敗：'+res.err); }
@@ -4386,12 +4570,17 @@ window.CLOUD={
       this.api={U,F,auth:U.getAuth(app),fs:F.getFirestore(app,'default')};
       U.onAuthStateChanged(this.api.auth,u=>{
         this.user=u; this.paint();
-        if(u){ this.watch(); this.publishProfile(); this.watchRequests(); this.watchFriends(); }
+        if(u){ this.watch(); this.publishProfile(); this.watchRequests(); this.watchFriends();
+               this.watchGroups(); this.watchGInbox(); }
         else{
           if(this.unsub){ this.unsub(); this.unsub=null; }
           if(this.unsubReq){ this.unsubReq(); this.unsubReq=null; }
           if(this.unsubFri){ this.unsubFri(); this.unsubFri=null; }
-          FRIENDS=[]; REQS=[]; SHARED={}; PROFILES={}; renderFriends();
+          [this.unsubG,this.unsubGI,this.unsubGR].forEach(f=>f&&f());
+          this.unsubG=this.unsubGI=this.unsubGR=null;
+          FRIENDS=[]; REQS=[]; SHARED={}; PROFILES={};
+          GROUPS=[]; GINVS=[]; GRECS=[]; gOpen=null;
+          renderFriends(); renderGroups();
         }
       });
       try{ await U.getRedirectResult(this.api.auth); }catch(e){}
@@ -4434,6 +4623,98 @@ window.CLOUD={
       this.last=Date.now(); this.err=''; this.paint();
     }catch(e){ this.err=e.code||'寫入失敗'; this.paint(); }
   },
+  /* ── 揪團 ──
+     groups/{gid}            群組本身，members 是成員的 uid 陣列
+     groups/{gid}/recs/{id}  共同記帳的紀錄，成員都能寫
+     users/{uid}/ginbox/{gid} 收到的邀請，規則用路徑判斷 */
+  gcol(){ return this.api.F.collection(this.api.fs,'groups'); },
+  async createGroup(name){
+    const {F}=this.api, me=this.user;
+    if(!me) return {err:'還沒登入'};
+    try{
+      const ref=F.doc(this.gcol());
+      await F.setDoc(ref,{
+        name:name, owner:me.uid, members:[me.uid],
+        info:{[me.uid]:{n:db.settings.name||'某人',a:db.settings.avatar||null}},
+        ts:Date.now()
+      });
+      return {ok:ref.id};
+    }catch(e){ return {err:e.code||e.message}; }
+  },
+  async inviteToGroup(g,f){
+    const {F}=this.api, me=this.user;
+    try{
+      await F.setDoc(F.doc(this.api.fs,'users',f.uid,'ginbox',g.id),{
+        gid:g.id, name:g.name, from:me.uid,
+        fromName:db.settings.name||'某人', ts:Date.now()
+      });
+      return {ok:1};
+    }catch(e){ return {err:e.code||e.message}; }
+  },
+  async joinGroup(inv){
+    const {F}=this.api, me=this.user;
+    try{
+      await F.updateDoc(F.doc(this.api.fs,'groups',inv.gid),{
+        members:F.arrayUnion(me.uid),
+        ['info.'+me.uid]:{n:db.settings.name||'某人',a:db.settings.avatar||null}
+      });
+      await F.deleteDoc(F.doc(this.api.fs,'users',me.uid,'ginbox',inv.gid));
+      return {ok:1};
+    }catch(e){ return {err:e.code||e.message}; }
+  },
+  async declineGroup(inv){
+    try{ await this.api.F.deleteDoc(this.api.F.doc(this.api.fs,'users',this.user.uid,'ginbox',inv.gid)); }
+    catch(e){}
+  },
+  async leaveGroup(g){
+    const {F}=this.api, me=this.user;
+    try{
+      await F.updateDoc(F.doc(this.api.fs,'groups',g.id),{members:F.arrayRemove(me.uid)});
+      return {ok:1};
+    }catch(e){ return {err:e.code||e.message}; }
+  },
+  async addGroupRec(gid,rec){
+    const {F}=this.api, me=this.user;
+    try{
+      const ref=F.doc(F.collection(this.api.fs,'groups',gid,'recs'));
+      await F.setDoc(ref,Object.assign({by:me.uid,byName:db.settings.name||'某人',ts:Date.now()},rec));
+      return {ok:1};
+    }catch(e){ return {err:e.code||e.message}; }
+  },
+  async delGroupRec(gid,id){
+    try{ await this.api.F.deleteDoc(this.api.F.doc(this.api.fs,'groups',gid,'recs',id)); }catch(e){}
+  },
+  watchGroups(){
+    const {F}=this.api;
+    if(this.unsubG) this.unsubG();
+    const q=F.query(this.gcol(),F.where('members','array-contains',this.user.uid));
+    this.unsubG=F.onSnapshot(q,snap=>{
+      GROUPS=[]; snap.forEach(d=>GROUPS.push(Object.assign({id:d.id},d.data())));
+      GROUPS.sort((a,b)=>(a.ts||0)-(b.ts||0));
+      if(gOpen&&!GROUPS.some(x=>x.id===gOpen)) gOpen=null;
+      this.watchGRecs(); renderGroups();
+    },e=>{ this.err=e.code||'群組讀取失敗'; this.paint(); renderGroups(); });
+  },
+  watchGInbox(){
+    const {F}=this.api;
+    if(this.unsubGI) this.unsubGI();
+    this.unsubGI=F.onSnapshot(F.collection(this.api.fs,'users',this.user.uid,'ginbox'),snap=>{
+      GINVS=[]; snap.forEach(d=>GINVS.push(Object.assign({id:d.id},d.data())));
+      renderGroups(); renderFriends();
+    },()=>{});
+  },
+  /* 只監聽目前展開的那一團，不然人多了會一直拉資料 */
+  watchGRecs(){
+    const {F}=this.api;
+    if(this.unsubGR){ this.unsubGR(); this.unsubGR=null; }
+    if(!gOpen) return;
+    this.unsubGR=F.onSnapshot(F.collection(this.api.fs,'groups',gOpen,'recs'),snap=>{
+      GRECS=[]; snap.forEach(d=>GRECS.push(Object.assign({id:d.id},d.data())));
+      GRECS.sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(b.ts||0)-(a.ts||0));
+      renderGroups();
+    },()=>{});
+  },
+
   /* ── 好友 ── */
   prof(){ const F=this.api.F; return F.doc(this.api.fs,'publicProfiles',this.user.uid); },
   /* 登入後把自己登記進名冊，別人才找得到你 */
