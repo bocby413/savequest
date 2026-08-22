@@ -75,25 +75,21 @@ svg.i{width:1em;height:1em;fill:currentColor;vertical-align:-.13em}
 .tag.lime{background:rgba(142,230,90,.14);color:var(--lime);border-color:rgba(142,230,90,.4)}
 
 /* ── 頂部狀態列 ── */
-.hud{position:relative;display:grid;grid-template-columns:auto auto 1fr auto;gap:22px;align-items:center;padding:20px 24px;margin-bottom:18px}
-/* 桌機站在頭貼左邊那塊空白；手機版面疊成一欄，改成貼在頭貼右邊 */
-.pet{width:96px;height:96px;flex:none;order:-1;align-self:end}
-.pet .actor{position:static;width:100%;height:100%;margin:0;overflow:visible}
-@media(max-width:900px){
-  .hud{grid-template-columns:1fr;gap:16px}
-  .pet{position:absolute;left:138px;top:14px;width:88px;height:88px;order:0;z-index:3}
-}
-@media(max-width:400px){.pet{left:126px;width:78px;height:78px}}
-.ava{position:relative;width:104px;height:104px;flex:none;padding:0;border:none;background:none;cursor:pointer}
-.ava .ring{position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--gold) var(--p,0%),var(--panel3) 0)}
-.ava .pic{position:absolute;inset:6px;border-radius:50%;overflow:hidden;background:var(--panel2);
-  border:3px solid var(--panel);display:grid;place-items:center}
-.ava .pic img{width:100%;height:100%;object-fit:cover;display:block}
-.ava .pic svg{width:82%;height:82%}
-.ava .edit{position:absolute;inset:6px;border-radius:50%;background:rgba(6,4,20,.62);color:#fff;display:grid;
+.hud{position:relative;display:grid;grid-template-columns:auto 1fr auto;gap:22px;align-items:center;padding:20px 24px;margin-bottom:18px}
+/* 生物站在等級進度圈裡面，整顆可以點去換角色 */
+.pet{position:relative;width:116px;height:116px;flex:none;padding:0;border:none;background:none;cursor:pointer}
+.pet .ring{position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(var(--gold) var(--p,0%),var(--panel3) 0)}
+.petbox{position:absolute;inset:7px;border-radius:50%;overflow:hidden;background:var(--panel2);
+  border:3px solid var(--panel);display:grid;place-items:end center}
+.petbox .actor{position:static;width:104%;height:104%;margin:0;overflow:visible}
+@media(max-width:900px){.hud{grid-template-columns:1fr;gap:16px}}
+@media(max-width:400px){.pet{width:104px;height:104px}}
+.ava{display:none}
+.pet .edit{position:absolute;inset:7px;border-radius:50%;background:rgba(6,4,20,.62);color:#fff;display:grid;
   place-items:center;gap:2px;font-size:12px;font-weight:700;opacity:0;transition:color .16s,background-color .16s,border-color .16s,opacity .16s,transform .16s,box-shadow .16s,filter .16s}
 .ava:hover .edit{opacity:1}
-.ava .edit svg{width:18px;height:18px;fill:#fff}
+.pet .edit svg{width:18px;height:18px;fill:#fff}
 .lvchip{position:absolute;right:-3px;bottom:0;display:flex;align-items:baseline;gap:2px;padding:2px 9px;border-radius:99px;
   background:linear-gradient(180deg,var(--gold),var(--gold2));color:#3a2600;font-weight:800;font-size:14px;
   border:3px solid var(--panel);box-shadow:0 2px 6px rgba(0,0,0,.3)}
@@ -774,11 +770,10 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 <div class="wrap">
 
 <div class="card hud">
-  <div class="pet" id="hudPet"></div>
-  <button class="ava" id="ava" title="換頭貼">
+  <button class="pet" id="hudPet" title="換角色">
     <span class="ring" id="avaRing"></span>
-    <span class="pic" id="avaPic"></span>
-    <span class="edit"><svg class="i"><use href="#i-cam"/></svg>換頭貼</span>
+    <span class="petbox" id="petBox"></span>
+    <span class="edit">換角色</span>
     <span class="lvchip"><small>Lv</small><b id="lvNum">1</b></span>
   </button>
   <div class="hudmid">
@@ -929,14 +924,12 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 </div></div>
 
 <div class="veil" id="vAva"><div class="dlg">
-  <h3>換頭貼</h3>
-  <div class="say">挑一個角色，或上傳自己的照片。</div>
+  <h3>換角色</h3>
+  <div class="say">挑一隻站在你的等級圈裡。</div>
   <div class="f"><label>暱稱</label><input type="text" id="aName" placeholder="想怎麼稱呼自己" maxlength="12"></div>
   <div class="f"><label>稱號</label><div class="titlepick" id="titlePick"></div>
     <div class="say" id="titleHint" style="margin-top:6px"></div></div>
-  <div class="f"><label>選一個角色</label><div class="avapick" id="avaPick"></div></div>
-  <button class="btn sm" id="btnPhoto" style="width:100%"><svg class="i"><use href="#i-cam"/></svg> 上傳照片（存在這台電腦）</button>
-  <input type="file" id="filePhoto" accept="image/*" hidden>
+  <div class="f"><label>角色</label><div class="avapick" id="avaPick"></div></div>
   <div class="dfoot"><button class="btn ghost" data-close>取消</button><button class="btn go" id="saveAva">好了</button></div>
 </div></div>
 
@@ -1520,9 +1513,8 @@ function shrink(file,cb){
 }
 function renderPick(){
   const cur=tempAva||db.settings.avatar||{type:'icon',id:AVATARS[0]};
-  let h=AVATARS.map(id=>'<button data-ava="'+id+'" class="'+(cur.type!=='photo'&&cur.id===id?'sel':'')+'">'+
+  const h=AVATARS.map(id=>'<button data-ava="'+id+'" class="'+(cur.id===id?'sel':'')+'">'+
     '<svg viewBox="0 0 64 64"><use href="#'+id+'"/></svg></button>').join('');
-  if(cur.type==='photo'&&cur.data) h+='<button class="photo sel" data-ava="photo"><img src="'+cur.data+'" alt=""></button>';
   $('avaPick').innerHTML=h;
 }
 let titleOrder=[], tempTitle=null;
@@ -1551,28 +1543,19 @@ function openAva(){
   renderTitlePick();
   renderPick(); open('vAva');
 }
-$('ava').onclick=openAva;
+$('hudPet').onclick=openAva;
 $('avaPick').addEventListener('click',e=>{
   const b=e.target.closest('button[data-ava]'); if(!b) return;
-  if(b.dataset.ava!=='photo') tempAva={type:'icon',id:b.dataset.ava};
+  tempAva={type:'icon',id:b.dataset.ava};
   renderPick();
 });
-$('btnPhoto').onclick=()=>$('filePhoto').click();
-$('filePhoto').onchange=e=>{
-  const f=e.target.files[0]; if(!f) return;
-  if(!f.type.startsWith('image/')){ toast('請選圖片檔'); e.target.value=''; return; }
-  shrink(f,d=>{ tempAva={type:'photo',data:d}; renderPick(); toast('照片準備好了，按「好了」存起來'); });
-  e.target.value='';
-};
 $('saveAva').onclick=()=>{
-  const back=db.settings.avatar;
   db.settings.name=$('aName').value.trim();
   if(tempTitle) db.settings.title=tempTitle;
   if(tempAva) db.settings.avatar=tempAva;
-  try{ save(); }
-  catch(err){ db.settings.avatar=back; toast('照片太大存不下，換一張小一點的'); return; }
+  save();
   if(window.CLOUD&&CLOUD.user){ CLOUD.publishProfile(); CLOUD.pushShares(); }
-  shut(); renderHud(); toast('頭貼換好了');
+  shut(); renderHud(); toast('角色換好了');
 };
 
 /* ── HUD ── */
@@ -1583,7 +1566,6 @@ function renderHud(){
   $('amtK').textContent=(sv||ov)?'總資產':'目前存款';
   $('lvNum').textContent=L.lv;
   $('avaRing').style.setProperty('--p',L.pct.toFixed(1)+'%');
-  $('avaPic').innerHTML=avaHTML(db.settings.avatar);
   const nick=db.settings.name?esc(db.settings.name)+'　':'';
   $('lvWho').innerHTML=nick+'<b>'+esc(myTitle())+'</b>';
   $('lvNext').textContent=cur>=L.next?'':'距 Lv.'+(L.lv+1)+' 還差 '+money(L.next-cur);
@@ -3706,7 +3688,7 @@ const PET={
   cur:{y:0,sx:1,sy:1,rot:0,aL:0,aR:0}, tgt:{y:0,sx:1,sy:1,rot:0,aL:0,aR:0},
   nextBlink:2600, nextAct:7000,
   grab(){
-    const box=$('hudPet');
+    const box=$('petBox');
     if(!box||!box.querySelector('.ch')){ this.el=null; return false; }
     if(this.el&&this.el.box===box&&box.contains(this.el.ch)) return true;
     this.el={box, ch:box.querySelector('.ch'), face:box.querySelector('.face'),
@@ -3715,7 +3697,7 @@ const PET={
     return true;
   },
   watch(){
-    const box=$('hudPet');
+    const box=$('petBox');
     if(!box||this.io||!window.IntersectionObserver) return;
     this.io=new IntersectionObserver(es=>{ this.live=es[0].isIntersecting; if(this.live){this.last=0;this.start();} },
       {rootMargin:'60px'});
@@ -3770,7 +3752,7 @@ function petChar(){
   return (av&&av.id&&TCHARS.find(x=>x.k===av.id))||tchar();
 }
 function renderPet(){
-  const box=$('hudPet'); if(!box) return;
+  const box=$('petBox'); if(!box) return;
   const a=petChar();
   if(box.dataset.k!==a.k){
     box.dataset.k=a.k; PET.el=null;
