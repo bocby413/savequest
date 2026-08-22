@@ -4642,7 +4642,7 @@ function renderGHome(){
     const amt=(mine===undefined||Math.abs(mine)<.5)
       ? (recs.length?'<small>目前打平</small>':'<small>還沒有紀錄</small>')
       : mine>0 ? '<b class="recv">'+money(Math.round(mine))+'</b><small>別人要還你</small>'
-               : '<b class="pay">'+money(Math.round(-mine))+'</b><small>你要還別人</small>';
+               : '<b class="pay">-'+money(Math.round(-mine))+'</b><small>你要還別人</small>';
     return '<button class="ghomecard" data-ghome="'+g.id+'">'+
       '<span class="who">'+faces+(mem.length>4?'<span>+'+(mem.length-4)+'</span>':'')+'</span>'+
       '<span class="mid"><span class="nm">'+esc(g.name||'一個團')+'</span>'+
