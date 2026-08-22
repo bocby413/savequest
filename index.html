@@ -1790,6 +1790,8 @@ const TCHARS=[
 const eyeY=a=>a.hy+a.eo, mouY=a=>a.hy+a.mo;
 
 /* 身體後面的東西：耳朵、角羽、尾巴、青蛙的眼球包 */
+/* 有些配件是把原本的部位換掉（機器人的天線、底座），不是疊在上面 */
+const hides=(a,part)=>wornList(a.k).some(id=>{ const o=itemById(id); return o&&o.hide===part; });
 function chBack(a,noTail){
   const T=x=>noTail?'':x;   /* 頭貼只取頭，尾巴不畫 */
   const E=x=>'<g class="ears" data-p="60,'+(a.hy-a.hr*.2).toFixed(0)+'">'+x+'</g>', hy=a.hy, hr=a.hr;
@@ -1817,7 +1819,8 @@ function chBack(a,noTail){
              '<path d="M'+(60-hr+3)+' '+(hy-hr+5)+' '+(60-hr+14)+' '+(hy+3)+' '+(60-hr+7)+' '+(hy+7)+'z'+
               'M'+(60+hr-3)+' '+(hy-hr+5)+' '+(60+hr-14)+' '+(hy+3)+' '+(60+hr-7)+' '+(hy+7)+'z" fill="#fff0e2" opacity=".8"/>');
   if(a.k==='a-bot')
-    return '<g class="ears" data-p="60,'+(hy-a.hry)+'"><path d="M60 '+(hy-a.hry-9)+'V'+(hy-a.hry+2)+'" stroke="'+a.d+'" stroke-width="4"/>'+
+    return hides(a,'ant') ? '<g class="ears" data-p="60,'+(hy-a.hry)+'"></g>'
+         : '<g class="ears" data-p="60,'+(hy-a.hry)+'"><path d="M60 '+(hy-a.hry-9)+'V'+(hy-a.hry+2)+'" stroke="'+a.d+'" stroke-width="4"/>'+
            '<circle cx="60" cy="'+(hy-a.hry-11)+'" r="6" fill="#3ce0d0"/></g>';
   if(a.k==='a-frog')                                   /* 兩顆凸在頭頂的眼球包 */
     return '<circle cx="'+(60-a.gap)+'" cy="'+eyeY(a)+'" r="13" fill="#6cc24a"/>'+
@@ -2066,10 +2069,18 @@ const ITEMS=[
       '<path d="M'+(60-a.bw*.7)+' '+t+'q'+(a.bw*.7)+' 7 '+(a.bw*1.4)+' 0" '+
       'stroke="#ffc233" stroke-width="3" fill="none"/>';}},
   {id:'mask', n:'狐狸面具', p:110, slot:'face', only:'a-fox', d:a=>{
-    const y=eyeY(a), g=a.gap;
-    return '<path d="M'+(60-g-9)+' '+(y-7)+'q'+(g+9)+' -6 '+((g+9)*2)+' 0q-2 15 -'+(g+9)+' 19q-'+(g+7)+' -4 -'+((g+9))+' -19z" fill="#fff0e2" opacity=".95"/>'+
-      '<path d="M'+(60-g-4)+' '+(y-1)+'h8M'+(60+g-4)+' '+(y-1)+'h8" stroke="#c94a1e" stroke-width="3" stroke-linecap="round"/>'+
-      '<path d="M'+(60-g-9)+' '+(y-7)+'l4-9 7 6M'+(60+g+9)+' '+(y-7)+'l-4-9-7 6" fill="#c94a1e"/>';}},
+    /* 整張臉都蓋住，只留兩個眼洞 */
+    const cy=a.hy, rx=a.hr*.98, ry=HRY(a)*.98, y=eyeY(a), g=a.gap;
+    return '<ellipse cx="60" cy="'+cy+'" rx="'+rx+'" ry="'+ry+'" fill="#fff0e2"/>'+
+      '<path d="M'+(60-rx)+' '+(cy-ry*.3)+'a'+rx+' '+ry+' 0 0 1 '+(rx*2)+' 0'+
+        'q-'+rx+' -'+(ry*.5)+' -'+(rx*2)+' 0z" fill="#c94a1e"/>'+
+      '<ellipse cx="'+(60-g)+'" cy="'+y+'" rx="5.6" ry="4.2" fill="#2b1a12"/>'+
+      '<ellipse cx="'+(60+g)+'" cy="'+y+'" rx="5.6" ry="4.2" fill="#2b1a12"/>'+
+      '<path d="M60 '+(cy+ry*.2)+'l-6.5 5.5h13z" fill="#2b1a12"/>'+
+      '<path d="M60 '+(cy+ry*.2+5.5)+'v5" stroke="#c94a1e" stroke-width="2"/>'+
+      '<path d="M'+(60-rx*.72)+' '+(cy+ry*.5)+'h9M'+(60+rx*.72-9)+' '+(cy+ry*.5)+'h9" '+
+        'stroke="#c94a1e" stroke-width="2" stroke-linecap="round"/>'+
+      '<ellipse cx="60" cy="'+cy+'" rx="'+rx+'" ry="'+ry+'" fill="none" stroke="#c94a1e" stroke-width="1.6"/>';}},
   /* ── 企鵝 ── */
   {id:'boot', n:'雪靴', p:90, slot:'foot', only:'a-peng', d:a=>{
     const y=(a.fy||107)-4, x=a.fx||13;
@@ -2093,16 +2104,19 @@ const ITEMS=[
       '<rect x="'+(60+w-10)+'" y="'+y+'" width="10" height="'+(a.bh*1.5)+'" rx="5" fill="#cdd7ee"/>'+
       '<path d="M'+(60-w+5)+' '+(y+a.bh*1.5)+'q5 12 10 0z" fill="#ff9f45"/>'+
       '<path d="M'+(60+w-5)+' '+(y+a.bh*1.5)+'q-5 12 -10 0z" fill="#ff9f45"/>';}},
-  {id:'jet', n:'噴射底座', p:140, slot:'foot', only:'a-bot', d:a=>{
-    const y=a.by+a.bh-3;                 /* 火焰要留在畫布內 */
-    return '<path d="M50 '+y+'h20l-4 11h-12z" fill="#8fa3c8"/>'+
-      '<path d="M54 '+(y+11)+'q6 11 12 0z" fill="#ff9f45"/>'+
-      '<path d="M57 '+(y+11)+'q3 6 6 0z" fill="#ffe58a"/>';}},
-  {id:'dish', n:'雷達天線', p:110, slot:'head', only:'a-bot', d:a=>{
-    const t=HT(a)+2;
-    return '<path d="M60 '+t+'l-11-8q11-6 22 0z" fill="#cdd7ee"/>'+
-      '<path d="M60 '+(t-8)+'v-6" stroke="#8fa3c8" stroke-width="3"/>'+
-      '<circle cx="60" cy="'+(t-16)+'" r="3.6" fill="#ff5c8a"/>';}},
+  {id:'jet', n:'噴射底座', p:140, slot:'foot', only:'a-bot', hide:'base', d:a=>{
+    const y=a.by+a.bh-2;                 /* 換掉原本的底座，火焰要留在畫布內 */
+    return '<path d="M47 '+y+'h26l-5 12h-16z" fill="#8fa3c8"/>'+
+      '<path d="M47 '+y+'h26" stroke="#6c7fa8" stroke-width="3" stroke-linecap="round"/>'+
+      '<path d="M53 '+(y+12)+'q7 11 14 0z" fill="#ff9f45"/>'+
+      '<path d="M56.5 '+(y+12)+'q3.5 6.5 7 0z" fill="#ffe58a"/>';}},
+  {id:'dish', n:'雷達天線', p:110, slot:'head', only:'a-bot', hide:'ant', d:a=>{
+    const t=HT(a)+2;                     /* 換掉原本那根天線，不是插兩根 */
+    return '<path d="M60 '+t+'V'+(t-7)+'" stroke="#8fa3c8" stroke-width="4"/>'+
+      '<path d="M60 '+(t-7)+'l-12-9q12-6.5 24 0z" fill="#cdd7ee"/>'+
+      '<path d="M60 '+(t-7)+'l-12-9q12-6.5 24 0z" fill="none" stroke="#8fa3c8" stroke-width="1.2"/>'+
+      '<path d="M60 '+(t-11)+'v-5" stroke="#8fa3c8" stroke-width="2.4"/>'+
+      '<circle cx="60" cy="'+(t-18)+'" r="3.6" fill="#ff5c8a"/>';}},
   /* ── 青蛙 ── */
   {id:'lotus', n:'荷葉傘', p:100, slot:'hand', only:'a-frog', d:a=>{
     const x=60-(a.bw+6), y=a.by-6;
@@ -2110,12 +2124,18 @@ const ITEMS=[
       '<path d="M'+(x-16)+' '+(y+4)+'a16 9 0 0 1 32 0z" fill="#4a8f32"/>'+
       '<path d="M'+x+' '+(y+4)+'l-9-7M'+x+' '+(y+4)+'l9-7" stroke="#2c5c23" stroke-width="1.4"/>';}},
   {id:'aloha', n:'花襯衫', p:120, slot:'body', only:'a-frog', d:a=>{
-    const t=a.by-a.bh, h=a.bh*2;
+    /* 敞開的，中間那條露出身體 */
+    const t=a.by-a.bh, h=a.bh*2, top=t+h*.08, bot=t+h*.95, gt=6.5, gb=3;
     return '<path d="'+garment(a,.08,.95)+'" fill="#3ce0d0"/>'+
-      '<circle cx="'+(60-a.bw*.42)+'" cy="'+(t+h*.28)+'" r="3.2" fill="#ff5c8a"/>'+
-      '<circle cx="'+(60+a.bw*.4)+'" cy="'+(t+h*.5)+'" r="3.2" fill="#ffc233"/>'+
-      '<circle cx="'+(60-a.bw*.18)+'" cy="'+(t+h*.66)+'" r="2.8" fill="#fff"/>'+
-      '<path d="M60 '+(t+h*.08)+'V'+(t+h*.95)+'" stroke="#1b8f85" stroke-width="2"/>';}},
+      '<path d="M'+(60-gt)+' '+top+'L'+(60-gb)+' '+bot+'h'+(gb*2)+'L'+(60+gt)+' '+top+'z" fill="'+a.c+'"/>'+
+      '<path d="M'+(60-gt)+' '+top+'L'+(60-gb)+' '+bot+'M'+(60+gt)+' '+top+'L'+(60+gb)+' '+bot+
+        '" stroke="#1b8f85" stroke-width="1.6" fill="none"/>'+
+      '<path d="M'+(60-gt)+' '+top+'l-8.5 2.5 6.5 8z" fill="#2bb5a8"/>'+
+      '<path d="M'+(60+gt)+' '+top+'l8.5 2.5-6.5 8z" fill="#2bb5a8"/>'+
+      '<circle cx="'+(60-a.bw*.55)+'" cy="'+(t+h*.42)+'" r="3.2" fill="#ff5c8a"/>'+
+      '<circle cx="'+(60+a.bw*.55)+'" cy="'+(t+h*.58)+'" r="3.2" fill="#ffc233"/>'+
+      '<circle cx="'+(60-a.bw*.5)+'" cy="'+(t+h*.75)+'" r="2.6" fill="#fff"/>'+
+      '<circle cx="'+(60+a.bw*.48)+'" cy="'+(t+h*.28)+'" r="2.6" fill="#fff"/>';}},
   {id:'goggle', n:'蛙鏡', p:90, slot:'face', only:'a-frog', d:a=>{
     const y=eyeY(a), g=a.gap;
     return '<g fill="none" stroke="#5aa9ff" stroke-width="3.4">'+
@@ -2130,11 +2150,14 @@ const ITEMS=[
       '<rect x="'+(x-8)+'" y="'+(y-6)+'" width="16" height="13" fill="#f7f4ec"/>'+
       '<path d="M'+x+' '+(y-6)+'v13" stroke="#c9b8e8" stroke-width="1.4"/>';}},
   {id:'grad', n:'學士帽', p:130, slot:'head', only:'a-owl', d:a=>{
-    const y=HLINE(a), w=HATW(a);
-    return '<path d="M'+(60-w*.62)+' '+(y-2)+'h'+(w*1.24)+'v9h-'+(w*1.24)+'z" fill="#2a1a4a"/>'+
-      '<path d="M60 '+(y-12)+'l'+(w+3)+' 6-'+(w+3)+' 6-'+(w+3)+'-6z" fill="#3a2560"/>'+
-      '<path d="M'+(60+w*.9)+' '+(y-4)+'v13" stroke="#ffc233" stroke-width="2.4"/>'+
-      '<circle cx="'+(60+w*.9)+'" cy="'+(y+10)+'" r="3.2" fill="#ffc233"/>';}},
+    /* 帽圈貼著頭的曲線，板子壓在頭頂上，不要陷進頭裡 */
+    const kb=.55, yb=a.hy-HRY(a)*kb, wb=HWAT(a,kb);
+    const yc=a.hy-HRY(a)*.96, wp=wb+9;
+    return '<path d="M'+(60-wb)+' '+(yb-4)+'h'+(wb*2)+'v11h-'+(wb*2)+'z" fill="#2a1a4a"/>'+
+      '<path d="M60 '+(yc-6)+'l'+wp+' 6-'+wp+' 6-'+wp+'-6z" fill="#3a2560"/>'+
+      '<path d="M60 '+(yc-6)+'l'+wp+' 6-'+wp+' 6-'+wp+'-6z" fill="none" stroke="#1b1030" stroke-width="1.2"/>'+
+      '<path d="M'+(60+wp*.6)+' '+(yc+2)+'v13" stroke="#ffc233" stroke-width="2.4"/>'+
+      '<circle cx="'+(60+wp*.6)+'" cy="'+(yc+17)+'" r="3.4" fill="#ffc233"/>';}},
   {id:'mono', n:'單片眼鏡', p:70, slot:'face', only:'a-owl', d:a=>{
     const y=eyeY(a), g=a.gap;
     return '<circle cx="'+(60+g)+'" cy="'+y+'" r="11" fill="none" stroke="#ffc233" stroke-width="2.6"/>'+
@@ -2208,7 +2231,7 @@ function chSVG(a,e,small){
   const leg=x=>a.legs?'<path d="M'+x+' '+(a.by+a.bh-4)+'V'+(fy-2)+'" stroke="'+a.d+
                       '" stroke-width="7" stroke-linecap="round"/>':'';
   const feet=a.base
-    ? '<rect x="45" y="'+(a.by+a.bh)+'" width="30" height="10" rx="5" fill="'+ft+'"/>'+
+    ? (hides(a,'base')?'':'<rect x="45" y="'+(a.by+a.bh)+'" width="30" height="10" rx="5" fill="'+ft+'"/>')+
       '<g class="footL"></g><g class="footR"></g>'
     : '<g class="footL">'+leg(60-fx)+'<ellipse cx="'+(60-fx)+'" cy="'+fy+'" rx="'+fw+'" ry="5.5" fill="'+ft+'"/></g>'+
       '<g class="footR">'+leg(60+fx)+'<ellipse cx="'+(60+fx)+'" cy="'+fy+'" rx="'+fw+'" ry="5.5" fill="'+ft+'"/></g>';
