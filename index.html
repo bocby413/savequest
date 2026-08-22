@@ -585,6 +585,21 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .glog .r .x{flex:none;width:20px;height:20px;border:0;background:none;color:var(--txt3);cursor:pointer;
   border-radius:50%;line-height:1;font-size:14px}
 .glog .r .x:hover{color:var(--red)}
+.mchips{display:flex;flex-wrap:wrap;gap:6px}
+.mchips button{border:1.5px solid var(--edge2);background:var(--panel2);color:var(--txt2);
+  border-radius:99px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.mchips button.on{border-color:var(--gold);background:rgba(255,194,51,.16);color:var(--gold)}
+.mchips button.off{opacity:.42;text-decoration:line-through}
+.f label .hint{display:block;font-style:normal;font-size:11.5px;color:var(--txt3);font-weight:500;margin-top:2px}
+.splitnote{font-size:12.5px;color:var(--txt3);margin:-2px 0 10px;min-height:18px}
+.splitnote b{color:var(--txt2);font-weight:700}
+.owe{margin-top:10px;border-top:1px solid var(--edge);padding-top:9px}
+.owe .hd{font-size:12px;letter-spacing:1px;color:var(--gold);font-weight:800;margin-bottom:6px}
+.owe .r{display:flex;align-items:center;gap:7px;font-size:13.5px;padding:4px 0}
+.owe .r b{font-weight:800}
+.owe .ar{color:var(--txt3);flex:none}
+.owe .v{margin-left:auto;font-weight:800;color:var(--gold)}
+.owe .none{font-size:12.5px;color:var(--txt3)}
 .gempty{color:var(--txt3);font-size:13px;padding:14px 2px;text-align:center}
 .ginvsel{font:inherit;font-size:13px;padding:7px 10px;border-radius:10px;cursor:pointer;
   background:var(--panel3);border:1.5px solid var(--edge);color:var(--txt2);width:100%}
@@ -773,6 +788,12 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   color:var(--txt2);text-align:center;margin-top:4px}
 .preview b{font-size:19px;font-weight:800;color:var(--txt);display:block;margin-top:2px}
 .quickbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+/* 三顆一律排同一行，寬度不夠就一起縮，不要換行 */
+.dfoot.one{flex-wrap:nowrap;gap:7px;justify-content:space-between}
+.dfoot.one .btn{flex:0 1 auto;min-width:0;padding-left:9px;padding-right:9px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;justify-content:center}
+@media(max-width:430px){.dfoot.one .btn{font-size:12.5px;padding-left:5px;padding-right:5px}}
+@media(max-width:360px){.dfoot.one .btn{font-size:11.5px}}
 .dfoot{display:flex;justify-content:flex-end;gap:10px;position:sticky;bottom:-24px;z-index:3;
   background:var(--panel);margin:20px -24px -24px;padding:14px 24px 24px;border-top:1px solid var(--edge)}
 #toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,16px);opacity:0;pointer-events:none;z-index:70;
@@ -1208,7 +1229,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   </div>
   <div class="pgrid" id="profBody"></div>
   <div class="say" id="profFoot" style="margin-top:12px"></div>
-  <div class="dfoot">
+  <div class="dfoot one">
     <button class="btn ghost" id="profBack">返回</button>
     <button class="btn ghost" id="profGrant">我分享給他什麼</button>
     <button class="btn ghost del" id="profDel">移除好友</button>
@@ -1238,6 +1259,10 @@ html[data-skin="light"] .logbar input{color-scheme:light}
     <div class="f"><label>金額</label><input type="number" id="grAmt" placeholder="" inputmode="decimal"></div>
   </div>
   <div class="f"><label>項目（可留白）</label><input type="text" id="grNote" placeholder="買什麼、誰付的…"></div>
+  <div class="f"><label id="grPayLb">誰先付的</label><div class="mchips" id="grPayer"></div></div>
+  <div class="f"><label>這筆不算誰<i class="hint">點一下就把他排除，剩下的人平分</i></label>
+    <div class="mchips" id="grExcl"></div></div>
+  <div class="splitnote" id="grSplit"></div>
   <div class="dfoot"><button class="btn ghost" id="grCancel">取消</button>
     <button class="btn go" id="grSave">記下來</button></div>
 </div></div>
@@ -3950,6 +3975,17 @@ $('profDel').onclick=()=>{
   if(!confirm('移除好友「'+friName(f)+'」？')) return;
   CLOUD.removeFriend(f).then(()=>{ SFX.play('del'); toast('已移除'); $('profBack').onclick(); });
 };
+$('grAmt').addEventListener('input',()=>{ if($('vGRec').classList.contains('on')) renderGPick(); });
+$('grPayer').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-gpay]'); if(!b) return;
+  grPayer=b.dataset.gpay; renderGPick(); SFX.play('tick');
+});
+$('grExcl').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-gex]'); if(!b) return;
+  const u=b.dataset.gex, i=grExcl.indexOf(u);
+  if(i>=0) grExcl.splice(i,1); else grExcl.push(u);
+  renderGPick(); SFX.play('tick');
+});
 $('grKinds').addEventListener('click',e=>{
   const b=e.target.closest('button[data-gk]'); if(!b) return;
   grKind=b.dataset.gk; SFX.play('tick');
@@ -4243,6 +4279,49 @@ function renderPet(){
   PET.watch(); PET.start();
 }
 /* ── 揪團 ── */
+const gMemName=(g,uid)=>((g.info||{})[uid]||{}).n||'成員';
+/* 每筆記錄記下當時是誰付的、哪些人要分。後來才加入的人不會被回頭算進舊帳 */
+function recPart(g,r){
+  if(Array.isArray(r.part)&&r.part.length) return r.part;
+  const ex=Array.isArray(r.excl)?r.excl:[];
+  return (g.members||[]).filter(u=>ex.indexOf(u)<0);
+}
+const recPayer=(g,r)=>r.payer||r.by;
+/* 每個人的淨額：正的代表他墊了錢別人要還他，負的代表他欠 */
+function settle(g,recs){
+  const bal={};
+  (g.members||[]).forEach(u=>bal[u]=0);
+  recs.forEach(r=>{
+    const v=+r.amount||0; if(!v) return;
+    const payer=recPayer(g,r); if(payer===undefined) return;
+    const part=recPart(g,r).filter(u=>bal[u]!==undefined);
+    if(!part.length) return;
+    const sign=r.kind==='in'?-1:1;            /* 收入是反過來的：收錢的人反而欠大家 */
+    if(bal[payer]===undefined) bal[payer]=0;
+    bal[payer]+=sign*v;
+    const share=sign*v/part.length;
+    part.forEach(u=>bal[u]-=share);
+  });
+  return bal;
+}
+/* 把淨額換成最少筆數的轉帳：最大的欠款去補最大的墊款 */
+function transfers(bal){
+  const cre=[], deb=[];
+  Object.keys(bal).forEach(u=>{
+    const v=Math.round(bal[u]*100)/100;
+    if(v>.005) cre.push([u,v]); else if(v<-.005) deb.push([u,-v]);
+  });
+  cre.sort((x,y)=>y[1]-x[1]); deb.sort((x,y)=>y[1]-x[1]);
+  const out=[]; let i=0, j=0;
+  while(i<deb.length&&j<cre.length){
+    const v=Math.min(deb[i][1],cre[j][1]);
+    if(v>.005) out.push({from:deb[i][0],to:cre[j][0],amt:v});
+    deb[i][1]-=v; cre[j][1]-=v;
+    if(deb[i][1]<=.005) i++;
+    if(cre[j][1]<=.005) j++;
+  }
+  return out;
+}
 function renderGroups(){
   const dot=$('gDot');
   if(dot) dot.className='dot'+(GINVS.length?' on':'');
@@ -4265,9 +4344,10 @@ function renderGroups(){
       /* 每個人各出了多少 */
       const per={}; let tin=0, tout=0;
       GRECS.forEach(r=>{
-        const v=+r.amount||0;
-        if(r.kind==='in') tin+=v; else { tout+=v; per[r.by]=(per[r.by]||0)+v; }
+        const v=+r.amount||0, p=recPayer(g,r);
+        if(r.kind==='in') tin+=v; else { tout+=v; per[p]=(per[p]||0)+v; }
       });
+      const tr=transfers(settle(g,GRECS));
       inner='<div class="gin">'+
         '<div class="gmem">'+(g.members||[]).map(uid=>{
           const i=info[uid]||{};
@@ -4284,13 +4364,22 @@ function renderGroups(){
         '<div class="glog">'+(GRECS.length?GRECS.map(r=>
           '<div class="r"><span class="d">'+md(r.date)+'</span>'+
           '<span class="t">'+esc(r.note||(r.kind==='in'?'收入':'支出'))+
-            '<i>'+esc(r.byName||'')+'</i></span>'+
+            '<i>'+esc(gMemName(g,recPayer(g,r))||r.byName||'')+
+            (recPart(g,r).length<(g.members||[]).length
+              ? '　'+recPart(g,r).length+' 人分' : '')+'</i></span>'+
           '<span class="v '+(r.kind==='in'?'in':'out')+'">'+(r.kind==='in'?'+':'-')+money(r.amount)+'</span>'+
           (r.by===me?'<button class="x" data-gdel="'+r.id+'" title="刪掉">×</button>':'<span class="x"></span>')+
           '</div>').join(''):'<div class="gempty">還沒有紀錄，按上面那顆記第一筆。</div>')+'</div>'+
         '<div class="gsum"><span>團裡花掉<b class="down">'+money(tout)+'</b></span>'+
           '<span>團裡收入<b>'+money(tin)+'</b></span>'+
           '<span>幾筆<b>'+GRECS.length+'</b></span></div>'+
+        '<div class="owe"><div class="hd">誰要給誰</div>'+
+          (tr.length?tr.map(t=>
+            '<div class="r"><b'+(t.from===me?' style="color:var(--gold)"':'')+'>'+esc(gMemName(g,t.from))+'</b>'+
+            '<span class="ar">給</span><b'+(t.to===me?' style="color:var(--gold)"':'')+'>'+esc(gMemName(g,t.to))+'</b>'+
+            '<span class="v">'+money(Math.round(t.amt))+'</span></div>').join('')
+           :'<div class="none">'+(GRECS.length?'目前打平，沒有人欠誰。':'還沒有紀錄。')+'</div>')+
+        '</div>'+
         '<div style="margin-top:10px;text-align:right">'+
           '<button class="btn sm ghost del" data-gout="'+g.id+'">退出這團</button></div>'+
       '</div>';
@@ -4301,11 +4390,31 @@ function renderGroups(){
   }).join('');
   box.innerHTML=h;
 }
-let grKind='out', grFor=null;
+let grKind='out', grFor=null, grPayer=null, grExcl=[];
+/* 兩排人名：上面單選誰付的，下面點掉不參與的 */
+function renderGPick(){
+  const g=GROUPS.find(x=>x.id===grFor); if(!g) return;
+  const me=CLOUD.user?CLOUD.user.uid:'';
+  const mem=g.members||[];
+  if(mem.indexOf(grPayer)<0) grPayer=mem.indexOf(me)>=0?me:mem[0];
+  grExcl=grExcl.filter(u=>mem.indexOf(u)>=0);
+  const nm=u=>esc(gMemName(g,u))+(u===me?'（我）':'');
+  $('grPayLb').textContent=grKind==='in'?'誰收的':'誰先付的';
+  $('grPayer').innerHTML=mem.map(u=>
+    '<button type="button" data-gpay="'+u+'" class="'+(u===grPayer?'on':'')+'">'+nm(u)+'</button>').join('');
+  $('grExcl').innerHTML=mem.map(u=>
+    '<button type="button" data-gex="'+u+'" class="'+(grExcl.indexOf(u)>=0?'off':'')+'">'+nm(u)+'</button>').join('');
+  const part=mem.filter(u=>grExcl.indexOf(u)<0);
+  const v=parseFloat($('grAmt').value);
+  $('grSplit').innerHTML= !part.length ? '至少要留一個人來分。'
+    : (isNaN(v)||v<=0) ? part.length+' 個人平分'
+    : '<b>'+part.length+' 個人</b>平分，一人 <b>'+money(Math.round(v/part.length))+'</b>';
+}
 function openGRec(gid){
-  grFor=gid; grKind='out';
+  grFor=gid; grKind='out'; grPayer=null; grExcl=[];
   $('grKinds').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.gk==='out'));
   $('grDate').value=todayStr(); $('grAmt').value=''; $('grNote').value='';
+  renderGPick();
   open('vGRec');
 }
 /* ── 商店 ── */
@@ -4688,7 +4797,11 @@ document.body.addEventListener('click',e=>{
   if(b.id==='grSave'){
     const d=$('grDate').value, v=parseFloat($('grAmt').value);
     if(!d||isNaN(v)||v<=0){ SFX.play('err'); toast('日期跟金額都要填'); return; }
-    CLOUD.addGroupRec(grFor,{date:d,kind:grKind,amount:v,note:$('grNote').value.trim()}).then(r=>{
+    const g=GROUPS.find(x=>x.id===grFor);
+    const part=(g&&g.members||[]).filter(u=>grExcl.indexOf(u)<0);
+    if(!part.length){ SFX.play('err'); toast('至少要留一個人來分'); return; }
+    CLOUD.addGroupRec(grFor,{date:d,kind:grKind,amount:v,note:$('grNote').value.trim(),
+      payer:grPayer, part:part}).then(r=>{
       if(r.err){ SFX.play('err'); toast('記帳失敗：'+r.err); return; }
       $('vGRec').classList.remove('on');
       SFX.play(grKind==='out'?'spend':'coin'); toast('記到團裡了');
