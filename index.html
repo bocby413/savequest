@@ -1826,7 +1826,8 @@ function chBack(a,noTail){
     return '<circle cx="'+(60-a.gap)+'" cy="'+eyeY(a)+'" r="13" fill="#6cc24a"/>'+
            '<circle cx="'+(60+a.gap)+'" cy="'+eyeY(a)+'" r="13" fill="#6cc24a"/>';
   if(a.k==='a-owl')
-    return E('<path d="M'+(60-hr+6)+' '+(hy-hr+9)+' '+(60-hr+15)+' '+(hy-hr-2)+'l9 10z'+
+    return hides(a,'ear') ? E('')
+         : E('<path d="M'+(60-hr+6)+' '+(hy-hr+9)+' '+(60-hr+15)+' '+(hy-hr-2)+'l9 10z'+
               'M'+(60+hr-6)+' '+(hy-hr+9)+' '+(60+hr-15)+' '+(hy-hr-2)+'l-9 10z" fill="'+a.d+'"/>');
   return '';
 }
@@ -2072,8 +2073,6 @@ const ITEMS=[
     /* 整張臉都蓋住，只留兩個眼洞 */
     const cy=a.hy, rx=a.hr*.98, ry=HRY(a)*.98, y=eyeY(a), g=a.gap;
     return '<ellipse cx="60" cy="'+cy+'" rx="'+rx+'" ry="'+ry+'" fill="#fff0e2"/>'+
-      '<path d="M'+(60-rx)+' '+(cy-ry*.3)+'a'+rx+' '+ry+' 0 0 1 '+(rx*2)+' 0'+
-        'q-'+rx+' -'+(ry*.5)+' -'+(rx*2)+' 0z" fill="#c94a1e"/>'+
       '<ellipse cx="'+(60-g)+'" cy="'+y+'" rx="5.6" ry="4.2" fill="#2b1a12"/>'+
       '<ellipse cx="'+(60+g)+'" cy="'+y+'" rx="5.6" ry="4.2" fill="#2b1a12"/>'+
       '<path d="M60 '+(cy+ry*.2)+'l-6.5 5.5h13z" fill="#2b1a12"/>'+
@@ -2149,7 +2148,7 @@ const ITEMS=[
     return '<rect x="'+(x-11)+'" y="'+(y-8)+'" width="22" height="17" rx="2" fill="#8a5ce0"/>'+
       '<rect x="'+(x-8)+'" y="'+(y-6)+'" width="16" height="13" fill="#f7f4ec"/>'+
       '<path d="M'+x+' '+(y-6)+'v13" stroke="#c9b8e8" stroke-width="1.4"/>';}},
-  {id:'grad', n:'學士帽', p:130, slot:'head', only:'a-owl', d:a=>{
+  {id:'grad', n:'學士帽', p:130, slot:'head', only:'a-owl', hide:'ear', d:a=>{
     /* 帽圈上窄下寬照著頭的弧度收，不然兩個角會戳出頭外面、跟板子中間漏出背景。
        板子直接壓在帽圈上緣，兩塊有重疊才不會有縫 */
     const k1=.42, k2=.78;
@@ -4155,7 +4154,7 @@ const PET={
   cur:{y:0,sx:1,sy:1,rot:0,aL:0,aR:0}, tgt:{y:0,sx:1,sy:1,rot:0,aL:0,aR:0},
   nextBlink:2600, nextAct:7000,
   grab(){
-    const box=$('petBox');
+    const box=$(this.boxId||'petBox');
     if(!box||!box.querySelector('.ch')){ this.el=null; return false; }
     if(this.el&&this.el.box===box&&box.contains(this.el.ch)) return true;
     this.el={box, ch:box.querySelector('.ch'), face:box.querySelector('.face'),
@@ -4164,7 +4163,7 @@ const PET={
     return true;
   },
   watch(){
-    const box=$('petBox');
+    const box=$(this.boxId||'petBox');
     if(!box||this.io||!window.IntersectionObserver) return;
     this.io=new IntersectionObserver(es=>{ this.live=es[0].isIntersecting; if(this.live){this.last=0;this.start();} },
       {rootMargin:'60px'});
@@ -4215,6 +4214,16 @@ const PET={
 };
 /* HUD 上那隻跟著頭貼走；頭貼是照片就用轉盤那隻 */
 /* 造型有變就同步一次，好友那邊才會跟著換 */
+/* 同一套閒置動畫可以掛在別的容器上（商店的試衣間也要牠自己動）。
+   狀態要各自一份，不然兩隻會互相搶 */
+function makePet(boxId){
+  return Object.assign(Object.create(PET),{
+    boxId, el:null, raf:0, last:0, live:true, io:null, t:0,
+    cur:{y:0,sx:1,sy:1,rot:0,aL:0,aR:0}, tgt:{y:0,sx:1,sy:1,rot:0,aL:0,aR:0},
+    nextBlink:2600, nextAct:7000
+  });
+}
+const SHOPPET=makePet('shopStage');
 function pushLook(){ if(window.CLOUD&&CLOUD.user){ CLOUD.publishProfile(); CLOUD.pushShares(); } }
 function petChar(){
   const av=db.settings.avatar;
@@ -4334,8 +4343,9 @@ function renderShop(){
   const m=wearMap(), keep=m[a.k];
   m[a.k]=tryOutfit(a);
   wearRaw=1;
-  $('shopStage').innerHTML=chSVG(a,'up');
+  $('shopStage').innerHTML=chSVG(a,'idle');   /* 跟 HUD 那隻一樣是閒置的樣子 */
   wearRaw=0;
+  SHOPPET.watch(); SHOPPET.start();
   m[a.k]=keep;
   $('shopCoins').innerHTML='<svg class="i"><use href="#i-coin"/></svg>'+money(coins())+' Bo士幣';
   /* 分類橫幅：正在試穿的那格標星號，已經穿著的標點 */
