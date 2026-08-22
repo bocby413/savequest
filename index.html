@@ -419,7 +419,8 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .cattag.plain{color:var(--txt3);border-color:var(--edge);background:var(--panel2)}
 .cattag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap;
   color:var(--c);border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) 12%,transparent)}
-.logt .x{text-align:right}
+.logt .x{text-align:right;white-space:nowrap}
+.logt .x .iq+.iq{margin-left:2px}
 .logt .x .iq{opacity:0} .logt tr:hover .x .iq{opacity:1}
 .empty{padding:30px 22px;color:var(--txt3);font-size:14px}
 .empty b{display:block;color:var(--txt2);font-size:15.5px;font-weight:700;margin-bottom:4px}
@@ -923,6 +924,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   <symbol id="i-vol" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4V9zm12.5-1.6a6 6 0 0 1 0 9.2l-1.3-1.5a4 4 0 0 0 0-6.2l1.3-1.5zm2.6-2.9a10 10 0 0 1 0 15l-1.3-1.5a8 8 0 0 0 0-12l1.3-1.5z"/></symbol>
   <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4V9zm12.6.4l1.4-1.4 2.1 2.1 2.1-2.1 1.4 1.4-2.1 2.1 2.1 2.1-1.4 1.4-2.1-2.1-2.1 2.1-1.4-1.4 2.1-2.1-2.1-2.1z"/></symbol>
   <symbol id="i-users" viewBox="0 0 24 24"><path d="M8 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-3.3 0-6 1.8-6 4v2h12v-2c0-2.2-2.7-4-6-4zm9-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 2c-.9 0-1.7.1-2.4.4 1.5.9 2.4 2.2 2.4 3.6v2h5v-2c0-2.2-2.4-4-5-4z"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M3 17.2V21h3.8L17.8 10 14 6.2 3 17.2zM20.7 7.1a1 1 0 0 0 0-1.4l-2.4-2.4a1 1 0 0 0-1.4 0l-1.8 1.8L19 8.9l1.7-1.8z"/></symbol>
   <symbol id="i-cam" viewBox="0 0 24 24"><path d="M9 3h6l1.5 2H21v16H3V5h4.5L9 3zm3 5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zm0 2a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7z"/></symbol>
 </svg>
 <svg id="avaDefs" style="display:none"></svg>
@@ -3185,7 +3187,11 @@ function renderLog(){
         '<td class="c n mobonly '+(p.delta>=0?'up':'down')+'">'+
           (p.kind==='set'?'':(p.kind==='in'?'+':'-')+money(p.amount))+'</td>'+
         '<td class="m n">'+money(p.bal)+'</td>'+
-        '<td class="x"><button class="iq del" data-del-rec="'+p.id+'"><svg class="i"><use href="#i-x"/></svg></button></td></tr>';
+        '<td class="x">'+
+          (p.code?'':'<button class="iq" data-edit-rec="'+p.id+'" title="改這筆">'+
+                    '<svg class="i"><use href="#i-pen"/></svg></button>')+
+          '<button class="iq del" data-del-rec="'+p.id+'" title="刪掉">'+
+          '<svg class="i"><use href="#i-x"/></svg></button></td></tr>';
     }).join('')+'</tbody></table>'+
     (pages>1
       ? '<div class="pager">'+
@@ -4158,6 +4164,9 @@ function renderCats(){
   $('rCatWrap').style.display='';
   const chips=detail?list.filter(c=>c!=='其他')
                    :list.filter(c=>c!=='其他').concat(usedCats(rKind));
+  /* 改舊紀錄時，那筆的分類可能已經從清單裡刪掉了。補一顆進去，
+     不然會被默默換成第一個分類，等於偷偷改了資料 */
+  if(!rCustom&&rCat&&rCat!=='其他'&&chips.indexOf(rCat)<0) chips.unshift(rCat);
   if(!rCustom&&chips.indexOf(rCat)<0) rCat=chips[0]||'其他';
   const btn=c=>{
     const col=catColor(c,base), on=!rCustom&&c===rCat;
@@ -4268,22 +4277,47 @@ $('rKinds').addEventListener('click',e=>{
 $('rAmt').addEventListener('input',updatePrev);
 $('rDate').addEventListener('change',updatePrev);
 
-$('btnAddRec').onclick=()=>{
-  $('rDate').value=todayStr(); $('rAmt').value=''; $('rNote').value='';
-  setKind('in');
+let rEdit=null;
+function openRec(id){
+  const r=id?db.records.find(x=>x.id===id):null;
+  rEdit=r?r.id:null;
+  setKind(r?(r.kind||'in'):'in');          /* 這行會把類別清空，所以要先叫 */
+  $('rDate').value=r?(r.date||todayStr()):todayStr();
+  $('rAmt').value=r?(r.amount||''):'';
+  $('rNote').value=r?(r.note||''):'';
+  if(r){                                   /* 把當時選的類別、子分類還原回去 */
+    const chips=(CATS[r.kind]||[]);
+    rCustom=!detailOn()&&!!(r.cat&&r.cat!=='其他'&&chips.indexOf(r.cat)<0);
+    rCat=r.cat||''; rSub=r.sub||'';
+    renderCats();
+    if(rCustom){ const i=$('rCatOther'); if(i) i.value=r.cat; }
+  }
+  $('vRec').querySelector('h3').textContent=r?'改這一筆':'記一筆';
+  $('saveRec').textContent=r?'存起來':'記下來';
+  updatePrev();
   open('vRec');
-};
+}
+$('btnAddRec').onclick=()=>openRec();
 $('saveRec').onclick=()=>{
   const date=$('rDate').value, v=parseFloat($('rAmt').value);
   if(!date||isNaN(v)||v<=0){ SFX.play('err'); toast('日期和金額都要填，金額要大於 0'); return; }
   const d0=new Date(), before=levelInfo().lv, tgt=targetAt(d0.getFullYear(),d0.getMonth());
   const thisMon=()=>{const d=new Date(),m=monthly().find(x=>x.y===d.getFullYear()&&x.m===d.getMonth());return m?m.delta:null;};
   const mBefore=thisMon();
-  const cat = rKind==='set' ? '' : ((rCustom?($('rCatOther')?$('rCatOther').value.trim():''):rCat)||'其他');
-  const rec={id:uid(),ts:Date.now(),date,kind:rKind,amount:v,cat,note:$('rNote').value.trim()};
+  const typed = rCustom&&$('rCatOther') ? $('rCatOther').value.trim() : '';
+  const cat = rKind==='set' ? '' : (typed||rCat||'其他');
+  const old=rEdit?db.records.find(x=>x.id===rEdit):null;
+  const rec={id:old?old.id:uid(), ts:old?old.ts:Date.now(),
+             date,kind:rKind,amount:v,cat,note:$('rNote').value.trim()};
   if(((cat===STOCK||cat===LOAN)||detailOn())&&rSub) rec.sub=rSub;
 
-  db.records.push(rec);
+  if(old){
+    /* 整筆換掉而不是逐欄合併，換了類別時舊的子分類才不會留著 */
+    rec.editedAt=Date.now();
+    db.records[db.records.indexOf(old)]=rec;
+  }
+  else db.records.push(rec);
+  const wasEdit=!!old; rEdit=null;
   /* 剛記的那筆一定要看得到：跳回第一頁，範圍外就把篩選清掉 */
   logPage=1;
   if((logFrom&&date<logFrom)||(logTo&&date>logTo)){
@@ -4296,6 +4330,7 @@ $('saveRec').onclick=()=>{
   else if(tgt>0&&mAfter!==null&&mAfter>=tgt&&(mBefore===null||mBefore<tgt)){
     burst(innerWidth/2,innerHeight*.4); SFX.play('star'); toast('這個月達標了，蓋一顆星');
   }
+  else if(wasEdit){ SFX.play('tick'); toast('改好了　餘額 '+money(bal)); }
   else{
     SFX.play(rKind==='out'?'spend':rKind==='set'?'set':'coin');
     toast((rKind==='in'?'存入 '+money(v):rKind==='out'?'花掉 '+money(v):'餘額校正')+'　現在 '+money(bal));
@@ -5318,6 +5353,7 @@ document.body.addEventListener('click',e=>{
     calYear=years[Math.max(0,Math.min(years.length-1,i+(b.id==='calNext'?1:-1)))];
     renderCal(); return;
   }
+  if(b.dataset.editRec){ SFX.play('tick'); return openRec(b.dataset.editRec); }
   if(b.dataset.delRec){ if(!confirm('刪掉這筆紀錄？後面的餘額會重算。')) return;
     markDeleted(b.dataset.delRec);
     db.records=db.records.filter(x=>x.id!==b.dataset.delRec); save(); render(); SFX.play('del'); toast('已刪除'); }
