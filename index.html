@@ -2150,14 +2150,18 @@ const ITEMS=[
       '<rect x="'+(x-8)+'" y="'+(y-6)+'" width="16" height="13" fill="#f7f4ec"/>'+
       '<path d="M'+x+' '+(y-6)+'v13" stroke="#c9b8e8" stroke-width="1.4"/>';}},
   {id:'grad', n:'學士帽', p:130, slot:'head', only:'a-owl', d:a=>{
-    /* 帽圈貼著頭的曲線，板子壓在頭頂上，不要陷進頭裡 */
-    const kb=.55, yb=a.hy-HRY(a)*kb, wb=HWAT(a,kb);
-    const yc=a.hy-HRY(a)*.96, wp=wb+9;
-    return '<path d="M'+(60-wb)+' '+(yb-4)+'h'+(wb*2)+'v11h-'+(wb*2)+'z" fill="#2a1a4a"/>'+
-      '<path d="M60 '+(yc-6)+'l'+wp+' 6-'+wp+' 6-'+wp+'-6z" fill="#3a2560"/>'+
-      '<path d="M60 '+(yc-6)+'l'+wp+' 6-'+wp+' 6-'+wp+'-6z" fill="none" stroke="#1b1030" stroke-width="1.2"/>'+
-      '<path d="M'+(60+wp*.6)+' '+(yc+2)+'v13" stroke="#ffc233" stroke-width="2.4"/>'+
-      '<circle cx="'+(60+wp*.6)+'" cy="'+(yc+17)+'" r="3.4" fill="#ffc233"/>';}},
+    /* 帽圈上窄下寬照著頭的弧度收，不然兩個角會戳出頭外面、跟板子中間漏出背景。
+       板子直接壓在帽圈上緣，兩塊有重疊才不會有縫 */
+    const k1=.42, k2=.78;
+    const y1=a.hy-HRY(a)*k1, w1=HWAT(a,k1);
+    const y2=a.hy-HRY(a)*k2, w2=HWAT(a,k2);
+    const yc=y2-1, wp=w1+8, tx=60+wp*.72;
+    const board='M60 '+(yc-6)+'l'+wp+' 6-'+wp+' 6-'+wp+'-6z';
+    return '<path d="M'+(60-w2)+' '+y2+'L'+(60-w1)+' '+y1+'h'+(w1*2)+'L'+(60+w2)+' '+y2+'z" fill="#2a1a4a"/>'+
+      '<path d="'+board+'" fill="#3a2560"/>'+
+      '<path d="'+board+'" fill="none" stroke="#1b1030" stroke-width="1.2"/>'+
+      '<path d="M'+tx+' '+(yc+2)+'v11" stroke="#ffc233" stroke-width="2.4"/>'+
+      '<circle cx="'+tx+'" cy="'+(yc+16)+'" r="3.4" fill="#ffc233"/>';}},
   {id:'mono', n:'單片眼鏡', p:70, slot:'face', only:'a-owl', d:a=>{
     const y=eyeY(a), g=a.gap;
     return '<circle cx="'+(60+g)+'" cy="'+y+'" r="11" fill="none" stroke="#ffc233" stroke-width="2.6"/>'+
@@ -2207,8 +2211,16 @@ function toggleWear(k,id){
   wearMap()[k]=cur; save();
 }
 /* 角色身上穿的東西。back 的畫在身體後面（翅膀、背包、披風），其餘畫最上層 */
+/* 疊的順序照部位固定，不看穿的先後。不然像狐狸面具那種蓋住整張臉的，
+   後穿上就會把帽子壓在底下 */
+const ZWEAR=['foot','body','hand','neck','face','head'];
 function wearSVG(a,mode){
-  return wornList(a.k).map(id=>{
+  return wornList(a.k).slice()
+    .sort((x,y)=>{
+      const ix=ZWEAR.indexOf((itemById(x)||{}).slot), iy=ZWEAR.indexOf((itemById(y)||{}).slot);
+      return ix-iy;
+    })
+    .map(id=>{
     const it=itemById(id); if(!it) return '';
     if(mode==='back') return it.back?it.d(a):'';
     if(it.back) return '';
