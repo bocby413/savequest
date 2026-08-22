@@ -639,7 +639,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   padding:9px 11px;line-height:1.55}
 .gtag{font-size:11px;font-weight:800;color:var(--gold);background:rgba(255,194,51,.16);
   border-radius:99px;padding:2px 8px;flex:none}
-.gops{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+.gops{display:flex;gap:8px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap}
 .gin.shut .owe{border-top-color:var(--gold)}
 .gin.shut .owe .hd::after{content:'　最後結算'}
 .ghome{display:flex;flex-direction:column;gap:9px}
@@ -1307,6 +1307,18 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   </div>
   <div id="gBody"></div>
   <div class="dfoot"><button class="btn ghost" data-close>關閉</button></div>
+</div></div>
+
+<div class="veil" id="vGShut"><div class="dlg">
+  <h3 id="gsTitle">結束旅行</h3>
+  <div class="say">挑一下這趟是哪幾天，會寫在合照上。只有一天的話兩邊填一樣就好。</div>
+  <div class="two">
+    <div class="f"><label>從</label><input type="date" id="gsFrom"></div>
+    <div class="f"><label>到</label><input type="date" id="gsTo"></div>
+  </div>
+  <div class="say" id="gsNote" style="min-height:20px"></div>
+  <div class="dfoot"><button class="btn ghost" id="gsCancel">取消</button>
+    <button class="btn go" id="gsOk">結束並拍照</button></div>
 </div></div>
 
 <div class="veil" id="vGRec"><div class="dlg">
@@ -2033,18 +2045,23 @@ function chFace(a,e){
   else if(e==='down')          eyes='<circle cx="'+L+'" cy="'+(y+1)+'" r="'+((a.pup||4.5)*.9)+'" fill="'+ink+'"/>'+
                                     '<circle cx="'+R+'" cy="'+(y+1)+'" r="'+((a.pup||4.5)*.9)+'" fill="'+ink+'"/>'+
                                     '<path d="M'+(L-7)+' '+(y-7)+'q7-3 13 1M'+(R-6)+' '+(y-6)+'q6-4 13-1"'+sw+' stroke-width="2.4"/>';
+  else if(e==='wink')          eyes='<path d="M'+(L-6)+' '+(y+2)+'q6-8 12 0"'+sw+' stroke-width="3"/>'+
+                                    '<circle cx="'+R+'" cy="'+y+'" r="'+(a.pup||4.5)+'" fill="'+ink+'"/>';
   else if(e==='win')           eyes=[L,R].map(x=>'<path d="M'+x+' '+(y-8)+'l2.6 5.4 5.8.8-4.2 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.2-4.1 5.8-.8z" fill="'+ink+'"/>').join('');
   else                         eyes='<circle cx="'+L+'" cy="'+y+'" r="'+(a.pup||4.5)+'" fill="'+ink+'"/>'+
                                     '<circle cx="'+R+'" cy="'+y+'" r="'+(a.pup||4.5)+'" fill="'+ink+'"/>';
   let mouth;
   if(a.beak){                                     /* 有喙的就張喙代替嘴型 */
-    const open=(e==='joy'||e==='win')?7:(e==='bad'||e==='sad')?1:3;
+    const open=(e==='joy'||e==='win'||e==='blush')?7:(e==='bad'||e==='sad')?1:4;
     mouth='<path d="M60 '+(m-6)+'l-7 6 7 '+(1+open)+' 7-'+(1+open)+'z" fill="'+a.beak+'"/>'+
           (open>5?'<path d="M53 '+m+'l7 7 7-7z" fill="#c25c12"/>':'');
   }
   else if(e==='joy'||e==='win')mouth='<ellipse cx="60" cy="'+(m+2)+'" rx="7.5" ry="'+(e==='win'?8.5:6.5)+'" fill="'+ink+'"/>'+
                                      '<ellipse cx="60" cy="'+(m+5)+'" rx="4" ry="2.6" fill="#ff7a9c"/>';
-  else if(e==='up')            mouth='<path d="M53 '+m+'q7 7 14 0"'+sw+' stroke-width="3"/>';
+  else if(e==='up'||e==='wink'||e==='smile')
+                               mouth='<path d="M53 '+m+'q7 7 14 0"'+sw+' stroke-width="3"/>';
+  else if(e==='blush')         mouth='<ellipse cx="60" cy="'+(m+2)+'" rx="6.5" ry="5.5" fill="'+ink+'"/>'+
+                                     '<ellipse cx="60" cy="'+(m+4)+'" rx="3.4" ry="2.2" fill="#ff7a9c"/>';
   else if(e==='down'||e==='sad')mouth='<path d="M53 '+(m+4)+'q7-7 14 0"'+sw+' stroke-width="3"/>';
   else if(e==='bad')           mouth='<ellipse cx="60" cy="'+(m+1)+'" rx="5" ry="5.5" fill="'+ink+'"/>';
   else if(e==='sleep')         mouth='<ellipse cx="60" cy="'+(m+1)+'" rx="3.6" ry="4.5" fill="'+ink+'"/>'+
@@ -2052,7 +2069,12 @@ function chFace(a,e){
                                      '<text class="zz" x="98" y="33" style="font-size:11px">z</text>';
   else if(e==='meh')           mouth='<path d="M53 '+(m+1)+'h14"'+sw+' stroke-width="3"/>';
   else                         mouth='<path d="M55 '+m+'q5 5 10 0"'+sw+' stroke-width="2.8"/>';
-  return eyes+mouth;
+  /* 害羞那款兩邊加腮紅 */
+  const cheek=(e==='blush')
+    ? '<ellipse cx="'+(L-6)+'" cy="'+(y+8)+'" rx="5" ry="3.2" fill="#ff9ec4" opacity=".6"/>'+
+      '<ellipse cx="'+(R+6)+'" cy="'+(y+8)+'" rx="5" ry="3.2" fill="#ff9ec4" opacity=".6"/>'
+    : '';
+  return eyes+cheek+mouth;
 }
 /* ── 配件 ──
    slot 同一格只能穿一件。only 有填就是那隻的專屬品，別隻買不到。
@@ -3347,7 +3369,9 @@ function yearRow(all,y){
 /* 好友：清單、待處理邀請、對方分享給我的快照 */
 let FRIENDS=[], REQS=[], SHARED={}, PROFILES={};
 /* 揪團：我加入的群組、收到的邀請、目前展開那一團的紀錄 */
-let GROUPS=[], GINVS=[], GRECS=[], gOpen=null;
+let GROUPS=[], GINVS=[], gOpen=null;
+/* 每個團的明細，key 是團 id。GRECS 是目前展開那一團的捷徑 */
+let GALL={}, GRECS=[];
 const GRANTS=[
   {k:'lv',    t:'稱號',       d:'像「存款加速」這樣的頭銜，不含等級數字'},
   {k:'streak',t:'打卡紀錄',   d:'這個月有沒有達標、連續達標幾個月'},
@@ -4039,6 +4063,24 @@ $('profDel').onclick=()=>{
   if(!confirm('移除好友「'+friName(f)+'」？')) return;
   CLOUD.removeFriend(f).then(()=>{ SFX.play('del'); toast('已移除'); $('profBack').onclick(); });
 };
+$('gsFrom').addEventListener('change',gsNote);
+$('gsTo').addEventListener('change',gsNote);
+$('gsCancel').onclick=()=>{ $('vGShut').classList.remove('on'); };
+$('gsOk').onclick=()=>{
+  const g=GROUPS.find(x=>x.id===gsFor); if(!g) return;
+  const f=$('gsFrom').value, t=$('gsTo').value;
+  if(!f||!t||t<f){ SFX.play('err'); toast('日期不對'); return; }
+  if(gsEdit){
+    CLOUD.tripDates(g,f,t).then(()=>{ $('vGShut').classList.remove('on');
+      SFX.play('tick'); toast('日期改好了'); });
+    return;
+  }
+  CLOUD.closeGroup(g,1,f,t).then(r=>{
+    if(r&&r.err){ SFX.play('err'); toast('結束失敗：'+r.err); return; }
+    gRecOpen=null; $('vGShut').classList.remove('on');
+    SFX.play('win'); toast('這趟結束了，合照拍好囉');
+  });
+};
 $('grAmt').addEventListener('input',()=>{ if($('vGRec').classList.contains('on')) gpNote(); });
 $('grMode').addEventListener('click',e=>{
   const b=e.target.closest('button[data-sm]'); if(!b) return;
@@ -4462,26 +4504,48 @@ function rnd(seed){                       /* 固定種子的亂數，同一個�
   return ()=>{ x^=x<<13; x^=x>>>17; x^=x<<5; return ((x>>>0)%100000)/100000; };
 }
 const POSES=[
-  {n:'萬歲',   aL:-155, aR:155, e:'joy', y:-11, rot:0,  s:1},
-  {n:'比一個', aL:-72,  aR:22,  e:'win', y:-2,  rot:-4, s:1},
-  {n:'歪頭',   aL:12,   aR:-12, e:'up',  y:0,   rot:10, s:1},
-  {n:'跳起來', aL:-125, aR:125, e:'joy', y:-17, rot:0,  s:1.02},
-  {n:'插腰',   aL:52,   aR:-52, e:'win', y:0,   rot:0,  s:1},
-  {n:'招手',   aL:-145, aR:14,  e:'up',  y:-3,  rot:-3, s:1},
-  {n:'蹲前排', aL:26,   aR:-26, e:'joy', y:9,   rot:0,  s:.9},
-  {n:'搭肩',   aL:-38,  aR:64,  e:'up',  y:-1,  rot:-7, s:1},
-  {n:'愣住',   aL:8,    aR:-8,  e:'meh', y:0,   rot:0,  s:1},
-  {n:'睡著',   aL:16,   aR:-16, e:'sleep', y:4, rot:13, s:.96}
+  {n:'萬歲',     aL:-155, aR:155,  y:-11, rot:0,   s:1},
+  {n:'比一個',   aL:-72,  aR:22,   y:-2,  rot:-4,  s:1},
+  {n:'歪頭',     aL:12,   aR:-12,  y:0,   rot:10,  s:1},
+  {n:'跳起來',   aL:-125, aR:125,  y:-17, rot:0,   s:1.02},
+  {n:'插腰',     aL:52,   aR:-52,  y:0,   rot:0,   s:1},
+  {n:'招手',     aL:-145, aR:14,   y:-3,  rot:-3,  s:1},
+  {n:'蹲前排',   aL:26,   aR:-26,  y:9,   rot:0,   s:.9},
+  {n:'搭肩',     aL:-38,  aR:64,   y:-1,  rot:-7,  s:1},
+  {n:'指向左邊', aL:-105, aR:-105, y:-4,  rot:6,   s:1},
+  {n:'指向右邊', aL:105,  aR:105,  y:-4,  rot:-6,  s:1},
+  {n:'單手衝天', aL:-160, aR:28,   y:-8,  rot:-10, s:1.02},
+  {n:'另一手衝天',aL:28,  aR:-160, y:-8,  rot:10,  s:1.02},
+  {n:'張開雙臂', aL:-92,  aR:92,   y:-6,  rot:0,   s:1.05},
+  {n:'撐著膝蓋', aL:72,   aR:-72,  y:7,   rot:0,   s:.94},
+  {n:'一手叉腰', aL:-22,  aR:150,  y:-2,  rot:4,   s:1},
+  {n:'另一手叉腰',aL:150, aR:-22,  y:-2,  rot:-4,  s:1},
+  {n:'墊腳尖',   aL:-58,  aR:58,   y:-13, rot:0,   s:1.03},
+  {n:'側身',     aL:-14,  aR:118,  y:0,   rot:-11, s:1},
+  {n:'另一側',   aL:118,  aR:-14,  y:0,   rot:11,  s:1},
+  {n:'比愛心',   aL:-118, aR:118,  y:-5,  rot:0,   s:1}
 ];
+/* 表情跟姿勢分開抽，每個人才不會看起來都一樣。只用開心的那幾種 */
+const PFACES=['joy','win','up','wink','smile','blush'];
 const PSTYLE=[
-  {k:'拍立得', bg:'#fdf6e3', ink:'#5b4a32', frame:'#ffffff', cap:'一起走過'},
-  {k:'夕陽',   bg:'#3a2560', ink:'#ffe58a', frame:'#241540', cap:'這趟結束啦'},
-  {k:'草地',   bg:'#dff3d0', ink:'#3d6b2a', frame:'#f3fae9', cap:'大合照'},
-  {k:'夜空',   bg:'#141a3a', ink:'#9fd8f0', frame:'#0d1129', cap:'謝謝你們'}
+  {k:'拍立得', bg:'#fdf6e3', ink:'#5b4a32', frame:'#ffffff'},
+  {k:'夕陽',   bg:'#3a2560', ink:'#ffe58a', frame:'#241540'},
+  {k:'草地',   bg:'#dff3d0', ink:'#3d6b2a', frame:'#f3fae9'},
+  {k:'夜空',   bg:'#141a3a', ink:'#9fd8f0', frame:'#0d1129'}
 ];
+/* 這趟是哪幾天。只有一天就只寫一天 */
+function tripWhen(g){
+  const f=g.from, t=g.to;
+  if(!f) return g.closed?new Date(g.closed).toLocaleDateString('zh-TW'):'';
+  const D=x=>{const p=x.split('-');return {y:+p[0],m:+p[1],d:+p[2]};};
+  const A=D(f), B=t?D(t):A;
+  if(f===(t||f)) return A.y+'/'+A.m+'/'+A.d;
+  return A.y===B.y ? A.y+'/'+A.m+'/'+A.d+'–'+B.m+'/'+B.d
+                   : A.y+'/'+A.m+'/'+A.d+'–'+B.y+'/'+B.m+'/'+B.d;
+}
 /* 把 chSVG 的內容拆出來重新擺位。手臂的支點寫在 data-p 上，直接補一個 rotate */
-function posedCh(a,p){
-  let h=chSVG(a,p.e,1).replace(/^<svg[^>]*>/,'').replace(/<\/svg>$/,'');
+function posedCh(a,p,face){
+  let h=chSVG(a,face,1).replace(/^<svg[^>]*>/,'').replace(/<\/svg>$/,'');
   h=h.replace(/class="(armL|armR)" data-p="([^"]+)"/g,
     (m,cls,pt)=>m+' transform="rotate('+(cls==='armL'?p.aL:p.aR)+','+pt+')"');
   return h;
@@ -4493,7 +4557,8 @@ function groupPhoto(g){
   const st=PSTYLE[Math.floor(R()*PSTYLE.length)];
   const n=mem.length;
   const step=n<=3?96:n<=5?84:74;                 /* 人多就靠近一點，一定塞得下 */
-  const W=Math.max(300, n*step+56), H=248;
+  const M=42;                                    /* 兩側留白。姿勢張很開的時候會用到 */
+  const W=Math.max(300, n*step+M*2), H=248;
   const info=g.info||{}, me=CLOUD.user?CLOUD.user.uid:'';
   /* 每個人一個姿勢，盡量不重複 */
   const bag=POSES.slice(), picks=[];
@@ -4501,39 +4566,57 @@ function groupPhoto(g){
                                         :POSES[Math.floor(R()*POSES.length)]); });
   let deco='';
   for(let i=0;i<14;i++){
-    const x=28+R()*(W-56), y=24+R()*70, r=2+R()*3;
+    const x=20+R()*(W-40), y=24+R()*70, r=2+R()*3;
     deco+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+r.toFixed(1)+
           '" fill="'+st.ink+'" opacity="'+(.12+R()*.2).toFixed(2)+'"/>';
   }
+  const tags=[];                       /* 名牌先記下來最後才畫，才蓋得住角色 */
+  const put=[];                        /* 已經放好的名牌，用來閃開彼此 */
   const people=mem.map((uid,i)=>{
     const i2=info[uid]||{};
     const k=(uid===me?petChar().k:i2.ch)||((uid===me?db.settings.avatar:i2.a)||{}).id;
     const a=TCHARS.find(x=>x.k===k)||TCHARS[0];
     const wear=uid===me?wornList(petChar().k):(i2.wear||[]);
-    const p=picks[i];
-    const cx=28+step*i+step/2, sc=(step/120)*1.55*p.s;
+    const p=picks[i], face=PFACES[Math.floor(R()*PFACES.length)];
+    const cx=M+step*i+step/2, sc=(step/120)*1.55*p.s;
     const m=wearMap(), had=m.hasOwnProperty(a.k), keep=m[a.k];
     m[a.k]=(Array.isArray(wear)?wear:[]).filter(id=>itemById(id));
     wearRaw=1;
-    const body=posedCh(a,p);
+    const body=posedCh(a,p,face);
     wearRaw=0;
     if(had) m[a.k]=keep; else delete m[a.k];
-    return '<g transform="translate('+cx.toFixed(1)+','+(H-52+p.y)+') scale('+sc.toFixed(3)+') '+
-           'rotate('+p.rot+') translate(-60,-110)">'+body+'</g>'+
-      '<text x="'+cx.toFixed(1)+'" y="'+(H-30)+'" text-anchor="middle" font-size="11" font-weight="700" '+
-      'fill="'+st.ink+'" opacity=".85">'+esc(gMemName(g,uid)).slice(0,6)+'</text>';
+    /* 名牌飄在自己頭頂上方，左右小幅晃、角度歪一點，撞到別人就往上讓 */
+    const nm=esc(gMemName(g,uid)).slice(0,5);
+    const tw=nm.replace(/[^\x00-\xff]/g,'..').length*5.6+15;
+    const slack=Math.max(0,(step-tw)/2);
+    let tx=cx+(R()*2-1)*slack*.55;
+    tx=Math.max(14+tw/2, Math.min(W-14-tw/2, tx));
+    let ty=(H-52+p.y)+(16-110)*sc-9-R()*10;
+    for(let k2=0;k2<4;k2++){
+      if(!put.some(o=>Math.abs(o.x-tx)<(o.w+tw)/2+3 && Math.abs(o.y-ty)<17)) break;
+      ty-=17;
+    }
+    ty=Math.max(52,ty);
+    put.push({x:tx,y:ty,w:tw});
+    const rot=(R()*2-1)*7;
+    tags.push('<g transform="rotate('+rot.toFixed(1)+','+tx.toFixed(1)+','+ty.toFixed(1)+')">'+
+      '<rect x="'+(tx-tw/2).toFixed(1)+'" y="'+(ty-9).toFixed(1)+'" width="'+tw.toFixed(1)+
+        '" height="18" rx="9" fill="'+st.ink+'" opacity=".92"/>'+
+      '<text x="'+tx.toFixed(1)+'" y="'+(ty+4).toFixed(1)+'" text-anchor="middle" font-size="11" '+
+        'font-weight="800" fill="'+st.bg+'">'+nm+'</text></g>');
+    return '<g transform="translate('+cx.toFixed(1)+','+(H-46+p.y)+') scale('+sc.toFixed(3)+') '+
+           'rotate('+p.rot+') translate(-60,-110)">'+body+'</g>';
   }).join('');
-  const when=g.closed?new Date(g.closed).toLocaleDateString('zh-TW'):'';
+  const when=tripWhen(g);
   return '<div class="gphoto"><svg viewBox="0 0 '+W+' '+H+'">'+
     '<rect width="'+W+'" height="'+H+'" rx="14" fill="'+st.frame+'"/>'+
     '<rect x="10" y="10" width="'+(W-20)+'" height="'+(H-44)+'" rx="10" fill="'+st.bg+'"/>'+
     deco+
     '<text x="'+(W/2)+'" y="36" text-anchor="middle" font-size="15" font-weight="800" fill="'+st.ink+'">'+
       esc(g.name||'這一團')+'</text>'+
-    people+
-    '<text x="18" y="'+(H-11)+'" font-size="11" font-weight="700" fill="'+st.ink+'" opacity=".7">'+st.cap+'</text>'+
-    '<text x="'+(W-18)+'" y="'+(H-11)+'" text-anchor="end" font-size="11" fill="'+st.ink+'" opacity=".55">'+
-      when+'</text>'+
+    people+tags.join('')+
+    '<text x="'+(W/2)+'" y="'+(H-11)+'" text-anchor="middle" font-size="11.5" font-weight="700" '+
+      'fill="'+st.ink+'" opacity=".65">'+when+'</text>'+
     '</svg></div>';
 }
 let gRecOpen=null;
@@ -4553,11 +4636,13 @@ function renderGHome(){
                          :{ch:i.ch,wear:i.wear,avatar:i.a};
       return '<span>'+friPic(null,look)+'</span>';
     }).join('');
-    /* 我在這團的淨額。只有打開過的團才抓得到明細，抓不到就先不顯示 */
-    const mine=(gOpen===g.id)?settle(g,GRECS)[me]:undefined;
-    const amt=(mine===undefined||Math.abs(mine)<.5)?''
-      : mine>0 ? '<b class="get">+'+money(Math.round(mine))+'</b><small>別人要還你</small>'
-               : '<b class="owe">-'+money(Math.round(-mine))+'</b><small>你要還別人</small>';
+    /* 我在這團的淨額。每個團都有監聽，所以不用先點開就算得出來 */
+    const recs=GALL[g.id]||[];
+    const mine=settle(g,recs)[me];
+    const amt=(mine===undefined||Math.abs(mine)<.5)
+      ? (recs.length?'<small>目前打平</small>':'<small>還沒有紀錄</small>')
+      : mine>0 ? '<b class="get">'+money(Math.round(mine))+'</b><small>別人要還你</small>'
+               : '<b class="owe">'+money(Math.round(-mine))+'</b><small>你要還別人</small>';
     return '<button class="ghomecard" data-ghome="'+g.id+'">'+
       '<span class="who">'+faces+(mem.length>4?'<span>+'+(mem.length-4)+'</span>':'')+'</span>'+
       '<span class="mid"><span class="nm">'+esc(g.name||'一個團')+'</span>'+
@@ -4579,6 +4664,7 @@ function gDetail(g,r){
   '</div>';
 }
 function renderGroups(){
+  GRECS=(gOpen&&GALL[gOpen])||[];
   const dot=$('gDot');
   if(dot) dot.className='dot'+(GINVS.length?' on':'');
   const box=$('gBody'); if(!box) return;
@@ -4653,7 +4739,8 @@ function renderGroups(){
            :'<div class="none">'+(GRECS.length?'目前打平，沒有人欠誰。':'還沒有紀錄。')+'</div>')+
         '</div>'+
         '<div class="gops">'+
-          (mine&&shut?'<button class="btn sm ghost" data-gsnap="'+g.id+'">重拍一張</button>':'')+
+          (mine&&shut?'<button class="btn sm ghost" data-gdate="'+g.id+'">改日期</button>'+
+                      '<button class="btn sm ghost" data-gsnap="'+g.id+'">重拍一張</button>':'')+
           (mine?(shut?'<button class="btn sm ghost" data-gopen2="'+g.id+'">重新開始</button>'
                      :'<button class="btn sm ghost" data-gshut="'+g.id+'">結束旅行</button>'):'')+
           '<button class="btn sm ghost del" data-gout="'+g.id+'">退出這團</button></div>'+
@@ -4733,6 +4820,28 @@ function gpNote(){
       : '已分 <b>'+money(Math.round(tot))+'</b>，還差 <b>'+money(Math.round(d))+'</b>';
     if(has&&Math.abs(d)>=.5) note.className='splitnote bad';
   }
+}
+/* 結束旅行 / 改日期。edit=1 是已經結束了只改日期 */
+let gsFor=null, gsEdit=0;
+function openGShut(gid,edit){
+  const g=GROUPS.find(x=>x.id===gid); if(!g) return;
+  gsFor=gid; gsEdit=edit?1:0;
+  const ds=(GALL[gid]||[]).map(r=>r.date).filter(Boolean).sort();
+  $('gsFrom').value=g.from||ds[0]||todayStr();
+  $('gsTo').value  =g.to  ||ds[ds.length-1]||todayStr();
+  $('gsTitle').textContent=edit?'改日期':'結束旅行';
+  $('gsOk').textContent=edit?'存起來':'結束並拍照';
+  gsNote();
+  open('vGShut');
+}
+function gsNote(){
+  const f=$('gsFrom').value, t=$('gsTo').value;
+  const el=$('gsNote');
+  if(!f||!t){ el.textContent='兩個日期都要填。'; return; }
+  if(t<f){ el.textContent='「到」不能比「從」早。'; return; }
+  const days=Math.round((new Date(t)-new Date(f))/86400000)+1;
+  el.textContent=days===1?'這趟就一天，合照上只會寫那一天。'
+                         :'共 '+days+' 天，合照上會寫這段期間。';
 }
 function openGRec(gid,rid){
   const g=GROUPS.find(x=>x.id===gid), mem=(g&&g.members)||[];
@@ -5119,12 +5228,11 @@ document.body.addEventListener('click',e=>{
     return;
   }
   if(b.dataset.gopen){ gOpen=gOpen===b.dataset.gopen?null:b.dataset.gopen; gRecOpen=null;
-    CLOUD.watchGRecs(); GRECS=[]; SFX.play('tick'); renderGroups(); return; }
+    SFX.play('tick'); renderGroups(); return; }
   if(b.dataset.gadd) return openGRec(b.dataset.gadd);
   if(b.dataset.gedit){ SFX.play('tick'); return openGRec(gOpen,b.dataset.gedit); }
   if(b.dataset.ghome){
     gOpen=b.dataset.ghome; gRecOpen=null;
-    CLOUD.watchGRecs(); GRECS=[];
     renderGroups(); SFX.play('tick'); open('vGroup'); return;
   }
   if(b.dataset.gsnap){
@@ -5132,15 +5240,8 @@ document.body.addEventListener('click',e=>{
     CLOUD.reshoot(g).then(()=>{ SFX.play('win'); toast('再拍一張'); });
     return;
   }
-  if(b.dataset.gshut){
-    const g=GROUPS.find(x=>x.id===b.dataset.gshut); if(!g) return;
-    if(!confirm('結束「'+(g.name||'這一團')+'」？\n帳會封起來不能再記也不能再改，只剩下最後要算的錢。\n之後還是可以重新開始。')) return;
-    CLOUD.closeGroup(g,1).then(r=>{
-      if(r&&r.err){ SFX.play('err'); toast('結束失敗：'+r.err); return; }
-      gRecOpen=null; SFX.play('win'); toast('這趟結束了，記得把錢算一算');
-    });
-    return;
-  }
+  if(b.dataset.gshut) return openGShut(b.dataset.gshut,0);
+  if(b.dataset.gdate) return openGShut(b.dataset.gdate,1);
   if(b.dataset.gopen2){
     const g=GROUPS.find(x=>x.id===b.dataset.gopen2); if(!g) return;
     CLOUD.closeGroup(g,0).then(r=>{
@@ -5403,7 +5504,9 @@ window.CLOUD={
           [this.unsubG,this.unsubGI,this.unsubGR,this.unsubW].forEach(f=>f&&f());
           this.unsubG=this.unsubGI=this.unsubGR=this.unsubW=null;
           FRIENDS=[]; REQS=[]; SHARED={}; PROFILES={};
-          GROUPS=[]; GINVS=[]; GRECS=[]; gOpen=null;
+          Object.keys(this.recSubs||{}).forEach(k=>this.recSubs[k]());
+          this.recSubs={};
+          GROUPS=[]; GINVS=[]; GRECS=[]; GALL={}; gOpen=null;
           renderFriends(); renderGroups(); renderGHome();
         }
       });
@@ -5557,15 +5660,21 @@ window.CLOUD={
       try{ await F.updateDoc(F.doc(this.api.fs,'groups',g.id),{['info.'+me]:val}); }catch(e){}
     }
   },
+  async tripDates(g,f,t){
+    const F=this.api.F;
+    try{ await F.updateDoc(F.doc(this.api.fs,'groups',g.id),{from:f,to:t}); }catch(e){}
+  },
   async reshoot(g){
     const {F}=this.api;
     try{ await F.updateDoc(F.doc(this.api.fs,'groups',g.id),
       {photo:Math.floor(Math.random()*1e9)+1}); }catch(e){}
   },
-  async closeGroup(g,on){
+  async closeGroup(g,on,from,to){
     const {F}=this.api;
     try{
-      const patch=on?{closed:Date.now(),photo:Math.floor(Math.random()*1e9)+1}:{closed:null};
+      const patch=on?{closed:Date.now(),photo:Math.floor(Math.random()*1e9)+1,
+                      from:from||null,to:to||null}
+                    :{closed:null};
       await F.updateDoc(F.doc(this.api.fs,'groups',g.id),patch);
       return {ok:1};
     }catch(e){ return {err:e.code||e.message}; }
@@ -5619,16 +5728,24 @@ window.CLOUD={
       renderGroups(); renderFriends();
     },()=>{});
   },
-  /* 只監聽目前展開的那一團，不然人多了會一直拉資料 */
+  /* 每個團都監聽。主畫面要直接顯示各團欠多少，只聽展開的那一團是算不出來的。
+     團的數量本來就不多，一團一個監聽還好 */
   watchGRecs(){
     const {F}=this.api;
-    if(this.unsubGR){ this.unsubGR(); this.unsubGR=null; }
-    if(!gOpen) return;
-    this.unsubGR=F.onSnapshot(F.collection(this.api.fs,'groups',gOpen,'recs'),snap=>{
-      GRECS=[]; snap.forEach(d=>GRECS.push(Object.assign({id:d.id},d.data())));
-      GRECS.sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(b.ts||0)-(a.ts||0));
-      renderGroups();
-    },()=>{});
+    const want={}; GROUPS.forEach(g=>want[g.id]=1);
+    Object.keys(this.recSubs||{}).forEach(gid=>{      /* 退出的團要收掉 */
+      if(!want[gid]){ this.recSubs[gid](); delete this.recSubs[gid]; delete GALL[gid]; }
+    });
+    this.recSubs=this.recSubs||{};
+    GROUPS.forEach(g=>{
+      if(this.recSubs[g.id]) return;
+      this.recSubs[g.id]=F.onSnapshot(F.collection(this.api.fs,'groups',g.id,'recs'),snap=>{
+        const list=[]; snap.forEach(d=>list.push(Object.assign({id:d.id},d.data())));
+        list.sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(b.ts||0)-(a.ts||0));
+        GALL[g.id]=list;
+        renderGroups();
+      },()=>{});
+    });
   },
 
   /* ── 好友 ── */
