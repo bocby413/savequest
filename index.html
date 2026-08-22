@@ -595,7 +595,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .shopstage svg{width:100%;height:auto;overflow:visible;display:block}
 .shopinfo{min-width:0}
 .tryon{font-size:13px;color:var(--txt2);margin:8px 0 9px;min-height:38px}
-.tryon b{display:block;font-size:15.5px;font-weight:800;color:var(--txt)}
+.tryon b{display:block;font-size:14.5px;font-weight:800;color:var(--txt);line-height:1.35}
 .tryon i{font-style:normal;color:var(--gold);font-weight:700}
 .tryon .no{color:var(--txt3)}
 .slottabs{display:flex;width:100%;overflow-x:auto;gap:4px;margin-bottom:2px}
@@ -612,7 +612,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .sitem .nm{font-size:12.5px;font-weight:700;margin-top:2px}
 .sitem .pr{font-size:11.5px;color:var(--gold);font-weight:700;display:flex;align-items:center;
   justify-content:center;gap:3px;margin-top:1px}
-.sitem .pr svg{width:12px;height:12px}
+.sitem .pr svg{width:12px;height:12px;fill:currentColor}
 .sitem.own{border-color:var(--edge2)}
 .sitem.own .pr{color:var(--txt3)}
 .sitem.on{border-color:var(--gold);background:rgba(255,194,51,.12)}
@@ -1949,9 +1949,39 @@ const ITEMS=[
     const y=HB(a)-4, w=a.bw*.9;
     return '<path d="M'+(60-w)+' '+y+'q'+w+' 10 '+(w*2)+' 0v9q-'+w+' 10 -'+(w*2)+' 0z" fill="#ff5c8a"/>'+
       '<path d="M'+(60+w*.42)+' '+(y+8)+'l7 19-9 2.5-4.5-19z" fill="#e8447a"/>';}},
+  {id:'crown', n:'皇冠', p:300, slot:'head', d:a=>{
+    const t=HT(a), r=a.hr*.62;
+    return '<path d="M'+(60-r)+' '+(t+8)+'l0-13 '+(r*.5)+' 7 '+(r*.5)+'-11 '+(r*.5)+' 11 '+(r*.5)+'-7 0 13z" fill="#ffc233"/>'+
+      '<circle cx="60" cy="'+(t-6)+'" r="3.4" fill="#ff5c8a"/>'+
+      '<rect x="'+(60-r)+'" y="'+(t+6)+'" width="'+(r*2)+'" height="5" rx="2.5" fill="#e39b12"/>';}},
+  {id:'shades', n:'墨鏡', p:80, slot:'face', d:a=>{
+    const y=eyeY(a), g=a.gap, w=Math.max(9,g*1.05);
+    return '<path d="M'+(60-g-w/2)+' '+(y-5)+'h'+w+'v7q0 6 -'+(w/2)+' 6t-'+(w/2)+'-6z'+
+      'M'+(60+g-w/2)+' '+(y-5)+'h'+w+'v7q0 6 -'+(w/2)+' 6t-'+(w/2)+'-6z" fill="#1b1830"/>'+
+      '<path d="M'+(60-g+w/2)+' '+(y-3)+'h'+((g-w/2)*2)+'" stroke="#1b1830" stroke-width="3"/>';}},
+  {id:'bag', n:'小背包', p:110, slot:'body', d:a=>{
+    const t=a.by-a.bh*.5, w=a.bw*.5;
+    return '<rect x="'+(60-w)+'" y="'+t+'" width="'+(w*2)+'" height="'+(a.bh*1.1)+'" rx="6" fill="#8a5a3c"/>'+
+      '<rect x="'+(60-w)+'" y="'+(t+a.bh*.5)+'" width="'+(w*2)+'" height="6" rx="3" fill="#5f3a22"/>'+
+      '<path d="M'+(60-w*.5)+' '+t+'v-7M'+(60+w*.5)+' '+t+'v-7" stroke="#5f3a22" stroke-width="4"/>';}},
+  {id:'wing', n:'小翅膀', p:200, slot:'body', d:a=>{
+    const y=a.by-a.bh*.35, w=a.bw+9;
+    return '<path d="M'+(60-w*.5)+' '+y+'q-'+w+' -6 -'+(w*.7)+' 16 8 4 '+(w*.55)+' -4z" fill="#f7f4ec" opacity=".92"/>'+
+      '<path d="M'+(60+w*.5)+' '+y+'q'+w+' -6 '+(w*.7)+' 16-8 4-'+(w*.55)+' -4z" fill="#f7f4ec" opacity=".92"/>';}},
+  {id:'phone', n:'耳罩耳機', p:90, slot:'head', d:a=>{
+    const t=HT(a)+4, r=a.hr;
+    return '<path d="M'+(60-r*.92)+' '+(t+a.hr*.55)+'a'+(r*.92)+' '+(r*.8)+' 0 0 1 '+(r*1.84)+' 0" '+
+      'stroke="#5aa9ff" stroke-width="5" fill="none"/>'+
+      '<rect x="'+(60-r-3)+'" y="'+(t+a.hr*.5)+'" width="10" height="15" rx="4" fill="#3d7fd6"/>'+
+      '<rect x="'+(60+r-7)+'" y="'+(t+a.hr*.5)+'" width="10" height="15" rx="4" fill="#3d7fd6"/>';}},
   {id:'halo', n:'天使光環', p:150, slot:'head', d:a=>
     '<ellipse cx="60" cy="'+(HT(a)-7)+'" rx="'+(a.hr*.6)+'" ry="4.5" fill="none" stroke="#ffe58a" stroke-width="4"/>'},
   /* ── 貓 ── */
+  {id:'fish', n:'小魚乾', p:70, slot:'hand', only:'a-cat', d:a=>{
+    const x=60-(a.bw+5), y=a.by+a.bh*.5;
+    return '<ellipse cx="'+x+'" cy="'+y+'" rx="10" ry="5.5" fill="#9fd8f0"/>'+
+      '<path d="M'+(x+9)+' '+y+'l7-5v10z" fill="#7fb6d9"/>'+
+      '<circle cx="'+(x-5)+'" cy="'+(y-1)+'" r="1.6" fill="#12142a"/>';}},
   {id:'bell', n:'鈴鐺項圈', p:80, slot:'neck', only:'a-cat', d:a=>{
     const y=HB(a)-2, w=a.bw*.8;
     return '<path d="M'+(60-w)+' '+y+'q'+w+' 9 '+(w*2)+' 0v6q-'+w+' 9 -'+(w*2)+' 0z" fill="#e8447a"/>'+
@@ -1962,6 +1992,11 @@ const ITEMS=[
     return '<circle cx="'+x+'" cy="'+y+'" r="10" fill="#e86a9e"/>'+
       '<path d="M'+(x-8)+' '+(y-3)+'q8 5 16 0M'+(x-7)+' '+(y+4)+'q7-7 14-2" stroke="#b34477" stroke-width="1.6" fill="none"/>';}},
   /* ── 狗 ── */
+  {id:'rain', n:'小雨衣', p:110, slot:'body', only:'a-dog', d:a=>{
+    const t=a.by-a.bh*.8, w=a.bw*.9, h=a.bh*1.6;
+    return '<path d="M'+(60-w)+' '+t+'q'+w+' -6 '+(w*2)+' 0v'+h+'q-'+w+' 8 -'+(w*2)+' 0z" fill="#ffc233"/>'+
+      '<path d="M'+(60-w)+' '+(t+h*.32)+'h'+(w*2)+'" stroke="#e39b12" stroke-width="2.4"/>'+
+      '<circle cx="60" cy="'+(t+h*.55)+'" r="3" fill="#e39b12"/>';}},
   {id:'bone', n:'骨頭項圈', p:80, slot:'neck', only:'a-dog', d:a=>{
     const y=HB(a)-2, w=a.bw*.8;
     return '<path d="M'+(60-w)+' '+y+'q'+w+' 9 '+(w*2)+' 0v6q-'+w+' 9 -'+(w*2)+' 0z" fill="#5aa9ff"/>'+
@@ -1973,6 +2008,10 @@ const ITEMS=[
     return '<ellipse cx="'+x+'" cy="'+y+'" rx="12" ry="5" fill="#3ce0d0"/>'+
       '<ellipse cx="'+x+'" cy="'+(y-1.5)+'" rx="7" ry="2.6" fill="#1b8f85"/>';}},
   /* ── 熊 ── */
+  {id:'bib', n:'圍兜', p:60, slot:'neck', only:'a-bear', d:a=>{
+    const y=HB(a)-2, w=a.bw*.62;
+    return '<path d="M'+(60-w)+' '+y+'q'+w+' 8 '+(w*2)+' 0v'+(a.bh*.7)+'q-'+w+' 9 -'+(w*2)+' 0z" fill="#f7f4ec"/>'+
+      '<circle cx="60" cy="'+(y+a.bh*.4)+'" r="4.5" fill="#ff9ec4"/>';}},
   {id:'honey', n:'蜂蜜罐', p:100, slot:'hand', only:'a-bear', d:a=>{
     const x=60-(a.bw+5), y=a.by+a.bh*.45;
     return '<path d="M'+(x-8)+' '+(y-5)+'h16l-2 16h-12z" fill="#e39b12"/>'+
@@ -1985,6 +2024,10 @@ const ITEMS=[
       'M'+(60-w)+' '+(t+h*.35)+'h'+(w*2)+'M'+(60-w)+' '+(t+h*.7)+'h'+(w*2)+
       '" stroke="#7d2a0e" stroke-width="2" fill="none" opacity=".8"/>';}},
   /* ── 狐狸 ── */
+  {id:'leaf', n:'楓葉帽', p:100, slot:'head', only:'a-fox', d:a=>{
+    const t=HT(a)+2;
+    return '<path d="M60 '+(t-14)+'l-6 8-8-3 4 9-9 2 10 6-3 6 12-4 12 4-3-6 10-6-9-2 4-9-8 3z" fill="#c94a1e"/>'+
+      '<path d="M60 '+(t-6)+'v14" stroke="#7d3a12" stroke-width="2"/>';}},
   {id:'cape', n:'披風', p:120, slot:'body', only:'a-fox', d:a=>{
     const t=HB(a)-6, w=a.bw*1.05, h=a.bh*1.7;
     return '<path d="M'+(60-w*.55)+' '+t+'q'+(w*.55)+' 7 '+(w*1.1)+' 0l'+(w*.5)+' '+h+
@@ -1996,6 +2039,12 @@ const ITEMS=[
       '<path d="M'+(60-g-4)+' '+(y-1)+'h8M'+(60+g-4)+' '+(y-1)+'h8" stroke="#c94a1e" stroke-width="3" stroke-linecap="round"/>'+
       '<path d="M'+(60-g-9)+' '+(y-7)+'l4-9 7 6M'+(60+g+9)+' '+(y-7)+'l-4-9-7 6" fill="#c94a1e"/>';}},
   /* ── 企鵝 ── */
+  {id:'boot', n:'雪靴', p:90, slot:'foot', only:'a-peng', d:a=>{
+    const y=(a.fy||107)-4, x=a.fx||13;
+    return '<rect x="'+(60-x-12)+'" y="'+y+'" width="24" height="13" rx="5" fill="#5aa9ff"/>'+
+      '<rect x="'+(60+x-12)+'" y="'+y+'" width="24" height="13" rx="5" fill="#5aa9ff"/>'+
+      '<rect x="'+(60-x-13)+'" y="'+(y-4)+'" width="26" height="6" rx="3" fill="#f7f4ec"/>'+
+      '<rect x="'+(60+x-13)+'" y="'+(y-4)+'" width="26" height="6" rx="3" fill="#f7f4ec"/>';}},
   {id:'bowtie', n:'領結', p:70, slot:'neck', only:'a-peng', d:a=>{
     const y=HB(a)+2;
     return '<path d="M60 '+y+'l-13-7v14zM60 '+y+'l13-7v14z" fill="#ff5c8a"/>'+
@@ -2006,6 +2055,12 @@ const ITEMS=[
       '<rect x="'+(60-r*.85)+'" y="'+(t+6)+'" width="'+(r*1.7)+'" height="6" rx="3" fill="#f7f4ec"/>'+
       '<circle cx="60" cy="'+(t-4)+'" r="6" fill="#f7f4ec"/>';}},
   /* ── 機器人 ── */
+  {id:'rocket', n:'火箭背包', p:160, slot:'body', only:'a-bot', d:a=>{
+    const y=a.by-a.bh*.6, w=a.bw+8;
+    return '<rect x="'+(60-w)+'" y="'+y+'" width="10" height="'+(a.bh*1.5)+'" rx="5" fill="#cdd7ee"/>'+
+      '<rect x="'+(60+w-10)+'" y="'+y+'" width="10" height="'+(a.bh*1.5)+'" rx="5" fill="#cdd7ee"/>'+
+      '<path d="M'+(60-w+5)+' '+(y+a.bh*1.5)+'q5 12 10 0z" fill="#ff9f45"/>'+
+      '<path d="M'+(60+w-5)+' '+(y+a.bh*1.5)+'q-5 12 -10 0z" fill="#ff9f45"/>';}},
   {id:'jet', n:'噴射底座', p:140, slot:'foot', only:'a-bot', d:a=>{
     const y=a.by+a.bh+8;
     return '<path d="M50 '+y+'h20l-4 12h-12z" fill="#8fa3c8"/>'+
@@ -2017,6 +2072,11 @@ const ITEMS=[
       '<path d="M60 '+(t-13)+'v-7" stroke="#8fa3c8" stroke-width="3"/>'+
       '<circle cx="60" cy="'+(t-22)+'" r="4" fill="#ff5c8a"/>';}},
   /* ── 青蛙 ── */
+  {id:'lotus', n:'荷葉傘', p:100, slot:'hand', only:'a-frog', d:a=>{
+    const x=60-(a.bw+6), y=a.by-6;
+    return '<path d="M'+x+' '+(y+26)+'V'+(y+4)+'" stroke="#5aa83c" stroke-width="3"/>'+
+      '<path d="M'+(x-16)+' '+(y+4)+'a16 9 0 0 1 32 0z" fill="#4a8f32"/>'+
+      '<path d="M'+x+' '+(y+4)+'l-9-7M'+x+' '+(y+4)+'l9-7" stroke="#2c5c23" stroke-width="1.4"/>';}},
   {id:'aloha', n:'花襯衫', p:120, slot:'body', only:'a-frog', d:a=>{
     const t=a.by-a.bh*.8, w=a.bw*.85, h=a.bh*1.55;
     return '<path d="M'+(60-w)+' '+t+'h'+(w*2)+'v'+h+'q-'+w+' 7 -'+(w*2)+' 0z" fill="#3ce0d0"/>'+
@@ -2032,6 +2092,11 @@ const ITEMS=[
       '<circle cx="'+(60+g)+'" cy="'+y+'" r="8" fill="#bfe9f7" opacity=".55"/>'+
       '<path d="M'+(60-g+9)+' '+y+'h'+((g-9)*2)+'" stroke="#5aa9ff" stroke-width="3"/>';}},
   /* ── 貓頭鷹 ── */
+  {id:'book', n:'厚厚的書', p:90, slot:'hand', only:'a-owl', d:a=>{
+    const x=60-(a.bw+5), y=a.by+a.bh*.45;
+    return '<rect x="'+(x-11)+'" y="'+(y-8)+'" width="22" height="17" rx="2" fill="#8a5ce0"/>'+
+      '<rect x="'+(x-8)+'" y="'+(y-6)+'" width="16" height="13" fill="#f7f4ec"/>'+
+      '<path d="M'+x+' '+(y-6)+'v13" stroke="#c9b8e8" stroke-width="1.4"/>';}},
   {id:'grad', n:'學士帽', p:130, slot:'head', only:'a-owl', d:a=>{
     const t=HT(a), r=a.hr;
     return '<path d="M'+(60-r*.6)+' '+(t+4)+'h'+(r*1.2)+'v9h-'+(r*1.2)+'z" fill="#2a1a4a"/>'+
@@ -4105,7 +4170,9 @@ function openGRec(gid){
 let shopTab='all';
 const SLOTN={head:'頭',face:'臉',neck:'脖子',body:'身體',hand:'手上',foot:'腳下'};
 const SLOTORDER=['head','face','neck','body','hand','foot'];
-let shopSlot='head', shopTry=null;
+let shopSlot='head';
+/* 試穿是一個部位記一件，換分類不會清掉。值是物品 id，null 代表這格試著脫掉 */
+let shopTry={};
 /* 物品圖示：只把那個部位那一塊裁出來，不畫整隻 */
 const SLOTBOX={
   head:a=>({x:60,y:HT(a)-2,w:68,h:54}),
@@ -4119,15 +4186,17 @@ function itemIcon(a,it){
   const b=(SLOTBOX[it.slot]||SLOTBOX.head)(a);
   return '<svg viewBox="'+(b.x-b.w/2)+' '+(b.y-b.h/2)+' '+b.w+' '+b.h+'">'+it.d(a)+'</svg>';
 }
-/* 試衣間：目前穿的，加上正在試穿的那一件 */
+/* 目前身上穿的，套上所有試穿的異動 */
 function tryOutfit(a){
-  const keep=wornList(a.k);
-  if(shopTry){
-    const it=itemById(shopTry);
-    if(it&&!isWorn(a.k,shopTry))
-      return keep.filter(x=>{const o=itemById(x);return o&&o.slot!==it.slot;}).concat([shopTry]);
-  }
-  return keep;
+  const bySlot={};
+  wornList(a.k).forEach(id=>{ const o=itemById(id); if(o) bySlot[o.slot]=id; });
+  Object.keys(shopTry).forEach(sl=>{ if(shopTry[sl]) bySlot[sl]=shopTry[sl]; else delete bySlot[sl]; });
+  return Object.keys(bySlot).map(sl=>bySlot[sl]);
+}
+/* 跟身上不一樣的那幾格 */
+function tryDiff(a){
+  const now={}; wornList(a.k).forEach(id=>{ const o=itemById(id); if(o) now[o.slot]=id; });
+  return Object.keys(shopTry).filter(sl=>(shopTry[sl]||null)!==(now[sl]||null));
 }
 function renderShop(){
   const box=$('shopBody'); if(!box) return;
@@ -4138,44 +4207,46 @@ function renderShop(){
   $('shopStage').innerHTML=chSVG(a,'up');
   wearMap()[a.k]=keep;
   $('shopCoins').innerHTML='<svg class="i"><use href="#i-coin"/></svg>'+money(coins())+' Bo士幣';
-  /* 分類橫幅 */
+  /* 分類橫幅：正在試穿的那格標星號，已經穿著的標點 */
   const avail=SLOTORDER.filter(sl=>shopFor(a.k).some(x=>x.slot===sl));
   if(avail.indexOf(shopSlot)<0) shopSlot=avail[0];
+  const chg=tryDiff(a);
   $('shopTabs').innerHTML=avail.map(sl=>{
     const on=shopFor(a.k).find(x=>x.slot===sl&&isWorn(a.k,x.id));
     return '<button data-sl="'+sl+'" class="'+(sl===shopSlot?'on':'')+'">'+SLOTN[sl]+
-      (on?' ●':'')+'</button>';
+      (chg.indexOf(sl)>=0?' ✽':on?' ●':'')+'</button>';
   }).join('');
   /* 物品 */
-  const list=shopFor(a.k).filter(x=>x.slot===shopSlot);
-  box.innerHTML=list.map(it=>{
-    const own=hasItem(it.id), wear=isWorn(a.k,it.id), poor=!own&&coins()<it.p;
+  const outfit=tryOutfit(a);
+  box.innerHTML=shopFor(a.k).filter(x=>x.slot===shopSlot).map(it=>{
+    const own=hasItem(it.id), wear=isWorn(a.k,it.id), trying=outfit.indexOf(it.id)>=0, poor=!own&&coins()<it.p;
     return '<button class="sitem'+(wear?' on':own?' own':'')+(poor?' poor':'')+
-      (shopTry===it.id?' try':'')+'" data-item="'+it.id+'">'+
+      (trying&&!wear?' try':'')+'" data-item="'+it.id+'">'+
       (wear?'<span class="tag">穿著中</span>':own?'<span class="tag">已擁有</span>':'')+
       (it.only?'<span class="tag only">專屬</span>':'')+
       itemIcon(a,it)+
       '<div class="nm">'+esc(it.n)+'</div>'+
-      '<div class="pr">'+(own?'已擁有':'<svg><use href="#i-coin"/></svg>'+it.p)+'</div></button>';
+      '<div class="pr">'+(own?'已擁有':'<svg class="i"><use href="#i-coin"/></svg>'+it.p)+'</div></button>';
   }).join('');
-  /* 右邊那塊 */
-  const it=shopTry?itemById(shopTry):null;
+  /* 右邊那塊：列出試穿的異動與總價 */
   const act=$('shopAct'), pick=$('shopPick');
-  if(!it){
-    pick.innerHTML='<span class="no">點下面的物品就會穿到牠身上看看。</span>';
+  const buy=chg.map(sl=>shopTry[sl]).filter(id=>id&&!hasItem(id));
+  const cost=buy.reduce((n,id)=>n+itemById(id).p,0);
+  if(!chg.length){
+    pick.innerHTML='<span class="no">點下面的物品就會穿到牠身上看看，換分類也不會消失。</span>';
     act.textContent='選一件來試穿'; act.disabled=true; act.style.opacity=.45;
   }else{
-    const own=hasItem(it.id), wear=isWorn(a.k,it.id);
-    pick.innerHTML='<b>'+esc(it.n)+'</b>'+SLOTN[it.slot]+
-      (own?'　已擁有':'　<i>'+it.p+' Bo士幣</i>');
-    act.disabled=false; act.style.opacity=1;
-    act.textContent = wear ? '脫下來' : own ? '穿上' :
-      (coins()>=it.p ? '買下來（'+it.p+'）' : '還差 '+(it.p-coins())+' 枚');
-    if(!own&&coins()<it.p){ act.disabled=true; act.style.opacity=.45; }
+    pick.innerHTML=chg.map(sl=>{
+      const id=shopTry[sl];
+      return '<b>'+(id?esc(itemById(id).n):'脫掉'+SLOTN[sl]+'的東西')+'</b>';
+    }).join('')+(cost?'<i>總共 '+cost+' Bo士幣</i>':'<span class="no">已經有的，直接換上</span>');
+    const poor=cost>coins();
+    act.textContent = poor ? '還差 '+(cost-coins())+' 枚' : cost ? '買下並穿上（'+cost+'）' : '就這樣穿';
+    act.disabled=poor; act.style.opacity=poor?.45:1;
   }
-  $('shopReset').style.display=shopTry?'':'none';
+  $('shopReset').style.display=chg.length?'':'none';
 }
-function openShop(){ shopSlot='head'; shopTry=null; renderShop(); open('vShop'); }
+function openShop(){ shopSlot='head'; shopTry={}; renderShop(); open('vShop'); }
 function buyOrWear(id){
   const a=petChar(), it=itemById(id); if(!it) return;
   if(!hasItem(id)){
@@ -4192,9 +4263,20 @@ function buyOrWear(id){
   }
   buildAvatars(); renderShop(); renderHud(); renderWheel();
 }
+/* 一次把試穿的都定下來：沒買過的先買，再整套換上 */
 function shopAction(){
-  const a=petChar(), it=shopTry?itemById(shopTry):null; if(!it) return;
-  buyOrWear(it.id);
+  const a=petChar(), chg=tryDiff(a); if(!chg.length) return;
+  const buy=chg.map(sl=>shopTry[sl]).filter(id=>id&&!hasItem(id));
+  const cost=buy.reduce((n,id)=>n+itemById(id).p,0);
+  if(cost>coins()){ SFX.play('err'); toast('Bo士幣不夠，還差 '+(cost-coins())+' 枚'); return; }
+  if(cost){ db.settings.coins=coins()-cost; buy.forEach(id=>coinsOwned().push(id)); }
+  wearMap()[a.k]=tryOutfit(a);
+  shopTry={}; save();
+  if(cost){ SFX.play('level');
+    const r=$('shopStage').getBoundingClientRect(); burst(r.left+r.width/2,r.top+r.height/2);
+    toast('花了 '+cost+' 枚，穿上了'); }
+  else{ SFX.play('coin'); toast('換好了'); }
+  buildAvatars(); renderShop(); renderHud(); renderWheel();
 }
 /* ── 每日轉盤：當天記過一筆就能轉一次 ── */
 const WHEEL=[10,0,20,10,50,0,20,100];      /* 0 是再接再厲 */
@@ -4539,15 +4621,19 @@ $('btnWheel').onclick=()=>{ SFX.play('tick'); openWheel(); };
 $('btnShop').onclick=()=>{ SFX.play('tick'); openShop(); };
 $('shopTabs').addEventListener('click',e=>{
   const b=e.target.closest('button[data-sl]'); if(!b) return;
-  shopSlot=b.dataset.sl; shopTry=null; SFX.play('tick'); renderShop();
+  shopSlot=b.dataset.sl; SFX.play('tick'); renderShop();   /* 換分類不清掉試穿 */
 });
 $('shopBody').addEventListener('click',e=>{
   const b=e.target.closest('[data-item]'); if(!b) return;
-  shopTry=shopTry===b.dataset.item?null:b.dataset.item;   /* 再點一次收回試穿 */
+  const a=petChar(), it=itemById(b.dataset.item); if(!it) return;
+  const sl=it.slot;
+  if(shopTry[sl]===it.id) delete shopTry[sl];              /* 再點一次收回這格 */
+  else if(isWorn(a.k,it.id)) shopTry[sl]=null;             /* 點身上那件＝試著脫掉 */
+  else shopTry[sl]=it.id;
   SFX.play('tick'); renderShop();
 });
 $('shopAct').onclick=shopAction;
-$('shopReset').onclick=()=>{ shopTry=null; SFX.play('tick'); renderShop(); };
+$('shopReset').onclick=()=>{ shopTry={}; SFX.play('tick'); renderShop(); };
 $('btnSpin').onclick=spin;
 $('catKind').addEventListener('click',e=>{
   const b=e.target.closest('button[data-ck]'); if(!b) return;
