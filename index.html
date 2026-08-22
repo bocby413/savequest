@@ -560,6 +560,9 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .pcard.lock .pv{font-size:14px;font-weight:600;color:var(--txt3);margin-top:7px}
 @media(max-width:420px){ .pgrid{grid-template-columns:1fr} }
 /* 揪團 */
+/* 開團那一行跟下面的團要分開，不然靠太近會點錯 */
+#gBody{margin-top:16px;padding-top:14px;border-top:1px solid var(--edge)}
+#gBody>:first-child{margin-top:0}
 .gcard{border:2px solid var(--edge);border-radius:14px;background:var(--panel2);margin-bottom:9px;overflow:hidden}
 .gcard.open{border-color:var(--gold)}
 .gcard>.hd{display:flex;align-items:center;gap:9px;padding:11px 12px}
@@ -617,7 +620,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .gempty{color:var(--txt3);font-size:13px;padding:14px 2px;text-align:center}
 .ginvsel{font:inherit;font-size:13px;padding:7px 10px;border-radius:10px;cursor:pointer;
   background:var(--panel3);border:1.5px solid var(--edge);color:var(--txt2);width:100%}
-.ginv{display:flex;align-items:center;gap:9px;padding:10px;border-radius:12px;
+.ginv{display:flex;align-items:center;gap:9px;padding:10px;border-radius:12px;margin-bottom:9px;
   background:rgba(255,194,51,.10);border:1.5px solid var(--gold);margin-bottom:8px}
 .ginv .info{flex:1;min-width:0}
 .ginv .nm{font-size:14.5px;font-weight:700}
