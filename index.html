@@ -1664,13 +1664,13 @@ const PENTA=[130.81,146.83,164.81,196.00,220.00,
    來拉開差別，五官一律掛在頭上，所以調身體不會把臉扯歪。 */
 const TCHARS=[
   {k:'a-cat', n:'貓',     c:'#ffc98a', d:'#f2a65a', ink:'#3a2a1a', tailC:'#f0b46f',
-   hr:27, hy:44, bw:18, bh:20, by:84, gap:11, eo:2, mo:13, fx:13, fy:106},
+   hr:27, hy:44, bw:18, bh:20, by:84, gap:11, eo:2, mo:13, fx:13, fy:106, tilt:13},
   {k:'a-dog', n:'狗',     c:'#c99168', d:'#8a5a3c', ink:'#2e1f14', tailC:'#ad7449',
-   hr:30, hy:47, bw:23, bh:16, by:88, gap:12, eo:2, mo:13, fx:15, fy:107, fw:10},
+   hr:30, hy:47, bw:23, bh:16, by:88, gap:12, eo:2, mo:13, fx:15, fy:107, fw:10, tilt:12},
   {k:'a-bear',n:'熊',     c:'#a97b5c', d:'#7d5a44', ink:'#2b1a12',
    hr:30, hy:43, bw:27, bh:21, by:82, gap:12, eo:2, mo:13, fx:17, fy:106, fw:11},
   {k:'a-fox', n:'狐狸',   c:'#f07a3c', d:'#d8622e', ink:'#2b1a12', tailC:'#f59a5e',
-   hr:26, hy:43, bw:17, bh:22, by:82, gap:11, eo:2, mo:12, fx:12, fy:106},
+   hr:26, hy:43, bw:17, bh:22, by:82, gap:11, eo:2, mo:12, fx:12, fy:106, tilt:13},
   {k:'a-peng',n:'企鵝',   c:'#4a5885', d:'#36406b', ink:'#12142a', beak:'#f5a623', foot:'#f5a623',
    hr:25, hy:48, bw:26, bh:36, by:72, gap:11, eo:2, mo:14, pup:4.2,
    armW:7, armH:20, apy:70, fx:13, fy:109, fw:11, egg:1},
@@ -1678,7 +1678,7 @@ const TCHARS=[
    hr:27, hy:43, hry:23, bw:19, bh:17, by:82, gap:11, eo:1, mo:12, sq:1, base:1},
   {k:'a-frog',n:'青蛙',   c:'#7ed957', d:'#5aa83c', ink:'#1d2b17',
    hr:24, hy:44, bw:19, bh:19, by:78, gap:15, eo:-14, mo:11, pup:4,
-   fx:14, fy:108, fw:12, legs:1},
+   fx:14, fy:108, fw:12, legs:1, tilt:14},
   {k:'a-owl', n:'貓頭鷹', c:'#a879ff', d:'#8a5ce0', ink:'#2a1a4a', beak:'#ffc233',
    hr:31, hy:46, bw:21, bh:16, by:88, gap:13, eo:1, mo:15, pup:7, fx:12, fy:106, fw:8}
 ];
@@ -1816,9 +1816,11 @@ function chFace(a,e){
 }
 function chSVG(a,e,small){
   const aw=a.armW||7, ah=a.armH||12;
-  /* 肩膀塞在身體裡面一點，手才會像從身上長出來，不是貼在旁邊 */
-  const apx=(a.apx!==undefined?a.apx:a.bw-1), apy=a.apy||(a.by-a.bh*.45);
-  const arm=(x)=>'<ellipse cx="'+x+'" cy="'+(apy+ah-2)+'" rx="'+aw+'" ry="'+ah+'" fill="'+a.d+'"/>';
+  const apx=a.bw+aw-2, apy=a.apy||(a.by-a.bh*.45);         /* 肩膀 */
+  /* tilt 是手臂的休息角度，下端往身體內側收一點，動畫的旋轉再疊在外層 */
+  const tl=a.tilt||0;
+  const arm=(x,sgn)=>'<ellipse cx="'+x+'" cy="'+(apy+ah-2)+'" rx="'+aw+'" ry="'+ah+'" fill="'+a.d+'"'+
+    (tl?' transform="rotate('+(sgn*tl)+','+x+','+apy+')"':'')+'/>';
   const ft=a.foot||a.d, fw=a.fw||9, fx=a.fx||13, fy=a.fy||107;
   /* 青蛙的後腿露出來，身體才有離地的高度 */
   const leg=x=>a.legs?'<path d="M'+x+' '+(a.by+a.bh-4)+'V'+(fy-2)+'" stroke="'+a.d+
@@ -1835,8 +1837,8 @@ function chSVG(a,e,small){
       '<g class="breathe"><g class="ch">'+
         chBack(a)+
         feet+
-        '<g class="armL" data-p="'+(60-apx)+','+apy+'">'+arm(60-apx)+'</g>'+
-        '<g class="armR" data-p="'+(60+apx)+','+apy+'">'+arm(60+apx)+'</g>'+
+        '<g class="armL" data-p="'+(60-apx)+','+apy+'">'+arm(60-apx,-1)+'</g>'+
+        '<g class="armR" data-p="'+(60+apx)+','+apy+'">'+arm(60+apx,1)+'</g>'+
         chBody(a)+
         chHead(a)+
         chFront(a)+
