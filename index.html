@@ -4470,7 +4470,9 @@ const PET={
       this.nextBlink=this.t+3200+Math.random()*2600;
       this.face('blink'); setTimeout(()=>this.face('idle'),140);
     }
-    if(this.t>this.nextAct){
+    /* 掛了循環動作就照那個走，不再隨機做自己的小動作 */
+    if(this.act&&ACTS[this.act]){ Object.assign(this.tgt,ACTS[this.act].p(this.t)); }
+    else if(this.t>this.nextAct){
       this.nextAct=this.t+6500+Math.random()*5000;
       const pick=Math.random();
       if(pick<.45){ this.pose({y:-13,sx:.98,sy:1.06,rot:0,aL:-110,aR:110},'joy',480); }   /* 跳一下 */
@@ -5263,6 +5265,66 @@ const JOBS={
        ['天文觀測記錄','記了一整晚，等到了那顆流星'],
        ['便利商店大夜','三點以後的客人牠都記得住']]}
 };
+/* ── 上班時的循環小動作 ──
+   每個都是「時間進去、姿勢出來」，接到那隻生物身上就會一直重複做。
+   欄位跟閒置動畫共用：y 上下、sx/sy 壓扁拉長、rot 傾斜、aL/aR 兩隻手的角度。 */
+const ACTS={
+  carry:{f:'up', p:t=>{const w=Math.sin(t/430);          /* 搬重物：屈膝起身，手在前面撐著 */
+    return {y:4+w*5, sx:1.04-w*.02, sy:.96+w*.02, rot:0, aL:-62+w*10, aR:62-w*10};}},
+  dig:{f:'up', p:t=>{const w=Math.sin(t/330);            /* 挖、採、除草：彎腰起來再彎下去 */
+    return {y:7+w*7, sx:1.03, sy:.95+w*.05, rot:w*4, aL:34+w*24, aR:-34-w*24};}},
+  clean:{f:'up', p:t=>{const w=Math.sin(t/240);          /* 擦洗：整個人跟著手左右來回 */
+    return {y:1, sx:1.02, sy:.99, rot:w*5, aL:-46+w*40, aR:46+w*40};}},
+  run:{f:'joy', p:t=>{const w=Math.sin(t/190);           /* 跑腿外送：小碎步往前傾 */
+    return {y:-4-Math.abs(w)*6, sx:1.01, sy:1.01, rot:6+w*3, aL:-88+w*34, aR:-30-w*34};}},
+  type:{f:'idle', p:t=>{const w=Math.sin(t/130);         /* 敲鍵盤、操作機器：手快速小幅上下 */
+    return {y:1, sx:1, sy:1, rot:0, aL:-74+w*9, aR:74-w*9};}},
+  read:{f:'idle', p:t=>{const w=Math.sin(t/620);         /* 看書校稿：頭微微點，身體幾乎不動 */
+    return {y:0, sx:1, sy:1, rot:3+w*4, aL:-24, aR:24};}},
+  talk:{f:'up', p:t=>{const w=Math.sin(t/300);           /* 解說導覽：一手上下比劃 */
+    return {y:0, sx:1, sy:1, rot:-w*3, aL:-118+w*26, aR:22};}},
+  serve:{f:'up', p:t=>{const w=Math.sin(t/340);          /* 遞東西、招呼客人：一手前伸來回 */
+    return {y:-1, sx:1, sy:1, rot:w*3, aL:-96+w*20, aR:40-w*10};}},
+  swim:{f:'joy', p:t=>{const w=Math.sin(t/300);          /* 泡在水裡：整個人漂上漂下，手在划 */
+    return {y:-5+w*7, sx:1.03+w*.02, sy:.98-w*.02, rot:w*6, aL:-70+w*46, aR:70-w*46};}},
+  stand:{f:'idle', p:t=>{const w=Math.sin(t/900);        /* 站崗看店：幾乎不動，偶爾轉個頭 */
+    return {y:0, sx:1, sy:1, rot:w*7, aL:12, aR:-12};}},
+  jump:{f:'joy', p:t=>{const w=Math.sin(t/260);          /* 跳來跳去 */
+    return {y:-Math.abs(w)*15, sx:1-Math.abs(w)*.03, sy:1+Math.abs(w)*.05, rot:0,
+            aL:-52-Math.abs(w)*46, aR:52+Math.abs(w)*46};}}
+};
+/* 用工作名稱裡的字判斷要做哪個動作。對不上的就當作招呼客人 */
+const ACTWORD=[
+  ['swim', ['泳','水','冰','魚','海','溪','漁','荷','溝渠','製冰','滑冰','溜冰','極地']],
+  ['dig',  ['採','除草','移盆','揉','育苗','餵','鋪','木','拆解','捏','陶','土','果園','蜂場','田']],
+  ['carry',['搬','扛','背','貨','行李','補給','盤點','分揀','看料','棉被','瓦斯','組裝','帳篷','上架']],
+  ['run',  ['遛','跑','外送','發傳單','撿','趕','巡','送','排隊','找','淨灘','電梯','物流']],
+  ['type', ['電腦','掃描','資料','程式','伺服器','產線','品管','校正','監視器','系統','除錯','運算','機器人','收銀','秤']],
+  ['read', ['書','校','查核','筆記','觀測','選書','記錄','算命','整理']],
+  ['talk', ['解說','導覽','家教','客服','銷售','帶看','講','錄','推銷','問卷','建議','穿搭','舉牌','人偶','模特兒','攤']],
+  ['stand',['警衛','顧店','值班','看店','櫃檯','救生員','夜班','大夜','看水','守','旅館','陪練','陪跑','試躺','臨演','巡檢']],
+  ['jump', ['跳','球','滑','套圈圈','快閃']],
+  ['clean',['洗','擦','清潔','沖','掃','打奶泡','美容','麵包','甜點','冰淇淋','奶']]
+];
+/* 關鍵字對不準的就在這裡指定。先查這張表 */
+const ACTFIX={
+  '魚販試吃員':'serve','海邊淨灘':'run','冰店挖冰':'dig','生鮮區補冰':'carry',
+  '水族館解說':'talk','製冰廠幫忙':'carry','冰淇淋車':'serve','滑冰場助教':'jump',
+  '海鮮攤顧攤':'stand','溜冰場夜班':'stand','極地紀錄片臨演':'stand',
+  '泳池救生員':'stand','田邊看水':'stand','溪邊生態導覽':'talk','洗車場沖水':'clean',
+  '水利站巡溝渠':'run','養魚場餵料':'serve','泳池夜間清潔':'clean','水族箱清潔':'clean',
+  '冷凍倉庫理貨':'carry','冷藏物流':'carry','漁港分魚':'dig',
+  '二手店挑貨':'read','咖啡廳收銀':'serve','陪跑長時間運算':'type',
+  '手作市集顧攤':'stand','市集擺攤':'serve','冬衣店試穿模特兒':'stand','企鵝人偶':'serve',
+  '鋼琴教室陪練':'type','夜市算命攤':'talk','工地看料':'stand','舊手機拆解回收':'type',
+  '幫人重灌電腦':'type','自助洗衣店排故障':'type','大樓電梯巡檢':'stand',
+  '便利商店試吃推廣':'serve','試吃推銷':'serve','蜂蜜攤試吃':'serve',
+  '寵物店顧店':'stand','貓旅館大夜班':'stand','民宿櫃檯':'stand','夜市套圈圈攤':'jump'};
+function jobAct(title){
+  if(ACTFIX[title]) return ACTFIX[title];
+  for(const [k,ws] of ACTWORD) if(ws.some(w=>title.indexOf(w)>=0)) return k;
+  return 'serve';
+}
 /* 同一隻、同一個時段有五種，每次隨機抽一種 */
 function jobOf(k,h){
   const list=(JOBS[k]||JOBS['a-cat'])[h];
@@ -5308,6 +5370,9 @@ function renderWork(){
   const a=petChar(), left=workLeft();
   if(box.dataset.k!==a.k){ box.dataset.k=a.k; WORKPET.el=null; box.innerHTML=chSVG(a,'idle'); }
   WORKPET.watch(); WORKPET.start();
+  if(!(onShift()&&!shiftDone())&&WORKPET.act){   /* 下班就把循環動作收起來 */
+    WORKPET.act=null; Object.assign(WORKPET.tgt,{y:0,sx:1,sy:1,rot:0,aL:0,aR:0}); WORKPET.face('idle');
+  }
   const card=$('workCard'), b=$('workGo');
   if(workJust){                                   /* 剛領完，先讓結果停一下 */
     card.innerHTML='<div class="wjob"><b>'+workJust.h+' 小時</b>'+esc(workJust.job)+'</div>'+
@@ -5315,15 +5380,16 @@ function renderWork(){
   }
   else if(shiftDone()){
     card.innerHTML='<div class="wjob"><b>'+WALLET.shiftH+' 小時</b>'+esc(WALLET.shiftJob)+'</div>'+
-      '<div class="wsay">下班囉，薪水還沒領</div>'+
-      '<div class="wpay">可以領 <b>'+WALLET.shiftPay+'</b> 枚</div>';
+      '<div class="wsay">下班囉，薪水還沒領</div>';
   }
   else if(onShift()){
+    const act=jobAct(WALLET.shiftJob);
+    if(WORKPET.act!==act){ WORKPET.act=act; WORKPET.face(ACTS[act].f); }
     card.innerHTML='<div class="wjob"><b>'+WALLET.shiftH+' 小時</b>'+esc(WALLET.shiftJob)+'</div>'+
       '<div class="wcount">還要 <b>'+hms(shiftLeftMs())+'</b></div>'+
       '<div class="wbar"><i style="width:'+
         Math.max(2,Math.min(100,100*(1-shiftLeftMs()/(WALLET.shiftH*3600000)))).toFixed(1)+'%"></i></div>'+
-      '<div class="wsay">做完這班可以領 '+WALLET.shiftPay+' 枚</div>';
+      '<div class="wsay">做完就知道這班有多少了</div>';
   }
   else card.innerHTML='';
   $('workLeft').textContent = onShift()&&!shiftDone()
