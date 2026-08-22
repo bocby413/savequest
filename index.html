@@ -1821,14 +1821,22 @@ function chBody(a){
   if(a.sq)  return '<rect x="'+(60-a.bw)+'" y="'+(a.by-a.bh)+'" width="'+(a.bw*2)+'" height="'+(a.bh*2)+
                    '" rx="7" fill="'+a.d+'"/>';
   /* 肩窄臀寬。用絕對座標畫，左右才會對稱、收尾才會剛好回到起點 */
-  const t=a.by-a.bh, b=a.by+a.bh, h=b-t, w1=a.bw*.66, w2=a.bw;
-  const L1=60-w1, R1=60+w1, L2=60-w2, R2=60+w2;
-  return '<path d="M'+L1+' '+t+
-         'Q60 '+(t-5)+' '+R1+' '+t+
+  return '<path d="'+torso(a.by-a.bh,a.by+a.bh,a.bw*.66,a.bw)+'" fill="'+a.c+'"/>';
+}
+/* 身體的曲線，衣服也用同一條，穿起來才貼身 */
+function torso(t,b,w1,w2){
+  const h=b-t, L1=60-w1, R1=60+w1, L2=60-w2, R2=60+w2;
+  return 'M'+L1+' '+t+'Q60 '+(t-5)+' '+R1+' '+t+
          'C'+(R2+1)+' '+(t+h*.42)+' '+R2+' '+(b-h*.22)+' '+(R2-1)+' '+b+
          'Q60 '+(b+6)+' '+(L2+1)+' '+b+
-         'C'+L2+' '+(b-h*.22)+' '+(L2-1)+' '+(t+h*.42)+' '+L1+' '+t+
-         'Z" fill="'+a.c+'"/>';
+         'C'+L2+' '+(b-h*.22)+' '+(L2-1)+' '+(t+h*.42)+' '+L1+' '+t+'Z';
+}
+/* 身體在某個高度有多寬（0＝肩膀 1＝屁股） */
+const bwAt=(a,k)=>a.bw*.66+(a.bw-a.bw*.66)*k;
+/* 一件衣服：從肩下 k1 到 k2，比身體大一點才蓋得住 */
+function garment(a,k1,k2,pad){
+  const t=a.by-a.bh, h=a.bh*2, p=pad===undefined?1.5:pad;
+  return torso(t+h*k1,t+h*k2,bwAt(a,k1)+p,bwAt(a,k2)+p);
 }
 function chHead(a){
   if(a.sq) return '<rect x="'+(60-a.hr)+'" y="'+(a.hy-a.hry)+'" width="'+(a.hr*2)+'" height="'+(a.hry*2)+
@@ -1888,7 +1896,7 @@ function chBodyMark(a){
 function avaBody(a){
   const k=(a.egg?18/a.bw:20/a.hr), cy=(a.egg?a.hy+4:a.hy);
   return '<g transform="translate(32,34) scale('+k.toFixed(3)+') translate(-60,'+(-cy)+')">'+
-    chBack(a,1)+(a.egg?chBody(a)+chBodyMark(a):'')+chHead(a)+chFaceMark(a)+chFace(a,'idle')+wearSVG(a,1)+'</g>';
+    chBack(a,1)+(a.egg?chBody(a)+chBodyMark(a):'')+chHead(a)+chFaceMark(a)+chFace(a,'idle')+wearSVG(a,'head')+'</g>';
 }
 function buildAvatars(){
   const box=$('avaDefs'); if(!box) return;
@@ -1931,15 +1939,19 @@ function chFace(a,e){
 /* ── 配件 ──
    slot 同一格只能穿一件。only 有填就是那隻的專屬品，別隻買不到。
    畫的時候拿角色自己的頭圍、身寬去算，所以八隻穿起來都合身。 */
-const HT=a=>a.hy-(a.hry||a.hr*.94);        /* 頭頂 */
-const HB=a=>a.hy+(a.hry||a.hr*.94);        /* 頭底 */
+const HRY=a=>(a.hry||a.hr*.94);
+const HT=a=>a.hy-HRY(a);                   /* 頭頂 */
+const HB=a=>a.hy+HRY(a);                   /* 頭底 */
+const HLINE=a=>a.hy-HRY(a)*.45;            /* 帽沿：戴上去會壓在這條線上 */
+/* 頭在某個高度有多寬，k 是從頭中心往上算的比例 */
+const HWAT=(a,k)=>a.sq?a.hr:a.hr*Math.sqrt(Math.max(.04,1-k*k));
 const ITEMS=[
   /* ── 通用 ── */
   {id:'cap', n:'鴨舌帽', p:60, slot:'head', d:a=>{
-    const t=HT(a), r=a.hr;
-    return '<path d="M'+(60-r*.82)+' '+(t+7)+'a'+(r*.82)+' '+(r*.78)+' 0 0 1 '+(r*1.64)+' 0z" fill="#3ce0d0"/>'+
-      '<path d="M'+(60+r*.5)+' '+(t+5)+'h'+(r*.62)+'a3.5 3.5 0 0 1 0 6h-'+(r*.62)+'z" fill="#1b8f85"/>'+
-      '<rect x="'+(60-r*.86)+'" y="'+(t+4)+'" width="'+(r*1.72)+'" height="5" rx="2.5" fill="#1b8f85"/>';}},
+    const y=HLINE(a), w=HWAT(a,.45), dome=HRY(a)*.66;
+    return '<path d="M'+(60-w)+' '+y+'a'+w+' '+dome+' 0 0 1 '+(w*2)+' 0z" fill="#3ce0d0"/>'+
+      '<path d="M'+(60+w*.55)+' '+(y-1)+'h'+(w*.8)+'a3.5 3.5 0 0 1 0 6h-'+(w*.8)+'z" fill="#1b8f85"/>'+
+      '<rect x="'+(60-w-2)+'" y="'+(y-2)+'" width="'+(w*2+4)+'" height="5.5" rx="2.75" fill="#1b8f85"/>';}},
   {id:'glass', n:'圓框眼鏡', p:50, slot:'face', d:a=>{
     const y=eyeY(a), g=a.gap, r=Math.max(6,g*.72);
     return '<g fill="none" stroke="#2a2440" stroke-width="2.4" opacity=".9">'+
@@ -1950,32 +1962,36 @@ const ITEMS=[
     return '<path d="M'+(60-w)+' '+y+'q'+w+' 10 '+(w*2)+' 0v9q-'+w+' 10 -'+(w*2)+' 0z" fill="#ff5c8a"/>'+
       '<path d="M'+(60+w*.42)+' '+(y+8)+'l7 19-9 2.5-4.5-19z" fill="#e8447a"/>';}},
   {id:'crown', n:'皇冠', p:300, slot:'head', d:a=>{
-    const t=HT(a), r=a.hr*.62;
-    return '<path d="M'+(60-r)+' '+(t+8)+'l0-13 '+(r*.5)+' 7 '+(r*.5)+'-11 '+(r*.5)+' 11 '+(r*.5)+'-7 0 13z" fill="#ffc233"/>'+
-      '<circle cx="60" cy="'+(t-6)+'" r="3.4" fill="#ff5c8a"/>'+
-      '<rect x="'+(60-r)+'" y="'+(t+6)+'" width="'+(r*2)+'" height="5" rx="2.5" fill="#e39b12"/>';}},
+    const y=HLINE(a), w=HWAT(a,.45)*.86, hh=HRY(a)*.5;
+    return '<path d="M'+(60-w)+' '+y+'l0-'+hh+' '+(w*.5)+' '+(hh*.45)+' '+(w*.5)+'-'+(hh*.8)+
+      ' '+(w*.5)+' '+(hh*.8)+' '+(w*.5)+'-'+(hh*.45)+' 0 '+hh+'z" fill="#ffc233"/>'+
+      '<circle cx="60" cy="'+(y-hh*.8)+'" r="3.2" fill="#ff5c8a"/>'+
+      '<rect x="'+(60-w-1)+'" y="'+(y-2)+'" width="'+(w*2+2)+'" height="5" rx="2.5" fill="#e39b12"/>';}},
   {id:'shades', n:'墨鏡', p:80, slot:'face', d:a=>{
     const y=eyeY(a), g=a.gap, w=Math.max(9,g*1.05);
     return '<path d="M'+(60-g-w/2)+' '+(y-5)+'h'+w+'v7q0 6 -'+(w/2)+' 6t-'+(w/2)+'-6z'+
       'M'+(60+g-w/2)+' '+(y-5)+'h'+w+'v7q0 6 -'+(w/2)+' 6t-'+(w/2)+'-6z" fill="#1b1830"/>'+
       '<path d="M'+(60-g+w/2)+' '+(y-3)+'h'+((g-w/2)*2)+'" stroke="#1b1830" stroke-width="3"/>';}},
-  {id:'bag', n:'小背包', p:110, slot:'body', d:a=>{
-    const t=a.by-a.bh*.5, w=a.bw*.5;
-    return '<rect x="'+(60-w)+'" y="'+t+'" width="'+(w*2)+'" height="'+(a.bh*1.1)+'" rx="6" fill="#8a5a3c"/>'+
-      '<rect x="'+(60-w)+'" y="'+(t+a.bh*.5)+'" width="'+(w*2)+'" height="6" rx="3" fill="#5f3a22"/>'+
-      '<path d="M'+(60-w*.5)+' '+t+'v-7M'+(60+w*.5)+' '+t+'v-7" stroke="#5f3a22" stroke-width="4"/>';}},
-  {id:'wing', n:'小翅膀', p:200, slot:'body', d:a=>{
-    const y=a.by-a.bh*.35, w=a.bw+9;
-    return '<path d="M'+(60-w*.5)+' '+y+'q-'+w+' -6 -'+(w*.7)+' 16 8 4 '+(w*.55)+' -4z" fill="#f7f4ec" opacity=".92"/>'+
-      '<path d="M'+(60+w*.5)+' '+y+'q'+w+' -6 '+(w*.7)+' 16-8 4-'+(w*.55)+' -4z" fill="#f7f4ec" opacity=".92"/>';}},
+  {id:'bag', n:'小背包', p:110, slot:'body', back:1, d:a=>{
+    const t=a.by-a.bh*.55, w=a.bw*.62, h=a.bh*1.15;
+    return '<rect x="'+(60-w)+'" y="'+t+'" width="'+(w*2)+'" height="'+h+'" rx="7" fill="#8a5a3c"/>'+
+      '<rect x="'+(60-w)+'" y="'+(t+h*.45)+'" width="'+(w*2)+'" height="6" rx="3" fill="#5f3a22"/>'+
+      '<rect x="'+(60-w*.34)+'" y="'+(t+h*.62)+'" width="'+(w*.68)+'" height="'+(h*.28)+
+      '" rx="3" fill="#5f3a22"/>';}},
+  {id:'wing', n:'小翅膀', p:200, slot:'body', back:1, d:a=>{
+    const y=a.by-a.bh*.45, w=a.bw*1.35, h=a.bh*1.25;
+    return '<path d="M'+(60-a.bw*.4)+' '+y+'c-'+w+' -'+(h*.35)+' -'+(w*1.05)+' '+(h*.55)+
+      ' -'+(w*.15)+' '+h+'c'+(w*.3)+' -'+(h*.2)+' '+(w*.45)+' -'+(h*.5)+' '+(w*.25)+' -'+h+'z" fill="#f7f4ec"/>'+
+      '<path d="M'+(60+a.bw*.4)+' '+y+'c'+w+' -'+(h*.35)+' '+(w*1.05)+' '+(h*.55)+
+      ' '+(w*.15)+' '+h+'c-'+(w*.3)+' -'+(h*.2)+' -'+(w*.45)+' -'+(h*.5)+' -'+(w*.25)+' -'+h+'z" fill="#f7f4ec"/>';}},
   {id:'phone', n:'耳罩耳機', p:90, slot:'head', d:a=>{
-    const t=HT(a)+4, r=a.hr;
-    return '<path d="M'+(60-r*.92)+' '+(t+a.hr*.55)+'a'+(r*.92)+' '+(r*.8)+' 0 0 1 '+(r*1.84)+' 0" '+
+    const y=a.hy-HRY(a)*.15, w=HWAT(a,.15);
+    return '<path d="M'+(60-w+2)+' '+y+'a'+(w-2)+' '+(HRY(a)*.9)+' 0 0 1 '+((w-2)*2)+' 0" '+
       'stroke="#5aa9ff" stroke-width="5" fill="none"/>'+
-      '<rect x="'+(60-r-3)+'" y="'+(t+a.hr*.5)+'" width="10" height="15" rx="4" fill="#3d7fd6"/>'+
-      '<rect x="'+(60+r-7)+'" y="'+(t+a.hr*.5)+'" width="10" height="15" rx="4" fill="#3d7fd6"/>';}},
+      '<rect x="'+(60-w-4)+'" y="'+(y-6)+'" width="11" height="16" rx="5" fill="#3d7fd6"/>'+
+      '<rect x="'+(60+w-7)+'" y="'+(y-6)+'" width="11" height="16" rx="5" fill="#3d7fd6"/>';}},
   {id:'halo', n:'天使光環', p:150, slot:'head', d:a=>
-    '<ellipse cx="60" cy="'+(HT(a)-7)+'" rx="'+(a.hr*.6)+'" ry="4.5" fill="none" stroke="#ffe58a" stroke-width="4"/>'},
+    '<ellipse cx="60" cy="'+(HT(a)-6)+'" rx="'+(a.hr*.55)+'" ry="4" fill="none" stroke="#ffe58a" stroke-width="4"/>'},
   /* ── 貓 ── */
   {id:'fish', n:'小魚乾', p:70, slot:'hand', only:'a-cat', d:a=>{
     const x=60-(a.bw+5), y=a.by+a.bh*.5;
@@ -1993,9 +2009,9 @@ const ITEMS=[
       '<path d="M'+(x-8)+' '+(y-3)+'q8 5 16 0M'+(x-7)+' '+(y+4)+'q7-7 14-2" stroke="#b34477" stroke-width="1.6" fill="none"/>';}},
   /* ── 狗 ── */
   {id:'rain', n:'小雨衣', p:110, slot:'body', only:'a-dog', d:a=>{
-    const t=a.by-a.bh*.8, w=a.bw*.9, h=a.bh*1.6;
-    return '<path d="M'+(60-w)+' '+t+'q'+w+' -6 '+(w*2)+' 0v'+h+'q-'+w+' 8 -'+(w*2)+' 0z" fill="#ffc233"/>'+
-      '<path d="M'+(60-w)+' '+(t+h*.32)+'h'+(w*2)+'" stroke="#e39b12" stroke-width="2.4"/>'+
+    const t=a.by-a.bh, h=a.bh*2;
+    return '<path d="'+garment(a,.05,.85)+'" fill="#ffc233"/>'+
+      '<path d="M'+(60-a.bw*.85)+' '+(t+h*.35)+'h'+(a.bw*1.7)+'" stroke="#e39b12" stroke-width="2.4"/>'+
       '<circle cx="60" cy="'+(t+h*.55)+'" r="3" fill="#e39b12"/>';}},
   {id:'bone', n:'骨頭項圈', p:80, slot:'neck', only:'a-dog', d:a=>{
     const y=HB(a)-2, w=a.bw*.8;
@@ -2018,21 +2034,22 @@ const ITEMS=[
       '<rect x="'+(x-10)+'" y="'+(y-9)+'" width="20" height="5" rx="2.5" fill="#c98209"/>'+
       '<path d="M'+(x-4)+' '+(y+3)+'h8" stroke="#8a5a05" stroke-width="2"/>';}},
   {id:'plaid', n:'樵夫格子衫', p:130, slot:'body', only:'a-bear', d:a=>{
-    const t=a.by-a.bh*.75, w=a.bw*.82, h=a.bh*1.5;
-    return '<path d="M'+(60-w)+' '+t+'h'+(w*2)+'v'+h+'q-'+w+' 7 -'+(w*2)+' 0z" fill="#c94a1e"/>'+
-      '<path d="M'+(60-w*.4)+' '+t+'v'+h+'M'+(60+w*.4)+' '+t+'v'+h+
-      'M'+(60-w)+' '+(t+h*.35)+'h'+(w*2)+'M'+(60-w)+' '+(t+h*.7)+'h'+(w*2)+
-      '" stroke="#7d2a0e" stroke-width="2" fill="none" opacity=".8"/>';}},
+    const t=a.by-a.bh, h=a.bh*2, y1=t+h*.1, y2=t+h*.8;
+    return '<path d="'+garment(a,.1,.8)+'" fill="#c94a1e"/>'+
+      '<path d="M'+(60-a.bw*.35)+' '+y1+'V'+y2+'M'+(60+a.bw*.35)+' '+y1+'V'+y2+
+      'M'+(60-a.bw*.8)+' '+(t+h*.35)+'h'+(a.bw*1.6)+'M'+(60-a.bw*.9)+' '+(t+h*.6)+'h'+(a.bw*1.8)+
+      '" stroke="#7d2a0e" stroke-width="2" fill="none" opacity=".75"/>';}},
   /* ── 狐狸 ── */
   {id:'leaf', n:'楓葉帽', p:100, slot:'head', only:'a-fox', d:a=>{
-    const t=HT(a)+2;
-    return '<path d="M60 '+(t-14)+'l-6 8-8-3 4 9-9 2 10 6-3 6 12-4 12 4-3-6 10-6-9-2 4-9-8 3z" fill="#c94a1e"/>'+
-      '<path d="M60 '+(t-6)+'v14" stroke="#7d3a12" stroke-width="2"/>';}},
-  {id:'cape', n:'披風', p:120, slot:'body', only:'a-fox', d:a=>{
-    const t=HB(a)-6, w=a.bw*1.05, h=a.bh*1.7;
-    return '<path d="M'+(60-w*.55)+' '+t+'q'+(w*.55)+' 7 '+(w*1.1)+' 0l'+(w*.5)+' '+h+
-      'q-'+w+' 9 -'+(w*2)+' 0z" fill="#7b4ce0" opacity=".92"/>'+
-      '<path d="M'+(60-w*.55)+' '+t+'q'+(w*.55)+' 7 '+(w*1.1)+' 0" stroke="#ffc233" stroke-width="3" fill="none"/>';}},
+    const y=HLINE(a)-4;
+    return '<path d="M60 '+(y-13)+'l-6 8-8-3 4 9-9 2 10 6-3 6 12-4 12 4-3-6 10-6-9-2 4-9-8 3z" fill="#c94a1e"/>'+
+      '<path d="M60 '+(y-5)+'v13" stroke="#7d3a12" stroke-width="2"/>';}},
+  {id:'cape', n:'披風', p:120, slot:'body', only:'a-fox', back:1, d:a=>{
+    const t=a.by-a.bh, h=a.bh*2, w=a.bw+7;
+    return '<path d="M'+(60-a.bw*.7)+' '+t+'q'+(a.bw*.7)+' 7 '+(a.bw*1.4)+' 0'+
+      'l'+(w-a.bw*.7)+' '+(h*.95)+'q-'+w+' 10 -'+(w*2)+' 0z" fill="#7b4ce0"/>'+
+      '<path d="M'+(60-a.bw*.7)+' '+t+'q'+(a.bw*.7)+' 7 '+(a.bw*1.4)+' 0" '+
+      'stroke="#ffc233" stroke-width="3" fill="none"/>';}},
   {id:'mask', n:'狐狸面具', p:110, slot:'face', only:'a-fox', d:a=>{
     const y=eyeY(a), g=a.gap;
     return '<path d="M'+(60-g-9)+' '+(y-7)+'q'+(g+9)+' -6 '+((g+9)*2)+' 0q-2 15 -'+(g+9)+' 19q-'+(g+7)+' -4 -'+((g+9))+' -19z" fill="#fff0e2" opacity=".95"/>'+
@@ -2050,12 +2067,12 @@ const ITEMS=[
     return '<path d="M60 '+y+'l-13-7v14zM60 '+y+'l13-7v14z" fill="#ff5c8a"/>'+
       '<circle cx="60" cy="'+y+'" r="4" fill="#e8447a"/>';}},
   {id:'beanie', n:'毛線帽', p:80, slot:'head', only:'a-peng', d:a=>{
-    const t=HT(a), r=a.hr;
-    return '<path d="M'+(60-r*.8)+' '+(t+8)+'a'+(r*.8)+' '+(r*.85)+' 0 0 1 '+(r*1.6)+' 0z" fill="#ff5c8a"/>'+
-      '<rect x="'+(60-r*.85)+'" y="'+(t+6)+'" width="'+(r*1.7)+'" height="6" rx="3" fill="#f7f4ec"/>'+
-      '<circle cx="60" cy="'+(t-4)+'" r="6" fill="#f7f4ec"/>';}},
+    const y=HLINE(a), w=HWAT(a,.45), dome=HRY(a)*.7;
+    return '<path d="M'+(60-w)+' '+y+'a'+w+' '+dome+' 0 0 1 '+(w*2)+' 0z" fill="#ff5c8a"/>'+
+      '<rect x="'+(60-w-2)+'" y="'+(y-3)+'" width="'+(w*2+4)+'" height="6.5" rx="3.25" fill="#f7f4ec"/>'+
+      '<circle cx="60" cy="'+(y-dome-3)+'" r="5.5" fill="#f7f4ec"/>';}},
   /* ── 機器人 ── */
-  {id:'rocket', n:'火箭背包', p:160, slot:'body', only:'a-bot', d:a=>{
+  {id:'rocket', n:'火箭背包', p:160, slot:'body', only:'a-bot', back:1, d:a=>{
     const y=a.by-a.bh*.6, w=a.bw+8;
     return '<rect x="'+(60-w)+'" y="'+y+'" width="10" height="'+(a.bh*1.5)+'" rx="5" fill="#cdd7ee"/>'+
       '<rect x="'+(60+w-10)+'" y="'+y+'" width="10" height="'+(a.bh*1.5)+'" rx="5" fill="#cdd7ee"/>'+
@@ -2067,10 +2084,10 @@ const ITEMS=[
       '<path d="M54 '+(y+12)+'q6 12 12 0z" fill="#ff9f45"/>'+
       '<path d="M57 '+(y+12)+'q3 7 6 0z" fill="#ffe58a"/>';}},
   {id:'dish', n:'雷達天線', p:110, slot:'head', only:'a-bot', d:a=>{
-    const t=HT(a);
-    return '<path d="M60 '+(t-4)+'l-11-9q11-7 22 0z" fill="#cdd7ee"/>'+
-      '<path d="M60 '+(t-13)+'v-7" stroke="#8fa3c8" stroke-width="3"/>'+
-      '<circle cx="60" cy="'+(t-22)+'" r="4" fill="#ff5c8a"/>';}},
+    const t=HT(a)+2;
+    return '<path d="M60 '+t+'l-11-8q11-6 22 0z" fill="#cdd7ee"/>'+
+      '<path d="M60 '+(t-8)+'v-6" stroke="#8fa3c8" stroke-width="3"/>'+
+      '<circle cx="60" cy="'+(t-16)+'" r="3.6" fill="#ff5c8a"/>';}},
   /* ── 青蛙 ── */
   {id:'lotus', n:'荷葉傘', p:100, slot:'hand', only:'a-frog', d:a=>{
     const x=60-(a.bw+6), y=a.by-6;
@@ -2078,12 +2095,12 @@ const ITEMS=[
       '<path d="M'+(x-16)+' '+(y+4)+'a16 9 0 0 1 32 0z" fill="#4a8f32"/>'+
       '<path d="M'+x+' '+(y+4)+'l-9-7M'+x+' '+(y+4)+'l9-7" stroke="#2c5c23" stroke-width="1.4"/>';}},
   {id:'aloha', n:'花襯衫', p:120, slot:'body', only:'a-frog', d:a=>{
-    const t=a.by-a.bh*.8, w=a.bw*.85, h=a.bh*1.55;
-    return '<path d="M'+(60-w)+' '+t+'h'+(w*2)+'v'+h+'q-'+w+' 7 -'+(w*2)+' 0z" fill="#3ce0d0"/>'+
-      '<circle cx="'+(60-w*.5)+'" cy="'+(t+h*.3)+'" r="3.4" fill="#ff5c8a"/>'+
-      '<circle cx="'+(60+w*.45)+'" cy="'+(t+h*.55)+'" r="3.4" fill="#ffc233"/>'+
-      '<circle cx="'+(60-w*.2)+'" cy="'+(t+h*.72)+'" r="3" fill="#fff"/>'+
-      '<path d="M60 '+t+'v'+h+'" stroke="#1b8f85" stroke-width="2"/>';}},
+    const t=a.by-a.bh, h=a.bh*2;
+    return '<path d="'+garment(a,.08,.78)+'" fill="#3ce0d0"/>'+
+      '<circle cx="'+(60-a.bw*.42)+'" cy="'+(t+h*.28)+'" r="3.2" fill="#ff5c8a"/>'+
+      '<circle cx="'+(60+a.bw*.4)+'" cy="'+(t+h*.5)+'" r="3.2" fill="#ffc233"/>'+
+      '<circle cx="'+(60-a.bw*.18)+'" cy="'+(t+h*.66)+'" r="2.8" fill="#fff"/>'+
+      '<path d="M60 '+(t+h*.08)+'V'+(t+h*.78)+'" stroke="#1b8f85" stroke-width="2"/>';}},
   {id:'goggle', n:'蛙鏡', p:90, slot:'face', only:'a-frog', d:a=>{
     const y=eyeY(a), g=a.gap;
     return '<g fill="none" stroke="#5aa9ff" stroke-width="3.4">'+
@@ -2098,11 +2115,11 @@ const ITEMS=[
       '<rect x="'+(x-8)+'" y="'+(y-6)+'" width="16" height="13" fill="#f7f4ec"/>'+
       '<path d="M'+x+' '+(y-6)+'v13" stroke="#c9b8e8" stroke-width="1.4"/>';}},
   {id:'grad', n:'學士帽', p:130, slot:'head', only:'a-owl', d:a=>{
-    const t=HT(a), r=a.hr;
-    return '<path d="M'+(60-r*.6)+' '+(t+4)+'h'+(r*1.2)+'v9h-'+(r*1.2)+'z" fill="#2a1a4a"/>'+
-      '<path d="M60 '+(t-6)+'l'+(r*.95)+' 8-'+(r*.95)+' 8-'+(r*.95)+'-8z" fill="#3a2560"/>'+
-      '<path d="M'+(60+r*.9)+' '+(t+2)+'v14" stroke="#ffc233" stroke-width="2.4"/>'+
-      '<circle cx="'+(60+r*.9)+'" cy="'+(t+17)+'" r="3.4" fill="#ffc233"/>';}},
+    const y=HLINE(a), w=HWAT(a,.45);
+    return '<path d="M'+(60-w*.62)+' '+(y-2)+'h'+(w*1.24)+'v9h-'+(w*1.24)+'z" fill="#2a1a4a"/>'+
+      '<path d="M60 '+(y-12)+'l'+(w+3)+' 6-'+(w+3)+' 6-'+(w+3)+'-6z" fill="#3a2560"/>'+
+      '<path d="M'+(60+w*.9)+' '+(y-4)+'v13" stroke="#ffc233" stroke-width="2.4"/>'+
+      '<circle cx="'+(60+w*.9)+'" cy="'+(y+10)+'" r="3.2" fill="#ffc233"/>';}},
   {id:'mono', n:'單片眼鏡', p:70, slot:'face', only:'a-owl', d:a=>{
     const y=eyeY(a), g=a.gap;
     return '<circle cx="'+(60+g)+'" cy="'+y+'" r="11" fill="none" stroke="#ffc233" stroke-width="2.6"/>'+
@@ -2121,11 +2138,13 @@ function toggleWear(k,id){
   if(!isWorn(k,id)) cur.push(id);
   wearMap()[k]=cur; save();
 }
-/* 角色身上穿的東西，畫在最上層 */
-function wearSVG(a,headOnly){
+/* 角色身上穿的東西。back 的畫在身體後面（翅膀、背包、披風），其餘畫最上層 */
+function wearSVG(a,mode){
   return wornList(a.k).map(id=>{
     const it=itemById(id); if(!it) return '';
-    if(headOnly&&['body','hand','foot'].indexOf(it.slot)>=0) return '';
+    if(mode==='back') return it.back?it.d(a):'';
+    if(it.back) return '';
+    if(mode==='head'&&['body','hand','foot'].indexOf(it.slot)>=0) return '';
     return it.d(a);
   }).join('');
 }
@@ -2154,6 +2173,7 @@ function chSVG(a,e,small){
       (small?'':'<ellipse class="shd" cx="60" cy="113" rx="24" ry="5" fill="#000" opacity=".18"/>')+
       '<g class="breathe"><g class="ch">'+
         chBack(a)+
+        wearSVG(a,'back')+
         feet+
         '<g class="armL" data-p="'+(60-apx)+','+apy+'">'+arm(60-apx,1)+'</g>'+
         '<g class="armR" data-p="'+(60+apx)+','+apy+'">'+arm(60+apx,-1)+'</g>'+
