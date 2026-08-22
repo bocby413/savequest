@@ -574,10 +574,10 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .gcard>.hd .cnt{font-size:11.5px;color:var(--txt3);flex:none}
 .gin{padding:0 12px 12px}
 .gmem{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-.gmem span{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 9px 3px 3px;
-  border-radius:99px;background:var(--panel3);color:var(--txt2)}
-.gmem span svg{width:19px;height:19px;border-radius:50%;background:var(--panel2)}
-.gmem span b{color:var(--gold);font-weight:700;margin-left:4px}
+.gmem span,.gmem .gm{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 9px 3px 3px;
+  border-radius:99px;background:var(--panel3);color:var(--txt2);border:1.5px solid transparent}
+.gmem span svg,.gmem .gm svg{width:19px;height:19px;flex:none;border-radius:50%;background:var(--panel2)}
+.gmem span b,.gmem .gm b{color:var(--gold);font-weight:700;margin-left:4px}
 .gsum{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--txt3);
   border-top:1px solid var(--edge);padding-top:10px;margin-top:4px}
 .gsum b{color:var(--txt);font-weight:800;margin-left:5px}
@@ -644,8 +644,9 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   border-radius:99px;padding:2px 8px;flex:none}
 .volrow input[type=range]{width:150px;flex:none;accent-color:var(--gold);cursor:pointer}
 @media(max-width:480px){.volrow input[type=range]{width:120px}}
-.gmem .gm{font:inherit;color:inherit;cursor:pointer}
+.gmem .gm{font-family:inherit;cursor:pointer}
 .gmem .gm:hover{border-color:var(--gold)}
+.gmem .gm:active{transform:translateY(1px)}
 .gops{display:flex;gap:8px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap}
 .gin.shut .owe{border-top-color:var(--gold)}
 .gin.shut .owe .hd::after{content:'　最後結算'}
