@@ -1817,10 +1817,11 @@ function chFace(a,e){
 function chSVG(a,e,small){
   const aw=a.armW||7, ah=a.armH||12;
   const apx=a.bw+aw-2, apy=a.apy||(a.by-a.bh*.45);         /* 肩膀 */
-  /* tilt 是手臂的休息角度，下端往身體內側收一點，動畫的旋轉再疊在外層 */
-  const tl=a.tilt||0;
+  /* tilt 是手臂的休息角度。支點放在手臂下端，轉的時候上端往身體靠、
+     下端留在原地；放在肩膀的話會變成只有下端在動。 */
+  const tl=a.tilt||0, abot=apy+ah*2-2;
   const arm=(x,sgn)=>'<ellipse cx="'+x+'" cy="'+(apy+ah-2)+'" rx="'+aw+'" ry="'+ah+'" fill="'+a.d+'"'+
-    (tl?' transform="rotate('+(sgn*tl)+','+x+','+apy+')"':'')+'/>';
+    (tl?' transform="rotate('+(sgn*tl)+','+x+','+abot+')"':'')+'/>';
   const ft=a.foot||a.d, fw=a.fw||9, fx=a.fx||13, fy=a.fy||107;
   /* 青蛙的後腿露出來，身體才有離地的高度 */
   const leg=x=>a.legs?'<path d="M'+x+' '+(a.by+a.bh-4)+'V'+(fy-2)+'" stroke="'+a.d+
@@ -1837,8 +1838,8 @@ function chSVG(a,e,small){
       '<g class="breathe"><g class="ch">'+
         chBack(a)+
         feet+
-        '<g class="armL" data-p="'+(60-apx)+','+apy+'">'+arm(60-apx,-1)+'</g>'+
-        '<g class="armR" data-p="'+(60+apx)+','+apy+'">'+arm(60+apx,1)+'</g>'+
+        '<g class="armL" data-p="'+(60-apx)+','+apy+'">'+arm(60-apx,1)+'</g>'+
+        '<g class="armR" data-p="'+(60+apx)+','+apy+'">'+arm(60+apx,-1)+'</g>'+
         chBody(a)+
         chHead(a)+
         chFront(a)+
