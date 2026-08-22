@@ -5069,20 +5069,24 @@ window.CLOUD={
       renderHud(); renderWheel(); renderShop();
     },()=>{});
   },
+  /* 寫完之後一律「指定絕對值」，不要再加減一次。
+     updateDoc 會立刻觸發自己的 snapshot 把 WALLET 換掉，
+     再做一次 -= 就等於扣兩次（90 買 90 會變成 -90） */
   async walletSpin(got,day){
     const {F}=this.api;
+    const next={coins:WALLET.coins+got, owned:WALLET.owned, spunOn:day};
     try{
-      await F.updateDoc(this.wref(),{coins:WALLET.coins+got,owned:WALLET.owned,spunOn:day});
-      WALLET.coins+=got; WALLET.spunOn=day; saveWallet();
+      await F.updateDoc(this.wref(),next);
+      WALLET=normWallet(next); saveWallet();
       return {ok:1};
     }catch(e){ return {ok:0,e:e.code||'x'}; }
   },
   async walletBuy(id,price){
     const {F}=this.api;
-    const owned=WALLET.owned.concat([id]);
+    const next={coins:WALLET.coins-price, owned:WALLET.owned.concat([id]), spunOn:WALLET.spunOn};
     try{
-      await F.updateDoc(this.wref(),{coins:WALLET.coins-price,owned:owned,spunOn:WALLET.spunOn});
-      WALLET.coins-=price; WALLET.owned=owned; saveWallet();
+      await F.updateDoc(this.wref(),next);
+      WALLET=normWallet(next); saveWallet();
       return {ok:1};
     }catch(e){ return {ok:0,e:e.code||'x'}; }
   },
