@@ -589,6 +589,21 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .glog .r .x{flex:none;width:20px;height:20px;border:0;background:none;color:var(--txt3);cursor:pointer;
   border-radius:50%;line-height:1;font-size:14px}
 .glog .r .x:hover{color:var(--red)}
+.glog .r>.body{flex:1;min-width:0;display:flex;align-items:center;gap:9px;background:none;border:0;
+  padding:0;margin:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.glog .r>.body .ch{flex:none;color:var(--txt3);font-size:10px;width:12px;text-align:center}
+.glog .r.op>.body .ch{color:var(--gold)}
+.glog .r.op{border-bottom:0}
+.gdet{background:var(--panel3);border-radius:10px;padding:8px 11px;margin:2px 0 7px}
+.gdet .who{font-size:12px;color:var(--txt2);margin-bottom:5px}
+.gdet .who b{color:var(--txt);font-weight:800}
+.gdet .who i{font-style:normal;color:var(--gold);font-size:11.5px;font-weight:700}
+.gdet .l{display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0}
+.gdet .l .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gdet .l i{font-style:normal;font-size:11.5px;color:var(--txt3);flex:none}
+.gdet .l b{font-weight:800;flex:none;color:var(--txt)}
+.glog .r [data-gedit]{font-size:13px}
+.glog .r [data-gedit]:hover{color:var(--gold)}
 .mchips{display:flex;flex-wrap:wrap;gap:6px}
 .mchips button{border:1.5px solid var(--edge2);background:var(--panel2);color:var(--txt2);
   border-radius:99px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
@@ -4346,6 +4361,25 @@ function recOwes(g,r){
   return out;
 }
 const SPLITN={even:'平分',share:'照份數',exact:'各自金額'};
+/* 展開用的明細：每個人分多少，四捨五入之後的尾差補給金額最大的那個人，
+   加總才會剛好等於這筆的總額 */
+function recSplitList(g,r){
+  const v=+r.amount||0, owes=recOwes(g,r);
+  const ks=Object.keys(owes);
+  if(!ks.length) return [];
+  let raw=0; ks.forEach(u=>raw+=owes[u]);
+  const fix=raw>0?v/raw:0;
+  const list=ks.map(u=>({uid:u, exact:owes[u]*fix, amt:Math.round(owes[u]*fix),
+                         share:(r.split==='share'&&r.shares)?(+r.shares[u]||0):null}));
+  let diff=Math.round(v)-list.reduce((n,x)=>n+x.amt,0);
+  if(diff){
+    let big=0;
+    list.forEach((x,i)=>{ if(x.exact>list[big].exact) big=i; });
+    list[big].amt+=diff;
+  }
+  list.sort((a,b)=>b.amt-a.amt);
+  return list;
+}
 /* 每個人的淨額：正的代表他墊了錢別人要還他，負的代表他欠 */
 function settle(g,recs){
   const bal={};
@@ -4382,6 +4416,20 @@ function transfers(bal){
     if(cre[j][1]<=.005) j++;
   }
   return out;
+}
+let gRecOpen=null;
+function gDetail(g,r){
+  const list=recSplitList(g,r), payer=recPayer(g,r);
+  const share=r.split==='share';
+  return '<div class="gdet">'+
+    '<div class="who">'+esc(gMemName(g,payer))+(r.kind==='in'?' 收了 ':' 先付 ')+
+      '<b>'+money(r.amount)+'</b>　<i>'+(SPLITN[r.split]||'平分')+'</i></div>'+
+    (list.length?list.map(x=>
+      '<div class="l"><span class="n">'+esc(gMemName(g,x.uid))+'</span>'+
+      (share?'<i>'+(Math.round(x.share*100)/100)+' 份</i>':'')+
+      '<b>'+money(x.amt)+'</b></div>').join('')
+     :'<div class="l"><span class="n">沒有人分到這筆</span></div>')+
+  '</div>';
 }
 function renderGroups(){
   const dot=$('gDot');
@@ -4422,16 +4470,24 @@ function renderGroups(){
               .map(f=>'<option value="'+f.uid+'">'+esc(friName(f))+'</option>').join('')+
           '</select>'+
         '</div>'+
-        '<div class="glog">'+(GRECS.length?GRECS.map(r=>
-          '<div class="r"><span class="d">'+md(r.date)+'</span>'+
-          '<span class="t">'+esc(r.note||(r.kind==='in'?'收入':'支出'))+
-            '<i>'+esc(gMemName(g,recPayer(g,r))||r.byName||'')+
-            ((r.split&&r.split!=='even')?'　'+SPLITN[r.split]
-              :recPart(g,r).length<(g.members||[]).length
-                ? '　'+recPart(g,r).length+' 人分' : '')+'</i></span>'+
-          '<span class="v '+(r.kind==='in'?'in':'out')+'">'+(r.kind==='in'?'+':'-')+money(r.amount)+'</span>'+
-          (r.by===me?'<button class="x" data-gdel="'+r.id+'" title="刪掉">×</button>':'<span class="x"></span>')+
-          '</div>').join(''):'<div class="gempty">還沒有紀錄，按上面那顆記第一筆。</div>')+'</div>'+
+        '<div class="glog">'+(GRECS.length?GRECS.map(r=>{
+          const op=gRecOpen===r.id;
+          return '<div class="r'+(op?' op':'')+'">'+
+            '<button class="body" data-gopenrec="'+r.id+'">'+
+              '<span class="d">'+md(r.date)+'</span>'+
+              '<span class="t">'+esc(r.note||(r.kind==='in'?'收入':'支出'))+
+                '<i>'+esc(gMemName(g,recPayer(g,r))||r.byName||'')+
+                ((r.split&&r.split!=='even')?'　'+SPLITN[r.split]
+                  :recPart(g,r).length<(g.members||[]).length
+                    ? '　'+recPart(g,r).length+' 人分' : '')+'</i></span>'+
+              '<span class="v '+(r.kind==='in'?'in':'out')+'">'+(r.kind==='in'?'+':'-')+money(r.amount)+'</span>'+
+              '<span class="ch">'+(op?'▴':'▾')+'</span>'+
+            '</button>'+
+            (r.by===me?'<button class="x" data-gedit="'+r.id+'" title="改這筆">✎</button>'+
+                       '<button class="x" data-gdel="'+r.id+'" title="刪掉">×</button>'
+                     :'<span class="x"></span><span class="x"></span>')+
+          '</div>'+(op?gDetail(g,r):'');
+        }).join(''):'<div class="gempty">還沒有紀錄，按上面那顆記第一筆。</div>')+'</div>'+
         '<div class="gsum"><span>團裡花掉<b class="down">'+money(tout)+'</b></span>'+
           '<span>團裡收入<b>'+money(tin)+'</b></span>'+
           '<span>幾筆<b>'+GRECS.length+'</b></span></div>'+
@@ -4453,7 +4509,7 @@ function renderGroups(){
   box.innerHTML=h;
 }
 let grKind='out', grFor=null, grPayer=null, grExcl=[];
-let grMode='even', grShares={}, grOwes={};
+let grMode='even', grShares={}, grOwes={}, grEdit=null;
 const grVal=u=>grMode==='share'
   ? (grShares[u]===undefined?1:grShares[u])
   : (grOwes[u]===undefined?'':grOwes[u]);
@@ -4519,11 +4575,24 @@ function gpNote(){
     if(has&&Math.abs(d)>=.5) note.className='splitnote bad';
   }
 }
-function openGRec(gid){
-  grFor=gid; grKind='out'; grPayer=null; grExcl=[];
-  grMode='even'; grShares={}; grOwes={};
-  $('grKinds').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.gk==='out'));
-  $('grDate').value=todayStr(); $('grAmt').value=''; $('grNote').value='';
+function openGRec(gid,rid){
+  const g=GROUPS.find(x=>x.id===gid), mem=(g&&g.members)||[];
+  const r=rid?GRECS.find(x=>x.id===rid):null;
+  grFor=gid; grEdit=r?r.id:null;
+  grKind=r?(r.kind||'out'):'out';
+  grPayer=r?recPayer(g,r):null;
+  grMode=r?(r.split||'even'):'even';
+  grShares={}; grOwes={};
+  /* 改舊的那筆時，把當時的分法還原回畫面上 */
+  grExcl = r ? mem.filter(u=>recPart(g,r).indexOf(u)<0) : [];
+  if(r&&grMode==='share'&&r.shares) mem.forEach(u=>grShares[u]=r.shares[u]===undefined?0:r.shares[u]);
+  if(r&&grMode==='exact'&&r.owes)   mem.forEach(u=>grOwes[u]=r.owes[u]===undefined?'':r.owes[u]);
+  $('grKinds').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.gk===grKind));
+  $('grDate').value=r?(r.date||todayStr()):todayStr();
+  $('grAmt').value=r?(r.amount||''):'';
+  $('grNote').value=r?(r.note||''):'';
+  $('grTitle').textContent=r?'改這一筆':'記一筆到團裡';
+  $('grSave').textContent=r?'存起來':'記下來';
   renderGPick();
   open('vGRec');
 }
@@ -4889,9 +4958,14 @@ document.body.addEventListener('click',e=>{
     });
     return;
   }
-  if(b.dataset.gopen){ gOpen=gOpen===b.dataset.gopen?null:b.dataset.gopen;
+  if(b.dataset.gopen){ gOpen=gOpen===b.dataset.gopen?null:b.dataset.gopen; gRecOpen=null;
     CLOUD.watchGRecs(); GRECS=[]; SFX.play('tick'); renderGroups(); return; }
   if(b.dataset.gadd) return openGRec(b.dataset.gadd);
+  if(b.dataset.gedit){ SFX.play('tick'); return openGRec(gOpen,b.dataset.gedit); }
+  if(b.dataset.gopenrec){
+    gRecOpen=gRecOpen===b.dataset.gopenrec?null:b.dataset.gopenrec;
+    SFX.play('tick'); renderGroups(); return;
+  }
   if(b.dataset.gdel){ CLOUD.delGroupRec(gOpen,b.dataset.gdel); SFX.play('del'); return; }
   if(b.dataset.gyes){ const v=GINVS.find(x=>x.gid===b.dataset.gyes);
     if(v) CLOUD.joinGroup(v).then(r=>{ if(r&&r.err){SFX.play('err');toast('加入失敗：'+r.err);}
@@ -4925,10 +4999,12 @@ document.body.addEventListener('click',e=>{
         toast(tot>v?'分掉的比總額多 '+money(Math.round(tot-v)):'還差 '+money(Math.round(v-tot))+' 沒分完'); return; }
       rec.owes=ow; rec.part=Object.keys(ow);
     }
-    CLOUD.addGroupRec(grFor,rec).then(r=>{
-      if(r.err){ SFX.play('err'); toast('記帳失敗：'+r.err); return; }
+    const job=grEdit?CLOUD.updGroupRec(grFor,grEdit,rec):CLOUD.addGroupRec(grFor,rec);
+    job.then(r=>{
+      if(r.err){ SFX.play('err'); toast((grEdit?'修改':'記帳')+'失敗：'+r.err); return; }
+      const was=grEdit; grEdit=null;
       $('vGRec').classList.remove('on');
-      SFX.play(grKind==='out'?'spend':'coin'); toast('記到團裡了');
+      SFX.play(grKind==='out'?'spend':'coin'); toast(was?'改好了':'記到團裡了');
     });
     return;
   }
@@ -5287,6 +5363,17 @@ window.CLOUD={
     try{
       const ref=F.doc(F.collection(this.api.fs,'groups',gid,'recs'));
       await F.setDoc(ref,Object.assign({by:me.uid,byName:db.settings.name||'某人',ts:Date.now()},rec));
+      return {ok:1};
+    }catch(e){ return {err:e.code||e.message}; }
+  },
+  /* 整筆覆蓋而不是合併，不然從照份數改成平分時 shares 會留在裡面繼續生效 */
+  async updGroupRec(gid,id,rec){
+    const {F}=this.api, me=this.user;
+    const old=GRECS.find(x=>x.id===id)||{};
+    try{
+      await F.setDoc(F.doc(this.api.fs,'groups',gid,'recs',id),
+        Object.assign({by:old.by||me.uid,byName:old.byName||db.settings.name||'某人',
+                       ts:old.ts||Date.now(),editedAt:Date.now()},rec));
       return {ok:1};
     }catch(e){ return {err:e.code||e.message}; }
   },
