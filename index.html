@@ -5329,7 +5329,7 @@ function renderWork(){
   $('workLeft').textContent = onShift()&&!shiftDone()
     ? '牠正在上班，你先去忙別的吧'
     : left>0 ? (left===2?'牠今天還沒出過門，精神很好':'牠還想再打一份工')
-             : '今天兩份都打完了，讓牠回家休息';
+             : '今天的兩份工都打完了，明天再來賺錢';
   b.disabled=workBusy||(!shiftDone()&&(onShift()||left<=0));
   b.style.opacity=b.disabled?.45:1;
   b.textContent=workBusy?'處理中…':shiftDone()?'領薪水':onShift()?'上班中':left>0?'派牠去打工':'今天收工了';
