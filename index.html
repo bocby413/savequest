@@ -625,7 +625,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .splitnote{font-size:12.5px;color:var(--txt3);margin:-2px 0 10px;min-height:18px}
 .splitnote.bad b{color:var(--down)}
 .splitnote b{color:var(--txt2);font-weight:700}
-.owe{margin-top:10px;border-top:1px solid var(--edge);padding-top:9px}
+.gin>.owe{margin-top:10px;border-top:1px solid var(--edge);padding-top:9px}
 .owe .hd{font-size:12px;letter-spacing:1px;color:var(--gold);font-weight:800;margin-bottom:6px}
 .owe .r{display:flex;align-items:center;gap:7px;font-size:13.5px;padding:4px 0}
 .owe .r b{font-weight:800}
@@ -657,7 +657,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .ghomecard .sub{font-size:12px;color:var(--txt3);margin-top:2px}
 .ghomecard .amt{flex:none;text-align:right}
 .ghomecard .amt b{display:block;font-size:15px;font-weight:800}
-.ghomecard .amt b.owe{color:var(--red)} .ghomecard .amt b.get{color:var(--lime)}
+.ghomecard .amt b.pay{color:var(--red)} .ghomecard .amt b.recv{color:var(--lime)}
 .ghomecard .amt small{font-size:11px;color:var(--txt3)}
 .gempty{color:var(--txt3);font-size:13px;padding:14px 2px;text-align:center}
 .ginvsel{font:inherit;font-size:13px;padding:7px 10px;border-radius:10px;cursor:pointer;
@@ -4641,8 +4641,8 @@ function renderGHome(){
     const mine=settle(g,recs)[me];
     const amt=(mine===undefined||Math.abs(mine)<.5)
       ? (recs.length?'<small>目前打平</small>':'<small>還沒有紀錄</small>')
-      : mine>0 ? '<b class="get">'+money(Math.round(mine))+'</b><small>別人要還你</small>'
-               : '<b class="owe">'+money(Math.round(-mine))+'</b><small>你要還別人</small>';
+      : mine>0 ? '<b class="recv">'+money(Math.round(mine))+'</b><small>別人要還你</small>'
+               : '<b class="pay">'+money(Math.round(-mine))+'</b><small>你要還別人</small>';
     return '<button class="ghomecard" data-ghome="'+g.id+'">'+
       '<span class="who">'+faces+(mem.length>4?'<span>+'+(mem.length-4)+'</span>':'')+'</span>'+
       '<span class="mid"><span class="nm">'+esc(g.name||'一個團')+'</span>'+
