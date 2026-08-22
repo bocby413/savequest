@@ -1726,14 +1726,16 @@ function chBody(a){
   if(a.egg) return '<ellipse cx="60" cy="'+a.by+'" rx="'+a.bw+'" ry="'+a.bh+'" fill="'+a.c+'"/>';
   if(a.sq)  return '<rect x="'+(60-a.bw)+'" y="'+(a.by-a.bh)+'" width="'+(a.bw*2)+'" height="'+(a.bh*2)+
                    '" rx="7" fill="'+a.d+'"/>';
-  /* 肩膀窄、屁股寬，才有身體的感覺，不是一顆球 */
-  const t=a.by-a.bh, b=a.by+a.bh, w1=a.bw*.72, w2=a.bw;
-  return '<path d="M'+(60-w1)+' '+t+'q'+w1+' -6 '+(w1*2)+' 0'+
-         'c'+(w2-w1+3)+' '+(a.bh*1.1)+' '+(w2-w1+3)+' '+(a.bh*1.6)+' '+(w2-w1)+' '+(a.bh*2)+
-         'q'+(-w2)+' 7 '+(-w2*2)+' 0'+
-         'c'+(-(w2-w1))+' '+(-a.bh*.4)+' '+(-(w2-w1))+' '+(-a.bh*.9)+' '+(w1-w2)+' '+(-a.bh*2)+'z" fill="'+a.c+'"/>';
+  /* 肩窄臀寬。用絕對座標畫，左右才會對稱、收尾才會剛好回到起點 */
+  const t=a.by-a.bh, b=a.by+a.bh, h=b-t, w1=a.bw*.66, w2=a.bw;
+  const L1=60-w1, R1=60+w1, L2=60-w2, R2=60+w2;
+  return '<path d="M'+L1+' '+t+
+         'Q60 '+(t-5)+' '+R1+' '+t+
+         'C'+(R2+1)+' '+(t+h*.42)+' '+R2+' '+(b-h*.22)+' '+(R2-1)+' '+b+
+         'Q60 '+(b+6)+' '+(L2+1)+' '+b+
+         'C'+L2+' '+(b-h*.22)+' '+(L2-1)+' '+(t+h*.42)+' '+L1+' '+t+
+         'Z" fill="'+a.c+'"/>';
 }
-/* 頭 */
 function chHead(a){
   if(a.sq) return '<rect x="'+(60-a.hr)+'" y="'+(a.hy-a.hry)+'" width="'+(a.hr*2)+'" height="'+(a.hry*2)+
                   '" rx="12" fill="'+a.c+'"/>';
