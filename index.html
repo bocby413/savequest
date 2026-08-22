@@ -1816,7 +1816,8 @@ function chFace(a,e){
 }
 function chSVG(a,e,small){
   const aw=a.armW||7, ah=a.armH||12;
-  const apx=a.bw+aw-2, apy=a.apy||(a.by-a.bh*.45);         /* 肩膀 */
+  /* 肩膀塞在身體裡面一點，手才會像從身上長出來，不是貼在旁邊 */
+  const apx=(a.apx!==undefined?a.apx:a.bw-1), apy=a.apy||(a.by-a.bh*.45);
   const arm=(x)=>'<ellipse cx="'+x+'" cy="'+(apy+ah-2)+'" rx="'+aw+'" ry="'+ah+'" fill="'+a.d+'"/>';
   const ft=a.foot||a.d, fw=a.fw||9, fx=a.fx||13, fy=a.fy||107;
   /* 青蛙的後腿露出來，身體才有離地的高度 */
