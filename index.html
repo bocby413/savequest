@@ -1826,8 +1826,7 @@ function chBack(a,noTail){
     return '<circle cx="'+(60-a.gap)+'" cy="'+eyeY(a)+'" r="13" fill="#6cc24a"/>'+
            '<circle cx="'+(60+a.gap)+'" cy="'+eyeY(a)+'" r="13" fill="#6cc24a"/>';
   if(a.k==='a-owl')
-    return hides(a,'ear') ? E('')
-         : E('<path d="M'+(60-hr+6)+' '+(hy-hr+9)+' '+(60-hr+15)+' '+(hy-hr-2)+'l9 10z'+
+    return E('<path d="M'+(60-hr+6)+' '+(hy-hr+9)+' '+(60-hr+15)+' '+(hy-hr-2)+'l9 10z'+
               'M'+(60+hr-6)+' '+(hy-hr+9)+' '+(60+hr-15)+' '+(hy-hr-2)+'l-9 10z" fill="'+a.d+'"/>');
   return '';
 }
@@ -2148,15 +2147,17 @@ const ITEMS=[
     return '<rect x="'+(x-11)+'" y="'+(y-8)+'" width="22" height="17" rx="2" fill="#8a5ce0"/>'+
       '<rect x="'+(x-8)+'" y="'+(y-6)+'" width="16" height="13" fill="#f7f4ec"/>'+
       '<path d="M'+x+' '+(y-6)+'v13" stroke="#c9b8e8" stroke-width="1.4"/>';}},
-  {id:'grad', n:'學士帽', p:130, slot:'head', only:'a-owl', hide:'ear', d:a=>{
-    /* 帽圈上窄下寬照著頭的弧度收，不然兩個角會戳出頭外面、跟板子中間漏出背景。
-       板子直接壓在帽圈上緣，兩塊有重疊才不會有縫 */
-    const k1=.42, k2=.78;
-    const y1=a.hy-HRY(a)*k1, w1=HWAT(a,k1);
-    const y2=a.hy-HRY(a)*k2, w2=HWAT(a,k2);
-    const yc=y2-1, wp=w1+8, tx=60+wp*.72;
+  {id:'grad', n:'學士帽', p:130, slot:'head', only:'a-owl', d:a=>{
+    /* 帽身要夠深，連耳羽一起罩進去——把耳朵藏起來會讓頭看起來變矮。
+       下緣貼著頭的寬度，往上略收，板子壓在帽頂 */
+    const k1=.42, y1=a.hy-HRY(a)*k1, w1=HWAT(a,k1);
+    const yt=a.hy-a.hr-8, wt=w1*.89, r=6;      /* 帽頂要蓋過耳羽的尖端 */
+    const yc=yt+4, wp=w1+8, tx=60+wp*.72;
     const board='M60 '+(yc-6)+'l'+wp+' 6-'+wp+' 6-'+wp+'-6z';
-    return '<path d="M'+(60-w2)+' '+y2+'L'+(60-w1)+' '+y1+'h'+(w1*2)+'L'+(60+w2)+' '+y2+'z" fill="#2a1a4a"/>'+
+    return '<path d="M'+(60-w1)+' '+y1+'L'+(60-wt)+' '+(yt+r)+
+        'Q'+(60-wt)+' '+yt+' '+(60-wt+r)+' '+yt+
+        'H'+(60+wt-r)+'Q'+(60+wt)+' '+yt+' '+(60+wt)+' '+(yt+r)+
+        'L'+(60+w1)+' '+y1+'z" fill="#2a1a4a"/>'+
       '<path d="'+board+'" fill="#3a2560"/>'+
       '<path d="'+board+'" fill="none" stroke="#1b1030" stroke-width="1.2"/>'+
       '<path d="M'+tx+' '+(yc+2)+'v11" stroke="#ffc233" stroke-width="2.4"/>'+
