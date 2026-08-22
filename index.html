@@ -588,6 +588,11 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .ginv .sub{font-size:11.5px;color:var(--txt3)}
 /* 商店 */
 .shopgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.slothd{grid-column:1/-1;display:flex;align-items:baseline;gap:9px;margin-top:6px;
+  padding-bottom:5px;border-bottom:1px solid var(--edge)}
+.slothd:first-child{margin-top:0}
+.slothd b{font-size:13px;font-weight:800;letter-spacing:1px;color:var(--gold)}
+.slothd span{font-size:11.5px;color:var(--txt3)}
 @media(max-width:520px){.shopgrid{grid-template-columns:repeat(2,1fr)}}
 .sitem{background:var(--panel2);border:2px solid var(--edge);border-radius:14px;padding:8px 6px 9px;
   text-align:center;cursor:pointer;font:inherit;color:inherit;position:relative;
@@ -604,6 +609,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .sitem.on .pr{color:var(--gold)}
 .sitem .tag{position:absolute;left:6px;top:6px;font-size:10px;padding:1px 6px;border-radius:99px;
   background:var(--panel3);color:var(--txt3);font-weight:700}
+.sitem .tag.only{left:auto;right:6px;background:rgba(168,121,255,.22);color:#c9a6ff}
 .sitem.on .tag{background:var(--gold);color:#3a2600}
 .sitem.poor{opacity:.5}
 .shopempty{grid-column:1/-1;color:var(--txt3);font-size:13.5px;padding:20px 2px;text-align:center}
@@ -4082,21 +4088,31 @@ function openGRec(gid){
 /* ── 商店 ── */
 let shopTab='all';
 const SLOTN={head:'頭',face:'臉',neck:'脖子',body:'身體',hand:'手上',foot:'腳下'};
+const SLOTORDER=['head','face','neck','body','hand','foot'];
 function renderShop(){
   const box=$('shopBody'); if(!box) return;
   const a=petChar(), list=shopFor(a.k).filter(x=>shopTab!=='own'||hasItem(x.id));
   $('shopSay').innerHTML='幫 <b style="color:var(--gold)">'+esc(a.n)+
     '</b> 買配件。目前有 <b style="color:var(--gold)">'+money(coins())+'</b> 枚 Bo士幣，'+
-    '每個部位只能穿一件，買過的可以隨時換。';
+    '同一個部位只能穿一件，買過的可以隨時換。';
   if(!list.length){ box.innerHTML='<div class="shopempty">還沒有買過東西</div>'; return; }
-  box.innerHTML=list.map(it=>{
-    const own=hasItem(it.id), on=isWorn(a.k,it.id), poor=!own&&coins()<it.p;
-    return '<button class="sitem'+(on?' on':own?' own':'')+(poor?' poor':'')+'" data-item="'+it.id+'">'+
-      '<span class="tag">'+(on?'穿著中':own?'已擁有':SLOTN[it.slot])+'</span>'+
-      itemPreview(a,it)+
-      '<div class="nm">'+esc(it.n)+'</div>'+
-      '<div class="pr">'+(own?(on?'點一下脫下':'點一下穿上')
-        :'<svg><use href="#i-coin"/></svg>'+it.p)+'</div></button>';
+  /* 依部位分區，每區標上有沒有穿東西 */
+  box.innerHTML=SLOTORDER.map(sl=>{
+    const items=list.filter(x=>x.slot===sl);
+    if(!items.length) return '';
+    const on=items.find(x=>isWorn(a.k,x.id));
+    return '<div class="slothd"><b>'+SLOTN[sl]+'</b>'+
+      '<span>'+(on?'穿著 '+esc(on.n):'沒穿東西')+'</span></div>'+
+      items.map(it=>{
+        const own=hasItem(it.id), wear=isWorn(a.k,it.id), poor=!own&&coins()<it.p;
+        return '<button class="sitem'+(wear?' on':own?' own':'')+(poor?' poor':'')+'" data-item="'+it.id+'">'+
+          (wear?'<span class="tag">穿著中</span>':own?'<span class="tag">已擁有</span>':'')+
+          (it.only?'<span class="tag only">專屬</span>':'')+
+          itemPreview(a,it)+
+          '<div class="nm">'+esc(it.n)+'</div>'+
+          '<div class="pr">'+(own?(wear?'點一下脫下':'點一下穿上')
+            :'<svg><use href="#i-coin"/></svg>'+it.p)+'</div></button>';
+      }).join('');
   }).join('');
 }
 /* 預覽：角色穿上這一件的樣子 */
