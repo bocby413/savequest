@@ -1219,7 +1219,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   <h3>揪團</h3>
   <div class="say">揪朋友開一團，一起記同一本帳。誰記的都看得到，也算得出各自出了多少。</div>
   <div class="two" style="gap:8px">
-    <input type="text" id="gName" placeholder="團名，例如 日本行、室友水電" maxlength="14">
+    <input type="text" id="grpName" placeholder="團名，例如 日本行、室友水電" maxlength="14">
     <button class="btn go" id="btnGNew">開一團</button>
   </div>
   <div id="gBody"></div>
@@ -4607,12 +4607,12 @@ document.body.addEventListener('click',e=>{
   if(b.id==='btnFriends'){ renderFriends(); $('friMsg').textContent=''; return open('vFri'); }
   if(b.id==='btnGroups'){ renderGroups(); SFX.play('tick'); return open('vGroup'); }
   if(b.id==='btnGNew'){
-    const n=$('gName').value.trim();
+    const n=$('grpName').value.trim();
     if(!n){ toast('先幫這團取個名字'); return; }
     if(!CLOUD.user){ toast('要先登入才能揪團'); return; }
     CLOUD.createGroup(n).then(r=>{
       if(r.err){ SFX.play('err'); toast('開團失敗：'+r.err); return; }
-      $('gName').value=''; gOpen=r.ok; CLOUD.watchGRecs(); SFX.play('win'); toast('開好了，把好友找進來');
+      $('grpName').value=''; gOpen=r.ok; CLOUD.watchGRecs(); SFX.play('win'); toast('開好了，把好友找進來');
     });
     return;
   }
