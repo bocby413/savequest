@@ -1665,7 +1665,7 @@ const TCHARS=[
    hr:26, hy:43, bw:17, bh:22, by:82, gap:9, eo:-4, mo:12, pup:3.9, fx:12, fy:106, tilt:13},
   {k:'a-peng',n:'企鵝',   c:'#4a5885', d:'#36406b', ink:'#12142a', beak:'#f5a623', foot:'#f5a623',
    hr:25, hy:48, bw:26, bh:36, by:72, gap:11, eo:2, mo:14, pup:4.2,
-   armW:7, armH:20, apy:70, fx:13, fy:109, fw:11, egg:1},
+   armW:7.5, armH:14, apy:74, fx:13, fy:109, fw:11, egg:1},
   {k:'a-bot', n:'機器人', c:'#8fa3c8', d:'#6c7fa8', ink:'#3ce0d0',
    hr:27, hy:43, hry:23, bw:19, bh:17, by:82, gap:11, eo:1, mo:12, sq:1, base:1},
   {k:'a-frog',n:'青蛙',   c:'#7ed957', d:'#5aa83c', ink:'#1d2b17',
@@ -1677,27 +1677,28 @@ const TCHARS=[
 const eyeY=a=>a.hy+a.eo, mouY=a=>a.hy+a.mo;
 
 /* 身體後面的東西：耳朵、角羽、尾巴、青蛙的眼球包 */
-function chBack(a){
+function chBack(a,noTail){
+  const T=x=>noTail?'':x;   /* 頭貼只取頭，尾巴不畫 */
   const E=x=>'<g class="ears" data-p="60,'+(a.hy-a.hr*.2).toFixed(0)+'">'+x+'</g>', hy=a.hy, hr=a.hr;
   if(a.k==='a-cat')
-    return '<g class="tail" data-p="'+(60+a.bw-2)+','+(a.by+8)+'"><path d="M'+(60+a.bw-2)+' '+(a.by+8)+'q18 3 13-19" stroke="'+a.tailC+
-             '" stroke-width="7" fill="none" stroke-linecap="round"/></g>'+
+    return T('<g class="tail" data-p="'+(60+a.bw-2)+','+(a.by+8)+'"><path d="M'+(60+a.bw-2)+' '+(a.by+8)+'q18 3 13-19" stroke="'+a.tailC+
+             '" stroke-width="7" fill="none" stroke-linecap="round"/></g>')+
            E('<path d="M'+(60-hr+3)+' '+(hy-6)+' '+(60-hr+1)+' '+(hy-hr-4)+'l19 11z'+
               'M'+(60+hr-3)+' '+(hy-6)+' '+(60+hr-1)+' '+(hy-hr-4)+'l-19 11z" fill="'+a.d+'"/>'+
              '<path d="M'+(60-hr+7)+' '+(hy-9)+' '+(60-hr+5)+' '+(hy-hr+3)+'l10 6z'+
               'M'+(60+hr-7)+' '+(hy-9)+' '+(60+hr-5)+' '+(hy-hr+3)+'l-10 6z" fill="#ff9ec4" opacity=".7"/>');
   if(a.k==='a-dog')
-    return '<g class="tail" data-p="'+(60+a.bw-1)+','+(a.by-2)+'"><path d="M'+(60+a.bw-1)+' '+(a.by-2)+'q15-3 11-17" stroke="'+a.tailC+
-             '" stroke-width="8" fill="none" stroke-linecap="round"/></g>'+
+    return T('<g class="tail" data-p="'+(60+a.bw-1)+','+(a.by-2)+'"><path d="M'+(60+a.bw-1)+' '+(a.by-2)+'q15-3 11-17" stroke="'+a.tailC+
+             '" stroke-width="8" fill="none" stroke-linecap="round"/></g>')+
            E('<ellipse cx="'+(60-hr-1)+'" cy="'+(hy+4)+'" rx="9" ry="15" fill="'+a.d+'"/>'+
              '<ellipse cx="'+(60+hr+1)+'" cy="'+(hy+4)+'" rx="9" ry="15" fill="'+a.d+'"/>');
   if(a.k==='a-bear')
     return E('<circle cx="'+(60-hr+5)+'" cy="'+(hy-hr+9)+'" r="10" fill="'+a.d+'"/>'+
              '<circle cx="'+(60+hr-5)+'" cy="'+(hy-hr+9)+'" r="10" fill="'+a.d+'"/>');
   if(a.k==='a-fox')
-    return '<g class="tail" data-p="'+(60+a.bw)+','+(a.by+6)+'"><path d="M'+(60+a.bw)+' '+(a.by+6)+'q22-1 16-22" stroke="'+a.tailC+
+    return T('<g class="tail" data-p="'+(60+a.bw)+','+(a.by+6)+'"><path d="M'+(60+a.bw)+' '+(a.by+6)+'q22-1 16-22" stroke="'+a.tailC+
              '" stroke-width="12" fill="none" stroke-linecap="round"/>'+
-             '<circle cx="'+(60+a.bw+15)+'" cy="'+(a.by-15)+'" r="6" fill="#fff0e2"/></g>'+
+             '<circle cx="'+(60+a.bw+15)+'" cy="'+(a.by-15)+'" r="6" fill="#fff0e2"/></g>')+
            E('<path d="M'+(60-hr-2)+' '+(hy-hr-2)+' '+(60-hr+16)+' '+(hy+3)+' '+(60-hr+3)+' '+(hy+13)+'z'+
               'M'+(60+hr+2)+' '+(hy-hr-2)+' '+(60+hr-16)+' '+(hy+3)+' '+(60+hr-3)+' '+(hy+13)+'z" fill="'+a.d+'"/>'+
              '<path d="M'+(60-hr+3)+' '+(hy-hr+5)+' '+(60-hr+14)+' '+(hy+3)+' '+(60-hr+7)+' '+(hy+7)+'z'+
@@ -1786,7 +1787,7 @@ function chBodyMark(a){
 function avaBody(a){
   const k=(a.egg?18/a.bw:20/a.hr), cy=(a.egg?a.hy+4:a.hy);
   return '<g transform="translate(32,34) scale('+k.toFixed(3)+') translate(-60,'+(-cy)+')">'+
-    chBack(a)+(a.egg?chBody(a)+chBodyMark(a):'')+chHead(a)+chFaceMark(a)+chFace(a,'idle')+'</g>';
+    chBack(a,1)+(a.egg?chBody(a)+chBodyMark(a):'')+chHead(a)+chFaceMark(a)+chFace(a,'idle')+'</g>';
 }
 function buildAvatars(){
   const box=$('avaDefs'); if(!box) return;
