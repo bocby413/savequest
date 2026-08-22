@@ -4901,13 +4901,14 @@ function renderShop(){
   const box=$('shopBody'); if(!box) return;
   const a=petChar();
   /* 試衣間。試穿的東西還沒買，所以要關掉「只能穿買過的」那層濾網 */
-  const m=wearMap(), keep=m[a.k];
+  const m=wearMap(), had=m.hasOwnProperty(a.k), keep=m[a.k];
   m[a.k]=tryOutfit(a);
   wearRaw=1;
   $('shopStage').innerHTML=chSVG(a,'idle');   /* 跟 HUD 那隻一樣是閒置的樣子 */
   wearRaw=0;
   SHOPPET.watch(); SHOPPET.start();
-  m[a.k]=keep;
+  /* 本來就沒有這個鍵的話要刪掉。寫回 undefined 會讓整包同步被 Firestore 退件 */
+  if(had) m[a.k]=keep; else delete m[a.k];
   $('shopCoins').innerHTML='<svg class="i"><use href="#i-coin"/></svg>'+money(coins())+' Bo士幣';
   /* 分類橫幅：正在試穿的那格標星號，已經穿著的標點 */
   const avail=SLOTORDER.filter(sl=>shopFor(a.k).some(x=>x.slot===sl));
@@ -5594,9 +5595,13 @@ window.CLOUD={
   async push(){
     if(!this.user||!this.api) return;
     try{
-      await this.api.F.setDoc(this.ref(),{
-        records:db.records, goals:db.goals, settings:db.settings, deleted:db.deleted||{}, updatedAt:Date.now()
-      });
+      /* Firestore 不收 undefined，整包會被退件變成同步異常。
+         繞一趟 JSON 把它們清掉，順便擋掉以後不小心又寫進去的 */
+      const clean=JSON.parse(JSON.stringify({
+        records:db.records, goals:db.goals, settings:db.settings, deleted:db.deleted||{}
+      }));
+      clean.updatedAt=Date.now();
+      await this.api.F.setDoc(this.ref(),clean);
       this.last=Date.now(); this.err=''; this.paint();
     }catch(e){ this.err=e.code||'寫入失敗'; this.paint(); }
   },
