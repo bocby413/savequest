@@ -642,6 +642,10 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   padding:9px 11px;line-height:1.55}
 .gtag{font-size:11px;font-weight:800;color:var(--gold);background:rgba(255,194,51,.16);
   border-radius:99px;padding:2px 8px;flex:none}
+.volrow input[type=range]{width:150px;flex:none;accent-color:var(--gold);cursor:pointer}
+@media(max-width:480px){.volrow input[type=range]{width:120px}}
+.gmem .gm{font:inherit;color:inherit;cursor:pointer}
+.gmem .gm:hover{border-color:var(--gold)}
 .gops{display:flex;gap:8px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap}
 .gin.shut .owe{border-top-color:var(--gold)}
 .gin.shut .owe .hd::after{content:'　最後結算'}
@@ -1203,6 +1207,8 @@ html[data-skin="light"] .logbar input{color-scheme:light}
     <button class="sw" id="swStock" role="switch"><i></i></button></div>
   <div class="setrow"><div class="lb"><b>音效</b><span>記帳、升級、完成任務的聲音</span></div>
     <button class="btn sm ghost" id="btnSfx"><svg class="i" id="sfxIcon"><use href="#i-vol"/></svg></button></div>
+  <div class="setrow volrow"><div class="lb"><b>音量</b><span id="volTxt">中</span></div>
+    <input type="range" id="volBar" min="0" max="100" step="5"></div>
   <div class="setrow"><div class="lb"><b>畫面</b><span>深色或亮色</span></div>
     <button class="btn sm ghost" id="btnSkin">亮色</button></div>
   <div class="setrow"><div class="lb"><b>備份</b><span>把所有資料存成一個檔案</span></div>
@@ -1299,6 +1305,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
     <button class="btn ghost" id="profBack">返回</button>
     <button class="btn ghost" id="profGrant">我分享給他什麼</button>
     <button class="btn ghost del" id="profDel">移除好友</button>
+    <button class="btn go" id="profAdd" style="display:none">加好友</button>
   </div>
 </div></div>
 
@@ -1498,6 +1505,11 @@ function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clear
 /* ── 音效：現場合成，不用音檔 ── */
 const SFX={
   on:localStorage.getItem('life_goals_sfx')!=='off', ctx:null,
+  /* 0～1 的總音量，所有聲音的音量都乘上它 */
+  vol:(()=>{ const v=parseFloat(localStorage.getItem('life_goals_vol'));
+             return isNaN(v)?.7:Math.max(0,Math.min(1,v)); })(),
+  setVol(v){ this.vol=Math.max(0,Math.min(1,v));
+             localStorage.setItem('life_goals_vol',this.vol); },
   /* iPhone 的靜音鍵會把網頁音效整個關掉，因為預設被歸類成「環境音」。
      宣告成媒體播放就跟影片一樣不受靜音鍵管，所有聲音一律照這樣走。
      代價是出聲的時候會接管音訊，正在聽的音樂會被停掉。 */
@@ -1515,7 +1527,7 @@ const SFX={
     const c=this.ctx, t=c.currentTime+t0, o=c.createOscillator(), g=c.createGain();
     o.type=type||'square'; o.frequency.setValueAtTime(f,t);
     g.gain.setValueAtTime(.0001,t);
-    g.gain.exponentialRampToValueAtTime(vol||.12,t+.012);
+    g.gain.exponentialRampToValueAtTime(Math.max(.0002,(vol||.12)*this.vol),t+.012);
     g.gain.exponentialRampToValueAtTime(.0001,t+dur);
     o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+dur+.03);
   },
@@ -1523,7 +1535,7 @@ const SFX={
     const c=this.ctx, t=c.currentTime+t0, o=c.createOscillator(), g=c.createGain();
     o.type=type||'sawtooth'; o.frequency.setValueAtTime(f1,t); o.frequency.exponentialRampToValueAtTime(f2,t+dur);
     g.gain.setValueAtTime(.0001,t);
-    g.gain.exponentialRampToValueAtTime(vol||.1,t+.015);
+    g.gain.exponentialRampToValueAtTime(Math.max(.0002,(vol||.1)*this.vol),t+.015);
     g.gain.exponentialRampToValueAtTime(.0001,t+dur);
     o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+dur+.03);
   },
@@ -3987,12 +3999,13 @@ function plock(icon,head){
   return '<div class="pcard lock"><div class="ph"><svg><use href="#'+icon+'"/></svg>'+head+'</div>'+
     '<div class="pv">沒有分享</div></div>';
 }
+const SENTREQ=new Set();          /* 這次開機送出過的邀請，按鈕才知道要變灰 */
 function renderProf(){
   const f=profFor; if(!f||!$('vProf').classList.contains('on')) return;
   const d=SHARED[f.uid], g=(d&&d.grant)||{}, p=PROFILES[f.uid]||{};
-  const pk=(d&&d.ch)||p.ch, pw=(d&&d.wear)||p.wear||[];
+  const pk=(d&&d.ch)||p.ch||f.ch, pw=(d&&d.wear)||p.wear||f.wear||[];
   const full=knownCh(pk);
-  $('profPic').innerHTML=full?charPortrait(pk,pw,1):friAvatar((d&&d.avatar)||p.avatar);
+  $('profPic').innerHTML=full?charPortrait(pk,pw,1):friAvatar((d&&d.avatar)||p.avatar||f.avatar);
   $('profPic').classList.toggle('full',full);
   if(full){                              /* 跟自己那隻一樣會眨眼、歪頭、跳一下 */
     PROFPET.who=()=>TCHARS.find(x=>x.k===pk)||petChar();
@@ -4030,9 +4043,20 @@ function renderProf(){
         '現金 '+short(d.cash||0)+'　股票 '+short(d.stock||0))
     : plock('i-coin','總資產');
   $('profBody').innerHTML=h;
-  $('profFoot').textContent=d
-    ? '資料更新於 '+new Date(d.updatedAt).toLocaleString('zh-TW')+'，對方開啟 app 時才會重新整理。'
-    : '對方還沒開啟過 app，所以這裡還沒有資料。';
+  const isFri=FRIENDS.some(x=>x.uid===f.uid);
+  const inReq=REQS.some(x=>x.from===f.uid);
+  $('profGrant').style.display=isFri?'':'none';
+  $('profDel').style.display=isFri?'':'none';
+  const add=$('profAdd');
+  add.style.display=isFri?'none':'';
+  add.disabled=SENTREQ.has(f.uid);
+  add.style.opacity=add.disabled?.5:1;
+  add.textContent=inReq?'他也在等你答應':SENTREQ.has(f.uid)?'邀請送出了':'加好友';
+  $('profFoot').textContent= isFri
+    ? (d ? '資料更新於 '+new Date(d.updatedAt).toLocaleString('zh-TW')+'，對方開啟 app 時才會重新整理。'
+         : '對方還沒開啟過 app，所以這裡還沒有資料。')
+    : (inReq ? '他寄了好友邀請給你，回上一頁的好友那邊可以答應。'
+             : '你們還不是好友，所以看不到他分享的東西。加了之後才看得到。');
 }
 function openProf(uid){
   const f=FRIENDS.find(x=>x.uid===uid); if(!f) return;
@@ -4064,6 +4088,14 @@ $('saveGrant').onclick=async()=>{
   $('vGrant').classList.remove('on'); toast('分享設定已更新');
 };
 $('grantCancel').onclick=()=>$('vGrant').classList.remove('on');   /* 只關這層，回到上一頁 */
+$('profAdd').onclick=async()=>{
+  const f=profFor; if(!f) return;
+  const btn=$('profAdd'); btn.disabled=true; btn.textContent='送出中…';
+  const r=await CLOUD.sendRequestTo(f.uid,f.name);
+  if(r.err){ SFX.play('err'); toast('送不出去：'+r.err); btn.disabled=false; renderProf(); return; }
+  SENTREQ.add(f.uid); SFX.play('win'); toast('邀請送給「'+r.ok+'」了，等他答應');
+  renderProf();
+};
 $('profBack').onclick=()=>{ $('vProf').classList.remove('on'); profFor=null; };
 $('profGrant').onclick=()=>{ if(profFor) openGrant(profFor.uid); };
 $('profDel').onclick=()=>{
@@ -4734,8 +4766,8 @@ function renderGroups(){
           /* 自己用當下的，別人用他自己更新上來的那份，都不是入團當時的快照 */
           const look=uid===me?{ch:petChar().k,wear:wornList(petChar().k),avatar:db.settings.avatar}
                              :{ch:i.ch,wear:i.wear,avatar:i.a};
-          return '<span>'+friPic(null,look)+esc(gMemName(g,uid))+
-            (per[uid]?'<b>'+short(per[uid])+'</b>':'')+'</span>';
+          return '<button class="gm" data-gmem="'+uid+'">'+friPic(null,look)+esc(gMemName(g,uid))+
+            (per[uid]?'<b>'+short(per[uid])+'</b>':'')+'</button>';
         }).join('')+'</div>'+
         (shut?groupPhoto(g)+
               '<div class="gshut">這趟已經結束了（'+md(iso(new Date(g.closed)))+'），'+
@@ -5269,6 +5301,14 @@ document.body.addEventListener('click',e=>{
     SFX.play('tick'); renderGroups(); return; }
   if(b.dataset.gadd) return openGRec(b.dataset.gadd);
   if(b.dataset.gedit){ SFX.play('tick'); return openGRec(gOpen,b.dataset.gedit); }
+  if(b.dataset.gmem){
+    const uid=b.dataset.gmem, me2=CLOUD.user?CLOUD.user.uid:'';
+    if(uid===me2){ SFX.play('tick'); return openAva&&openAva(); }
+    const g=GROUPS.find(x=>x.id===gOpen)||{}, i=((g.info)||{})[uid]||{};
+    const fri=FRIENDS.find(x=>x.uid===uid);
+    profFor=fri||{uid, name:i.n, ch:i.ch, wear:i.wear, avatar:i.a};
+    SFX.play('tick'); open('vProf'); renderProf(); return;
+  }
   if(b.dataset.ghome){
     gOpen=b.dataset.ghome; gRecOpen=null;
     renderGroups(); SFX.play('tick'); open('vGroup'); return;
@@ -5460,7 +5500,19 @@ function sfxIcon(){
   $('sfxIcon').innerHTML='<use href="#i-'+(SFX.on?'vol':'mute')+'"/>';
   $('btnSfx').style.opacity=SFX.on?1:.5;
   $('btnSfx').title=SFX.on?'目前是開的':'目前是關的';
+  const bar=$('volBar'); if(!bar) return;
+  bar.value=Math.round(SFX.vol*100);
+  bar.disabled=!SFX.on;
+  $('volTxt').textContent=!SFX.on?'音效關著'
+    :SFX.vol<=0?'靜音':SFX.vol<.35?'小聲':SFX.vol<.75?'中等':'大聲';
+  $('volBar').style.opacity=SFX.on?1:.4;
 }
+let volTimer=0;
+$('volBar').addEventListener('input',e=>{
+  SFX.setVol(e.target.value/100); sfxIcon();
+  clearTimeout(volTimer);                       /* 放手才試聽一次，不然拖動會一直叫 */
+  volTimer=setTimeout(()=>{ if(SFX.on&&SFX.vol>0) SFX.play('coin'); },260);
+});
 $('btnSfx').onclick=()=>{ const on=SFX.toggle(); sfxIcon(); toast(on?'音效開了':'音效關了'); };
 
 $('btnExport').onclick=()=>{
@@ -5819,6 +5871,22 @@ window.CLOUD={
     catch(e){ throw new Error('查名冊失敗：'+(e.code||e.message)); }
     let hit=null; snap.forEach(d=>{ if(!hit) hit=d.data(); });
     return hit;
+  },
+  /* 同一團但還不是好友：直接用 uid 送，不用先知道對方的信箱 */
+  async sendRequestTo(uid,name){
+    const me=this.user;
+    if(!me) return {err:'還沒登入'};
+    if(uid===me.uid) return {err:'這是你自己'};
+    if(FRIENDS.some(f=>f.uid===uid)) return {err:'你們已經是好友了'};
+    const {F}=this.api;
+    try{
+      await F.setDoc(F.doc(this.api.fs,'users',uid,'inbox',me.uid),{
+        from:me.uid, fromEmail:(me.email||'').toLowerCase(),
+        fromName:db.settings.name||me.displayName||'某人',
+        avatar:db.settings.avatar||null, ts:Date.now()
+      });
+    }catch(e){ return {err:'寫入失敗：'+(e.code||e.message)}; }
+    return {ok:name||'對方'};
   },
   async sendRequest(email){
     const me=this.user;
