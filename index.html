@@ -2166,9 +2166,13 @@ const ITEMS=[
       'stroke="#ff5c8a" stroke-width="5" fill="none"/>';}},
   {id:'heartglass', n:'愛心眼鏡', p:70, slot:'face', only:'a-cat', d:a=>{
     const y=eyeY(a), g=a.gap, r=Math.max(7,g*.8);
-    const heart=cx=>'<path d="M'+cx+' '+(y+r*.75)+'c-'+(r*1.15)+' -'+(r*.85)+' -'+(r*.62)+' -'+(r*1.85)+
-      ' 0 -'+(r*.72)+'c'+(r*.62)+' -'+(r*1.13)+' '+(r*1.15)+' -'+(r*.13)+' 0 '+(r*1.44)+'z"'+
-      ' fill="#ff9ec4" stroke="#e8447a" stroke-width="2"/>';
+    /* 標準的兩段三次曲線：下面收成尖角，上面兩個圓弧 */
+    const heart=cx=>{
+      const d='M'+cx+' '+(y+r*.85)+
+        'C'+(cx-r*1.5)+' '+(y-r*.15)+' '+(cx-r*.55)+' '+(y-r*1.15)+' '+cx+' '+(y-r*.3)+
+        'C'+(cx+r*.55)+' '+(y-r*1.15)+' '+(cx+r*1.5)+' '+(y-r*.15)+' '+cx+' '+(y+r*.85)+'Z';
+      return '<path d="'+d+'" fill="#ff9ec4" stroke="#e8447a" stroke-width="2"/>';
+    };
     return '<path d="M'+(60-g+r*.8)+' '+(y-1)+'h'+((g-r*.8)*2)+'" stroke="#e8447a" stroke-width="2.6"/>'+
       heart(60-g)+heart(60+g);}},
   {id:'sweater', n:'針織毛衣', p:90, slot:'body', only:'a-cat', d:a=>{
@@ -2256,12 +2260,13 @@ const ITEMS=[
       '<path d="M'+(cx-w+2)+' '+(y+4)+'h'+(w*2-4)+'" stroke="#8a5a3c" stroke-width="2"/>';
     return one(60-x)+one(60+x);}},
   {id:'plaidscarf', n:'格紋圍巾', p:70, slot:'neck', only:'a-bear', d:a=>{
+    /* 不能跟樵夫格子衫同色，不然疊上去整條看不見 */
     const y=HB(a)-3, w=a.bw*.86;
-    return '<path d="M'+(60-w)+' '+y+'q'+w+' 10 '+(w*2)+' 0v10q-'+w+' 10 -'+(w*2)+' 0z" fill="#c94a1e"/>'+
-      '<path d="M'+(60-w*.4)+' '+(y+2)+'v10M'+(60+w*.4)+' '+(y+2)+'v10'+
-      'M'+(60-w)+' '+(y+6)+'q'+w+' 10 '+(w*2)+' 0" stroke="#7d2a0e" stroke-width="2" fill="none"/>'+
-      '<path d="M'+(60+w*.35)+' '+(y+11)+'l9 18-9 3-4-19z" fill="#a83c17"/>'+
-      '<path d="M'+(60+w*.35+2)+' '+(y+16)+'l7 12" stroke="#7d2a0e" stroke-width="1.8"/>';}},
+    return '<path d="M'+(60-w)+' '+y+'q'+w+' 10 '+(w*2)+' 0v11q-'+w+' 10 -'+(w*2)+' 0z" fill="#3f7d55"/>'+
+      '<path d="M'+(60-w*.42)+' '+(y+2)+'v11M'+(60+w*.42)+' '+(y+2)+'v11'+
+      'M'+(60-w)+' '+(y+6)+'q'+w+' 10 '+(w*2)+' 0" stroke="#f7f4ec" stroke-width="2" fill="none"/>'+
+      '<path d="M'+(60+w*.34)+' '+(y+12)+'l10 17-9 4-5-19z" fill="#2f6242"/>'+
+      '<path d="M'+(60+w*.34+3)+' '+(y+17)+'l7 11" stroke="#f7f4ec" stroke-width="1.8"/>';}},
   {id:'honey', n:'蜂蜜罐', p:100, slot:'hand', only:'a-bear', d:a=>{
     const x=60-(a.bw+5), y=a.by+a.bh*.45;
     return '<path d="M'+(x-8)+' '+(y-5)+'h16l-2 16h-12z" fill="#e39b12"/>'+
