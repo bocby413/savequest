@@ -5260,8 +5260,15 @@ window.CLOUD={
     try{
       await F.setDoc(F.doc(this.api.fs,'users',me.uid,'friends',req.from),
         {uid:req.from,email:req.fromEmail,name:req.fromName,since:Date.now(),grant:DEFAULT_GRANT},{merge:true});
-      await F.setDoc(F.doc(this.api.fs,'users',req.from,'friends',me.uid),
-        {uid:me.uid,email:(me.email||'').toLowerCase(),name:db.settings.name||'某人',since:Date.now()},{merge:true});
+      /* 這筆是寫進對方的名單。寫不進去就把自己這邊也收回，
+         不然會變成單邊好友：我看得到他，他看不到我，也收不到我的分享 */
+      try{
+        await F.setDoc(F.doc(this.api.fs,'users',req.from,'friends',me.uid),
+          {uid:me.uid,email:(me.email||'').toLowerCase(),name:db.settings.name||'某人',since:Date.now()},{merge:true});
+      }catch(e2){
+        try{ await F.deleteDoc(F.doc(this.api.fs,'users',me.uid,'friends',req.from)); }catch(e3){}
+        return {err:(e2.code||e2.message)+'（寫不進對方的名單）'};
+      }
       await F.deleteDoc(F.doc(this.api.fs,'users',me.uid,'inbox',req.from));
       this.pushShares();
       return {ok:1};
