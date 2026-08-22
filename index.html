@@ -1409,6 +1409,9 @@ const SFX={
     o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+dur+.03);
   },
   play(n){
+    try{ this.sound(n); }catch(e){}       /* 音效出事不能擋住後面的畫面更新 */
+  },
+  sound(n){
     if(!this.on||!this.wake()) return;
     if(n==='coin'){ this.beep(988,0,.07,'square',.11); this.beep(1319,.065,.17,'square',.11); }
     else if(n==='spend'){ this.beep(415,0,.09,'triangle',.12); this.beep(311,.075,.16,'triangle',.1); }
@@ -4293,12 +4296,12 @@ function renderShop(){
   const box=$('shopBody'); if(!box) return;
   const a=petChar();
   /* 試衣間。試穿的東西還沒買，所以要關掉「只能穿買過的」那層濾網 */
-  const keep=wornList(a.k);
-  wearMap()[a.k]=tryOutfit(a);
+  const m=wearMap(), keep=m[a.k];
+  m[a.k]=tryOutfit(a);
   wearRaw=1;
   $('shopStage').innerHTML=chSVG(a,'up');
   wearRaw=0;
-  wearMap()[a.k]=keep;
+  m[a.k]=keep;
   $('shopCoins').innerHTML='<svg class="i"><use href="#i-coin"/></svg>'+money(coins())+' Bo士幣';
   /* 分類橫幅：正在試穿的那格標星號，已經穿著的標點 */
   const avail=SLOTORDER.filter(sl=>shopFor(a.k).some(x=>x.slot===sl));
@@ -4731,7 +4734,7 @@ $('btnWheel').onclick=()=>{ SFX.play('tick'); openWheel(); };
 $('btnShop').onclick=()=>{ SFX.play('tick'); openShop(); };
 $('shopTabs').addEventListener('click',e=>{
   const b=e.target.closest('button[data-sl]'); if(!b) return;
-  shopSlot=b.dataset.sl; SFX.play('tick'); renderShop();   /* 換分類不清掉試穿 */
+  shopSlot=b.dataset.sl; renderShop(); SFX.play('tick');   /* 換分類不清掉試穿 */
 });
 $('shopBody').addEventListener('click',e=>{
   const b=e.target.closest('[data-item]'); if(!b) return;
@@ -4740,7 +4743,7 @@ $('shopBody').addEventListener('click',e=>{
   if(shopTry[sl]===it.id) delete shopTry[sl];              /* 再點一次收回這格 */
   else if(isWorn(a.k,it.id)) shopTry[sl]=null;             /* 點身上那件＝試著脫掉 */
   else shopTry[sl]=it.id;
-  SFX.play('tick'); renderShop();
+  renderShop(); SFX.play('tick');
 });
 $('shopAct').onclick=shopAction;
 $('shopReset').onclick=()=>{ shopTry={}; SFX.play('tick'); renderShop(); };
