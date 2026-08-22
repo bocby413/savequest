@@ -532,6 +532,13 @@ html[data-skin="light"] .logbar input{color-scheme:light}
   display:grid;place-items:center;border:2.5px solid var(--edge2)}
 .ppic img{width:100%;height:100%;object-fit:cover}
 .ppic svg{width:82%;height:82%}
+.ppic.full{width:96px;height:96px;border-radius:18px;place-items:end center;border-color:var(--edge);
+  background:radial-gradient(ellipse at 50% 90%,var(--panel2) 0%,transparent 68%)}
+.ppic.full svg{width:106%;height:106%;overflow:visible}
+.pwear{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.wtag{font-size:11px;padding:2px 8px;border-radius:99px;background:rgba(255,194,51,.16);
+  color:var(--gold);font-weight:700}
+.wnone{font-size:11.5px;color:var(--txt3)}
 .pwho{min-width:0;flex:1}
 .pnm{font-size:20px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ptt{display:inline-block;margin-top:5px;padding:2px 10px;border-radius:99px;font-size:12.5px;font-weight:700;
@@ -1196,6 +1203,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
       <div class="pnm" id="profNm"></div>
       <div class="ptt" id="profTt"></div>
       <div class="pseen" id="profSeen"></div>
+      <div class="pwear" id="profWear"></div>
     </div>
   </div>
   <div class="pgrid" id="profBody"></div>
@@ -3708,6 +3716,23 @@ function friName(f){
   const d=SHARED[f.uid], p=PROFILES[f.uid]||{};
   return (d&&d.name)||p.name||f.name||f.email||'這位好友';
 }
+/* 畫某一隻穿著指定配件的樣子。畫的是好友，所以不能吃自己的穿戴清單，
+   借用 wearMap 暫存再還回去（跟商店試衣間同一招） */
+function charPortrait(k,wear,full){
+  const a=TCHARS.find(x=>x.k===k); if(!a) return friAvatar(null);
+  const m=wearMap(), had=m.hasOwnProperty(a.k), keep=m[a.k];
+  m[a.k]=Array.isArray(wear)?wear.filter(id=>itemById(id)):[];
+  const h=full?chSVG(a,'idle',1):'<svg viewBox="0 0 64 64">'+avaBody(a)+'</svg>';
+  if(had) m[a.k]=keep; else delete m[a.k];
+  return h;
+}
+const knownCh=k=>TCHARS.some(x=>x.k===k);
+/* 好友那一列的小圖：知道角色就畫角色，不知道就退回頭貼符號 */
+function friPic(d,p){
+  d=d||{}; p=p||{};
+  const k=d.ch||p.ch||((d.avatar||p.avatar||{}).id);
+  return knownCh(k)?charPortrait(k,d.wear||p.wear||[]):friAvatar(d.avatar||p.avatar);
+}
 function friAvatar(a){
   if(a&&a.type==='photo'&&a.data) return '<img src="'+a.data+'" alt="">';
   return '<svg viewBox="0 0 64 64"><use href="#'+((a&&a.id)||AVATARS[0])+'"/></svg>';
@@ -3744,7 +3769,7 @@ function renderFriends(){
     const p=PROFILES[f.uid]||{};
     return '<div class="fri">'+
       '<button class="friopen" data-prof="'+f.uid+'">'+
-        '<span class="pic">'+friAvatar((d&&d.avatar)||p.avatar)+'</span>'+
+        '<span class="pic">'+friPic(d,p)+'</span>'+
         '<span class="info"><span class="nm"><b>'+esc(friName(f))+'</b>'+
           (p.lastSeen?'<i class="seen">'+seenText(p.lastSeen)+'</i>':'')+'</span>'+
         '<span class="sub">'+bits.join('　')+'</span></span>'+
@@ -3776,12 +3801,20 @@ function plock(icon,head){
 function renderProf(){
   const f=profFor; if(!f||!$('vProf').classList.contains('on')) return;
   const d=SHARED[f.uid], g=(d&&d.grant)||{}, p=PROFILES[f.uid]||{};
-  $('profPic').innerHTML=friAvatar((d&&d.avatar)||p.avatar);
+  const pk=(d&&d.ch)||p.ch, pw=(d&&d.wear)||p.wear||[];
+  $('profPic').innerHTML=knownCh(pk)?charPortrait(pk,pw,1):friAvatar((d&&d.avatar)||p.avatar);
+  $('profPic').classList.toggle('full',knownCh(pk));
   $('profNm').textContent=friName(f);
   const tt=$('profTt'), has=g.lv&&d&&d.title;
   tt.textContent=has?d.title:'沒有分享稱號';
   tt.className='ptt'+(has?'':' none');
   $('profSeen').textContent=p.lastSeen?seenText(p.lastSeen):'還沒有上線紀錄';
+  /* 身上的配件 */
+  const wr=pw.map(id=>itemById(id)).filter(Boolean);
+  $('profWear').innerHTML=knownCh(pk)
+    ? (wr.length?wr.map(it=>'<span class="wtag">'+esc(it.n)+'</span>').join('')
+                :'<span class="wnone">還沒穿任何配件</span>')
+    : '';
   let h='';
   h+=(g.streak&&d.streak!==undefined)
     ? pcard('i-check','連續達標',d.streak+'<small>個月</small>',
@@ -4111,6 +4144,8 @@ const PET={
   }
 };
 /* HUD 上那隻跟著頭貼走；頭貼是照片就用轉盤那隻 */
+/* 造型有變就同步一次，好友那邊才會跟著換 */
+function pushLook(){ if(window.CLOUD&&CLOUD.user){ CLOUD.publishProfile(); CLOUD.pushShares(); } }
 function petChar(){
   const av=db.settings.avatar;
   return (av&&av.id&&TCHARS.find(x=>x.k===av.id))||tchar();
@@ -4286,6 +4321,7 @@ function buyOrWear(id){
     toast(isWorn(a.k,id)?'穿上「'+it.n+'」':'脫下「'+it.n+'」');
   }
   buildAvatars(); renderShop(); renderHud(); renderWheel();
+  pushLook();                             /* 讓好友看得到新造型 */
 }
 /* 一次把試穿的都定下來：沒買過的先買，再整套換上 */
 function shopAction(){
@@ -4301,6 +4337,7 @@ function shopAction(){
     toast('花了 '+cost+' 枚，穿上了'); }
   else{ SFX.play('coin'); toast('換好了'); }
   buildAvatars(); renderShop(); renderHud(); renderWheel();
+  pushLook();                             /* 讓好友看得到新造型 */
 }
 /* ── 每日轉盤：當天記過一筆就能轉一次 ── */
 const WHEEL=[10,0,20,10,50,0,20,100];      /* 0 是再接再厲 */
@@ -4909,6 +4946,8 @@ window.CLOUD={
         email:(this.user.email||'').toLowerCase(),
         name:db.settings.name||this.user.displayName||'某人',
         avatar:db.settings.avatar||null,
+        ch:petChar().k,                       /* 角色跟身上穿的，好友要看 */
+        wear:wornList(petChar().k),
         lastSeen:Date.now(),
         updatedAt:Date.now()
       });                       /* 等級屬於授權內容，放在 shares 裡，不放名冊 */
@@ -5012,6 +5051,7 @@ window.CLOUD={
       const L=levelInfo();
       const data={owner:me,viewer:f.uid,updatedAt:Date.now(),
         name:db.settings.name||'某人', avatar:db.settings.avatar||null,
+        ch:petChar().k, wear:wornList(petChar().k),
         grant:g};
       if(g.lv) data.title=myTitle();             /* 只給稱號，等級數字不外流 */
       if(g.streak){ const c=calStats(); data.streak=c.streak; data.hit=c.hit; data.has=c.has; }
