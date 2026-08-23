@@ -2429,16 +2429,17 @@ const AC={
       'C'+f(cx+sgn*w*.42)+' '+f(cy-h*.42)+' '+f(cx+sgn*w*.74)+' '+f(cy-h)+' '+f(cx+sgn*w)+' '+f(cy-h*.86)+
       'C'+f(cx+sgn*w*1.1)+' '+f(cy-h*.3)+' '+f(cx+sgn*w*1.1)+' '+f(cy+h*.3)+' '+f(cx+sgn*w)+' '+f(cy+h*.86)+
       'C'+f(cx+sgn*w*.74)+' '+f(cy+h)+' '+f(cx+sgn*w*.42)+' '+f(cy+h*.42)+' '+f(cx)+' '+f(cy)+'Z';},
-  bow:(a,c,d)=>{const y=AC.crest(a)+2,w=AC.crestW(a)*.86,h=w*.66,
-      tw=w*.72,th=h*1.7,f=n=>n.toFixed(1);
+  bow:(a,c,d)=>{const y=Math.min(HT(a)+7,HLINE(a)+2),
+      cx=60-(y>HT(a)?AC.wAtY(a,y)*.72:0),        /* 跟髮夾一樣別在側邊 */
+      w=AC.crestW(a)*.62,h=w*.66,tw=w*.72,th=h*1.7,f=n=>n.toFixed(1);
     /* 垂下來的帶子：越往下越寬，尾端剪一個 V */
-    const tail=g=>'<path d="M60 '+f(y+1)+'L'+f(60+g*tw*.16)+' '+f(y+1)+
-      'L'+f(60+g*tw)+' '+f(y+th)+'L'+f(60+g*tw*.7)+' '+f(y+th*.8)+
-      'L'+f(60+g*tw*.42)+' '+f(y+th)+'Z" fill="'+d+'"/>';
+    const tail=g=>'<path d="M'+f(cx)+' '+f(y+1)+'L'+f(cx+g*tw*.16)+' '+f(y+1)+
+      'L'+f(cx+g*tw)+' '+f(y+th)+'L'+f(cx+g*tw*.7)+' '+f(y+th*.8)+
+      'L'+f(cx+g*tw*.42)+' '+f(y+th)+'Z" fill="'+d+'"/>';
     return tail(-1)+tail(1)+
-      '<path d="'+AC.ribbon(a,-1,60,y,w,h)+'" fill="'+c+'"/>'+
-      '<path d="'+AC.ribbon(a,1,60,y,w,h)+'" fill="'+c+'"/>'+
-      '<path d="M60 '+f(y)+'m-'+f(w*.3)+' 0a'+f(w*.3)+' '+f(h*.62)+' 0 1 0 '+f(w*.6)+
+      '<path d="'+AC.ribbon(a,-1,cx,y,w,h)+'" fill="'+c+'"/>'+
+      '<path d="'+AC.ribbon(a,1,cx,y,w,h)+'" fill="'+c+'"/>'+
+      '<path d="M'+f(cx)+' '+f(y)+'m-'+f(w*.3)+' 0a'+f(w*.3)+' '+f(h*.62)+' 0 1 0 '+f(w*.6)+
       ' 0a'+f(w*.3)+' '+f(h*.62)+' 0 1 0 -'+f(w*.6)+' 0z" fill="'+d+'"/>';},
   flower:(a,c,m)=>{const y=Math.min(HT(a)+6,HLINE(a)+2),
       /* 眼睛長在頭頂兩側的（青蛙），夾在側邊會壓到眼睛，改夾正中間 */
@@ -2695,10 +2696,11 @@ const AC={
       '<path d="M'+(x-3)+' '+(y-4)+'h6M'+x+' '+(y-7)+'v6" stroke="#ffffff" stroke-width="1.8" opacity=".8"/>';},
   /* 冰棒：一根扁扁的，下面露出木棍 */
   popsicle:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a);
-    /* 木棍要跨過手掌、上面還要留一截露出來，不然會變成握在冰上 */
-    return '<rect x="'+(x-2)+'" y="'+(y-9)+'" width="4" height="18" rx="2" fill="#d8b98a"/>'+
-      '<rect x="'+(x-7)+'" y="'+(y-28)+'" width="14" height="19" rx="5" fill="'+c+'"/>'+
-      '<path d="M'+(x-4)+' '+(y-24)+'v9" stroke="'+d+'" stroke-width="2" stroke-linecap="round"/>';},
+    /* 手掌握在木棍上，上面留一截棍子才看得出是握著棍子；
+       下面只露一點點，不然棍子會像拖在地上 */
+    return '<rect x="'+(x-2)+'" y="'+(y-13)+'" width="4" height="16" rx="2" fill="#d8b98a"/>'+
+      '<rect x="'+(x-7)+'" y="'+(y-30)+'" width="14" height="17" rx="5" fill="'+c+'"/>'+
+      '<path d="M'+(x-4)+' '+(y-26)+'v8" stroke="'+d+'" stroke-width="2" stroke-linecap="round"/>';},
   /* 烤地瓜：橢圓的，一半包著錫箔 */
   yam:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a)-3;
     return '<ellipse cx="'+x+'" cy="'+y+'" rx="7" ry="11" fill="'+c+'" transform="rotate(-18,'+x+','+y+')"/>'+
@@ -3127,7 +3129,7 @@ const ITEMS=[
   {id:'cte4', n:'感冒口罩', p:100, slot:'face', only:'a-cat', d:a=>AC.maskLow(a,'#3a4a8c','#23305e')},
   {id:'cte5', n:'腮紅貼紙', p:100, slot:'face', only:'a-cat', d:a=>AC.blush(a,'#d94c4c','#a12b2b')},
   {id:'cte6', n:'方框文青眼鏡', p:100, slot:'face', only:'a-cat', d:a=>AC.square(a,'#8fa3c8','#5c6d92')},
-  {id:'ctn1', n:'緞帶領結', p:100, slot:'neck', only:'a-cat', d:a=>AC.bowN(a,'#8fa3c8','#5c6d92')},
+  {id:'ctn1', n:'緞帶領結', p:100, slot:'neck', only:'a-cat', d:a=>AC.bowN(a,'#e8447a','#a8214c')},
   {id:'ctn2', n:'珍珠項鍊', p:100, slot:'neck', only:'a-cat', d:a=>AC.beads(a,'#c0d861','#86a02f')},
   {id:'ctn3', n:'小魚吊牌', p:100, slot:'neck', only:'a-cat', d:a=>AC.collar2(a,'#ff9ec4','#e8447a',1)},
   {id:'ctn4', n:'毛絨圍巾', p:100, slot:'neck', only:'a-cat', d:a=>AC.scarf(a,'#f7e3c0','#d8b98a')},
