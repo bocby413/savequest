@@ -2422,18 +2422,24 @@ const AC={
     return '<path d="M'+L+' '+y+'L'+L+' '+(y-h)+'L'+(60-w*.5)+' '+(y-h*.45)+'L60 '+(y-h*1.4)+
       'L'+(60+w*.5)+' '+(y-h*.45)+'L'+R+' '+(y-h)+'L'+R+' '+y+'Z" fill="'+c+'"/>'+
       '<circle cx="60" cy="'+(y-h*.3)+'" r="3.4" fill="'+g+'"/>';},
-  /* 綁在頭頂的緞帶結：兩個圓圓的耳朵加兩條垂下來的帶子。
-     脖子那顆是領結，做成尖角的，兩個才分得出來 */
-  bow:(a,c,d)=>{const y=AC.crest(a)+1,w=AC.crestW(a)*.8,r=w*.55;
-    return '<path d="M60 '+y+'l-'+w.toFixed(1)+' 9 3 7" stroke="'+d+
-      '" stroke-width="2.6" fill="none" stroke-linecap="round"/>'+
-      '<path d="M60 '+y+'l'+w.toFixed(1)+' 9-3 7" stroke="'+d+
-      '" stroke-width="2.6" fill="none" stroke-linecap="round"/>'+
-      '<ellipse cx="'+(60-r).toFixed(1)+'" cy="'+(y-2).toFixed(1)+'" rx="'+r.toFixed(1)+
-      '" ry="'+(r*.82).toFixed(1)+'" fill="'+c+'" transform="rotate(-16,'+(60-r).toFixed(1)+','+(y-2).toFixed(1)+')"/>'+
-      '<ellipse cx="'+(60+r).toFixed(1)+'" cy="'+(y-2).toFixed(1)+'" rx="'+r.toFixed(1)+
-      '" ry="'+(r*.82).toFixed(1)+'" fill="'+c+'" transform="rotate(16,'+(60+r).toFixed(1)+','+(y-2).toFixed(1)+')"/>'+
-      '<rect x="'+(60-3.2)+'" y="'+(y-5).toFixed(1)+'" width="6.4" height="7" rx="2.6" fill="'+d+'"/>';},
+  /* 一片緞帶：從結的地方收緊、往外撐開、外緣鼓起來再收回結。
+     頭上的蝴蝶結跟脖子的領結都用它，差別在有沒有垂下來的帶子 */
+  ribbon:(a,sgn,cx,cy,w,h)=>{const f=(n)=>n.toFixed(1);
+    return 'M'+f(cx)+' '+f(cy)+
+      'C'+f(cx+sgn*w*.42)+' '+f(cy-h*.42)+' '+f(cx+sgn*w*.74)+' '+f(cy-h)+' '+f(cx+sgn*w)+' '+f(cy-h*.86)+
+      'C'+f(cx+sgn*w*1.1)+' '+f(cy-h*.3)+' '+f(cx+sgn*w*1.1)+' '+f(cy+h*.3)+' '+f(cx+sgn*w)+' '+f(cy+h*.86)+
+      'C'+f(cx+sgn*w*.74)+' '+f(cy+h)+' '+f(cx+sgn*w*.42)+' '+f(cy+h*.42)+' '+f(cx)+' '+f(cy)+'Z';},
+  bow:(a,c,d)=>{const y=AC.crest(a)+2,w=AC.crestW(a)*.86,h=w*.66,
+      tw=w*.72,th=h*1.7,f=n=>n.toFixed(1);
+    /* 垂下來的帶子：越往下越寬，尾端剪一個 V */
+    const tail=g=>'<path d="M60 '+f(y+1)+'L'+f(60+g*tw*.16)+' '+f(y+1)+
+      'L'+f(60+g*tw)+' '+f(y+th)+'L'+f(60+g*tw*.7)+' '+f(y+th*.8)+
+      'L'+f(60+g*tw*.42)+' '+f(y+th)+'Z" fill="'+d+'"/>';
+    return tail(-1)+tail(1)+
+      '<path d="'+AC.ribbon(a,-1,60,y,w,h)+'" fill="'+c+'"/>'+
+      '<path d="'+AC.ribbon(a,1,60,y,w,h)+'" fill="'+c+'"/>'+
+      '<path d="M60 '+f(y)+'m-'+f(w*.3)+' 0a'+f(w*.3)+' '+f(h*.62)+' 0 1 0 '+f(w*.6)+
+      ' 0a'+f(w*.3)+' '+f(h*.62)+' 0 1 0 -'+f(w*.6)+' 0z" fill="'+d+'"/>';},
   flower:(a,c,m)=>{const y=Math.min(HT(a)+6,HLINE(a)+2),
       /* 眼睛長在頭頂兩側的（青蛙），夾在側邊會壓到眼睛，改夾正中間 */
       x=60-(y>HT(a)?AC.wAtY(a,y)*.78:0);let s='';
@@ -2512,11 +2518,12 @@ const AC={
   tieN:(a,c,d)=>{const y=HB(a)-1,w=a.bw*.7;
     return '<path d="M'+(60-w)+' '+y+'q'+w+' 9 '+(w*2)+' 0v5q-'+w+' 9 -'+(w*2)+' 0z" fill="'+d+'"/>'+
       '<path d="M60 '+(y+8)+'l-5 5 5 16 5-16z" fill="'+c+'"/>';},
-  bowN:(a,c,d)=>{const y=HB(a)+3,w=a.bw*.62;
-    /* 標準領結：外寬內窄的尖角，中間一個方形結 */
-    return '<path d="M56 '+y+'L'+(60-w).toFixed(1)+' '+(y-7)+'V'+(y+7)+'Z" fill="'+c+'"/>'+
-      '<path d="M64 '+y+'L'+(60+w).toFixed(1)+' '+(y-7)+'V'+(y+7)+'Z" fill="'+c+'"/>'+
-      '<rect x="55.5" y="'+(y-4)+'" width="9" height="8" rx="1.8" fill="'+d+'"/>';},
+  bowN:(a,c,d)=>{const y=HB(a)+3,w=a.bw*.66,h=w*.56,f=n=>n.toFixed(1);
+    /* 領結：同一片緞帶，沒有垂下來的帶子，結做窄一點 */
+    return '<path d="'+AC.ribbon(a,-1,60,y,w,h)+'" fill="'+c+'"/>'+
+      '<path d="'+AC.ribbon(a,1,60,y,w,h)+'" fill="'+c+'"/>'+
+      '<rect x="'+f(60-w*.19)+'" y="'+f(y-h*.72)+'" width="'+f(w*.38)+
+      '" height="'+f(h*1.44)+'" rx="'+f(w*.13)+'" fill="'+d+'"/>';},
   beads:(a,c,d)=>{const y=HB(a)+1,w=a.bw*.72;let s='';
     for(let i=0;i<7;i++){const t=(i/6-.5)*2;
       s+='<circle cx="'+(60+t*w).toFixed(1)+'" cy="'+(y+(1-t*t)*9).toFixed(1)+'" r="3" fill="'+c+'"/>';}
