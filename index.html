@@ -5425,7 +5425,8 @@ async function shopAction(){
     const bg=shopCat==='bg';
     const id=bg?tryBg:tryWin; if(!id) return;
     const it=itemById(id);
-    if(!hasItem(id)){          /* 免費的（預設佈景）不用買 */
+    const paid=!hasItem(id);   /* 有沒有真的花到錢 */
+    if(paid){                  /* 免費的（預設佈景）不用買 */
       if(coins()<it.p){ SFX.play('err'); toast('Bo士幣不夠'); return; }
       const act=$('shopAct'); act.disabled=true; act.textContent='結帳中…';
       const r=await walletBuy([id]);
@@ -5435,7 +5436,8 @@ async function shopAction(){
     if(bg){ db.settings.bg=id; applyTheme(id,1); tryBg=null; themeBefore=null;
             $('prevBar').classList.remove('on'); }
     else { db.settings.win=id; tryWin=null; }
-    save(); SFX.play('level'); toast('換好了：'+it.n);
+    /* 已經有的東西只是換上去，不用放升級那種大音效 */
+    save(); SFX.play(paid?'level':'tick'); toast(paid?'買下「'+it.n+'」了':'換好了：'+it.n);
     renderShop(); renderHud(); renderWork(); renderTheme(); pushLook();
     if(bg){ renderChart(); renderBars(); }
     return;
@@ -5457,7 +5459,7 @@ async function shopAction(){
   if(cost){ SFX.play('level');
     const r=$('shopStage').getBoundingClientRect(); burst(r.left+r.width/2,r.top+r.height/2);
     toast('花了 '+cost+' 枚，穿上了'); }
-  else{ SFX.play('coin'); toast('換好了'); }
+  else{ SFX.play('tick'); toast('換好了'); }
   buildAvatars(); renderShop(); renderHud(); renderWheel();
   pushLook();                             /* 讓好友看得到新造型 */
 }
