@@ -2035,8 +2035,10 @@ const TCHARS=[
   {k:'a-gir', n:'長頸鹿', c:'#f0c76a', d:'#d9a441', ink:'#4a3418', tailC:'#d9a441',
    hr:20, hy:40, hry:18, bw:17, bh:15, by:90, gap:8, eo:1, mo:9, pup:4,
    armW:6.5, armH:11, apy:80, fx:13, fy:108, fw:9, neck:1},
-  {k:'a-shp', n:'綿羊',   c:'#f4e2c8', d:'#d9bf9c', ink:'#4a3d31', wool:'#fffaf2',
-   hr:22, hy:48, bw:20, bh:18, by:86, gap:10, eo:3, mo:13, pup:5.2, fx:14, fy:107, fw:9},
+  /* 白毛身體、深色的頭跟四肢分開來，臉上是兩顆大白眼 */
+  {k:'a-shp', n:'綿羊',   c:'#f7f3ea', d:'#4a4a52', ink:'#23232a', wool:'#fffdf8',
+   hr:22, hy:44, hry:20, bw:21, bh:17, by:82, gap:9, eo:-4, mo:11, pup:4.6,
+   hatY:27, hatW:19, fx:14, fy:107, fw:9, legs:1},
   {k:'a-sqr', n:'松鼠',   c:'#d98b4a', d:'#b56a2e', ink:'#3a2414', tailC:'#e0a468',
    hr:23, hy:46, bw:16, bh:18, by:86, gap:10, eo:1, mo:12, fx:12, fy:106, fw:8, tilt:13}
 ];
@@ -2110,27 +2112,21 @@ function chBack(a,noTail){
              '<ellipse cx="'+(60-hr-4)+'" cy="'+(hy+2)+'" rx="7" ry="4.5" fill="'+a.d+'"/>'+
              '<ellipse cx="'+(60+hr+4)+'" cy="'+(hy+2)+'" rx="7" ry="4.5" fill="'+a.d+'"/>');
   }
-  if(a.k==='a-shp'){                                   /* 一整團羊毛，衣服穿上去邊邊還是看得到 */
+  if(a.k==='a-shp'){                                   /* 羊毛沿著身體外緣鋪一圈，衣服穿上去邊邊還看得到 */
     const puff=(x,y,r)=>'<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+r.toFixed(1)+'" fill="'+a.wool+'"/>';
-    /* 身體：沿著身體外緣密排一圈小球，連起來就是雲一樣的邊 */
     let body='';
-    for(let i=0;i<16;i++){
-      const an=Math.PI*(.52+i/15*1.96);
-      body+=puff(60+Math.cos(an)*(a.bw+1.5), a.by+Math.sin(an)*(a.bh+1), 6.6);
+    for(let i=0;i<18;i++){
+      const an=Math.PI*(.46+i/17*2.08);
+      body+=puff(60+Math.cos(an)*(a.bw+2), a.by+Math.sin(an)*(a.bh+2), 7);
     }
-    /* 頭：從左耳上方繞到右耳上方，像一頂毛帽扣著 */
-    let head='';
-    for(let i=0;i<9;i++){
-      const an=Math.PI*(1.02+i/8*.96);
-      head+=puff(60+Math.cos(an)*(hr-2), hy+Math.sin(an)*(a.hr*.94-2), 7.4);
-    }
-    head+=puff(60,hy-a.hr*.94+1,8.4);
-    return T('<g class="tail" data-p="'+(60+a.bw)+','+(a.by+9)+'">'+
-             puff(60+a.bw+3,a.by+9,6.4)+puff(60+a.bw+6,a.by+5,4.6)+'</g>')+body+E(
-             '<ellipse cx="'+(60-hr-3)+'" cy="'+(hy+5)+'" rx="8.5" ry="5.2" fill="'+a.d+
-             '" transform="rotate(14,'+(60-hr-3)+','+(hy+5)+')"/>'+
-             '<ellipse cx="'+(60+hr+3)+'" cy="'+(hy+5)+'" rx="8.5" ry="5.2" fill="'+a.d+
-             '" transform="rotate(-14,'+(60+hr+3)+','+(hy+5)+')"/>'+head);
+    /* 耳朵：從深色的頭往兩側平伸出去，微微下垂 */
+    const ear=(x,g)=>'<ellipse cx="'+x+'" cy="'+(hy-3)+'" rx="11" ry="6" fill="'+a.d+
+      '" transform="rotate('+(g*13)+','+x+','+(hy-3)+')"/>'+
+      '<ellipse cx="'+(x+g*2)+'" cy="'+(hy-3)+'" rx="7" ry="3.2" fill="#6b6b74"'+
+      ' transform="rotate('+(g*13)+','+(x+g*2)+','+(hy-3)+')"/>';
+    return T('<g class="tail" data-p="'+(60+a.bw)+','+(a.by+8)+'">'+
+             puff(60+a.bw+4,a.by+8,6.6)+'</g>')+body+
+           E(ear(60-hr-7,-1)+ear(60+hr+7,1));
   }
   if(a.k==='a-sqr'){                                   /* 大尾巴從屁股捲到頭旁邊 */
     return T('<g class="tail" data-p="'+(60+a.bw-1)+','+(a.by+8)+'">'+
@@ -2213,15 +2209,14 @@ function chFaceMark(a){
     return '<ellipse cx="60" cy="'+(my+1)+'" rx="9" ry="7" fill="#f7e6bd"/>'+
            '<ellipse cx="'+(60-3.4)+'" cy="'+(my-1)+'" rx="1.5" ry="2" fill="'+a.ink+'"/>'+
            '<ellipse cx="'+(60+3.4)+'" cy="'+(my-1)+'" rx="1.5" ry="2" fill="'+a.ink+'"/>';
-  if(a.k==='a-shp')                                    /* 額頭那撮瀏海壓在眼睛上面一點才可愛 */
-    return '<circle cx="'+(60-13)+'" cy="'+(ey-9)+'" r="6.2" fill="'+a.wool+'"/>'+
-           '<circle cx="'+(60-5)+'" cy="'+(ey-12)+'" r="7.4" fill="'+a.wool+'"/>'+
-           '<circle cx="'+(60+5)+'" cy="'+(ey-12)+'" r="7.4" fill="'+a.wool+'"/>'+
-           '<circle cx="'+(60+13)+'" cy="'+(ey-9)+'" r="6.2" fill="'+a.wool+'"/>'+
-           '<ellipse cx="60" cy="'+(my+2)+'" rx="10.5" ry="7.5" fill="#fdf3e6"/>'+
-           '<path d="M60 '+(my-4)+'l-3.4 3.2h6.8z" fill="'+a.ink+'"/>'+
-           '<ellipse cx="'+(60-15)+'" cy="'+(my-3)+'" rx="5" ry="3.4" fill="#f7b8bd" opacity=".7"/>'+
-           '<ellipse cx="'+(60+15)+'" cy="'+(my-3)+'" rx="5" ry="3.4" fill="#f7b8bd" opacity=".7"/>';
+  if(a.k==='a-shp')                                    /* 深色的臉壓在頭上，頭頂一撮毛蓋下來 */
+    return '<ellipse cx="60" cy="'+(a.hy+1)+'" rx="'+(a.hr-.5)+'" ry="'+(a.hry-1)+'" fill="'+a.d+'"/>'+
+           '<circle cx="'+(60-11)+'" cy="'+(a.hy-a.hry+5)+'" r="7.6" fill="'+a.wool+'"/>'+
+           '<circle cx="60" cy="'+(a.hy-a.hry+1)+'" r="9" fill="'+a.wool+'"/>'+
+           '<circle cx="'+(60+11)+'" cy="'+(a.hy-a.hry+5)+'" r="7.6" fill="'+a.wool+'"/>'+
+           '<circle cx="'+L+'" cy="'+ey+'" r="9.6" fill="#ffffff"/>'+
+           '<circle cx="'+R+'" cy="'+ey+'" r="9.6" fill="#ffffff"/>'+
+           '<ellipse cx="60" cy="'+(my+3)+'" rx="6.5" ry="4.6" fill="#6b6b74"/>';
   if(a.k==='a-sqr')
     return '<ellipse cx="60" cy="'+(my+1)+'" rx="10" ry="8" fill="#f6dcc0"/>'+
            '<path d="M60 '+(my-6)+'l-3.4 3.4h6.8z" fill="'+a.ink+'"/>'+
@@ -2549,11 +2544,13 @@ const AC={
       '<path d="'+AC.ribbon(a,1,cx,y,w,h)+'" fill="'+c+'"/>'+
       '<path d="M'+f(cx)+' '+f(y)+'m-'+f(w*.3)+' 0a'+f(w*.3)+' '+f(h*.62)+' 0 1 0 '+f(w*.6)+
       ' 0a'+f(w*.3)+' '+f(h*.62)+' 0 1 0 -'+f(w*.6)+' 0z" fill="'+d+'"/>';},
-  flower:(a,c,m)=>{const r=Math.min(4.8,a.hr*.21),
-      /* 花照頭的大小縮。頭小的角色用原本的尺寸會壓到眼睛。
-         眼睛長在頭頂兩側的（青蛙）夾側邊會壓到眼睛，改夾正中間 */
-      y=Math.min(HT(a)+r*1.1,HLINE(a)+2),
-      x=60-(y>HT(a)?AC.wAtY(a,y)*.78:0);let s='';
+  flower:(a,c,m)=>{const r=Math.min(4.8,a.hr*.21);
+    /* 花照頭的大小縮。夾在側邊的還要再往上讓，眼睛大的角色（綿羊）才不會被蓋到。
+       眼睛長在頭頂兩側的（青蛙）夾側邊一定會壓到眼睛，改夾正中間 */
+    let y=Math.min(HT(a)+r*1.1,HLINE(a)+2);
+    const side=y>HT(a);
+    if(side) y=Math.min(y,eyeY(a)-4-r*2.6);
+    const x=60-(side?AC.wAtY(a,Math.max(y,HT(a)+1))*.78:0);let s='';
     for(let i=0;i<5;i++){const an=i*72*Math.PI/180;
       s+='<circle cx="'+(x+Math.cos(an)*r*1.17).toFixed(1)+'" cy="'+(y+Math.sin(an)*r*1.17).toFixed(1)+
          '" r="'+r.toFixed(1)+'" fill="'+c+'"/>';}
@@ -3606,31 +3603,31 @@ const ITEMS=[
   {id:'she1', n:'圓框眼鏡', p:100, slot:'face', only:'a-shp', d:a=>AC.round(a,'#9fd8f0','#33b5ec')},
   {id:'she2', n:'方框老鏡', p:100, slot:'face', only:'a-shp', d:a=>AC.square(a,'#c9a6ff','#8536ff')},
   {id:'she3', n:'牧場墨鏡', p:100, slot:'face', only:'a-shp', d:a=>AC.shades(a,'#3a3a8c','#151541')},
-  {id:'she4', n:'睡眠眼罩', p:100, slot:'face', only:'a-shp', d:a=>AC.patch(a,'#33363d','#111318')},
+  {id:'she4', n:'睡眠眼罩', p:100, slot:'face', only:'a-shp', d:a=>AC.patch(a,'#22232a','#101119')},
   {id:'she5', n:'保暖口罩', p:100, slot:'face', only:'a-shp', d:a=>AC.maskLow(a,'#ff9ec4','#ff2e80')},
-  {id:'she6', n:'腮紅貼紙', p:100, slot:'face', only:'a-shp', d:a=>AC.blush(a,'#ff7a5c','#eb2b00')},
+  {id:'she6', n:'腮紅貼紙', p:100, slot:'face', only:'a-shp', d:a=>AC.blush(a,'#ddc08a','#cc942b')},
   {id:'shn1', n:'牧羊鈴鐺', p:100, slot:'neck', only:'a-shp', d:a=>AC.collar2(a,'#e2452f','#951d0c',2)},
   {id:'shn2', n:'手織圍巾', p:100, slot:'neck', only:'a-shp', d:a=>AC.scarf(a,'#e8447a','#b10b42')},
   {id:'shn3', n:'牧場領結', p:100, slot:'neck', only:'a-shp', d:a=>AC.bowN(a,'#ff7a5c','#eb2b00')},
-  {id:'shn4', n:'木珠串鍊', p:100, slot:'neck', only:'a-shp', d:a=>AC.beads(a,'#7a4a24','#261508')},
-  {id:'shn5', n:'荷葉領', p:100, slot:'neck', only:'a-shp', d:a=>AC.ruff(a,'#266b45','#092013')},
+  {id:'shn4', n:'木珠串鍊', p:100, slot:'neck', only:'a-shp', d:a=>AC.beads(a,'#e0921a','#825207')},
+  {id:'shn5', n:'荷葉領', p:100, slot:'neck', only:'a-shp', d:a=>AC.ruff(a,'#8a9b3c','#454f18')},
   {id:'shn6', n:'剪毛獎牌', p:100, slot:'neck', only:'a-shp', d:a=>AC.medalN(a,'#ffc233','#c28800')},
   {id:'shb1', n:'手織上衣', p:200, slot:'body', only:'a-shp', d:a=>AC.tee(a,'#4a9b3f','#205119')},
-  {id:'shb2', n:'橫紋針織', p:200, slot:'body', only:'a-shp', d:a=>AC.stripes(a,'#266b45','#092013')},
-  {id:'shb3', n:'午睡帽T', p:200, slot:'body', only:'a-shp', d:a=>AC.hoodie(a,'#8a9b3c','#454f18')},
-  {id:'shb4', n:'牧場圍裙', p:200, slot:'body', only:'a-shp', d:a=>AC.apron(a,'#1f9b96','#09413f')},
-  {id:'shb5', n:'吊帶工作褲', p:200, slot:'body', only:'a-shp', d:a=>AC.overall(a,'#7a4a24','#261508')},
-  {id:'shb6', n:'毛毯披風', p:200, slot:'body', only:'a-shp', back:1, d:a=>AC.capeB(a,'#7c8797','#404e63')},
+  {id:'shb2', n:'橫紋針織', p:200, slot:'body', only:'a-shp', d:a=>AC.stripes(a,'#8a9b3c','#454f18')},
+  {id:'shb3', n:'午睡帽T', p:200, slot:'body', only:'a-shp', d:a=>AC.hoodie(a,'#1f9b96','#09413f')},
+  {id:'shb4', n:'牧場圍裙', p:200, slot:'body', only:'a-shp', d:a=>AC.apron(a,'#7a4a24','#261508')},
+  {id:'shb5', n:'吊帶工作褲', p:200, slot:'body', only:'a-shp', d:a=>AC.overall(a,'#7c8797','#322234')},
+  {id:'shb6', n:'毛毯披風', p:200, slot:'body', only:'a-shp', back:1, d:a=>AC.capeB(a,'#3a3a8c','#151541')},
   {id:'shd1', n:'毛線球', p:200, slot:'hand', only:'a-shp', d:a=>AC.ball(a,'#e0921a','#825207')},
   {id:'shd2', n:'牧羊杖', p:200, slot:'hand', only:'a-shp', d:a=>AC.torch(a,'#ffc233','#c28800')},
   {id:'shd3', n:'熱牛奶', p:200, slot:'hand', only:'a-shp', d:a=>AC.cup(a,'#9fd8f0','#33b5ec')},
-  {id:'shd4', n:'午睡抱枕', p:200, slot:'hand', only:'a-shp', d:a=>AC.pillow(a,'#ff7a5c','#eb2b00')},
-  {id:'shd5', n:'草料籃', p:200, slot:'hand', only:'a-shp', d:a=>AC.basket(a,'#d8e84a','#a4b60c')},
-  {id:'shd6', n:'甜甜圈', p:200, slot:'hand', only:'a-shp', d:a=>AC.donut(a,'#a8763f','#5c3d1a')},
+  {id:'shd4', n:'午睡抱枕', p:200, slot:'hand', only:'a-shp', d:a=>AC.pillow(a,'#a8763f','#5c3d1a')},
+  {id:'shd5', n:'草料籃', p:200, slot:'hand', only:'a-shp', d:a=>AC.basket(a,'#ddc08a','#cc942b')},
+  {id:'shd6', n:'甜甜圈', p:200, slot:'hand', only:'a-shp', d:a=>AC.donut(a,'#ff7a5c','#eb2b00')},
   {id:'shf1', n:'牧場短靴', p:200, slot:'foot', only:'a-shp', d:a=>AC.bootF(a,'#7a4a24','#261508')},
   {id:'shf2', n:'軟底便鞋', p:200, slot:'foot', only:'a-shp', d:a=>AC.sneak(a,'#9c3055','#4b1125')},
-  {id:'shf3', n:'毛絨拖鞋', p:200, slot:'foot', only:'a-shp', d:a=>AC.slipper(a,'#c4471d','#682109')},
-  {id:'shf4', n:'厚毛襪', p:200, slot:'foot', only:'a-shp', d:a=>AC.sockF(a,'#a8763f','#5c3d1a')},
+  {id:'shf3', n:'毛絨拖鞋', p:200, slot:'foot', only:'a-shp', d:a=>AC.slipper(a,'#a8763f','#5c3d1a')},
+  {id:'shf4', n:'厚毛襪', p:200, slot:'foot', only:'a-shp', d:a=>AC.sockF(a,'#c4471d','#682109')},
   {id:'shf5', n:'草地涼鞋', p:200, slot:'foot', only:'a-shp', d:a=>AC.sandal(a,'#4a9b3f','#205119')},
   {id:'shf6', n:'木底便鞋', p:200, slot:'foot', only:'a-shp', d:a=>AC.clog(a,'#e0921a','#825207')},
   /* ── 松鼠 ── */
