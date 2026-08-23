@@ -1284,6 +1284,8 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
     <button class="sw" id="swLoan" role="switch"><i></i></button></div>
   <div class="setrow"><div class="lb"><b>股票當沖分開算</b><span>沒在做當沖就不用開</span></div>
     <button class="sw" id="swStock" role="switch"><i></i></button></div>
+  <div class="setrow"><div class="lb"><b>打工完成通知</b><span id="pushSub">打工做完的時候推一則到手機</span></div>
+    <button class="sw" id="swPush" role="switch"><i></i></button></div>
   <div class="setrow"><div class="lb"><b>音效</b><span>記帳、升級、完成任務的聲音</span></div>
     <button class="btn sm ghost" id="btnSfx"><svg class="i" id="sfxIcon"><use href="#i-vol"/></svg></button></div>
   <div class="setrow volrow"><div class="lb"><b>音量</b><span id="volTxt">中</span></div>
@@ -9942,6 +9944,7 @@ $('btnTheme').onclick=()=>{
 };
 
 function swPaint(){
+  pushRefresh();
   $('swLoan').classList.toggle('on',db.settings.showLoan!==false);
   $('swStock').classList.toggle('on',db.settings.splitStock!==false);
   $('catMode').querySelectorAll('button').forEach(b=>
@@ -10027,6 +10030,104 @@ $('swLoan').onclick=()=>{
 $('swStock').onclick=()=>{
   db.settings.splitStock=db.settings.splitStock===false; save(); swPaint(); render(); SFX.play('tick');
   toast(db.settings.splitStock?'當沖分開算':'當沖併進日常收支');
+};
+/* ── 打工完成推播 ──
+   一班 2～8 小時，結束的時候 app 一定是關著的：頁面裡的 setTimeout 跟 service worker
+   在關掉後幾十秒就被系統收掉，撐不到那時候。所以走標準的 Web Push：
+   這裡只負責跟瀏覽器要權限、拿訂閱、把訂閱存到 Firestore，
+   真正在時間到的時候發推播的是 GitHub Actions 那支排程。 */
+const VAPID_PUB='BKFS7yvLGaX9BfG5_8-VB8bD_qXlYisTUHKhXl51h1JElO1aaoij9jr4uLIFkNq1J8Nd6Ql-SiaRnZeGl2OiIgc';
+const pushOK=()=>'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+/* iOS 只有「加到主畫面」之後才收得到推播，Safari 分頁裡是拿不到權限的 */
+const isIOS=()=>/iP(hone|ad|od)/.test(navigator.userAgent)||
+  (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const standalone=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+
+function b64url(buf){
+  let b=''; new Uint8Array(buf).forEach(c=>b+=String.fromCharCode(c));
+  return btoa(b).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function keyToBytes(k){
+  const pad='='.repeat((4-k.length%4)%4);
+  const raw=atob((k+pad).replace(/-/g,'+').replace(/_/g,'/'));
+  return Uint8Array.from(raw, c=>c.charCodeAt(0));
+}
+async function subId(endpoint){
+  const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(endpoint));
+  return Array.from(new Uint8Array(h)).slice(0,16).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+let pushOn=false;
+/* service worker 還沒註冊好的話 navigator.serviceWorker.ready 會一直不回來，
+   等太久就當作沒有，不要讓設定畫面卡在那裡 */
+function swReady(msec){
+  return Promise.race([navigator.serviceWorker.ready,
+    new Promise((_,rej)=>setTimeout(()=>rej(new Error('sw 沒就緒')),msec||4000))]);
+}
+async function pushRefresh(){
+  const sw=$('swPush'), sub=$('pushSub'); if(!sw) return;
+  if(!pushOK()){
+    pushOn=false; sw.classList.remove('on'); sw.style.opacity=.4;
+    sub.textContent='這個瀏覽器不支援推播'; return;
+  }
+  if(isIOS()&&!standalone()){
+    pushOn=false; sw.classList.remove('on'); sw.style.opacity=.4;
+    sub.textContent='iPhone 要先用分享選單「加入主畫面」，從那個圖示開才收得到'; return;
+  }
+  sw.style.opacity=1;
+  try{
+    const reg=await swReady();
+    const cur=await reg.pushManager.getSubscription();
+    pushOn=!!cur&&Notification.permission==='granted';
+  }catch(e){ pushOn=false; }
+  sw.classList.toggle('on',pushOn);
+  sub.textContent=pushOn?'打工做完的時候會推一則到這台裝置'
+    :Notification.permission==='denied'?'通知被瀏覽器擋掉了，要去網站設定裡開回來'
+    :'打工做完的時候推一則到手機';
+}
+async function pushEnable(){
+  if(!CLOUD.user){ toast('要先登入才收得到，通知是從雲端發的'); return; }
+  const perm=await Notification.requestPermission();
+  if(perm!=='granted'){ toast('沒拿到通知權限'); pushRefresh(); return; }
+  const reg=await swReady(8000);
+  let sub=await reg.pushManager.getSubscription();
+  if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true,
+    applicationServerKey:keyToBytes(VAPID_PUB)});
+  const j=sub.toJSON();
+  const {F}=CLOUD.api;
+  await F.setDoc(F.doc(CLOUD.api.fs,'users',CLOUD.user.uid,'push',await subId(sub.endpoint)),{
+    endpoint:sub.endpoint, p256dh:j.keys.p256dh, auth:j.keys.auth,
+    ua:navigator.userAgent.slice(0,180), at:Date.now()
+  });
+  toast('打工做完會通知你了');
+  pushRefresh();
+}
+async function pushDisable(){
+  try{
+    const reg=await swReady();
+    const sub=await reg.pushManager.getSubscription();
+    if(sub){
+      if(CLOUD.user&&CLOUD.api){
+        const {F}=CLOUD.api;
+        await F.deleteDoc(F.doc(CLOUD.api.fs,'users',CLOUD.user.uid,'push',await subId(sub.endpoint)))
+          .catch(()=>{});
+      }
+      await sub.unsubscribe();
+    }
+  }catch(e){}
+  toast('關掉了，不會再推播');
+  pushRefresh();
+}
+$('swPush').onclick=async()=>{
+  const sw=$('swPush');
+  if(sw.style.opacity==='0.4'){
+    toast(isIOS()&&!standalone()?'iPhone 要先「加入主畫面」，從那個圖示開才行':'這個瀏覽器不支援推播');
+    return;
+  }
+  SFX.play('tick');
+  sw.disabled=true;
+  try{ pushOn?await pushDisable():await pushEnable(); }
+  catch(e){ toast('通知設定沒成功：'+(e.message||e.name||'不明')); pushRefresh(); }
+  sw.disabled=false;
 };
 function sfxIcon(){
   $('sfxIcon').innerHTML='<use href="#i-'+(SFX.on?'vol':'mute')+'"/>';

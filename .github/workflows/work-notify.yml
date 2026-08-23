@@ -1,0 +1,30 @@
+name: 打工完成通知
+
+# GitHub 的排程本來就會延遲，尤其整點特別塞。
+# 打工提醒晚個十分鐘無所謂，所以用 10 分鐘一次、而且避開整點。
+on:
+  schedule:
+    - cron: '3,13,23,33,43,53 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: work-notify
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 裝套件
+        run: npm i --no-save firebase-admin@12 web-push@3
+      - name: 發通知
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SA }}
+          VAPID_PRIVATE: ${{ secrets.VAPID_PRIVATE }}
+          VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+        run: node scripts/notify.mjs
