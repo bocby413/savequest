@@ -33,6 +33,8 @@
   /* 按鈕與進度條的填色，跟金色文字分開。每個佈景都會換掉 */
   --fill:#5b3fb8; --fill2:#432c8f; --fillEdge:#7d5ce0; --fillDeep:#2a1a5e;
   --onFill:#ffffff; --fillGlow:rgba(125,92,224,.4);
+  /* 稱號固定是金色，不跟著佈景變 */
+  --title:#ffc233; --titleBg:rgba(255,194,51,.16);
   --r:16px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
@@ -94,7 +96,7 @@ svg.i{width:1em;height:1em;fill:currentColor;vertical-align:-.13em}
   background:var(--panel2);border:1.5px solid var(--edge);color:var(--txt2);
   transition:color .14s,border-color .14s,background-color .14s}
 .titlepick button:hover{color:var(--txt)}
-.titlepick button.on{border-color:var(--gold);background:rgba(255,194,51,.16);color:var(--gold);font-weight:700}
+.titlepick button.on{border-color:var(--title);background:var(--titleBg);color:var(--title);font-weight:700}
 .avapick{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:6px}
 .avapick button{aspect-ratio:1;border-radius:50%;border:2.5px solid var(--edge);background:var(--panel2);cursor:pointer;
   display:grid;place-items:center;padding:5px;transition:color .15s,background-color .15s,border-color .15s,opacity .15s,transform .15s,box-shadow .15s,filter .15s}
@@ -522,7 +524,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .fri .seen{flex:none;font-size:11.5px;font-weight:500;color:var(--txt3);font-style:normal}
 .fri .sub{font-size:12px;color:var(--txt3);margin-top:2px;line-height:1.5}
 .fri .lvtag{display:inline-flex;align-items:baseline;gap:3px;padding:1px 8px;border-radius:99px;
-  background:rgba(255,194,51,.16);color:var(--gold);font-weight:700;font-size:12px;margin-right:6px}
+  background:var(--titleBg);color:var(--title);font-weight:700;font-size:12px;margin-right:6px}
 .fri .ops{display:flex;gap:6px;flex:none}
 .friempty{color:var(--txt3);font-size:13.5px;padding:14px 2px}
 .mecard{margin-top:14px;border-top:1px solid var(--edge);padding-top:12px}
@@ -535,7 +537,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .mesmall{width:34px;height:34px;flex:none;border-radius:50%;overflow:hidden;background:var(--panel3);
   border:1.5px solid var(--edge2);display:grid;place-items:center}
 .mesmall svg{width:82%;height:82%}
-.mett{font-size:12.5px;color:var(--gold);font-weight:700;margin-top:1px}
+.mett{font-size:12.5px;color:var(--title);font-weight:700;margin-top:1px}
 .mewear{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
 .fridiag{margin-top:12px;padding-top:10px;border-top:1px dashed var(--edge);font-size:11.5px;color:var(--txt3);line-height:1.6}
 /* 好友個人主頁 */
@@ -560,7 +562,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .pwho{min-width:0;flex:1}
 .pnm{font-size:20px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ptt{display:inline-block;margin-top:5px;padding:2px 10px;border-radius:99px;font-size:12.5px;font-weight:700;
-  background:rgba(255,194,51,.16);color:var(--gold)}
+  background:var(--titleBg);color:var(--title)}
 .ptt.none{background:var(--panel2);color:var(--txt3);font-weight:500}
 .pseen{font-size:11.5px;color:var(--txt3);margin-top:6px}
 .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
@@ -759,6 +761,8 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   background:var(--panel3);color:var(--txt3);font-weight:700}
 .sitem .tag.only{left:auto;right:6px;background:rgba(168,121,255,.22);color:#c9a6ff}
 .sitem.on .tag{background:var(--gold);color:#3a2600}
+.sitem.half{border-color:var(--fillEdge)}
+.sitem.half .tag{background:var(--fill);color:var(--onFill)}
 .sitem.poor{opacity:.5}
 .shopempty{grid-column:1/-1;color:var(--txt3);font-size:13.5px;padding:20px 2px;text-align:center}
 /* 打工 */
@@ -2266,7 +2270,10 @@ function hueAt(h,sa,target){
 /* 按鈕與進度條的填色。深色佈景給深色系、淡色佈景給鮮豔一點，
    兩者都配白字，亮度用反推抓的所以每個色相對比都一樣 */
 function fillOf(h,sa,light){
-  const S=Math.max(sa,.62), t=light?.20:.17;
+  /* 灰白那類佈景本來就沒彩度，硬拉到 .62 會變成別款的紫或藍，
+     所以低彩度的維持低彩度，按鈕就是深灰、板岩灰那種自己的顏色 */
+  const S=sa<.18 ? Math.min(sa*2.2,.16) : Math.max(sa,.62);
+  const t=light?.20:.17;
   return {
     '--fill':     hueAt(h,S,t),        '--fill2':    hueAt(h,S+.06,t*.62),
     '--fillEdge': hueAt(h,S,t*1.75),   '--fillDeep': hueAt(h,S+.06,t*.34),
@@ -2276,6 +2283,8 @@ function fillOf(h,sa,light){
 }
 function accentLight(h){
   return {
+    /* 稱號在淺底上要用深一點的金，不然看不到，但還是金色不是主題色 */
+    '--title':'#8a5e00', '--titleBg':'rgba(255,194,51,.42)',
     /* 淡色佈景：金色文字要壓深才讀得到 */
     '--gold':     hueAt(h,.72,.20), '--gold2': hueAt(h,.78,.13),
     '--violet':   hueAt(h,.60,.16),
@@ -2284,7 +2293,8 @@ function accentLight(h){
 }
 /* 深色佈景的金色文字維持原本那組，好認也好讀 */
 const ACCENTD={'--gold':'#ffc233','--gold2':'#e39b12','--cyan':'#3ce0d0',
-  '--pink':'#ff5c8a','--lime':'#8ee65a','--violet':'#a879ff','--red':'#ff6b6b'};
+  '--pink':'#ff5c8a','--lime':'#8ee65a','--violet':'#a879ff','--red':'#ff6b6b',
+  '--title':'#ffc233','--titleBg':'rgba(255,194,51,.16)'};
 function themeVars(b){
   const o={}, d=b.dl||0;
   if(b.light){
@@ -5455,23 +5465,31 @@ function renderShopExtra(){
   const bg=shopCat==='bg';
   const list=bg?BGS:WINS;
   const now=bg?db.settings.bg:db.settings.win;
+  const nowTh=bg?(db.settings.theme||DEFBG):null;   /* 佈景是另一個設定 */
   const pick=bg?tryBg:tryWin;
   const sel=pick!==null?pick:now;
   $('shopBody').innerHTML=list.map(it=>{
-    const own=hasItem(it.id), on=now===it.id, poor=!own&&coins()<it.p;
-    const tag=on?'使用中':own?(it.p===0?'預設':'已擁有'):'';
+    const own=hasItem(it.id), poor=!own&&coins()<it.p;
+    /* 背景跟佈景各自獨立，只用在其中一邊的還是可以點來換到另一邊 */
+    const onBg=now===it.id, onTh=bg&&nowTh===it.id;
+    const on=bg?(onBg&&onTh):onBg, half=bg&&(onBg!==onTh);
+    const tag=bg
+      ? (on?'都在用':onBg?'背景中':onTh?'佈景中':own?(it.p===0?'預設':'已擁有'):'')
+      : (on?'使用中':own?(it.p===0?'預設':'已擁有'):'');
     const icon=bg
       ? '<span class="bgchip" style="background:'+bgCSS(it.id)+'"></span>'
       : '<span class="winchip">'+esc(it.n.slice(0,2))+'</span>';
-    return '<button class="sitem'+(on?' on':own?' own':'')+(poor?' poor':'')+
-      (sel===it.id&&!on?' try':'')+'" data-extra="'+it.id+'">'+
+    return '<button class="sitem'+(on?' on':half?' own half':own?' own':'')+(poor?' poor':'')+
+      (pick!==null&&sel===it.id&&!on?' try':'')+'" data-extra="'+it.id+'">'+
       (tag?'<span class="tag">'+tag+'</span>':'')+
       icon+'<div class="nm">'+esc(it.n)+'</div>'+
       '<div class="pr">'+(own?(it.p===0?'免費':'已擁有'):'<svg class="i"><use href="#i-coin"/></svg>'+it.p)+
       '</div></button>';
   }).join('');
   const act=$('shopAct'), info=$('shopPick');
-  const chosen=pick!==null&&pick!==now?itemById(pick):null;
+  /* 背景那頁：只要還有一邊沒換上，就算選得動 */
+  const done=id=>bg?(id===now&&id===nowTh):(id===now);
+  const chosen=pick!==null&&!done(pick)?itemById(pick):null;
   if(!chosen){
     info.innerHTML='<span class="no">'+(bg?'點一個顏色就會換到牠身後看看。'
       :'點一個動作就會在上面演一次，領薪水跟升級的時候會用。')+'</span>';
