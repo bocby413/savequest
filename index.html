@@ -696,13 +696,15 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .shopstage{position:relative;border-radius:13px;overflow:hidden;
   background:radial-gradient(ellipse at 50% 92%,var(--panel3) 0%,transparent 70%)}
 /* 預覽佈景時那條回商店的橫幅 */
-.prevbar{position:fixed;left:50%;bottom:20px;transform:translate(-50%,120%);z-index:80;
+/* 沒在預覽的時候要完全看不到。只靠位移的話陰影還是會從畫面下緣透出來 */
+.prevbar{position:fixed;left:50%;bottom:20px;transform:translate(-50%,160%);z-index:80;
+  opacity:0;visibility:hidden;pointer-events:none;
   display:flex;align-items:center;gap:10px;cursor:pointer;
   background:var(--panel);border:2.5px solid var(--gold);border-radius:99px;
   padding:11px 20px;font-size:14px;color:var(--txt2);
   box-shadow:0 6px 0 var(--deep),0 10px 26px rgba(0,0,0,.4);
-  transition:transform .26s}
-.prevbar.on{transform:translate(-50%,0)}
+  transition:transform .26s,opacity .2s,visibility .26s}
+.prevbar.on{transform:translate(-50%,0);opacity:1;visibility:visible;pointer-events:auto}
 /* 中文預設可以在任何字之間斷行，會變成「點這裡回／商店」。
    拆成兩段各自不斷行，只允許在中間那一刀斷 */
 .prevbar b{color:var(--gold);font-weight:800;display:flex;flex-wrap:wrap;
@@ -2187,23 +2189,23 @@ const HATW=a=>a.hatW!==undefined?a.hatW:HWAT(a,.45);
 const BGS=[
   {id:'bg-violet',n:'紫藤',     p:0,   h:252, s:.52},
   {id:'bg-night', n:'夜空',     p:150, h:224, s:.50},
-  {id:'bg-dawn',  n:'清晨',     p:150, h:352, s:.42},
+  {id:'bg-dawn',  n:'清晨',     p:150, h:352, s:.42, light:1},
   {id:'bg-grass', n:'草地',     p:150, h:132, s:.40},
   {id:'bg-sea',   n:'海邊',     p:150, h:198, s:.48},
   {id:'bg-sunset',n:'夕陽',     p:200, h:18,  s:.46},
-  {id:'bg-mint',  n:'薄荷',     p:150, h:168, s:.42},
+  {id:'bg-mint',  n:'薄荷',     p:150, h:168, s:.42, light:1},
   {id:'bg-cocoa', n:'可可',     p:150, h:32,  s:.34},
   {id:'bg-neon',  n:'霓虹',     p:200, h:288, s:.58},
   /* dl 是亮度微調。灰白跟淡色系稍微淺一點，但仍然是暗色調 */
-  {id:'bg-ink',   n:'墨黑',     p:150, h:250, s:.05, dl:-3},
-  {id:'bg-mist',  n:'霧灰',     p:150, h:218, s:.08, dl:5},
-  {id:'bg-sakura',n:'櫻花',     p:150, h:340, s:.22, dl:4},
-  {id:'bg-cream', n:'奶油',     p:150, h:44,  s:.15, dl:9},
+  {id:'bg-ink',   n:'墨黑',     p:150, h:250, s:.04, dl:-6},
+  {id:'bg-mist',  n:'霧灰',     p:150, h:218, s:.10, light:1},
+  {id:'bg-sakura',n:'櫻花',     p:150, h:340, s:.40, light:1},
+  {id:'bg-cream', n:'奶油',     p:150, h:44,  s:.52, light:1},
   {id:'bg-matcha',n:'抹茶',     p:150, h:88,  s:.34},
   {id:'bg-grape', n:'葡萄',     p:200, h:308, s:.44},
-  {id:'bg-peach', n:'蜜桃',     p:150, h:4,   s:.34, dl:3}
+  {id:'bg-peach', n:'蜜桃',     p:150, h:4,   s:.46, light:1}
 ];
-/* 一整套深色調。亮度全部壓在同一個帶裡，換色相不會變亮 */
+/* 深色那組。亮度全部壓在同一個帶裡，換色相不會變亮 */
 const THEME=[
   ['--bg',    12, 1.00],['--bg2',   17, 1.00],['--panel', 22, .96],
   ['--panel2',27, .94],['--panel3', 33, .92],['--edge',   40, .86],
@@ -2211,9 +2213,26 @@ const THEME=[
   /* 文字也跟著色相走，不然換成綠色佈景還配一組紫字 */
   ['--txt',   96, .48],['--txt2',  77, .86],['--txt3',  60, .60]
 ];
+/* 淡色那組：整個翻過來，淺底深字 */
+const THEMEL=[
+  ['--bg',    91, .82],['--bg2',   95, .62],['--panel', 98, .46],
+  ['--panel2',93, .70],['--panel3',87, .78],['--edge',   79, .70],
+  ['--edge2', 66, .72],['--deep',   79, .60],
+  ['--txt',   15, .62],['--txt2',  34, .52],['--txt3',  47, .42]
+];
+/* 強調色在淺底上要壓深，不然數字都看不清楚 */
+const ACCENTL={'--gold':'#9a6600','--gold2':'#7d5200','--cyan':'#0b7f76',
+  '--pink':'#c22a5c','--lime':'#3f7f1f','--violet':'#5c34b8','--red':'#c03636'};
+const ACCENTD={'--gold':'#ffc233','--gold2':'#e39b12','--cyan':'#3ce0d0',
+  '--pink':'#ff5c8a','--lime':'#8ee65a','--violet':'#a879ff','--red':'#ff6b6b'};
 const hsl=(h,s,l)=>'hsl('+h+' '+Math.round(s*100)+'% '+l+'%)';
 function themeVars(b){
   const o={}, d=b.dl||0;
+  if(b.light){
+    THEMEL.forEach(([k,l,f])=>o[k]=hsl(b.h,b.s*f,Math.max(12,Math.min(99,l+d))));
+    Object.keys(ACCENTL).forEach(k=>o[k]=ACCENTL[k]);
+    return o;
+  }
   THEME.forEach(([k,l,f])=>{
     /* 底變亮，淺色的字就要更亮才拉得開對比 */
     const txt=k.indexOf('--txt')===0;
@@ -2221,6 +2240,7 @@ function themeVars(b){
                  : Math.max(4,Math.min(60,l+d));
     o[k]=hsl(b.h,b.s*f,lv);
   });
+  Object.keys(ACCENTD).forEach(k=>o[k]=ACCENTD[k]);
   return o;
 }
 /* remember 才會記進設定。預覽的時候只換畫面，不動存起來的值，
@@ -2249,7 +2269,7 @@ const defBg=()=>bgById(DEFBG)||BGS[0];
 /* 商店與設定的排列：從深排到淺 */
 (function(){
   const lum=b=>{
-    const h=b.h/360, sa=b.s, l=(12+(b.dl||0))/100;
+    const h=b.h/360, sa=b.s, l=((b.light?91:12)+(b.dl||0))/100;
     const f=n=>{const k=(n+h*12)%12; return l-sa*Math.min(l,1-l)*Math.max(-1,Math.min(k-3,9-k,1));};
     const g=[f(0),f(8),f(4)].map(v=>v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4));
     return .2126*g[0]+.7152*g[1]+.0722*g[2];
@@ -2263,7 +2283,9 @@ const myWin=()=>winById(db.settings.win)||WINS[0];
 function bgCSS(id){
   const b=bgById(id)||defBg();         /* 沒買過任何背景就用預設那款 */
   const d=b.dl||0;
-  return 'linear-gradient(160deg,'+hsl(b.h,b.s*.9,34+d)+' 0%,'+hsl(b.h,b.s,17+d)+' 100%)';
+  return b.light
+    ? 'linear-gradient(160deg,'+hsl(b.h,b.s*.55,93)+' 0%,'+hsl(b.h,b.s*.75,76)+' 100%)'
+    : 'linear-gradient(160deg,'+hsl(b.h,b.s*.9,34+d)+' 0%,'+hsl(b.h,b.s,17+d)+' 100%)';
 }
 const ITEMS=[
   /* ── 貓 ── */
