@@ -688,7 +688,12 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   box-shadow:0 6px 0 var(--deep),0 10px 26px rgba(0,0,0,.4);
   transition:transform .26s}
 .prevbar.on{transform:translate(-50%,0)}
-.prevbar b{color:var(--gold);font-weight:800}
+/* 中文預設可以在任何字之間斷行，會變成「點這裡回／商店」。
+   拆成兩段各自不斷行，只允許在中間那一刀斷 */
+.prevbar b{color:var(--gold);font-weight:800;display:flex;flex-wrap:wrap;
+  justify-content:flex-end;gap:0 4px;line-height:1.35}
+.prevbar b i{font-style:normal;white-space:nowrap}
+.prevbar #prevTxt{white-space:nowrap}
 .bigtabs{margin-bottom:8px}
 .bigtabs button{font-size:13.5px;font-weight:800}
 .bgchip{display:block;width:100%;max-width:70px;aspect-ratio:1;border-radius:11px;margin:0 auto;
@@ -1289,7 +1294,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   <div class="dfoot"><button class="btn ghost" data-close>關閉</button></div>
 </div></div>
 
-<div class="prevbar" id="prevBar"><span id="prevTxt"></span><b>點這裡回商店</b></div>
+<div class="prevbar" id="prevBar"><span id="prevTxt"></span><b><i>點這裡</i><i>回商店</i></b></div>
 
 <div class="veil" id="vWork"><div class="dlg">
   <h3>打工</h3>
@@ -6182,6 +6187,14 @@ $('shopAct').onclick=shopAction;
 $('shopReset').onclick=()=>{ shopTry={}; tryBg=null; tryWin=null; SFX.play('tick'); renderShop(); };
 $('shopPrev').onclick=startPreview;
 $('prevBar').onclick=endPreview;
+/* 預覽中不給用 App：點任何東西都直接彈回商店。
+   用捕獲階段先攔下來，原本的按鈕就不會被觸發。捲動不受影響，還是可以滑一滑看效果 */
+document.addEventListener('click',e=>{
+  if(themeBefore===null) return;
+  if(e.target.closest&&e.target.closest('#prevBar')) return;
+  e.preventDefault(); e.stopPropagation();
+  endPreview();
+},true);
 $('btnSpin').onclick=spin;
 $('catKind').addEventListener('click',e=>{
   const b=e.target.closest('button[data-ck]'); if(!b) return;
