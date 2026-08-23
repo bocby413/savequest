@@ -6120,7 +6120,12 @@ function loadWallet(){
   /* 舊版把這三個放在 db.settings，搬過來一次 */
   if(!raw&&db&&db.settings) raw={coins:db.settings.coins,owned:db.settings.owned,spunOn:db.settings.spunOn};
   WALLET=normWallet(raw);
-  if(WALLET.workOn!==todayStr()){ WALLET.workOn=''; WALLET.workN=0; }   /* 隔天重新開始 */
+  /* 這裡不要主動把 workOn／workN 清掉。
+     「今天還能打幾次」是 workLeft() 拿存的日期跟今天比出來的，日期不是今天就
+     自動當 0 次，本來就不用清。清了反而會壞：跨過午夜才回來領薪水的時候，
+     本機變成 workOn=''／workN=0，而雲端還是昨天的日期跟次數，
+     收工的規則要求這兩個欄位前後一致，就會對不上。
+     次數要以「開工那天」為準，不是以領薪水那天為準。 */
   saveWallet();
   /* 舊欄位清掉，免得看起來像有兩份真相 */
   if(db&&db.settings){ delete db.settings.coins; delete db.settings.owned; delete db.settings.spunOn; }
