@@ -3394,13 +3394,15 @@ const ITEMS=[
     'a9 9 0 0 1-9-9v-3a4 4 0 0 1 4-4z" fill="#8f5ce0"/>'+
     '<path d="M'+(60-7)+' '+(y-2)+'h7l-7 6h7" stroke="#f7f4ec" stroke-width="1.6" fill="none"/>'+
     '<path d="M'+(60+3)+' '+(y-4)+'h5l-5 4h5" stroke="#f7f4ec" stroke-width="1.3" fill="none"/>';}},
-  {id:'cte4', n:'鬍鬚貼紙', p:100, slot:'face', only:'a-cat', d:a=>{
-  const y=mouY(a)-2,w=a.hr;
-  const side=sg=>'<path d="M'+(60+sg*8)+' '+(y-4)+'q'+(sg*12)+' -4 '+(sg*16)+' -6'+
-    'M'+(60+sg*8)+' '+y+'q'+(sg*13)+' 0 '+(sg*18)+' 0'+
-    'M'+(60+sg*8)+' '+(y+4)+'q'+(sg*12)+' 4 '+(sg*16)+' 6" stroke="#22232a" stroke-width="1.8" '+
-    'fill="none" stroke-linecap="round"/>';
-  return side(-1)+side(1);}},
+  {id:'cte4', n:'鈴鐺髮夾', p:100, slot:'face', only:'a-cat', d:a=>{
+    /* 貓本來就有鬍鬚，不用再貼一次。改成夾在臉旁邊的小鈴鐺 */
+    const x=60+a.hr*.88,y=eyeY(a)+2;
+    return '<path d="M'+(x-4).toFixed(1)+' '+(y-9)+'h9" stroke="#e8447a" stroke-width="2.6" '+
+      'stroke-linecap="round"/>'+
+      '<path d="M'+(x-1).toFixed(1)+' '+(y-8)+'v4" stroke="#c28800" stroke-width="1.6"/>'+
+      '<path d="M'+(x-6).toFixed(1)+' '+(y+3)+'q0-8 5-8t5 8z" fill="#ffc233"/>'+
+      '<rect x="'+(x-6.6).toFixed(1)+'" y="'+(y+2.4)+'" width="11.2" height="3" rx="1.5" fill="#c28800"/>'+
+      '<circle cx="'+(x-1).toFixed(1)+'" cy="'+(y+7)+'" r="1.8" fill="#c28800"/>';}},
   {id:'cte5', n:'肉球貼紙', p:100, slot:'face', only:'a-cat', d:a=>{
     const y=eyeY(a)+9, g=a.gap+7;
     const paw=x=>'<circle cx="'+x+'" cy="'+(y+2)+'" r="3.6" fill="#ff9ec4"/>'+
@@ -4356,11 +4358,20 @@ const ITEMS=[
   {id:'shh3', n:'牧羊皇冠', p:100, slot:'head', only:'a-shp', d:a=>AC.crown(a,'#ffc233','#c28800')},
   {id:'shh4', n:'雛菊髮飾', p:100, slot:'head', only:'a-shp', d:a=>AC.flower(a,'#9fd8f0','#33b5ec')},
   {id:'shh5', n:'生日尖帽', p:100, slot:'head', only:'a-shp', d:a=>AC.cone(a,'#c9a6ff','#8536ff')},
-  {id:'shh6', n:'捲角', p:100, slot:'head', only:'a-shp', d:a=>{
-    const y=AC.crest(a)-4, w=a.hr-1;
-    const horn=(x,sg)=>'<path d="M'+x+' '+y+'q'+(sg*9)+' -4 '+(sg*9)+' 4t'+(sg*-7)+' 5-4-4 4-3" '+
-      'stroke="#c9a86a" stroke-width="4.6" fill="none" stroke-linecap="round"/>';
-    return horn(60-w,-1)+horn(60+w,1);}},
+  {id:'shh6', n:'公羊角', p:100, slot:'head', only:'a-shp', d:a=>{
+    /* 公羊角：從頭側往外往下捲一圈，粗細分三段做出漸細的感覺。
+       往外捲才不會壓到眼睛 */
+    const bx=a.hr+3, by=HT(a)+3;
+    const horn=sg=>{const X=d=>(60+sg*(bx+d)).toFixed(1);
+      return '<path d="M'+X(0)+' '+by+'Q'+X(9)+' '+(by+1)+' '+X(11)+' '+(by+10)+
+        '" stroke="#c9a86a" stroke-width="7" fill="none" stroke-linecap="round"/>'+
+        '<path d="M'+X(11)+' '+(by+10)+'Q'+X(12)+' '+(by+18)+' '+X(4)+' '+(by+18)+
+        '" stroke="#c9a86a" stroke-width="5.4" fill="none" stroke-linecap="round"/>'+
+        '<path d="M'+X(4)+' '+(by+18)+'Q'+X(1)+' '+(by+17)+' '+X(3)+' '+(by+13)+
+        '" stroke="#b08d4a" stroke-width="3.6" fill="none" stroke-linecap="round"/>'+
+        '<path d="M'+X(2)+' '+(by+2)+'Q'+X(8)+' '+(by+3)+' '+X(9)+' '+(by+9)+
+        '" stroke="#e0c9a8" stroke-width="1.6" fill="none"/>';};
+    return horn(-1)+horn(1);}},
   {id:'she1', n:'圓框眼鏡', p:100, slot:'face', only:'a-shp', d:a=>AC.round(a,'#f7f4ec','#7c8797')},
   {id:'she2', n:'鼻樑OK繃', p:100, slot:'face', only:'a-shp', d:a=>AC.bandaid(a,'#ff9ec4','#e8447a')},
   {id:'she3', n:'叼著牧草', p:100, slot:'face', only:'a-shp', d:a=>{
