@@ -2210,7 +2210,8 @@ function chFaceMark(a){
            '<ellipse cx="'+(60-3.4)+'" cy="'+(my-1)+'" rx="1.5" ry="2" fill="'+a.ink+'"/>'+
            '<ellipse cx="'+(60+3.4)+'" cy="'+(my-1)+'" rx="1.5" ry="2" fill="'+a.ink+'"/>';
   if(a.k==='a-shp')                                    /* 深色的臉壓在頭上，頭頂一撮毛蓋下來 */
-    return '<ellipse cx="60" cy="'+(a.hy+1)+'" rx="'+(a.hr-.5)+'" ry="'+(a.hry-1)+'" fill="'+a.d+'"/>'+
+    /* 深色的臉要比頭再大一點點，不然頭的白邊會露出來一圈 */
+    return '<ellipse cx="60" cy="'+a.hy+'" rx="'+(a.hr+.8)+'" ry="'+(a.hry+.8)+'" fill="'+a.d+'"/>'+
            '<circle cx="'+(60-11)+'" cy="'+(a.hy-a.hry+5)+'" r="7.6" fill="'+a.wool+'"/>'+
            '<circle cx="60" cy="'+(a.hy-a.hry+1)+'" r="9" fill="'+a.wool+'"/>'+
            '<circle cx="'+(60+11)+'" cy="'+(a.hy-a.hry+5)+'" r="7.6" fill="'+a.wool+'"/>'+
