@@ -2610,9 +2610,11 @@ const AC={
       '<path d="M'+(x-2)+' '+(y-4)+'h8M'+(x-2)+' '+(y+1)+'h8M'+(x-2)+' '+(y+6)+'h8" stroke="'+d+'" stroke-width="1.6"/>';},
   /* 氣球：線從手上往上拉，球在線的上端 */
   balloon:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a);
-    return '<path d="M'+x+' '+y+'V'+(y-16)+'" stroke="'+d+'" stroke-width="1.8" fill="none"/>'+
-      '<path d="M'+x+' '+(y-16)+'l-3-4h6z" fill="'+c+'"/>'+
-      '<ellipse cx="'+x+'" cy="'+(y-29)+'" rx="9" ry="10.5" fill="'+c+'"/>';},
+    /* 線拉長，球才浮得上去 */
+    return '<path d="M'+x+' '+y+'V'+(y-31)+'" stroke="'+d+'" stroke-width="1.8" fill="none"/>'+
+      '<path d="M'+x+' '+(y-31)+'l-3-4h6z" fill="'+c+'"/>'+
+      '<ellipse cx="'+x+'" cy="'+(y-45)+'" rx="9.5" ry="11" fill="'+c+'"/>'+
+      '<ellipse cx="'+(x-3.5)+'" cy="'+(y-49)+'" rx="2.6" ry="3.6" fill="#ffffff" opacity=".45"/>';},
   /* 傘：傘柄穿過手掌，傘面撐在上面 */
   umbrella:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a);
     /* 握在傘柄中段偏下，傘面撐高一點才像撐傘 */
