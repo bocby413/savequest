@@ -30,6 +30,8 @@
   --txt:#f4f0ff; --txt2:#b6aae2; --txt3:#8579bd;
   --gold:#ffc233; --gold2:#e39b12; --cyan:#3ce0d0; --pink:#ff5c8a; --lime:#8ee65a; --violet:#a879ff;
   --red:#ff6b6b;
+  /* 金色底上面配什麼字、邊、陰影。淡色主題會整組換掉 */
+  --onGold:#3a2600; --goldEdge:#ffd76b; --goldDeep:#8a5c00; --goldGlow:rgba(255,194,51,.4);
   --r:16px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
@@ -53,9 +55,9 @@ svg.i{width:1em;height:1em;fill:currentColor;vertical-align:-.13em}
   transition:transform .08s,box-shadow .08s}
 .btn:hover{filter:brightness(1.1)}
 .btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--deep)}
-.btn.go{background:linear-gradient(180deg,var(--gold),var(--gold2));border-color:#ffd76b;color:#3a2600;
-  box-shadow:0 4px 0 #8a5c00}
-.btn.go:active{box-shadow:0 1px 0 #8a5c00}
+.btn.go{background:linear-gradient(180deg,var(--gold),var(--gold2));border-color:var(--goldEdge);
+  color:var(--onGold);box-shadow:0 4px 0 var(--goldDeep)}
+.btn.go:active{box-shadow:0 1px 0 var(--goldDeep)}
 .btn.sm{font-size:13px;padding:6px 13px;border-radius:10px;box-shadow:0 3px 0 var(--deep)}
 .btn.ghost{background:transparent;border-color:var(--edge);color:var(--txt2);box-shadow:none}
 .btn.ghost:hover{color:var(--txt);border-color:var(--edge2)}
@@ -142,8 +144,8 @@ svg.i{width:1em;height:1em;fill:currentColor;vertical-align:-.13em}
 .cells{display:flex;gap:4px}
 .cells .c{flex:1;height:22px;border-radius:5px;background:var(--panel2);border:1.5px solid var(--edge);
   position:relative;overflow:hidden}
-.cells .c.on{background:linear-gradient(180deg,var(--gold),var(--gold2));border-color:#ffd76b;
-  box-shadow:0 0 5px rgba(255,194,51,.4);animation:pop .26s cubic-bezier(.2,1.5,.4,1) backwards}
+.cells .c.on{background:linear-gradient(180deg,var(--gold),var(--gold2));border-color:var(--goldEdge);
+  box-shadow:0 0 5px var(--goldGlow);animation:pop .26s cubic-bezier(.2,1.5,.4,1) backwards}
 .cells .c.on.c1{background:linear-gradient(180deg,var(--cyan),#12a596);border-color:#7ff0e4;box-shadow:0 0 9px rgba(60,224,208,.45)}
 .cells .c.on.c2{background:linear-gradient(180deg,var(--lime),#4d9e2a);border-color:#c2f59b;box-shadow:0 0 9px rgba(142,230,90,.4)}
 .cells .c b{position:absolute;left:0;top:0;bottom:0;width:100%;transform:scaleX(0);transform-origin:left;
@@ -2220,17 +2222,42 @@ const THEMEL=[
   ['--edge2', 66, .72],['--deep',   79, .60],
   ['--txt',   15, .62],['--txt2',  34, .52],['--txt3',  47, .42]
 ];
-/* 強調色在淺底上要壓深，不然數字都看不清楚 */
-const ACCENTL={'--gold':'#9a6600','--gold2':'#7d5200','--cyan':'#0b7f76',
-  '--pink':'#c22a5c','--lime':'#3f7f1f','--violet':'#5c34b8','--red':'#c03636'};
+/* 淡色主題的強調色：跟著佈景的色相走，亮度用二分逼近抓到指定的相對亮度，
+   這樣不管什麼色相，配在白底上的對比都差不多，也不會有的太深有的太淺 */
+function lumOfHSL(h,sa,l){
+  const H=h/360, S=sa, L=l/100;
+  const f=n=>{const k=(n+H*12)%12; return L-S*Math.min(L,1-L)*Math.max(-1,Math.min(k-3,9-k,1));};
+  const g=[f(0),f(8),f(4)].map(v=>v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4));
+  return .2126*g[0]+.7152*g[1]+.0722*g[2];
+}
+function hueAt(h,sa,target){
+  let lo=5, hi=95;
+  for(let i=0;i<24;i++){ const mid=(lo+hi)/2;
+    if(lumOfHSL(h,sa,mid)<target) lo=mid; else hi=mid; }
+  return hsl(h,sa,+((lo+hi)/2).toFixed(1));
+}
+function accentLight(h){
+  return {
+    /* 按鈕與進度條的底：夠鮮豔又不會太亮，上面配白字 */
+    '--gold':     hueAt(h,.72,.20), '--gold2': hueAt(h,.78,.13),
+    '--goldEdge': hueAt(h,.70,.34), '--goldDeep': hueAt(h,.80,.07),
+    '--goldGlow': 'rgba(0,0,0,.12)', '--onGold': '#ffffff',
+    '--violet':   hueAt(h,.60,.16),
+    '--cyan':'#0b7f76','--pink':'#c22a5c','--lime':'#3f7f1f','--red':'#c03636'
+  };
+}
 const ACCENTD={'--gold':'#ffc233','--gold2':'#e39b12','--cyan':'#3ce0d0',
-  '--pink':'#ff5c8a','--lime':'#8ee65a','--violet':'#a879ff','--red':'#ff6b6b'};
+  '--pink':'#ff5c8a','--lime':'#8ee65a','--violet':'#a879ff','--red':'#ff6b6b',
+  '--onGold':'#3a2600','--goldEdge':'#ffd76b','--goldDeep':'#8a5c00',
+  '--goldGlow':'rgba(255,194,51,.4)'};
+
 const hsl=(h,s,l)=>'hsl('+h+' '+Math.round(s*100)+'% '+l+'%)';
 function themeVars(b){
   const o={}, d=b.dl||0;
   if(b.light){
     THEMEL.forEach(([k,l,f])=>o[k]=hsl(b.h,b.s*f,Math.max(12,Math.min(99,l+d))));
-    Object.keys(ACCENTL).forEach(k=>o[k]=ACCENTL[k]);
+    const ac=accentLight(b.h);
+    Object.keys(ac).forEach(k=>o[k]=ac[k]);
     return o;
   }
   THEME.forEach(([k,l,f])=>{
@@ -2275,6 +2302,9 @@ const defBg=()=>bgById(DEFBG)||BGS[0];
     return .2126*g[0]+.7152*g[1]+.0722*g[2];
   };
   BGS.sort((a,b)=>lum(a)-lum(b));
+  /* 預設那款固定排最前面 */
+  const i=BGS.findIndex(b=>b.id===DEFBG);
+  if(i>0) BGS.unshift(BGS.splice(i,1)[0]);
 })();
 const winById=id=>WINS.find(x=>x.id===id);
 const myBg=()=>bgById(db.settings.bg)||null;
