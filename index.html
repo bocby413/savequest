@@ -10326,7 +10326,10 @@ window.CLOUD={
                 shiftSay:WALLET.shiftSay};
     try{
       await F.updateDoc(this.wref(),next);
-      WALLET=normWallet(next); saveWallet();
+      /* next 裡面刻意沒有 shiftAt：那是伺服器時間，不能拿手機的時間去蓋
+         （不然把時鐘調早就能秒領薪水）。但也因此不能整包覆蓋本機那份，
+         否則 shiftAt 會變 0，畫面就以為沒有在打工 */
+      WALLET=normWallet(Object.assign({},next,{shiftAt:WALLET.shiftAt})); saveWallet();
       return {ok:1};
     }catch(e){ return {ok:0,e:e.code||'x'}; }
   },
@@ -10363,7 +10366,10 @@ window.CLOUD={
                 shiftSay:WALLET.shiftSay};
     try{
       await F.updateDoc(this.wref(),next);
-      WALLET=normWallet(next); saveWallet();
+      /* next 裡面刻意沒有 shiftAt：那是伺服器時間，不能拿手機的時間去蓋
+         （不然把時鐘調早就能秒領薪水）。但也因此不能整包覆蓋本機那份，
+         否則 shiftAt 會變 0，畫面就以為沒有在打工 */
+      WALLET=normWallet(Object.assign({},next,{shiftAt:WALLET.shiftAt})); saveWallet();
       return {ok:1};
     }catch(e){ return {ok:0,e:e.code||'x'}; }
   },
