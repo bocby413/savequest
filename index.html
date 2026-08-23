@@ -3657,13 +3657,47 @@ const ITEMS=[
     '<path d="M'+(x-2.6)+' '+(y+2)+'a2.6 2.6 0 1 0 5.2 0a2.6 2.6 0 1 0 -5.2 0z" fill="#f7f4ec"/>'+
     '<circle cx="'+(x-4)+'" cy="'+(y-1)+'" r="1.4" fill="#f7f4ec"/>'+
     '<circle cx="'+(x+4)+'" cy="'+(y-1)+'" r="1.4" fill="#f7f4ec"/>';}},
-  {id:'dgf1', n:'慢跑鞋', p:200, slot:'foot', only:'a-dog', d:a=>AC.sneak(a,'#543424','#1f110a')},
-  {id:'dgf2', n:'登山靴', p:200, slot:'foot', only:'a-dog', d:a=>AC.bootF(a,'#c4471d','#682109')},
-  {id:'dgf3', n:'海灘拖', p:200, slot:'foot', only:'a-dog', d:a=>AC.sandal(a,'#2f7fd0','#13477c')},
-  {id:'dgf4', n:'球襪', p:200, slot:'foot', only:'a-dog', d:a=>AC.sockF(a,'#8a9b3c','#454f18')},
-  {id:'dgf5', n:'直排輪', p:200, slot:'foot', only:'a-dog', d:a=>AC.skate(a,'#266b45','#092013')},
-  {id:'dgf6', n:'室內拖鞋', p:200, slot:'foot', only:'a-dog', d:a=>AC.slipper(a,'#4a9b3f','#205119')},
-  /* ── 熊 加開 ── */
+  {id:'dgf1', n:'慢跑鞋', p:200, slot:'foot', only:'a-dog', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<path d="M'+(cx-w)+' '+(y+2)+'q0-9 '+(w*.85)+'-9h'+(w*.5)+'l'+(w*.8)+' 9z" fill="#3d7fd6"/>'+
+    '<rect x="'+(cx-w)+'" y="'+(y+1)+'" width="'+(w*2)+'" height="6" rx="3" fill="#f7f4ec"/>'+
+    '<path d="M'+(cx-w+2)+' '+(y-2)+'l5 3M'+(cx-w+2)+' '+(y+1)+'l5 3" stroke="#f7f4ec" stroke-width="1.4"/>'+
+    '<path d="M'+(cx+w*.2)+' '+(y-5)+'q'+(w*.6)+' 3 '+(w*.8)+' 7" stroke="#ffd23c" stroke-width="2" fill="none"/>');}},
+  {id:'dgf2', n:'登山靴', p:200, slot:'foot', only:'a-dog', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-7)+'" width="'+(w*2)+'" height="12" rx="4" fill="#5d3a24"/>'+
+    '<rect x="'+(cx-w*.42)+'" y="'+(y-8)+'" width="'+(w*.84)+'" height="8" rx="2" fill="#a8763f"/>'+
+    '<rect x="'+(cx-w-1)+'" y="'+(y+3)+'" width="'+(w*2+2)+'" height="5" rx="2" fill="#33363d"/>'+
+    '<path d="M'+(cx-w+1)+' '+(y+8)+'v2M'+cx+' '+(y+8)+'v2M'+(cx+w-1)+' '+(y+8)+'v2" stroke="#33363d" stroke-width="1.6"/>');}},
+  {id:'dgf3', n:'海灘拖', p:200, slot:'foot', only:'a-dog', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+1)+'" width="'+(w*2)+'" height="6" rx="3" fill="#ffd23c"/>'+
+    '<path d="M'+(cx-w+2)+' '+(y+1)+'L'+cx+' '+(y-5)+'L'+(cx+w-2)+' '+(y+1)+
+    '" stroke="#3d7fd6" stroke-width="2.6" fill="none"/>'+
+    '<circle cx="'+cx+'" cy="'+(y-5)+'" r="2" fill="#3d7fd6"/>');}},
+  {id:'dgf4', n:'球襪', p:200, slot:'foot', only:'a-dog', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1-1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-6)+'" width="'+(w*2)+'" height="12" rx="4" fill="#f7f4ec"/>'+
+    '<path d="M'+(cx-w)+' '+(y-3)+'h'+(w*2)+'M'+(cx-w)+' '+y+'h'+(w*2)+'" stroke="#3d7fd6" stroke-width="2"/>'+
+    '<circle cx="'+cx+'" cy="'+(y+4)+'" r="1.8" fill="#c4471d"/>'+
+    '<circle cx="'+(cx-3)+'" cy="'+(y+1.6)+'" r="1" fill="#c4471d"/>'+
+    '<circle cx="'+(cx+3)+'" cy="'+(y+1.6)+'" r="1" fill="#c4471d"/>');}},
+  {id:'dgf5', n:'直排輪', p:200, slot:'foot', only:'a-dog', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-8)+'" width="'+(w*2)+'" height="10" rx="4" fill="#c4471d"/>'+
+    '<rect x="'+(cx-w)+'" y="'+(y-5)+'" width="'+(w*2)+'" height="3" fill="#f7f4ec"/>'+
+    '<rect x="'+(cx-w+1)+'" y="'+(y+2)+'" width="'+(w*2-2)+'" height="3" rx="1.5" fill="#33363d"/>'+
+    '<circle cx="'+(cx-w+3)+'" cy="'+(y+8)+'" r="2.6" fill="#cdd7ee"/>'+
+    '<circle cx="'+(cx+w-3)+'" cy="'+(y+8)+'" r="2.6" fill="#cdd7ee"/>');}},
+  {id:'dgf6', n:'骨頭拖鞋', p:200, slot:'foot', only:'a-dog', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+2)+'" width="'+(w*2)+'" height="6" rx="3" fill="#a8763f"/>'+
+    '<path d="M'+(cx-w)+' '+(y+3)+'a'+w+' 8 0 0 1 '+(w*2)+' 0z" fill="#f2e3c0"/>'+
+    '<rect x="'+(cx-4)+'" y="'+(y-3)+'" width="8" height="2.6" rx="1.3" fill="#a8763f"/>'+
+    '<circle cx="'+(cx-4)+'" cy="'+(y-3.4)+'" r="1.8" fill="#a8763f"/>'+
+    '<circle cx="'+(cx-4)+'" cy="'+(y-.4)+'" r="1.8" fill="#a8763f"/>'+
+    '<circle cx="'+(cx+4)+'" cy="'+(y-3.4)+'" r="1.8" fill="#a8763f"/>'+
+    '<circle cx="'+(cx+4)+'" cy="'+(y-.4)+'" r="1.8" fill="#a8763f"/>');}},
   {id:'brh1', n:'露營毛帽', p:100, slot:'head', only:'a-bear', d:a=>AC.beanie(a,'#266b45','#092013')},
   {id:'brh2', n:'獵人帽', p:100, slot:'head', only:'a-bear', d:a=>AC.cap(a,'#5aa9ff','#006fe9')},
   {id:'brh3', n:'蜂蜜皇冠', p:100, slot:'head', only:'a-bear', d:a=>AC.crown(a,'#d8e84a','#a4b60c')},
@@ -3735,13 +3769,43 @@ const ITEMS=[
   return cell(-4,-3)+cell(3,-3)+cell(-7,3)+cell(0,3)+cell(7,3)+cell(-4,9)+cell(3,9)+
     '<ellipse cx="'+(x+8)+'" cy="'+(y-8)+'" rx="3.4" ry="2.4" fill="#ffd84d"/>'+
     '<path d="M'+(x+8)+' '+(y-10)+'l-2-2M'+(x+8)+' '+(y-10)+'l2-2" stroke="#3a2008" stroke-width="1"/>';}},
-  {id:'brf1', n:'磚紅短靴', p:200, slot:'foot', only:'a-bear', d:a=>AC.bootF(a,'#543424','#1f110a')},
-  {id:'brf2', n:'登山鞋', p:200, slot:'foot', only:'a-bear', d:a=>AC.sneak(a,'#c4471d','#682109')},
-  {id:'brf3', n:'木屐', p:200, slot:'foot', only:'a-bear', d:a=>AC.clog(a,'#e0921a','#825207')},
-  {id:'brf4', n:'厚毛襪', p:200, slot:'foot', only:'a-bear', d:a=>AC.sockF(a,'#266b45','#092013')},
-  {id:'brf5', n:'溪邊涼鞋', p:200, slot:'foot', only:'a-bear', d:a=>AC.sandal(a,'#2f7fd0','#13477c')},
-  {id:'brf6', n:'熊掌拖鞋', p:200, slot:'foot', only:'a-bear', d:a=>AC.padF(a,'#4a9b3f','#205119')},
-  /* ── 狐狸 加開 ── */
+  {id:'brf1', n:'工作短靴', p:200, slot:'foot', only:'a-bear', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-6)+'" width="'+(w*2)+'" height="11" rx="4" fill="#c4471d"/>'+
+    '<rect x="'+(cx-w-1)+'" y="'+(y+3)+'" width="'+(w*2+2)+'" height="5" rx="2" fill="#5d3a24"/>'+
+    '<rect x="'+(cx-w)+'" y="'+(y-3)+'" width="'+(w*2)+'" height="3" fill="#8a2f10"/>'+
+    '<rect x="'+(cx-2)+'" y="'+(y-4)+'" width="4" height="5" rx="1" fill="#ffc233"/>');}},
+  {id:'brf2', n:'登山鞋', p:200, slot:'foot', only:'a-bear', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<path d="M'+(cx-w)+' '+(y+2)+'q0-8 '+(w*.8)+'-8h'+(w*.6)+'l'+(w*.7)+' 8z" fill="#266b45"/>'+
+    '<rect x="'+(cx-w-1)+'" y="'+(y+1)+'" width="'+(w*2+2)+'" height="6" rx="2" fill="#5d3a24"/>'+
+    '<path d="M'+(cx-w)+' '+(y+7)+'h'+(w*2)+'" stroke="#33363d" stroke-width="2.4"/>'+
+    '<path d="M'+(cx-w+2)+' '+(y-3)+'l5 2M'+(cx-w+2)+' '+y+'l5 2" stroke="#e0c9a8" stroke-width="1.4"/>');}},
+  {id:'brf3', n:'木屐', p:200, slot:'foot', only:'a-bear', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+1)+'" width="'+(w*2)+'" height="5" rx="1.6" fill="#c9a86a"/>'+
+    '<rect x="'+(cx-w+1.5)+'" y="'+(y+6)+'" width="3.4" height="4" fill="#8a6a3c"/>'+
+    '<rect x="'+(cx+w-4.9)+'" y="'+(y+6)+'" width="3.4" height="4" fill="#8a6a3c"/>'+
+    '<path d="M'+(cx-w+2)+' '+(y+1)+'L'+cx+' '+(y-5)+'L'+(cx+w-2)+' '+(y+1)+
+    '" stroke="#3f7d55" stroke-width="2.4" fill="none"/>');}},
+  {id:'brf4', n:'厚毛襪', p:200, slot:'foot', only:'a-bear', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1-1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-7)+'" width="'+(w*2)+'" height="13" rx="4" fill="#f2e3c0"/>'+
+    '<path d="M'+(cx-w)+' '+(y-4)+'h'+(w*2)+'" stroke="#ddc08a" stroke-width="2.4"/>'+
+    '<path d="M'+(cx-3)+' '+(y-1)+'q3 3 6 0M'+(cx-3)+' '+(y+3)+
+    'q3 3 6 0" stroke="#ddc08a" stroke-width="1.6" fill="none"/>');}},
+  {id:'brf5', n:'溪邊涼鞋', p:200, slot:'foot', only:'a-bear', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+2)+'" width="'+(w*2)+'" height="6" rx="3" fill="#2f7fa8"/>'+
+    '<path d="M'+(cx-w+1)+' '+(y+2)+'l'+(w-1)+' -7 '+(w-1)+' 7" stroke="#1a5573" stroke-width="2.6" fill="none"/>'+
+    '<path d="M'+(cx-w+1)+' '+(y-2)+'h'+(w*2-2)+'" stroke="#1a5573" stroke-width="2.4"/>');}},
+  {id:'brf6', n:'熊掌拖鞋', p:200, slot:'foot', only:'a-bear', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<ellipse cx="'+cx+'" cy="'+(y+4)+'" rx="'+w+'" ry="5.5" fill="#7d5a44"/>'+
+    '<ellipse cx="'+cx+'" cy="'+(y+4)+'" rx="'+(w*.5)+'" ry="3.2" fill="#e7cdb8"/>'+
+    '<circle cx="'+(cx-w*.62)+'" cy="'+(y-1)+'" r="2" fill="#e7cdb8"/>'+
+    '<circle cx="'+(cx-w*.1)+'" cy="'+(y-2.4)+'" r="2" fill="#e7cdb8"/>'+
+    '<circle cx="'+(cx+w*.44)+'" cy="'+(y-1.6)+'" r="2" fill="#e7cdb8"/>');}},
   {id:'fxh1', n:'靛藍毛帽', p:100, slot:'head', only:'a-fox', d:a=>AC.beanie(a,'#22315e','#090f20')},
   {id:'fxh2', n:'秋葉花冠', p:100, slot:'head', only:'a-fox', d:a=>AC.flower(a,'#9c3055','#4b1125')},
   {id:'fxh3', n:'狐狸皇冠', p:100, slot:'head', only:'a-fox', d:a=>AC.crown(a,'#ffc233','#c28800')},
@@ -3821,13 +3885,40 @@ const ITEMS=[
     '<path d="M'+x+' '+(y-2)+'V'+(y+13)+'M'+x+' '+(y+6)+'h-5M'+x+' '+(y+11)+
     'h-5" stroke="#e0921a" stroke-width="3"/>'+
     '<circle cx="'+x+'" cy="'+(y-7)+'" r="1.6" fill="#7a4a24"/>';}},
-  {id:'fxf1', n:'和風草履', p:200, slot:'foot', only:'a-fox', d:a=>AC.clog(a,'#266b45','#092013')},
-  {id:'fxf2', n:'旅人短靴', p:200, slot:'foot', only:'a-fox', d:a=>AC.bootF(a,'#7a4a24','#261508')},
-  {id:'fxf3', n:'苔綠襪', p:200, slot:'foot', only:'a-fox', d:a=>AC.sockF(a,'#4a9b3f','#205119')},
-  {id:'fxf4', n:'夏日涼鞋', p:200, slot:'foot', only:'a-fox', d:a=>AC.sandal(a,'#9c3055','#4b1125')},
-  {id:'fxf5', n:'軟底跑鞋', p:200, slot:'foot', only:'a-fox', d:a=>AC.sneak(a,'#33363d','#111318')},
-  {id:'fxf6', n:'暖腳拖鞋', p:200, slot:'foot', only:'a-fox', d:a=>AC.slipper(a,'#8a9b3c','#454f18')},
-  /* ── 企鵝 加開 ── */
+  {id:'fxf1', n:'和風草履', p:200, slot:'foot', only:'a-fox', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+2)+'" width="'+(w*2)+'" height="5" rx="2.4" fill="#ddc08a"/>'+
+    '<path d="M'+(cx-w+1)+' '+(y+4)+'h'+(w*2-2)+'M'+(cx-w+1)+' '+(y+6)+
+    'h'+(w*2-2)+'" stroke="#a8763f" stroke-width="1"/>'+
+    '<path d="M'+(cx-w+2)+' '+(y+2)+'L'+cx+' '+(y-4)+'L'+(cx+w-2)+' '+(y+2)+
+    '" stroke="#9e2b2b" stroke-width="2.4" fill="none"/>');}},
+  {id:'fxf2', n:'旅人短靴', p:200, slot:'foot', only:'a-fox', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-7)+'" width="'+(w*2)+'" height="12" rx="4" fill="#7a4a24"/>'+
+    '<rect x="'+(cx-w-1)+'" y="'+(y+3)+'" width="'+(w*2+2)+'" height="5" rx="2" fill="#3b2a22"/>'+
+    '<path d="M'+(cx-w+2)+' '+(y-4)+'l5 2M'+(cx-w+2)+' '+(y-1)+'l5 2M'+(cx-w+2)+' '+(y+2)+
+    'l5 2" stroke="#e3c98a" stroke-width="1.3"/>');}},
+  {id:'fxf3', n:'楓葉短襪', p:200, slot:'foot', only:'a-fox', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1-1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-6)+'" width="'+(w*2)+'" height="12" rx="4" fill="#f7f0e2"/>'+
+    '<path d="M'+(cx-w)+' '+(y-3)+'h'+(w*2)+'" stroke="#c4471d" stroke-width="2.4"/>'+
+    '<path d="M'+cx+' '+(y+1)+'l-2.6 3-3.4-1 1.6 3.4-4 1 4.4 1.6 4.4-1.6-4-1 1.6-3.4-3.4 1z" fill="#c4471d"/>');}},
+  {id:'fxf4', n:'夏日涼鞋', p:200, slot:'foot', only:'a-fox', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+2)+'" width="'+(w*2)+'" height="6" rx="3" fill="#e0921a"/>'+
+    '<path d="M'+(cx-w+1)+' '+(y+1)+'h'+(w*2-2)+'M'+(cx-w+2)+' '+(y-3)+
+    'h'+(w*2-4)+'" stroke="#a8763f" stroke-width="2.4"/>'+
+    '<circle cx="'+cx+'" cy="'+(y-1)+'" r="1.8" fill="#f7f0e2"/>');}},
+  {id:'fxf5', n:'軟底跑鞋', p:200, slot:'foot', only:'a-fox', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<path d="M'+(cx-w)+' '+(y+2)+'q0-8 '+(w*.85)+'-8h'+(w*.5)+'l'+(w*.8)+' 8z" fill="#f7f0e2"/>'+
+    '<rect x="'+(cx-w)+'" y="'+(y+1)+'" width="'+(w*2)+'" height="6" rx="3" fill="#9e2b2b"/>'+
+    '<path d="M'+(cx+w*.1)+' '+(y-4)+'q'+(w*.6)+' 2 '+(w*.85)+' 6" stroke="#9e2b2b" stroke-width="2" fill="none"/>');}},
+  {id:'fxf6', n:'暖腳拖鞋', p:200, slot:'foot', only:'a-fox', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+3)+'" width="'+(w*2)+'" height="5" rx="2.5" fill="#3b2a22"/>'+
+    '<path d="M'+(cx-w)+' '+(y+4)+'a'+w+' 8 0 0 1 '+(w*2)+' 0z" fill="#9e2b2b"/>'+
+    '<path d="M'+(cx-w)+' '+(y-1)+'a'+w+' 3.4 0 0 1 '+(w*2)+' 0z" fill="#f7f0e2"/>');}},
   {id:'pgh1', n:'奶油毛帽', p:100, slot:'head', only:'a-peng', d:a=>AC.beanie(a,'#f2e3c0','#e8bd5a')},
   {id:'pgh2', n:'遠航船長帽', p:100, slot:'head', only:'a-peng', d:a=>AC.cap(a,'#5aa9ff','#006fe9')},
   {id:'pgh3', n:'冰晶皇冠', p:100, slot:'head', only:'a-peng', d:a=>AC.crown(a,'#e6f4fb','#7eccf3')},
@@ -3901,13 +3992,40 @@ const ITEMS=[
     '<path d="M'+(x-6)+' '+(y+3)+'a4 4 0 0 1 5-3M'+(x+1)+' '+(y+5)+'a4.5 4.5 0 0 1 6-2" '+
     'stroke="#bfd8e8" stroke-width="1.8" fill="none" stroke-linecap="round"/>'+
     '<circle cx="'+(x-3)+'" cy="'+(y-4)+'" r="2.4" fill="#ffffff"/>';}},
-  {id:'pgf1', n:'珊瑚短靴', p:200, slot:'foot', only:'a-peng', d:a=>AC.bootF(a,'#7a4a24','#261508')},
-  {id:'pgf2', n:'溜冰鞋', p:200, slot:'foot', only:'a-peng', d:a=>AC.skate(a,'#9fd8f0','#33b5ec')},
-  {id:'pgf3', n:'毛絨腳套', p:200, slot:'foot', only:'a-peng', d:a=>AC.padF(a,'#9c3055','#4b1125')},
-  {id:'pgf4', n:'沙灘涼鞋', p:200, slot:'foot', only:'a-peng', d:a=>AC.sandal(a,'#a8763f','#5c3d1a')},
-  {id:'pgf5', n:'條紋襪', p:200, slot:'foot', only:'a-peng', d:a=>AC.sockF(a,'#c4471d','#682109')},
-  {id:'pgf6', n:'甲板球鞋', p:200, slot:'foot', only:'a-peng', d:a=>AC.sneak(a,'#4a9b3f','#205119')},
-  /* ── 機器人 加開 ── */
+  {id:'pgf1', n:'雪地短靴', p:200, slot:'foot', only:'a-peng', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-6)+'" width="'+(w*2)+'" height="11" rx="4" fill="#12355c"/>'+
+    '<rect x="'+(cx-w-1)+'" y="'+(y-8)+'" width="'+(w*2+2)+'" height="5" rx="2.5" fill="#f7f4ec"/>'+
+    '<rect x="'+(cx-w-1)+'" y="'+(y+3)+'" width="'+(w*2+2)+'" height="5" rx="2" fill="#9fd8f0"/>');}},
+  {id:'pgf2', n:'溜冰鞋', p:200, slot:'foot', only:'a-peng', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-6)+'" width="'+(w*2)+'" height="10" rx="4" fill="#f7f4ec"/>'+
+    '<path d="M'+(cx-w+2)+' '+(y-3)+'l5 2M'+(cx-w+2)+' '+y+'l5 2" stroke="#9fd8f0" stroke-width="1.4"/>'+
+    '<path d="M'+(cx-w-1)+' '+(y+9)+'h'+(w*2+2)+'" stroke="#cdd7ee" stroke-width="2.6" stroke-linecap="round"/>'+
+    '<path d="M'+(cx-w+1)+' '+(y+5)+'v4M'+(cx+w-1)+' '+(y+5)+'v4" stroke="#cdd7ee" stroke-width="2.2"/>');}},
+  {id:'pgf3', n:'毛絨腳套', p:200, slot:'foot', only:'a-peng', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<ellipse cx="'+cx+'" cy="'+(y+3)+'" rx="'+w+'" ry="5.5" fill="#e6f4fb"/>'+
+    '<circle cx="'+(cx-w*.6)+'" cy="'+(y-2)+'" r="3.6" fill="#f7f4ec"/>'+
+    '<circle cx="'+cx+'" cy="'+(y-3.4)+'" r="4" fill="#f7f4ec"/>'+
+    '<circle cx="'+(cx+w*.6)+'" cy="'+(y-2)+'" r="3.6" fill="#f7f4ec"/>');}},
+  {id:'pgf4', n:'沙灘涼鞋', p:200, slot:'foot', only:'a-peng', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+2)+'" width="'+(w*2)+'" height="6" rx="3" fill="#ffc233"/>'+
+    '<path d="M'+(cx-w+2)+' '+(y+2)+'L'+cx+' '+(y-4)+'L'+(cx+w-2)+' '+(y+2)+
+    '" stroke="#ff8a3c" stroke-width="2.6" fill="none"/>'+
+    '<circle cx="'+cx+'" cy="'+(y-4)+'" r="2" fill="#e6f4fb"/>');}},
+  {id:'pgf5', n:'條紋襪', p:200, slot:'foot', only:'a-peng', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1-1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-6)+'" width="'+(w*2)+'" height="12" rx="4" fill="#f7f4ec"/>'+
+    '<path d="M'+(cx-w)+' '+(y-3)+'h'+(w*2)+'M'+(cx-w)+' '+y+'h'+(w*2)+'M'+(cx-w)+' '+(y+3)+
+    'h'+(w*2)+'" stroke="#2f7fd0" stroke-width="1.8"/>');}},
+  {id:'pgf6', n:'甲板球鞋', p:200, slot:'foot', only:'a-peng', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<path d="M'+(cx-w)+' '+(y+2)+'q0-8 '+(w*.85)+'-8h'+(w*.5)+'l'+(w*.8)+' 8z" fill="#22315e"/>'+
+    '<rect x="'+(cx-w)+'" y="'+(y+1)+'" width="'+(w*2)+'" height="6" rx="3" fill="#f7f4ec"/>'+
+    '<path d="M'+cx+' '+(y-6)+'v6M'+(cx-2.6)+' '+(y-4)+'h5.2M'+(cx-3)+' '+(y-1)+
+    'q3 3 6 0" stroke="#ffc233" stroke-width="1.5" fill="none"/>');}},
   {id:'bth1', n:'青光安全帽', p:100, slot:'head', only:'a-bot', d:a=>AC.helm(a,'#ff8a3c','#cb5100')},
   {id:'bth2', n:'資料皇冠', p:100, slot:'head', only:'a-bot', d:a=>AC.crown(a,'#d8e84a','#a4b60c')},
   {id:'bth3', n:'運算尖帽', p:100, slot:'head', only:'a-bot', d:a=>AC.cone(a,'#5aa9ff','#006fe9')},
@@ -3984,13 +4102,43 @@ const ITEMS=[
     '<rect x="'+(x-5.4)+'" y="'+(y-8)+'" width="10.8" height="7" rx="1.4" fill="#3ce0d0"/>'+
     '<path d="M'+(x-5)+' '+(y+3)+'h10M'+(x-5)+' '+(y+6)+'h7" stroke="#2f3c5c" stroke-width="1.4"/>'+
     '<circle cx="'+x+'" cy="'+(y-13)+'" r="2.4" fill="none" stroke="#2f3c5c" stroke-width="1.6"/>';}},
-  {id:'btf1', n:'履帶底座', p:200, slot:'foot', only:'a-bot', hide:'base', d:a=>AC.wheelB(a,'#7a4a24','#261508')},
-  {id:'btf2', n:'懸浮底座', p:200, slot:'foot', only:'a-bot', hide:'base', d:a=>AC.hoverB(a,'#9c3055','#4b1125')},
-  {id:'btf3', n:'鐵藍支架', p:200, slot:'foot', only:'a-bot', hide:'base', d:a=>AC.baseF(a,'#a8763f','#5c3d1a')},
-  {id:'btf4', n:'橡膠腳墊', p:200, slot:'foot', only:'a-bot', d:a=>AC.padF(a,'#c4471d','#682109')},
-  {id:'btf5', n:'工程靴', p:200, slot:'foot', only:'a-bot', d:a=>AC.bootF(a,'#33363d','#111318')},
-  {id:'btf6', n:'磁力鞋', p:200, slot:'foot', only:'a-bot', d:a=>AC.sneak(a,'#cdd7ee','#7090da')},
-  /* ── 青蛙 加開 ── */
+  {id:'btf1', n:'履帶底座', p:200, slot:'foot', only:'a-bot', hide:'base', d:a=>{
+  const y=a.by+a.bh-2;
+  return '<rect x="47" y="'+y+'" width="26" height="7" rx="3" fill="#2f3c5c"/>'+
+    '<rect x="43" y="'+(y+6)+'" width="34" height="9" rx="4.5" fill="#33363d"/>'+
+    '<circle cx="50" cy="'+(y+10.5)+'" r="3.4" fill="#cdd7ee"/>'+
+    '<circle cx="60" cy="'+(y+10.5)+'" r="3.4" fill="#cdd7ee"/>'+
+    '<circle cx="70" cy="'+(y+10.5)+'" r="3.4" fill="#cdd7ee"/>';}},
+  {id:'btf2', n:'懸浮底座', p:200, slot:'foot', only:'a-bot', hide:'base', d:a=>{
+  const y=a.by+a.bh-2;
+  return '<ellipse cx="60" cy="'+(y+5)+'" rx="17" ry="6" fill="#cdd7ee"/>'+
+    '<ellipse cx="60" cy="'+(y+3)+'" rx="11" ry="3.4" fill="#7c8797"/>'+
+    '<ellipse cx="60" cy="'+(y+12)+'" rx="12" ry="4" fill="#3ce0d0" opacity=".55"/>'+
+    '<ellipse cx="60" cy="'+(y+17)+'" rx="6" ry="2.6" fill="#3ce0d0" opacity=".3"/>';}},
+  {id:'btf3', n:'鐵藍支架', p:200, slot:'foot', only:'a-bot', hide:'base', d:a=>{
+  const y=a.by+a.bh-2;
+  return '<path d="M60 '+y+'L48 '+(y+13)+'M60 '+y+'L72 '+(y+13)+
+    '" stroke="#2f3c5c" stroke-width="5" stroke-linecap="round"/>'+
+    '<rect x="43" y="'+(y+12)+'" width="12" height="5" rx="2.5" fill="#7c8797"/>'+
+    '<rect x="65" y="'+(y+12)+'" width="12" height="5" rx="2.5" fill="#7c8797"/>'+
+    '<circle cx="60" cy="'+(y+1)+'" r="4" fill="#cdd7ee"/>';}},
+  {id:'btf4', n:'橡膠腳墊', p:200, slot:'foot', only:'a-bot', d:a=>{
+  const y=a.by+a.bh-2;
+  return '<rect x="46" y="'+(y+2)+'" width="28" height="8" rx="4" fill="#33363d"/>'+
+    '<path d="M50 '+(y+4)+'v4M56 '+(y+4)+'v4M64 '+(y+4)+'v4M70 '+(y+4)+
+    'v4" stroke="#7c8797" stroke-width="1.8"/>'+
+    '<rect x="54" y="'+(y-3)+'" width="12" height="6" rx="2" fill="#7c8797"/>';}},
+  {id:'btf5', n:'工程靴', p:200, slot:'foot', only:'a-bot', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-6)+'" width="'+(w*2)+'" height="11" rx="3" fill="#ff8a3c"/>'+
+    '<rect x="'+(cx-w-1)+'" y="'+(y+3)+'" width="'+(w*2+2)+'" height="5" rx="2" fill="#33363d"/>'+
+    '<path d="M'+(cx-w)+' '+(y-2)+'h'+(w*2)+'" stroke="#c9691e" stroke-width="2.4"/>'+
+    '<rect x="'+(cx-2)+'" y="'+(y-7)+'" width="4" height="4" rx="1" fill="#cdd7ee"/>');}},
+  {id:'btf6', n:'磁力鞋', p:200, slot:'foot', only:'a-bot', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-4)+'" width="'+(w*2)+'" height="9" rx="3" fill="#cdd7ee"/>'+
+    '<rect x="'+(cx-w)+'" y="'+(y+4)+'" width="'+(w*2)+'" height="4" rx="1.6" fill="#e2452f"/>'+
+    '<path d="M'+(cx-3)+' '+(y-1)+'h6M'+cx+' '+(y-4)+'v6" stroke="#3ce0d0" stroke-width="1.8"/>');}},
   {id:'fgh1', n:'雨天毛帽', p:100, slot:'head', only:'a-frog', d:a=>AC.beanie(a,'#7ed9c0','#29be95')},
   {id:'fgh2', n:'蓮花髮飾', p:100, slot:'head', only:'a-frog', d:a=>AC.flower(a,'#266b45','#092013')},
   {id:'fgh3', n:'池塘皇冠', p:100, slot:'head', only:'a-frog', d:a=>AC.crown(a,'#ffc233','#c28800')},
@@ -4061,13 +4209,42 @@ const ITEMS=[
     '<path d="M'+(x-4)+' '+(y-7)+'l3 4M'+(x+1)+' '+(y-9)+'l3 4" stroke="#a8763f" stroke-width="1.2"/>'+
     '<circle cx="'+x+'" cy="'+(y-17)+'" r="7.5" fill="#ffc233"/>'+
     '<circle cx="'+(x-3)+'" cy="'+(y-21)+'" r="4.4" fill="#ffd84d"/>';}},
-  {id:'fgf1', n:'雨鞋', p:200, slot:'foot', only:'a-frog', d:a=>AC.bootF(a,'#2f7fd0','#13477c')},
-  {id:'fgf2', n:'池畔涼鞋', p:200, slot:'foot', only:'a-frog', d:a=>AC.sandal(a,'#9fd8f0','#33b5ec')},
-  {id:'fgf3', n:'軟底拖鞋', p:200, slot:'foot', only:'a-frog', d:a=>AC.slipper(a,'#7a4a24','#261508')},
-  {id:'fgf4', n:'田野球鞋', p:200, slot:'foot', only:'a-frog', d:a=>AC.sneak(a,'#1f9b96','#09413f')},
-  {id:'fgf5', n:'條紋襪', p:200, slot:'foot', only:'a-frog', d:a=>AC.sockF(a,'#9c3055','#4b1125')},
-  {id:'fgf6', n:'木屐', p:200, slot:'foot', only:'a-frog', d:a=>AC.clog(a,'#a8763f','#5c3d1a')},
-  /* ── 貓頭鷹 加開 ── */
+  {id:'fgf1', n:'雨鞋', p:200, slot:'foot', only:'a-frog', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-7)+'" width="'+(w*2)+'" height="13" rx="4" fill="#ffc233"/>'+
+    '<rect x="'+(cx-w-1)+'" y="'+(y+4)+'" width="'+(w*2+2)+'" height="5" rx="2" fill="#5aa9ff"/>'+
+    '<path d="M'+(cx-w)+' '+(y-3)+'h'+(w*2)+'" stroke="#e0a400" stroke-width="2"/>'+
+    '<circle cx="'+(cx-2)+'" cy="'+(y+1)+'" r="1.6" fill="#5aa9ff"/>'+
+    '<circle cx="'+(cx+3)+'" cy="'+(y-1)+'" r="1.2" fill="#5aa9ff"/>');}},
+  {id:'fgf2', n:'池畔涼鞋', p:200, slot:'foot', only:'a-frog', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+2)+'" width="'+(w*2)+'" height="6" rx="3" fill="#3ce0d0"/>'+
+    '<path d="M'+(cx-w+1)+' '+(y+2)+'l'+(w-1)+' -6 '+(w-1)+' 6" stroke="#0d6b66" stroke-width="2.6" fill="none"/>'+
+    '<ellipse cx="'+cx+'" cy="'+(y-4)+'" rx="4" ry="2.4" fill="#4a9b3f"/>');}},
+  {id:'fgf3', n:'荷葉拖鞋', p:200, slot:'foot', only:'a-frog', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+3)+'" width="'+(w*2)+'" height="5" rx="2.5" fill="#266b45"/>'+
+    '<ellipse cx="'+cx+'" cy="'+(y+1)+'" rx="'+w+'" ry="6" fill="#4a9b3f"/>'+
+    '<path d="M'+cx+' '+(y+1)+'l-'+(w*.7)+' -3M'+cx+' '+(y+1)+'l'+(w*.7)+' -3M'+cx+' '+(y+1)+
+    'v-5" stroke="#266b45" stroke-width="1.3"/>');}},
+  {id:'fgf4', n:'田野球鞋', p:200, slot:'foot', only:'a-frog', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<path d="M'+(cx-w)+' '+(y+2)+'q0-8 '+(w*.85)+'-8h'+(w*.5)+'l'+(w*.8)+' 8z" fill="#5aa9ff"/>'+
+    '<rect x="'+(cx-w)+'" y="'+(y+1)+'" width="'+(w*2)+'" height="6" rx="3" fill="#4a9b3f"/>'+
+    '<ellipse cx="'+(cx+1)+'" cy="'+(y-3)+'" rx="4.4" ry="2.6" fill="#4a9b3f"/>'+
+    '<path d="M'+(cx+1)+' '+(y-3)+'l-3-1.4" stroke="#266b45" stroke-width="1.2"/>');}},
+  {id:'fgf5', n:'條紋襪', p:200, slot:'foot', only:'a-frog', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1-1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-6)+'" width="'+(w*2)+'" height="12" rx="4" fill="#f7f4ec"/>'+
+    '<path d="M'+(cx-w)+' '+(y-3)+'h'+(w*2)+'M'+(cx-w)+' '+(y+1)+'h'+(w*2)+
+    '" stroke="#4a9b3f" stroke-width="2.4"/>');}},
+  {id:'fgf6', n:'木屐', p:200, slot:'foot', only:'a-frog', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+1)+'" width="'+(w*2)+'" height="5" rx="1.6" fill="#d8b071"/>'+
+    '<rect x="'+(cx-w+1.5)+'" y="'+(y+6)+'" width="3.4" height="4" fill="#a07c3c"/>'+
+    '<rect x="'+(cx+w-4.9)+'" y="'+(y+6)+'" width="3.4" height="4" fill="#a07c3c"/>'+
+    '<path d="M'+(cx-w+2)+' '+(y+1)+'L'+cx+' '+(y-5)+'L'+(cx+w-2)+' '+(y+1)+
+    '" stroke="#2f7fd0" stroke-width="2.4" fill="none"/>');}},
   {id:'owh1', n:'夜讀毛帽', p:100, slot:'head', only:'a-owl', d:a=>AC.beanie(a,'#22315e','#090f20')},
   {id:'owh2', n:'智者尖帽', p:100, slot:'head', only:'a-owl', d:a=>AC.cone(a,'#3a3a8c','#151541')},
   {id:'owh3', n:'星光皇冠', p:100, slot:'head', only:'a-owl', d:a=>AC.crown(a,'#ff8a3c','#cb5100')},
@@ -4135,13 +4312,39 @@ const ITEMS=[
       '<circle cx="'+(x-3)+'" cy="'+y+'" r="1.6" fill="#23232a"/>'+
       '<circle cx="'+(x+3)+'" cy="'+y+'" r="1.6" fill="#23232a"/>'+
       '<path d="M'+(x+9)+' '+(y+4)+'q8 2 6 9" stroke="#9aa4b5" stroke-width="2" fill="none"/>';}},
-  {id:'owf1', n:'木底便鞋', p:200, slot:'foot', only:'a-owl', d:a=>AC.clog(a,'#a8763f','#5c3d1a')},
-  {id:'owf2', n:'旅行短靴', p:200, slot:'foot', only:'a-owl', d:a=>AC.bootF(a,'#7a4a24','#261508')},
-  {id:'owf3', n:'星紋襪', p:200, slot:'foot', only:'a-owl', d:a=>AC.sockF(a,'#9c3055','#4b1125')},
-  {id:'owf4', n:'講堂涼鞋', p:200, slot:'foot', only:'a-owl', d:a=>AC.sandal(a,'#c4471d','#682109')},
-  {id:'owf5', n:'軟底便鞋', p:200, slot:'foot', only:'a-owl', d:a=>AC.sneak(a,'#33363d','#111318')},
-  {id:'owf6', n:'絨毛拖鞋', p:200, slot:'foot', only:'a-owl', d:a=>AC.slipper(a,'#266b45','#092013')},
-  /* ── 兔子 ── */
+  {id:'owf1', n:'木底便鞋', p:200, slot:'foot', only:'a-owl', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+2)+'" width="'+(w*2)+'" height="5" rx="1.6" fill="#a8763f"/>'+
+    '<path d="M'+(cx-w)+' '+(y+2)+'a'+w+' 6 0 0 1 '+(w*2)+' 0z" fill="#2a2560"/>'+
+    '<path d="M'+cx+' '+(y-5)+'l1 2 2 .4-1.4 1.4.4 2-2-1-2 1 .4-2-1.4-1.4 2-.4z" fill="#ffc233"/>');}},
+  {id:'owf2', n:'夜行短靴', p:200, slot:'foot', only:'a-owl', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-6)+'" width="'+(w*2)+'" height="11" rx="4" fill="#2a2560"/>'+
+    '<rect x="'+(cx-w-1)+'" y="'+(y+3)+'" width="'+(w*2+2)+'" height="5" rx="2" fill="#171240"/>'+
+    '<path d="M'+cx+' '+(y-4)+'l1 2 2 .4-1.4 1.4.4 2-2-1-2 1 .4-2-1.4-1.4 2-.4z" fill="#ffc233"/>');}},
+  {id:'owf3', n:'星紋襪', p:200, slot:'foot', only:'a-owl', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1-1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-6)+'" width="'+(w*2)+'" height="12" rx="4" fill="#c9a6ff"/>'+
+    '<path d="M'+(cx-w)+' '+(y-3)+'h'+(w*2)+'" stroke="#8a5ce0" stroke-width="2.4"/>'+
+    '<path d="M'+(cx-2.6)+' '+(y+2)+'l.9 1.8 2 .3-1.4 1.4.3 2-1.8-.9-1.8.9.3-2-1.4-1.4 2-.3z" fill="#ffe58a"/>'+
+    '<path d="M'+(cx+3.4)+' '+(y+1)+'l.7 1.4 1.6.2-1.1 1.1.2 1.6-1.4-.7-1.4.7.2-1.6-1.1-1.1 1.6-.2z" fill="#ffe58a"/>');}},
+  {id:'owf4', n:'講堂涼鞋', p:200, slot:'foot', only:'a-owl', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+2)+'" width="'+(w*2)+'" height="6" rx="3" fill="#7a4a24"/>'+
+    '<path d="M'+(cx-w+1)+' '+(y+1)+'h'+(w*2-2)+'M'+(cx-w+2)+' '+(y-3)+
+    'h'+(w*2-4)+'" stroke="#543424" stroke-width="2.4"/>'+
+    '<rect x="'+(cx-2)+'" y="'+(y-4)+'" width="4" height="3.4" rx="1" fill="#ffc233"/>');}},
+  {id:'owf5', n:'軟底便鞋', p:200, slot:'foot', only:'a-owl', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<path d="M'+(cx-w)+' '+(y+2)+'q0-7 '+(w*.85)+'-7h'+(w*.5)+'l'+(w*.8)+' 7z" fill="#f7f0e2"/>'+
+    '<rect x="'+(cx-w)+'" y="'+(y+1)+'" width="'+(w*2)+'" height="6" rx="3" fill="#8a5ce0"/>'+
+    '<path d="M'+(cx-1)+' '+(y-4)+'q3 2 3 5" stroke="#8a5ce0" stroke-width="1.8" fill="none"/>');}},
+  {id:'owf6', n:'絨毛拖鞋', p:200, slot:'foot', only:'a-owl', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+3)+'" width="'+(w*2)+'" height="5" rx="2.5" fill="#5c3aa8"/>'+
+    '<path d="M'+(cx-w)+' '+(y+4)+'a'+w+' 8 0 0 1 '+(w*2)+' 0z" fill="#c9a6ff"/>'+
+    '<circle cx="'+(cx-w*.5)+'" cy="'+(y-1)+'" r="2.6" fill="#f7f0e2"/>'+
+    '<circle cx="'+(cx+w*.5)+'" cy="'+(y-1)+'" r="2.6" fill="#f7f0e2"/>');}},
   {id:'rbh1', n:'草原毛帽', p:100, slot:'head', only:'a-rab', d:a=>AC.beanie(a,'#266b45','#092013')},
   {id:'rbh2', n:'花園草帽', p:100, slot:'head', only:'a-rab', d:a=>AC.cap(a,'#ffd84d','#dcac00')},
   {id:'rbh3', n:'胡蘿蔔頭飾', p:100, slot:'head', only:'a-rab', d:a=>{
@@ -4231,8 +4434,17 @@ const ITEMS=[
     '<path d="M'+x+' '+(y-32)+'C'+(x-14)+' '+(y-44)+' '+(x-6)+' '+(y-54)+' '+x+' '+(y-46)+
     'C'+(x+6)+' '+(y-54)+' '+(x+14)+' '+(y-44)+' '+x+' '+(y-32)+'Z" fill="#e8447a"/>'+
     '<ellipse cx="'+(x-4)+'" cy="'+(y-46)+'" rx="2.4" ry="3.4" fill="#ffffff" opacity=".45"/>';}},
-  {id:'rbf1', n:'軟底便鞋', p:200, slot:'foot', only:'a-rab', d:a=>AC.sneak(a,'#7a4a24','#261508')},
-  {id:'rbf2', n:'雨天短靴', p:200, slot:'foot', only:'a-rab', d:a=>AC.bootF(a,'#9c3055','#4b1125')},
+  {id:'rbf1', n:'軟底便鞋', p:200, slot:'foot', only:'a-rab', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<path d="M'+(cx-w)+' '+(y+2)+'q0-7 '+(w*.85)+'-7h'+(w*.5)+'l'+(w*.8)+' 7z" fill="#f7f4ec"/>'+
+    '<rect x="'+(cx-w)+'" y="'+(y+1)+'" width="'+(w*2)+'" height="6" rx="3" fill="#ff9ec4"/>'+
+    '<path d="M'+(cx-1)+' '+(y-3)+'l-4-2M'+(cx-1)+' '+(y-3)+'l4-2" stroke="#e8447a" stroke-width="1.6"/>');}},
+  {id:'rbf2', n:'雨天短靴', p:200, slot:'foot', only:'a-rab', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-6)+'" width="'+(w*2)+'" height="12" rx="4" fill="#c9a6ff"/>'+
+    '<rect x="'+(cx-w-1)+'" y="'+(y+4)+'" width="'+(w*2+2)+'" height="5" rx="2" fill="#5c3aa8"/>'+
+    '<path d="M'+(cx-w)+' '+(y-2)+'h'+(w*2)+'" stroke="#8536ff" stroke-width="2"/>'+
+    '<circle cx="'+(cx-2)+'" cy="'+(y+2)+'" r="1.6" fill="#f7f4ec"/>');}},
   {id:'rbf3', n:'兔掌拖鞋', p:200, slot:'foot', only:'a-rab', d:a=>{
     const y=(a.fy||107)-2, w=(a.fw||9)+1;
     return AC.feet(a,cx=>'<ellipse cx="'+cx+'" cy="'+(y+5)+'" rx="'+w+'" ry="6" fill="#ff9ec4"/>'+
@@ -4240,10 +4452,24 @@ const ITEMS=[
       '<circle cx="'+(cx-4)+'" cy="'+(y+1.5)+'" r="1.8" fill="#ffffff"/>'+
       '<circle cx="'+cx+'" cy="'+(y+.5)+'" r="1.8" fill="#ffffff"/>'+
       '<circle cx="'+(cx+4)+'" cy="'+(y+1.5)+'" r="1.8" fill="#ffffff"/>');}},
-  {id:'rbf4', n:'絨毛拖鞋', p:200, slot:'foot', only:'a-rab', d:a=>AC.slipper(a,'#a8763f','#5c3d1a')},
-  {id:'rbf5', n:'條紋襪', p:200, slot:'foot', only:'a-rab', d:a=>AC.sockF(a,'#c4471d','#682109')},
-  {id:'rbf6', n:'木底便鞋', p:200, slot:'foot', only:'a-rab', d:a=>AC.clog(a,'#e0921a','#825207')},
-  /* ── 長頸鹿 ── */
+  {id:'rbf4', n:'絨毛拖鞋', p:200, slot:'foot', only:'a-rab', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+3)+'" width="'+(w*2)+'" height="5" rx="2.5" fill="#e8447a"/>'+
+    '<path d="M'+(cx-w)+' '+(y+4)+'a'+w+' 8 0 0 1 '+(w*2)+' 0z" fill="#ffd0e2"/>'+
+    '<circle cx="'+(cx-w*.45)+'" cy="'+(y-1)+'" r="2.6" fill="#f7f4ec"/>'+
+    '<circle cx="'+(cx+w*.45)+'" cy="'+(y-1)+'" r="2.6" fill="#f7f4ec"/>');}},
+  {id:'rbf5', n:'紅蘿蔔襪', p:200, slot:'foot', only:'a-rab', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1-1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-6)+'" width="'+(w*2)+'" height="12" rx="4" fill="#f7f4ec"/>'+
+    '<path d="M'+(cx-w)+' '+(y-3)+'h'+(w*2)+'" stroke="#4a9b3f" stroke-width="2.4"/>'+
+    '<path d="M'+(cx-2.6)+' '+(y+1)+'L'+cx+' '+(y+6)+'L'+(cx+2.6)+' '+(y+1)+'z" fill="#ff8a3c"/>'+
+    '<path d="M'+(cx-2.6)+' '+(y+1)+'h5.2" stroke="#4a9b3f" stroke-width="2" stroke-linecap="round"/>');}},
+  {id:'rbf6', n:'草編涼鞋', p:200, slot:'foot', only:'a-rab', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+2)+'" width="'+(w*2)+'" height="5" rx="2.4" fill="#ddc08a"/>'+
+    '<path d="M'+(cx-w+1)+' '+(y+4)+'h'+(w*2-2)+'M'+(cx-w+1)+' '+(y+6)+
+    'h'+(w*2-2)+'" stroke="#a8763f" stroke-width="1"/>'+
+    '<path d="M'+(cx-w+2)+' '+(y+2)+'q'+(w-2)+' -8 '+(w*2-4)+' 0" stroke="#7ed9c0" stroke-width="2.6" fill="none"/>');}},
   {id:'gfh1', n:'草原毛帽', p:100, slot:'head', only:'a-gir', d:a=>AC.beanie(a,'#266b45','#092013')},
   {id:'gfh2', n:'探險帽', p:100, slot:'head', only:'a-gir', d:a=>AC.cap(a,'#5aa9ff','#006fe9')},
   {id:'gfh3', n:'樹葉冠', p:100, slot:'head', only:'a-gir', d:a=>{
@@ -4342,11 +4568,34 @@ const ITEMS=[
   return '<path d="M'+x+' '+(y-30)+'V'+(y+9)+'" stroke="#7a4a24" stroke-width="2.6"/>'+
     '<path d="M'+x+' '+(y-30)+'h-16l5 6-5 6h16z" fill="#4a9b3f"/>'+
     '<circle cx="'+(x-3)+'" cy="'+(y-24)+'" r="2.4" fill="#f2e3c0"/>';}},
-  {id:'gff1', n:'長途跑鞋', p:200, slot:'foot', only:'a-gir', d:a=>AC.sneak(a,'#7a4a24','#261508')},
-  {id:'gff2', n:'探險長靴', p:200, slot:'foot', only:'a-gir', d:a=>AC.bootF(a,'#9c3055','#4b1125')},
-  {id:'gff3', n:'草原涼鞋', p:200, slot:'foot', only:'a-gir', d:a=>AC.sandal(a,'#4a9b3f','#205119')},
-  {id:'gff4', n:'厚毛襪', p:200, slot:'foot', only:'a-gir', d:a=>AC.sockF(a,'#a8763f','#5c3d1a')},
-  {id:'gff5', n:'木底便鞋', p:200, slot:'foot', only:'a-gir', d:a=>AC.clog(a,'#c4471d','#682109')},
+  {id:'gff1', n:'長途跑鞋', p:200, slot:'foot', only:'a-gir', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<path d="M'+(cx-w)+' '+(y+2)+'q0-8 '+(w*.85)+'-8h'+(w*.5)+'l'+(w*.8)+' 8z" fill="#7ed9c0"/>'+
+    '<rect x="'+(cx-w)+'" y="'+(y+1)+'" width="'+(w*2)+'" height="6" rx="3" fill="#f7f4ec"/>'+
+    '<path d="M'+(cx+w*.1)+' '+(y-4)+'q'+(w*.6)+' 2 '+(w*.85)+' 6" stroke="#29be95" stroke-width="2" fill="none"/>');}},
+  {id:'gff2', n:'探險長靴', p:200, slot:'foot', only:'a-gir', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-8)+'" width="'+(w*2)+'" height="14" rx="4" fill="#7a4a24"/>'+
+    '<rect x="'+(cx-w-1)+'" y="'+(y+4)+'" width="'+(w*2+2)+'" height="5" rx="2" fill="#3b2412"/>'+
+    '<path d="M'+(cx-w)+' '+(y-4)+'h'+(w*2)+'" stroke="#c9a86a" stroke-width="2.4"/>'+
+    '<rect x="'+(cx-2)+'" y="'+(y-2)+'" width="4" height="4" rx="1" fill="#e0921a"/>');}},
+  {id:'gff3', n:'草原涼鞋', p:200, slot:'foot', only:'a-gir', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+2)+'" width="'+(w*2)+'" height="6" rx="3" fill="#8a9b3c"/>'+
+    '<path d="M'+(cx-w+1)+' '+(y+2)+'l'+(w-1)+' -6 '+(w-1)+' 6" stroke="#4a9b3f" stroke-width="2.6" fill="none"/>'+
+    '<ellipse cx="'+cx+'" cy="'+(y-4)+'" rx="3.4" ry="2" fill="#c9b44a"/>');}},
+  {id:'gff4', n:'斑紋長襪', p:200, slot:'foot', only:'a-gir', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1-1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-7)+'" width="'+(w*2)+'" height="13" rx="4" fill="#f2e3c0"/>'+
+    '<ellipse cx="'+(cx-w*.42)+'" cy="'+(y-3)+'" rx="2.8" ry="2.2" fill="#a8763f"/>'+
+    '<ellipse cx="'+(cx+w*.42)+'" cy="'+(y+1)+'" rx="2.8" ry="2.2" fill="#a8763f"/>'+
+    '<ellipse cx="'+(cx-w*.3)+'" cy="'+(y+4)+'" rx="2.2" ry="1.8" fill="#a8763f"/>');}},
+  {id:'gff5', n:'雙帶木鞋', p:200, slot:'foot', only:'a-gir', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+2)+'" width="'+(w*2)+'" height="5" rx="1.6" fill="#a8763f"/>'+
+    '<path d="M'+(cx-w+1)+' '+(y+1)+'h'+(w*2-2)+'M'+(cx-w+2)+' '+(y-3)+
+    'h'+(w*2-4)+'" stroke="#c4471d" stroke-width="2.6"/>'+
+    '<circle cx="'+cx+'" cy="'+(y-1)+'" r="1.6" fill="#f2e3c0"/>');}},
   {id:'gff6', n:'蹄套', p:200, slot:'foot', only:'a-gir', d:a=>{
     const y=(a.fy||107)-3, w=(a.fw||9)+1;
     return AC.feet(a,cx=>'<path d="M'+(cx-w)+' '+(y+2)+'h'+(w*2)+'v4a'+w+' 5 0 0 1 -'+(w*2)+' 0z" fill="#543424"/>'+
@@ -4459,12 +4708,34 @@ const ITEMS=[
     return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+2)+'" width="'+(w*2)+'" height="11" rx="4" fill="#7a4a24"/>'+
       '<rect x="'+(cx-w-1.4)+'" y="'+(y-1)+'" width="'+(w*2+2.8)+'" height="5.5" rx="2.7" fill="#fffdf8"/>'+
       '<rect x="'+(cx-w-.8)+'" y="'+(y+10)+'" width="'+(w*2+1.6)+'" height="4" rx="2" fill="#543424"/>');}},
-  {id:'shf2', n:'軟底便鞋', p:200, slot:'foot', only:'a-shp', d:a=>AC.sneak(a,'#9c3055','#4b1125')},
-  {id:'shf3', n:'毛絨拖鞋', p:200, slot:'foot', only:'a-shp', d:a=>AC.slipper(a,'#a8763f','#5c3d1a')},
-  {id:'shf4', n:'厚毛襪', p:200, slot:'foot', only:'a-shp', d:a=>AC.sockF(a,'#c4471d','#682109')},
-  {id:'shf5', n:'草地涼鞋', p:200, slot:'foot', only:'a-shp', d:a=>AC.sandal(a,'#4a9b3f','#205119')},
-  {id:'shf6', n:'木底便鞋', p:200, slot:'foot', only:'a-shp', d:a=>AC.clog(a,'#e0921a','#825207')},
-  /* ── 松鼠 ── */
+  {id:'shf2', n:'軟底便鞋', p:200, slot:'foot', only:'a-shp', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<path d="M'+(cx-w)+' '+(y+2)+'q0-7 '+(w*.85)+'-7h'+(w*.5)+'l'+(w*.8)+' 7z" fill="#fffdf8"/>'+
+    '<rect x="'+(cx-w)+'" y="'+(y+1)+'" width="'+(w*2)+'" height="6" rx="3" fill="#7c8797"/>'+
+    '<path d="M'+(cx-1)+' '+(y-3)+'q3 2 3 5" stroke="#7c8797" stroke-width="1.8" fill="none"/>');}},
+  {id:'shf3', n:'毛絨拖鞋', p:200, slot:'foot', only:'a-shp', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+3)+'" width="'+(w*2)+'" height="5" rx="2.5" fill="#9aa4b5"/>'+
+    '<circle cx="'+(cx-w*.55)+'" cy="'+(y+1)+'" r="4.4" fill="#fffdf8"/>'+
+    '<circle cx="'+cx+'" cy="'+(y-1)+'" r="5" fill="#fffdf8"/>'+
+    '<circle cx="'+(cx+w*.55)+'" cy="'+(y+1)+'" r="4.4" fill="#fffdf8"/>');}},
+  {id:'shf4', n:'手織厚襪', p:200, slot:'foot', only:'a-shp', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1-1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-7)+'" width="'+(w*2)+'" height="13" rx="4" fill="#c9a6ff"/>'+
+    '<path d="M'+(cx-w)+' '+(y-4)+'h'+(w*2)+'" stroke="#8536ff" stroke-width="2.4"/>'+
+    '<path d="M'+(cx-3)+' '+(y-1)+'q3 3 6 0M'+(cx-3)+' '+(y+3)+
+    'q3 3 6 0" stroke="#8536ff" stroke-width="1.6" fill="none"/>');}},
+  {id:'shf5', n:'草地涼鞋', p:200, slot:'foot', only:'a-shp', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+2)+'" width="'+(w*2)+'" height="6" rx="3" fill="#8a9b3c"/>'+
+    '<path d="M'+(cx-w+2)+' '+(y+2)+'L'+cx+' '+(y-4)+'L'+(cx+w-2)+' '+(y+2)+
+    '" stroke="#4a9b3f" stroke-width="2.6" fill="none"/>'+
+    '<circle cx="'+cx+'" cy="'+(y-4)+'" r="2" fill="#ffd84d"/>');}},
+  {id:'shf6', n:'毛球木鞋', p:200, slot:'foot', only:'a-shp', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+2)+'" width="'+(w*2)+'" height="5" rx="1.6" fill="#c9a86a"/>'+
+    '<path d="M'+(cx-w)+' '+(y+2)+'a'+w+' 6 0 0 1 '+(w*2)+' 0z" fill="#e8447a"/>'+
+    '<circle cx="'+cx+'" cy="'+(y-5)+'" r="3.4" fill="#fffdf8"/>');}},
   {id:'sqh1', n:'橡實毛帽', p:100, slot:'head', only:'a-sqr', d:a=>AC.beanie(a,'#9c3055','#4b1125')},
   {id:'sqh2', n:'林間報童帽', p:100, slot:'head', only:'a-sqr', d:a=>AC.cap(a,'#266b45','#092013')},
   {id:'sqh3', n:'橡實帽', p:100, slot:'head', only:'a-sqr', d:a=>{
@@ -4561,11 +4832,34 @@ const ITEMS=[
     return AC.feet(a,cx=>'<path d="M'+(cx-w)+' '+(y+4)+'q'+w+' -11 '+(w*2)+' 0q-'+w+' 9 -'+(w*2)+' 0z" fill="#c4471d"/>'+
       '<path d="M'+(cx-w)+' '+(y+4)+'h'+(w*2)+'" stroke="#8a2f10" stroke-width="1.6"/>'+
       '<path d="M'+(cx-w*.5)+' '+(y+1)+'l'+(w*.5)+' 3 '+(w*.5)+' -3" stroke="#8a2f10" stroke-width="1.3" fill="none"/>');}},
-  {id:'sqf2', n:'採果短靴', p:200, slot:'foot', only:'a-sqr', d:a=>AC.bootF(a,'#7a4a24','#261508')},
-  {id:'sqf3', n:'樹皮涼鞋', p:200, slot:'foot', only:'a-sqr', d:a=>AC.sandal(a,'#8a9b3c','#454f18')},
-  {id:'sqf4', n:'絨毛拖鞋', p:200, slot:'foot', only:'a-sqr', d:a=>AC.slipper(a,'#9c3055','#4b1125')},
-  {id:'sqf5', n:'條紋襪', p:200, slot:'foot', only:'a-sqr', d:a=>AC.sockF(a,'#33363d','#111318')},
-  {id:'sqf6', n:'木底便鞋', p:200, slot:'foot', only:'a-sqr', d:a=>AC.clog(a,'#7c8797','#404e63')},
+  {id:'sqf2', n:'採果短靴', p:200, slot:'foot', only:'a-sqr', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-6)+'" width="'+(w*2)+'" height="11" rx="4" fill="#543424"/>'+
+    '<rect x="'+(cx-w-1)+'" y="'+(y+3)+'" width="'+(w*2+2)+'" height="5" rx="2" fill="#33363d"/>'+
+    '<path d="M'+(cx-w+2)+' '+(y-3)+'l5 2M'+(cx-w+2)+' '+y+'l5 2" stroke="#e0c9a8" stroke-width="1.4"/>');}},
+  {id:'sqf3', n:'樹皮涼鞋', p:200, slot:'foot', only:'a-sqr', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+2)+'" width="'+(w*2)+'" height="6" rx="2.4" fill="#7a4a24"/>'+
+    '<path d="M'+(cx-w+2)+' '+(y+3)+'v4M'+cx+' '+(y+3)+'v4M'+(cx+w-2)+' '+(y+3)+
+    'v4" stroke="#543424" stroke-width="1.3"/>'+
+    '<path d="M'+(cx-w+1)+' '+(y+2)+'l'+(w-1)+' -6 '+(w-1)+' 6" stroke="#a8763f" stroke-width="2.6" fill="none"/>');}},
+  {id:'sqf4', n:'絨毛拖鞋', p:200, slot:'foot', only:'a-sqr', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+3)+'" width="'+(w*2)+'" height="5" rx="2.5" fill="#7a4a24"/>'+
+    '<path d="M'+(cx-w)+' '+(y+4)+'a'+w+' 8 0 0 1 '+(w*2)+' 0z" fill="#e0921a"/>'+
+    '<path d="M'+(cx-w)+' '+(y-1)+'a'+w+' 3.4 0 0 1 '+(w*2)+' 0z" fill="#f6dcc0"/>');}},
+  {id:'sqf5', n:'橡實襪', p:200, slot:'foot', only:'a-sqr', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1-1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-6)+'" width="'+(w*2)+'" height="12" rx="4" fill="#f2e3c0"/>'+
+    '<path d="M'+(cx-w)+' '+(y-3)+'h'+(w*2)+'" stroke="#7a4a24" stroke-width="2.4"/>'+
+    '<path d="M'+(cx-3)+' '+(y+1)+'q0 5 3 5t3-5z" fill="#e0d0a8"/>'+
+    '<path d="M'+(cx-3.6)+' '+(y+1)+'q3.6 3 7.2 0z" fill="#7a4a24"/>');}},
+  {id:'sqf6', n:'橡實木鞋', p:200, slot:'foot', only:'a-sqr', d:a=>{
+  const y=(a.fy||107),w=(a.fw||9)+1;
+  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+2)+'" width="'+(w*2)+'" height="5" rx="1.6" fill="#a8763f"/>'+
+    '<path d="M'+(cx-w)+' '+(y+2)+'a'+w+' 6 0 0 1 '+(w*2)+' 0z" fill="#266b45"/>'+
+    '<path d="M'+(cx-2.6)+' '+(y-4)+'q0 4 2.6 4t2.6-4z" fill="#e0d0a8"/>'+
+    '<path d="M'+(cx-3)+' '+(y-4)+'q3 2.6 6 0z" fill="#7a4a24"/>');}},
 ];
 /* 背景跟勝利動作也是買來的，價格與擁有狀態走同一套 */
 const EXTRAS=()=>BGS.map(b=>({id:b.id,n:b.n,p:b.p,cat:'bg'}))
