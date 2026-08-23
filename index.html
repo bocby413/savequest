@@ -697,8 +697,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   justify-content:flex-end;gap:0 4px;line-height:1.35}
 .prevbar b i{font-style:normal;white-space:nowrap}
 .prevbar #prevTxt{white-space:nowrap}
-.bigtabs{position:sticky;top:calc(var(--shoptop,150px) - 2px);z-index:5;
-  background:var(--panel);padding:4px 0;margin-bottom:8px}
+.bigtabs{margin-bottom:8px}
 .bigtabs button{font-size:13.5px;font-weight:800}
 .bgchip{display:block;width:100%;max-width:70px;aspect-ratio:1;border-radius:11px;margin:0 auto;
   border:1.5px solid rgba(255,255,255,.25)}
@@ -5258,10 +5257,6 @@ function renderShop(){
   /* 本來就沒有這個鍵的話要刪掉。寫回 undefined 會讓整包同步被 Firestore 退件 */
   if(had) m[a.k]=keep; else delete m[a.k];
   $('shopCoins').innerHTML='<svg class="i"><use href="#i-coin"/></svg>'+money(coins())+' Bo士幣';
-  /* 大標籤要黏在試衣間下面，高度是量出來的 */
-  const th=document.querySelector('.shoptop');
-  if(th) $('vShop').querySelector('.dlg').style.setProperty('--shoptop',
-    Math.round(th.getBoundingClientRect().height+14)+'px');
   $('shopStage').style.background=bgCSS(tryBg!==null?tryBg:db.settings.bg);
   $('shopCats').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.sc===shopCat));
   $('shopTabs').style.display=shopCat==='char'?'':'none';
