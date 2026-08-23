@@ -699,6 +699,14 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   background:radial-gradient(ellipse at 50% 92%,var(--panel3) 0%,transparent 70%)}
 /* 預覽佈景時那條回商店的橫幅 */
 /* 沒在預覽的時候要完全看不到。只靠位移的話陰影還是會從畫面下緣透出來 */
+.askrow{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin:4px 0 2px}
+.askone{text-align:center;background:var(--panel2);border:1.5px solid var(--edge);
+  border-radius:14px;padding:10px}
+.askone b{display:block;font-size:14px;font-weight:800;margin-top:7px}
+.askone span{font-size:11.5px;color:var(--txt3)}
+.askpic{height:56px;border-radius:11px;border:1.5px solid var(--edge2);
+  display:grid;place-items:end center;overflow:hidden}
+.askpic svg{width:76%;height:104%;overflow:visible}
 .prevbar{position:fixed;left:50%;bottom:20px;transform:translate(-50%,160%);z-index:80;
   opacity:0;visibility:hidden;pointer-events:none;
   display:flex;align-items:center;gap:10px;cursor:pointer;
@@ -1312,6 +1320,19 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   <div class="segs slottabs" id="shopTabs"></div>
   <div class="shopgrid" id="shopBody"></div>
   <div class="dfoot"><button class="btn ghost" data-close>關閉</button></div>
+</div></div>
+
+<div class="veil" id="vBgAsk"><div class="dlg">
+  <h3>要換哪裡？</h3>
+  <div class="say">背景是生物身後那塊，佈景是整個畫面的色調，兩個是分開的。</div>
+  <div class="askrow">
+    <div class="askone"><div class="askpic" id="askBgPic"></div><b>背景</b><span>生物身後</span></div>
+    <div class="askone"><div class="askpic" id="askThPic"></div><b>佈景</b><span>整個畫面</span></div>
+  </div>
+  <div class="dfoot">
+    <button class="btn ghost" id="bgOnly">只換背景</button>
+    <button class="btn go" id="bgBoth">兩個都換</button>
+  </div>
 </div></div>
 
 <div class="prevbar" id="prevBar"><span id="prevTxt"></span><b><i>點這裡</i><i>回商店</i></b></div>
@@ -2246,10 +2267,19 @@ function accentLight(h){
     '--cyan':'#0b7f76','--pink':'#c22a5c','--lime':'#3f7f1f','--red':'#c03636'
   };
 }
-const ACCENTD={'--gold':'#ffc233','--gold2':'#e39b12','--cyan':'#3ce0d0',
-  '--pink':'#ff5c8a','--lime':'#8ee65a','--violet':'#a879ff','--red':'#ff6b6b',
-  '--onGold':'#3a2600','--goldEdge':'#ffd76b','--goldDeep':'#8a5c00',
-  '--goldGlow':'rgba(255,194,51,.4)'};
+/* 深色主題的強調色也跟著色相走。彩度給下限，
+   不然墨黑、霧灰那種近乎灰的色相會做出一顆灰按鈕 */
+function accentDark(h,sa){
+  const S=Math.max(sa,.62);
+  return {
+    '--gold':     hueAt(h,S,.56),  '--gold2':    hueAt(h,S+.06,.40),
+    '--goldEdge': hueAt(h,S,.74),  '--goldDeep': hueAt(h,S+.06,.10),
+    '--goldGlow': 'hsl('+h+' '+Math.round(S*100)+'% 62% / .4)',
+    '--onGold':   hueAt(h,Math.min(.95,S+.15),.017),
+    '--violet':   hueAt(h,S,.36),
+    '--cyan':'#3ce0d0','--pink':'#ff5c8a','--lime':'#8ee65a','--red':'#ff6b6b'
+  };
+}
 
 const hsl=(h,s,l)=>'hsl('+h+' '+Math.round(s*100)+'% '+l+'%)';
 function themeVars(b){
@@ -2267,7 +2297,8 @@ function themeVars(b){
                  : Math.max(4,Math.min(60,l+d));
     o[k]=hsl(b.h,b.s*f,lv);
   });
-  Object.keys(ACCENTD).forEach(k=>o[k]=ACCENTD[k]);
+  const ad=accentDark(b.h,b.s);
+  Object.keys(ad).forEach(k=>o[k]=ad[k]);
   return o;
 }
 /* remember 才會記進設定。預覽的時候只換畫面，不動存起來的值，
@@ -5453,6 +5484,32 @@ function renderShopExtra(){
   pv.style.display=(bg&&sel)?'':'none';
   pv.textContent='整個畫面看看';
 }
+/* 買了背景之後問一次：只換生物身後那塊，還是連整個畫面的色調一起換 */
+let askBgId=null, askBgPaid=false;
+function askBg(id,paid){
+  askBgId=id; askBgPaid=!!paid;
+  const a=petChar();
+  $('askBgPic').style.background=bgCSS(id);
+  $('askBgPic').innerHTML=charPortrait(a.k,wornList(a.k),1);
+  const v=themeVars(bgById(id));
+  $('askThPic').style.background=v['--bg'];
+  $('askThPic').innerHTML='<div style="width:78%;height:60%;border-radius:9px;margin-bottom:8px;'+
+    'background:'+v['--panel']+';border:2px solid '+v['--edge']+';display:grid;place-items:center">'+
+    '<span style="width:52%;height:8px;border-radius:99px;background:'+v['--gold']+'"></span></div>';
+  open('vBgAsk');
+}
+function doAskBg(both){
+  const id=askBgId; if(!id) return;
+  const it=itemById(id);
+  db.settings.bg=id;
+  if(both){ applyTheme(id,1); themeBefore=null; $('prevBar').classList.remove('on'); }
+  tryBg=null; save();
+  $('vBgAsk').classList.remove('on');
+  toast((askBgPaid?'買下「'+it.n+'」，':'')+(both?'背景跟佈景都換好了':'背景換好了'));
+  renderShop(); renderHud(); renderWork(); renderTheme(); pushLook();
+  if(both){ renderChart(); renderBars(); }
+  askBgId=null;
+}
 /* 預覽：把佈景暫時套上去、收起商店，讓你四處滑一滑 */
 let themeBefore=null, prevId=null;
 function startPreview(){
@@ -5486,13 +5543,12 @@ async function shopAction(){
       act.disabled=false;
       if(!r.ok){ SFX.play('err'); renderShop(); toast('結帳沒過，等一下再試'); return; }
     }
-    if(bg){ db.settings.bg=id; applyTheme(id,1); tryBg=null; themeBefore=null;
-            $('prevBar').classList.remove('on'); }
-    else { db.settings.win=id; tryWin=null; }
     /* 已經有的東西只是換上去，不用放升級那種大音效 */
-    save(); SFX.play(paid?'level':'tick'); toast(paid?'買下「'+it.n+'」了':'換好了：'+it.n);
+    SFX.play(paid?'level':'tick');
+    if(bg){ askBg(id,paid); return; }        /* 背景要先問換哪裡 */
+    db.settings.win=id; tryWin=null;
+    save(); toast(paid?'買下「'+it.n+'」了':'換好了：'+it.n);
     renderShop(); renderHud(); renderWork(); renderTheme(); pushLook();
-    if(bg){ renderChart(); renderBars(); }
     return;
   }
   const a=petChar(), chg=tryDiff(a); if(!chg.length) return;
@@ -6247,9 +6303,10 @@ $('btnTheme').onclick=()=>{
   if(list.length<2){ SFX.play('err'); toast('先去商店買個背景吧'); return; }
   const i=list.findIndex(b=>b.id===(db.settings.theme||DEFBG));
   const nx=list[(i+1)%list.length];
-  db.settings.bg=nx.id; applyTheme(nx.id,1); save();
+  /* 這裡只換佈景。生物背景是另一個設定，在商店那邊決定 */
+  applyTheme(nx.id,1); save();
   renderTheme(); renderHud(); renderWork(); SFX.play('tick');
-  renderChart(); renderBars(); pushLook();
+  renderChart(); renderBars();
   toast('佈景換成「'+nx.n+'」');
 };
 
@@ -6305,6 +6362,8 @@ $('shopBody').addEventListener('click',e=>{
 });
 $('shopAct').onclick=shopAction;
 $('shopReset').onclick=()=>{ shopTry={}; tryBg=null; tryWin=null; SFX.play('tick'); renderShop(); };
+$('bgOnly').onclick=()=>{ SFX.play('tick'); doAskBg(false); };
+$('bgBoth').onclick=()=>{ SFX.play('tick'); doAskBg(true); };
 $('shopPrev').onclick=startPreview;
 $('prevBar').onclick=endPreview;
 /* 預覽中不給用 App：點任何東西都直接彈回商店。
