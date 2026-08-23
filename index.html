@@ -32,13 +32,6 @@
   --red:#ff6b6b;
   --r:16px;
 }
-html[data-skin="light"]{
-  --bg:#eaeefb; --bg2:#f4f6fd; --panel:#ffffff; --panel2:#f0f2fc; --panel3:#e3e7fa;
-  --edge:#ccd4f0; --edge2:#a9b5e4; --deep:#b9c2e4;
-  --txt:#1a1840; --txt2:#5b5788; --txt3:#8a86b4;
-  --gold:#f0a91b; --gold2:#c9860a; --cyan:#12b3a6; --pink:#e8447a; --lime:#4faa2b; --violet:#7b4ce0;
-  --red:#e04b4b;
-}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg);color:var(--txt);line-height:1.6;
   font-family:"Segoe UI","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;font-size:15px;
@@ -48,7 +41,6 @@ body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:radial-gradient(900px 500px at 15% -10%,rgba(168,121,255,.18),transparent 60%),
              radial-gradient(760px 460px at 88% 0%,rgba(60,224,208,.13),transparent 62%),
              radial-gradient(700px 600px at 50% 112%,rgba(255,92,138,.12),transparent 60%)}
-html[data-skin="light"] body:before{opacity:.5}
 .n{font-variant-numeric:tabular-nums}
 .wrap{max-width:1180px;margin:0 auto;
   padding:calc(24px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right)) calc(90px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left))}
@@ -398,7 +390,6 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   margin-bottom:4px}
 .logbar input{background:var(--panel2);border:1.5px solid var(--edge);border-radius:10px;padding:6px 10px;
   color:var(--txt);font:inherit;font-size:13px;outline:none;color-scheme:dark}
-html[data-skin="light"] .logbar input{color-scheme:light}
 .logbar input:focus{border-color:var(--cyan)}
 .logbar .tilde{color:var(--txt3);font-size:13px}
 .logbar .segs{margin-left:auto}
@@ -689,6 +680,15 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 @media(max-width:480px){.shoptop{grid-template-columns:112px 1fr;gap:12px;padding:10px}}
 .shopstage{position:relative;border-radius:13px;overflow:hidden;
   background:radial-gradient(ellipse at 50% 92%,var(--panel3) 0%,transparent 70%)}
+.themerow{border-bottom:0;padding-bottom:2px}
+.themepick{display:flex;flex-wrap:wrap;gap:7px;padding:0 0 14px}
+.thchip{display:inline-flex;align-items:center;gap:7px;font-family:inherit;cursor:pointer;
+  border:1.5px solid var(--edge2);background:var(--panel2);color:var(--txt2);
+  border-radius:99px;padding:5px 12px 5px 5px;font-size:13px;font-weight:700}
+.thchip .sw{width:22px;height:22px;border-radius:50%;flex:none;border:1.5px solid rgba(255,255,255,.22)}
+.thchip.on{border-color:var(--gold);color:var(--gold)}
+.thchip.lock{opacity:.45;cursor:default}
+.thchip i{font-style:normal;font-size:11px;color:var(--txt3)}
 .bigtabs{margin-bottom:8px}
 .bigtabs button{font-size:13.5px;font-weight:800}
 .bgchip{display:block;width:100%;max-width:70px;aspect-ratio:1;border-radius:11px;margin:0 auto;
@@ -1242,8 +1242,8 @@ html[data-skin="light"] .logbar input{color-scheme:light}
     <button class="btn sm ghost" id="btnSfx"><svg class="i" id="sfxIcon"><use href="#i-vol"/></svg></button></div>
   <div class="setrow volrow"><div class="lb"><b>音量</b><span id="volTxt">中</span></div>
     <input type="range" id="volBar" min="0" max="100" step="5"></div>
-  <div class="setrow"><div class="lb"><b>畫面</b><span>深色或亮色</span></div>
-    <button class="btn sm ghost" id="btnSkin">亮色</button></div>
+  <div class="setrow themerow"><div class="lb"><b>佈景</b><span>在商店買到的背景可以拿來換整個畫面的色調</span></div></div>
+  <div class="themepick" id="themePick"></div>
   <div class="setrow"><div class="lb"><b>備份</b><span>把所有資料存成一個檔案</span></div>
     <button class="btn sm ghost" id="btnExport">匯出</button></div>
   <div class="setrow"><div class="lb"><b>還原</b><span>讀回備份檔，會蓋掉現在的資料</span></div>
@@ -1430,7 +1430,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 <div id="burst"></div>
 
 <script>
-const KEY='life_goals_savings_v1', SKIN='life_goals_skin';
+const KEY='life_goals_savings_v1';
 const STOCK='股票';
 const SUBS=['1號','2號','3號','4號','5號','手動'];   /* 股票底下：五個策略加手動 */
 const SUBCOLOR={'1號':'#ffc233','2號':'#3ce0d0','3號':'#ff5c8a','4號':'#a879ff','5號':'#8ee65a','手動':'#5aa9ff','未分':'#8a93a8'};
@@ -2158,16 +2158,40 @@ const HATW=a=>a.hatW!==undefined?a.hatW:HWAT(a,.45);
 /* ── 背景顏色 ──
    生物身後那塊底色。HUD、商店、打工、好友看到的都會跟著換。
    c1/c2 是漸層的兩個顏色，全部角色共用 */
+/* h 是色相、s 是彩度。整個 App 的配色都從這兩個數字算出來，
+   所以每一款都跟原本那組紫的一樣深，不會有刺眼的亮色 */
 const BGS=[
-  {id:'bg-night', n:'夜空',   p:150, c1:'#2a2160', c2:'#141a3a'},
-  {id:'bg-dawn',  n:'清晨',   p:150, c1:'#ffd0a8', c2:'#ff9ec4'},
-  {id:'bg-grass', n:'草地',   p:150, c1:'#a8e08a', c2:'#4a8f32'},
-  {id:'bg-sea',   n:'海邊',   p:150, c1:'#9fd8f0', c2:'#3d7fd6'},
-  {id:'bg-sunset',n:'夕陽',   p:200, c1:'#ffc233', c2:'#e8447a'},
-  {id:'bg-mint',  n:'薄荷',   p:150, c1:'#c9f7ef', c2:'#3ce0d0'},
-  {id:'bg-cocoa', n:'可可',   p:150, c1:'#e3c98a', c2:'#8a5a3c'},
-  {id:'bg-neon',  n:'霓虹',   p:200, c1:'#a879ff', c2:'#3ce0d0'}
+  {id:'bg-violet',n:'原本的紫', p:0,   h:252, s:.52},
+  {id:'bg-night', n:'夜空',     p:150, h:224, s:.50},
+  {id:'bg-dawn',  n:'清晨',     p:150, h:342, s:.42},
+  {id:'bg-grass', n:'草地',     p:150, h:132, s:.40},
+  {id:'bg-sea',   n:'海邊',     p:150, h:198, s:.48},
+  {id:'bg-sunset',n:'夕陽',     p:200, h:18,  s:.46},
+  {id:'bg-mint',  n:'薄荷',     p:150, h:168, s:.42},
+  {id:'bg-cocoa', n:'可可',     p:150, h:28,  s:.34},
+  {id:'bg-neon',  n:'霓虹',     p:200, h:288, s:.58}
 ];
+/* 一整套深色調。亮度全部壓在同一個帶裡，換色相不會變亮 */
+const THEME=[
+  ['--bg',    12, 1.00],['--bg2',   17, 1.00],['--panel', 22, .96],
+  ['--panel2',27, .94],['--panel3', 33, .92],['--edge',   40, .86],
+  ['--edge2', 52, .80],['--deep',    8, 1.00],
+  /* 文字也跟著色相走，不然換成綠色佈景還配一組紫字 */
+  ['--txt',   96, .48],['--txt2',  77, .86],['--txt3',  60, .60]
+];
+const hsl=(h,s,l)=>'hsl('+h+' '+Math.round(s*100)+'% '+l+'%)';
+function themeVars(b){
+  const o={};
+  THEME.forEach(([k,l,f])=>o[k]=hsl(b.h,b.s*f,l));
+  return o;
+}
+function applyTheme(id){
+  const b=bgById(id)||BGS[0];
+  const st=document.documentElement.style;
+  const v=themeVars(b);
+  Object.keys(v).forEach(k=>st.setProperty(k,v[k]));
+  db.settings.theme=b.id;
+}
 /* ── 勝利動作 ──
    領薪水、轉盤中獎、升級的時候牠會做的動作 */
 const WINS=[
@@ -2185,7 +2209,7 @@ const myWin=()=>winById(db.settings.win)||WINS[0];
 /* 生物身後那塊的樣式。沒買背景就用原本的暈影 */
 function bgCSS(id){
   const b=bgById(id);
-  return b ? 'linear-gradient(160deg,'+b.c1+' 0%,'+b.c2+' 100%)'
+  return b ? 'linear-gradient(160deg,'+hsl(b.h,b.s*.9,34)+' 0%,'+hsl(b.h,b.s,17)+' 100%)'
            : 'radial-gradient(ellipse at 50% 92%,var(--panel2) 0%,transparent 70%)';
 }
 const ITEMS=[
@@ -5310,9 +5334,11 @@ async function shopAction(){
       act.disabled=false;
       if(!r.ok){ SFX.play('err'); renderShop(); toast('結帳沒過，等一下再試'); return; }
     }
-    if(bg){ db.settings.bg=id; tryBg=null; } else { db.settings.win=id; tryWin=null; }
+    if(bg){ db.settings.bg=id; applyTheme(id); tryBg=null; }
+    else { db.settings.win=id; tryWin=null; }
     save(); SFX.play('level'); toast('換好了：'+it.n);
-    renderShop(); renderHud(); renderWork(); pushLook();
+    renderShop(); renderHud(); renderWork(); renderTheme(); pushLook();
+    if(bg){ renderChart(); renderBars(); }
     return;
   }
   const a=petChar(), chg=tryDiff(a); if(!chg.length) return;
@@ -5844,7 +5870,7 @@ document.body.addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
   if(b.id==='btnAddGoal'||b.id==='btnAddGoal2') return open('vGoal');
   if(b.id==='btnTarget2') return openTarget();
-  if(b.id==='btnMore'){ SFX.play('tick'); return open('vMore'); }
+  if(b.id==='btnMore'){ SFX.play('tick'); renderTheme(); return open('vMore'); }
   if(b.dataset.lp){ logPage=+b.dataset.lp; renderLog();
     document.querySelector('.logbar').scrollIntoView({block:'nearest'}); return; }
   if(b.dataset.lq){
@@ -6049,12 +6075,25 @@ document.body.addEventListener('click',e=>{
       else{ SFX.play('tick'); toast('放回未完成'); } } }
 });
 
-function skin(s){
-  document.documentElement.dataset.skin=s;
-  $('btnSkin').textContent=s==='dark'?'亮色':'暗色';
-  localStorage.setItem(SKIN,s);
+/* 佈景：買到的背景才能選，原本的紫免費 */
+function renderTheme(){
+  const box=$('themePick'); if(!box) return;
+  const now=db.settings.theme||BGS[0].id;
+  box.innerHTML=BGS.map(b=>{
+    const own=b.p===0||hasItem(b.id);
+    return '<button class="thchip'+(now===b.id?' on':'')+(own?'':' lock')+'" data-theme="'+b.id+'"'+
+      (own?'':' disabled')+'>'+
+      '<span class="sw" style="background:linear-gradient(160deg,'+hsl(b.h,b.s*.9,34)+' 0%,'+
+        hsl(b.h,b.s,17)+' 100%)"></span>'+esc(b.n)+
+      (own?'':'<i>還沒買</i>')+'</button>';
+  }).join('');
 }
-$('btnSkin').onclick=()=>{SFX.play('tick'); skin(document.documentElement.dataset.skin==='dark'?'light':'dark'); renderChart(); renderBars();};
+$('themePick').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-theme]'); if(!b||b.disabled) return;
+  applyTheme(b.dataset.theme); save(); renderTheme(); SFX.play('tick');
+  renderChart(); renderBars();
+  toast('佈景換成「'+bgById(b.dataset.theme).n+'」');
+});
 
 function swPaint(){
   $('swLoan').classList.toggle('on',db.settings.showLoan!==false);
@@ -6768,7 +6807,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
 }
 
 loadPrices();
-skin(localStorage.getItem(SKIN)||'dark');
+applyTheme(db.settings.theme||BGS[0].id);
 sfxIcon(); swPaint();
 loadWallet();            /* 幣跟擁有的東西自己一份，不跟著 db 備份走 */
 setTimeout(renderWork,0);
