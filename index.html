@@ -675,8 +675,11 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .ginv .nm{font-size:14.5px;font-weight:700}
 .ginv .sub{font-size:11.5px;color:var(--txt3)}
 /* 商店 */
-.shoptop{display:grid;grid-template-columns:150px 1fr;gap:16px;align-items:center;
-  background:var(--panel2);border:1.5px solid var(--edge);border-radius:16px;padding:12px 14px;margin-bottom:14px}
+/* 試衣間跟按鈕黏在最上面，往下滑挑東西的時候一直看得到效果 */
+.shoptop{position:sticky;top:-2px;z-index:6;
+  display:grid;grid-template-columns:150px 1fr;gap:16px;align-items:center;
+  background:var(--panel2);border:1.5px solid var(--edge);border-radius:16px;padding:12px 14px;margin-bottom:14px;
+  box-shadow:0 10px 14px -10px var(--deep)}
 @media(max-width:480px){.shoptop{grid-template-columns:112px 1fr;gap:12px;padding:10px}}
 .shopstage{position:relative;border-radius:13px;overflow:hidden;
   background:radial-gradient(ellipse at 50% 92%,var(--panel3) 0%,transparent 70%)}
@@ -694,7 +697,8 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   justify-content:flex-end;gap:0 4px;line-height:1.35}
 .prevbar b i{font-style:normal;white-space:nowrap}
 .prevbar #prevTxt{white-space:nowrap}
-.bigtabs{margin-bottom:8px}
+.bigtabs{position:sticky;top:calc(var(--shoptop,150px) - 2px);z-index:5;
+  background:var(--panel);padding:4px 0;margin-bottom:8px}
 .bigtabs button{font-size:13.5px;font-weight:800}
 .bgchip{display:block;width:100%;max-width:70px;aspect-ratio:1;border-radius:11px;margin:0 auto;
   border:1.5px solid rgba(255,255,255,.25)}
@@ -5254,9 +5258,14 @@ function renderShop(){
   /* 本來就沒有這個鍵的話要刪掉。寫回 undefined 會讓整包同步被 Firestore 退件 */
   if(had) m[a.k]=keep; else delete m[a.k];
   $('shopCoins').innerHTML='<svg class="i"><use href="#i-coin"/></svg>'+money(coins())+' Bo士幣';
+  /* 大標籤要黏在試衣間下面，高度是量出來的 */
+  const th=document.querySelector('.shoptop');
+  if(th) $('vShop').querySelector('.dlg').style.setProperty('--shoptop',
+    Math.round(th.getBoundingClientRect().height+14)+'px');
   $('shopStage').style.background=bgCSS(tryBg!==null?tryBg:db.settings.bg);
   $('shopCats').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.sc===shopCat));
   $('shopTabs').style.display=shopCat==='char'?'':'none';
+  $('shopPrev').style.display='none';        /* 只有背景那頁才會再打開 */
   if(shopCat!=='char') return renderShopExtra();
   /* 分類橫幅：正在試穿的那格標星號，已經穿著的標點 */
   const avail=SLOTORDER.filter(sl=>shopFor(a.k).some(x=>x.slot===sl));
