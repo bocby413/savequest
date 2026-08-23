@@ -2275,6 +2275,16 @@ function fillOf(h,sa,light){
   /* 灰白那類佈景本來就沒彩度，硬拉到 .62 會變成別款的紫或藍，
      所以低彩度的維持低彩度，按鈕就是深灰、板岩灰那種自己的顏色 */
   const S=sa<.18 ? Math.min(sa*2.2,.16) : Math.max(sa,.62);
+  /* 黃到黃綠這段色相壓暗一定會變成土色，只能反過來做：
+     亮亮的底配同色系的深字，看起來才是淡黃而不是大便色 */
+  if(light && h>=34 && h<=98){
+    return {
+      '--fill':     hueAt(h,.92,.52), '--fill2':    hueAt(h,.92,.40),
+      '--fillEdge': hueAt(h,.95,.30), '--fillDeep': hueAt(h,.95,.16),
+      '--onFill':   hueAt(h,.90,.025),
+      '--fillGlow': 'hsl('+h+' 92% 62% / .5)'
+    };
+  }
   const t=light?.20:.17;
   return {
     '--fill':     hueAt(h,S,t),        '--fill2':    hueAt(h,S+.06,t*.62),
