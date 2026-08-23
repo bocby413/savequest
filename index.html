@@ -2407,9 +2407,9 @@ const AC={
     return '<path d="M'+L+' '+y+'L'+L+' '+(y-h)+'L'+(60-w*.5)+' '+(y-h*.45)+'L60 '+(y-h*1.4)+
       'L'+(60+w*.5)+' '+(y-h*.45)+'L'+R+' '+(y-h)+'L'+R+' '+y+'Z" fill="'+c+'"/>'+
       '<circle cx="60" cy="'+(y-h*.3)+'" r="3.4" fill="'+g+'"/>';},
-  bow:(a,c,d)=>{const y=HLINE(a)-1,w=HATW(a)*.44;
-    return '<path d="M60 '+y+'l-'+w+' -7v14z" fill="'+c+'"/><path d="M60 '+y+'l'+w+' -7v14z" fill="'+c+'"/>'+
-      '<circle cx="60" cy="'+y+'" r="4" fill="'+d+'"/>';},
+  bow:(a,c,d)=>{const y=HT(a)+5,w=HATW(a)*.4;    /* 綁在頭頂，不是貼在額頭上 */
+    return '<path d="M60 '+y+'l-'+w+' -6v12z" fill="'+c+'"/><path d="M60 '+y+'l'+w+' -6v12z" fill="'+c+'"/>'+
+      '<circle cx="60" cy="'+y+'" r="3.8" fill="'+d+'"/>';},
   flower:(a,c,m)=>{const y=HLINE(a)-2,x=60-HATW(a)*.62;let s='';
     for(let i=0;i<5;i++){const an=i*72*Math.PI/180;
       s+='<circle cx="'+(x+Math.cos(an)*5.6).toFixed(1)+'" cy="'+(y+Math.sin(an)*5.6).toFixed(1)+
@@ -2436,28 +2436,30 @@ const AC={
       '<circle cx="'+(60+w*.55)+'" cy="'+(t+r)+'" r="'+r+'" fill="'+c+'"/>'+
       '<rect x="'+(60-w)+'" y="'+(y-8)+'" width="'+(w*2)+'" height="10" rx="3" fill="'+c+'"/>'+
       '<rect x="'+(60-w)+'" y="'+(y-3.5)+'" width="'+(w*2)+'" height="4" fill="'+d+'"/>';},
-  /* ── 臉 ── */
-  round:(a,l,f)=>{const y=eyeY(a),g=a.gap,r=Math.max(7,g*.78);
+  /* ── 臉 ──
+     鏡片照眼距算，但不能寬過臉頰。青蛙眼距大、頭卻小，不夾住會掛到臉外面 */
+  ew:a=>Math.max(6,Math.min(a.gap*.78,a.hr-a.gap-1)),
+  round:(a,l,f)=>{const y=eyeY(a),g=a.gap,r=AC.ew(a);
     return '<g fill="'+l+'" stroke="'+f+'" stroke-width="2.8"><circle cx="'+(60-g)+'" cy="'+y+'" r="'+r+'"/>'+
       '<circle cx="'+(60+g)+'" cy="'+y+'" r="'+r+'"/></g>'+
       '<path d="M'+(60-g+r)+' '+y+'h'+((g-r)*2)+'" stroke="'+f+'" stroke-width="2.6"/>';},
-  square:(a,l,f)=>{const y=eyeY(a),g=a.gap,r=Math.max(7,g*.76);
+  square:(a,l,f)=>{const y=eyeY(a),g=a.gap,r=AC.ew(a)*.97;
     return '<g fill="'+l+'" stroke="'+f+'" stroke-width="2.6">'+
       '<rect x="'+(60-g-r)+'" y="'+(y-r*.78)+'" width="'+(r*2)+'" height="'+(r*1.56)+'" rx="3"/>'+
       '<rect x="'+(60+g-r)+'" y="'+(y-r*.78)+'" width="'+(r*2)+'" height="'+(r*1.56)+'" rx="3"/></g>'+
       '<path d="M'+(60-g+r)+' '+y+'h'+((g-r)*2)+'" stroke="'+f+'" stroke-width="2.6"/>';},
-  shades:(a,c,f)=>{const y=eyeY(a),g=a.gap,r=Math.max(7,g*.8);
+  shades:(a,c,f)=>{const y=eyeY(a),g=a.gap,r=AC.ew(a)*1.02;
     return '<rect x="'+(60-g-r)+'" y="'+(y-r*.7)+'" width="'+(r*2)+'" height="'+(r*1.4)+'" rx="'+(r*.45)+'" fill="'+c+'"/>'+
       '<rect x="'+(60+g-r)+'" y="'+(y-r*.7)+'" width="'+(r*2)+'" height="'+(r*1.4)+'" rx="'+(r*.45)+'" fill="'+c+'"/>'+
       '<path d="M'+(60-g+r)+' '+(y-2)+'h'+((g-r)*2)+'" stroke="'+f+'" stroke-width="3"/>'+
       '<path d="M'+(60-g-r+3.5)+' '+(y-r*.3)+'l4.5 4" stroke="#ffffff" stroke-width="2" opacity=".65"/>';},
   patch:(a,c,s)=>{const y=eyeY(a),g=a.gap;
-    return '<path d="M'+(60-g-a.hr*.85)+' '+(y-8)+'L'+(60+g+3)+' '+(y-10)+'" stroke="'+s+'" stroke-width="2.6"/>'+
+    return '<path d="M'+(60-a.hr+2)+' '+(y-8)+'L'+(60+g+3)+' '+(y-10)+'" stroke="'+s+'" stroke-width="2.6"/>'+
       '<ellipse cx="'+(60-g)+'" cy="'+y+'" rx="8" ry="7" fill="'+c+'"/>';},
   maskLow:(a,c,d)=>{const y=mouY(a),w=a.hr*.72;
     return '<path d="M'+(60-w)+' '+(y-7)+'h'+(w*2)+'v6q0 10-'+w+' 10t-'+w+'-10z" fill="'+c+'"/>'+
       '<path d="M'+(60-w)+' '+(y-5)+'h-6M'+(60+w)+' '+(y-5)+'h6" stroke="'+d+'" stroke-width="2.4"/>';},
-  blush:(a,c,s)=>{const y=eyeY(a)+8,g=a.gap+7;
+  blush:(a,c,s)=>{const y=eyeY(a)+8,g=Math.min(a.gap+7,a.hr-8);
     const one=x=>'<ellipse cx="'+x+'" cy="'+y+'" rx="6.2" ry="4.2" fill="'+c+'" opacity=".8"/>'+
       '<path d="M'+x+' '+(y-6)+'l1.6 3.4 3.4 1.6-3.4 1.6-1.6 3.4-1.6-3.4-3.4-1.6 3.4-1.6z" fill="'+s+'"/>';
     return one(60-g)+one(60+g);},
@@ -2538,7 +2540,8 @@ const AC={
   cup:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a);
     return '<path d="M'+(x-7)+' '+(y-7)+'h14l-2 17h-10z" fill="'+c+'"/>'+
       '<rect x="'+(x-8)+'" y="'+(y-10)+'" width="16" height="4.5" rx="2.2" fill="'+d+'"/>'+
-      '<path d="M'+(x+7)+' '+(y-3)+'a5 5 0 0 1 0 9" stroke="'+d+'" stroke-width="2.4" fill="none"/>';},
+      /* 把手朝外，朝內會卡到身體 */
+      '<path d="M'+(x-7)+' '+(y-3)+'a5 5 0 0 0 0 9" stroke="'+d+'" stroke-width="2.4" fill="none"/>';},
   ball:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a);
     return '<circle cx="'+x+'" cy="'+y+'" r="10" fill="'+c+'"/>'+
       '<path d="M'+(x-9)+' '+(y-3)+'q9 6 18 0M'+(x-9)+' '+(y+3)+'q9-6 18 0" stroke="'+d+'" stroke-width="1.8" fill="none"/>';},
@@ -2551,12 +2554,12 @@ const AC={
       '<ellipse cx="'+x+'" cy="'+(y-8)+'" rx="9" ry="10.5" fill="'+c+'"/>'+
       '<path d="M'+x+' '+(y+2)+'l-3-4h6z" fill="'+c+'"/>';},
   umbrella:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a)-4;
-    return '<path d="M'+x+' '+(y-2)+'V'+(y+20)+'a4 4 0 0 0 8 0" stroke="'+d+'" stroke-width="2.4" fill="none"/>'+
-      '<path d="M'+(x-15)+' '+(y-2)+'a15 11 0 0 1 30 0z" fill="'+c+'"/>'+
-      '<path d="M'+(x-5)+' '+(y-2)+'a5 9 0 0 1 10 0" stroke="'+d+'" stroke-width="1.4" fill="none"/>';},
-  flag:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a);
-    return '<path d="M'+(x-4)+' '+(y-14)+'V'+(y+12)+'" stroke="'+d+'" stroke-width="2.6"/>'+
-      '<path d="M'+(x-4)+' '+(y-14)+'h16l-4 6 4 6h-16z" fill="'+c+'"/>';},
+    return '<path d="M'+x+' '+(y-2)+'V'+(y+20)+'a4 4 0 0 1-8 0" stroke="'+d+'" stroke-width="2.4" fill="none"/>'+
+      '<path d="M'+(x-14)+' '+(y-2)+'a13 10 0 0 1 26 0z" fill="'+c+'"/>'+
+      '<path d="M'+(x-5)+' '+(y-2)+'a5 8 0 0 1 9 0" stroke="'+d+'" stroke-width="1.4" fill="none"/>';},
+  flag:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a);   /* 旗子往外飄，不然整面蓋在肚子上 */
+    return '<path d="M'+(x+4)+' '+(y-14)+'V'+(y+12)+'" stroke="'+d+'" stroke-width="2.6"/>'+
+      '<path d="M'+(x+4)+' '+(y-14)+'h-16l4 6-4 6h16z" fill="'+c+'"/>';},
   icecream:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a);
     return '<path d="M'+(x-7)+' '+(y-1)+'L'+x+' '+(y+15)+'L'+(x+7)+' '+(y-1)+'z" fill="'+d+'"/>'+
       '<circle cx="'+x+'" cy="'+(y-6)+'" r="8" fill="'+c+'"/>';},
@@ -2565,16 +2568,16 @@ const AC={
       '<rect x="'+(x-4)+'" y="'+(y-10)+'" width="8" height="4" rx="1.5" fill="'+d+'"/>'+
       '<circle cx="'+x+'" cy="'+(y+1)+'" r="5" fill="'+d+'"/>'+
       '<circle cx="'+x+'" cy="'+(y+1)+'" r="2.2" fill="#f7f4ec"/>';},
-  wand:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a);
-    return '<path d="M'+(x+5)+' '+(y-4)+'L'+(x-4)+' '+(y+14)+'" stroke="'+d+'" stroke-width="2.6"/>'+
-      '<path d="M'+(x+6)+' '+(y-14)+'l2.6 6 6.4 1-4.6 4.4 1.2 6.4-5.6-3.2-5.6 3.2 1.2-6.4-4.6-4.4 6.4-1z" fill="'+c+'"/>';},
+  wand:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a);   /* 星星舉向外側 */
+    return '<path d="M'+(x-5)+' '+(y-4)+'L'+(x+4)+' '+(y+14)+'" stroke="'+d+'" stroke-width="2.6"/>'+
+      '<path d="M'+(x-6)+' '+(y-14)+'l2.6 6 6.4 1-4.6 4.4 1.2 6.4-5.6-3.2-5.6 3.2 1.2-6.4-4.6-4.4 6.4-1z" fill="'+c+'"/>';},
   donut:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a);
     return '<circle cx="'+x+'" cy="'+y+'" r="10" fill="'+d+'"/>'+
       '<path d="M'+x+' '+(y-10)+'a10 10 0 0 1 0 20 10 10 0 0 1 0-20" fill="'+c+'"/>'+
       '<circle cx="'+x+'" cy="'+y+'" r="3.6" fill="#3a2a1a" opacity=".25"/>';},
   key:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a);
     return '<circle cx="'+x+'" cy="'+(y-7)+'" r="6" fill="none" stroke="'+c+'" stroke-width="3.4"/>'+
-      '<path d="M'+x+' '+(y-1)+'V'+(y+14)+'M'+x+' '+(y+7)+'h5M'+x+' '+(y+12)+'h5" stroke="'+c+'" stroke-width="3"/>'+
+      '<path d="M'+x+' '+(y-1)+'V'+(y+14)+'M'+x+' '+(y+7)+'h-5M'+x+' '+(y+12)+'h-5" stroke="'+c+'" stroke-width="3"/>'+
       '<circle cx="'+x+'" cy="'+(y-7)+'" r="2" fill="'+d+'"/>';},
   torch:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a);
     return '<rect x="'+(x-3)+'" y="'+(y-2)+'" width="6" height="18" rx="3" fill="'+d+'"/>'+
@@ -2588,31 +2591,31 @@ const AC={
       '<path d="M'+(x-4.5)+' '+(y-3)+'a4.5 6 0 0 1 9 0" stroke="'+d+'" stroke-width="2.4" fill="none"/>';},
   /* ── 腳下 ── */
   feet:(a,fn)=>{const x=a.fx||13;return fn(60-x)+fn(60+x);},
-  sneak:(a,c,d)=>{const y=(a.fy||107)-4,w=(a.fw||9)+3;
+  sneak:(a,c,d)=>{const y=(a.fy||107)-3,w=(a.fw||9)+1;
     return AC.feet(a,cx=>'<path d="M'+(cx-w)+' '+(y+4)+'q0-8 '+(w*.8)+'-8h'+(w*.6)+'l'+(w*.7)+' 8z" fill="'+c+'"/>'+
       '<rect x="'+(cx-w)+'" y="'+(y+3)+'" width="'+(w*2)+'" height="6" rx="3" fill="'+d+'"/>');},
-  bootF:(a,c,d)=>{const y=(a.fy||107)-8,w=(a.fw||9)+3;
-    return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="16" rx="4" fill="'+c+'"/>'+
-      '<rect x="'+(cx-w-2)+'" y="'+(y+12)+'" width="'+(w*2+4)+'" height="5" rx="2.5" fill="'+d+'"/>');},
-  sandal:(a,c,d)=>{const y=(a.fy||107)+2,w=(a.fw||9)+2;
+  bootF:(a,c,d)=>{const y=(a.fy||107)-7,w=(a.fw||9)+1;
+    return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="12" rx="4" fill="'+c+'"/>'+
+      '<rect x="'+(cx-w-.8)+'" y="'+(y+9)+'" width="'+(w*2+1.6)+'" height="4" rx="2" fill="'+d+'"/>');},
+  sandal:(a,c,d)=>{const y=(a.fy||107)+1,w=(a.fw||9)+1;
     return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="6" rx="3" fill="'+c+'"/>'+
       '<path d="M'+(cx-w+2)+' '+y+'l'+(w-2)+' -7 '+(w-2)+' 7" stroke="'+d+'" stroke-width="2.6" fill="none"/>');},
-  slipper:(a,c,d)=>{const y=(a.fy||107)-2,w=(a.fw||9)+3;
+  slipper:(a,c,d)=>{const y=(a.fy||107)-2,w=(a.fw||9)+1;
     return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+3)+'" width="'+(w*2)+'" height="7" rx="3.5" fill="'+d+'"/>'+
       '<path d="M'+(cx-w)+' '+(y+4)+'a'+w+' 7 0 0 1 '+(w*2)+' 0z" fill="'+c+'"/>');},
-  skate:(a,c,d)=>{const y=(a.fy||107)-6,w=(a.fw||9)+3;
-    return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="12" rx="4" fill="'+c+'"/>'+
-      '<path d="M'+(cx-w-2)+' '+(y+15)+'h'+(w*2+4)+'" stroke="'+d+'" stroke-width="3" stroke-linecap="round"/>'+
-      '<path d="M'+(cx-w+1)+' '+(y+12)+'v3M'+(cx+w-1)+' '+(y+12)+'v3" stroke="'+d+'" stroke-width="2.4"/>');},
-  sockF:(a,c,d)=>{const y=(a.fy||107)-6,w=(a.fw||9)+1;
-    return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="12" rx="4" fill="'+c+'"/>'+
-      '<path d="M'+(cx-w)+' '+(y+4)+'h'+(w*2)+'M'+(cx-w)+' '+(y+8)+'h'+(w*2)+'" stroke="'+d+'" stroke-width="2"/>');},
-  clog:(a,c,d)=>{const y=(a.fy||107)-3,w=(a.fw||9)+3;
+  skate:(a,c,d)=>{const y=(a.fy||107)-6,w=(a.fw||9)+1;
+    return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="10" rx="4" fill="'+c+'"/>'+
+      '<path d="M'+(cx-w-.8)+' '+(y+13)+'h'+(w*2+1.6)+'" stroke="'+d+'" stroke-width="2.6" stroke-linecap="round"/>'+
+      '<path d="M'+(cx-w+1)+' '+(y+10)+'v3M'+(cx+w-1)+' '+(y+10)+'v3" stroke="'+d+'" stroke-width="2.2"/>');},
+  sockF:(a,c,d)=>{const y=(a.fy||107)-5,w=(a.fw||9)+.5;
+    return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="10" rx="4" fill="'+c+'"/>'+
+      '<path d="M'+(cx-w)+' '+(y+3.5)+'h'+(w*2)+'M'+(cx-w)+' '+(y+7)+'h'+(w*2)+'" stroke="'+d+'" stroke-width="1.8"/>');},
+  clog:(a,c,d)=>{const y=(a.fy||107)-3,w=(a.fw||9)+1;
     return AC.feet(a,cx=>'<path d="M'+(cx-w)+' '+(y+2)+'h'+(w*2)+'v5a4 4 0 0 1-4 4h-'+(w*2-8)+'a4 4 0 0 1-4-4z" fill="'+c+'"/>'+
       '<path d="M'+(cx-w)+' '+(y+2)+'a'+w+' 5 0 0 1 '+(w*2)+' 0z" fill="'+d+'"/>');},
-  padF:(a,c,d)=>{const y=(a.fy||107)-1,w=(a.fw||9)+4;
-    return AC.feet(a,cx=>'<ellipse cx="'+cx+'" cy="'+(y+6)+'" rx="'+w+'" ry="6" fill="'+c+'"/>'+
-      '<ellipse cx="'+cx+'" cy="'+(y+4)+'" rx="'+(w*.6)+'" ry="3.4" fill="'+d+'"/>');},
+  padF:(a,c,d)=>{const y=(a.fy||107)-2,w=(a.fw||9)+1;
+    return AC.feet(a,cx=>'<ellipse cx="'+cx+'" cy="'+(y+4)+'" rx="'+w+'" ry="5.5" fill="'+c+'"/>'+
+      '<ellipse cx="'+cx+'" cy="'+(y+2.5)+'" rx="'+(w*.55)+'" ry="3" fill="'+d+'"/>');},
   /* 機器人沒有腳，這幾件換掉整個底座 */
   baseF:(a,c,d)=>{const y=a.by+a.bh-2;
     return '<path d="M47 '+y+'h26l-4 11h-18z" fill="'+c+'"/>'+
@@ -2674,8 +2677,8 @@ const ITEMS=[
   {id:'fish', n:'小魚乾', p:200, slot:'hand', only:'a-cat', d:a=>{
     const x=60-(a.bw+5), y=a.by+a.bh*.5;
     return '<ellipse cx="'+x+'" cy="'+y+'" rx="10" ry="5.5" fill="#9fd8f0"/>'+
-      '<path d="M'+(x+9)+' '+y+'l7-5v10z" fill="#7fb6d9"/>'+
-      '<circle cx="'+(x-5)+'" cy="'+(y-1)+'" r="1.6" fill="#12142a"/>';}},
+      '<path d="M'+(x-9)+' '+y+'l-7-5v10z" fill="#7fb6d9"/>'+
+      '<circle cx="'+(x+5)+'" cy="'+(y-1)+'" r="1.6" fill="#12142a"/>';}},
   {id:'bell', n:'鈴鐺項圈', p:100, slot:'neck', only:'a-cat', d:a=>{
     const y=HB(a)-2, w=a.bw*.8;
     return '<path d="M'+(60-w)+' '+y+'q'+w+' 9 '+(w*2)+' 0v6q-'+w+' 9 -'+(w*2)+' 0z" fill="#e8447a"/>'+
@@ -2698,7 +2701,7 @@ const ITEMS=[
       '<path d="M'+(60-g+r)+' '+y+'h'+((g-r)*2)+'" stroke="#8a5a3c" stroke-width="3"/>'+
       '<path d="M'+(60-g-r)+' '+y+'h-6M'+(60+g+r)+' '+y+'h6" stroke="#5f3a22" stroke-width="3"/>';}},
   {id:'sneaker', n:'運動鞋', p:200, slot:'foot', only:'a-dog', d:a=>{
-    const y=(a.fy||107)-4, x=a.fx||13, w=(a.fw||9)+3;
+    const y=(a.fy||107)-3, x=a.fx||13, w=(a.fw||9)+1.5;
     const one=cx=>'<path d="M'+(cx-w)+' '+(y+4)+'q0-8 '+(w*.8)+'-8h'+(w*.6)+'l'+(w*.7)+' 8z" fill="#ff5c8a"/>'+
       '<rect x="'+(cx-w)+'" y="'+(y+3)+'" width="'+(w*2)+'" height="6" rx="3" fill="#f7f4ec"/>';
     return one(60-x)+one(60+x);}},
@@ -2736,9 +2739,9 @@ const ITEMS=[
       '<rect x="'+(60+g-r)+'" y="'+(y-r*.8)+'" width="'+(r*2)+'" height="'+(r*1.6)+'" rx="3"/>'+
       '<path d="M'+(60-g+r)+' '+y+'h'+((g-r)*2)+'"/></g>';}},
   {id:'workboot', n:'工作靴', p:200, slot:'foot', only:'a-bear', d:a=>{
-    const y=(a.fy||107)-7, x=a.fx||13, w=(a.fw||9)+3;
-    const one=cx=>'<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="15" rx="4" fill="#5f3a22"/>'+
-      '<rect x="'+(cx-w-2)+'" y="'+(y+11)+'" width="'+(w*2+4)+'" height="5" rx="2.5" fill="#3b2412"/>'+
+    const y=(a.fy||107)-6, x=a.fx||13, w=(a.fw||9)+1;
+    const one=cx=>'<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="12" rx="4" fill="#5f3a22"/>'+
+      '<rect x="'+(cx-w-.8)+'" y="'+(y+9)+'" width="'+(w*2+1.6)+'" height="4" rx="2" fill="#3b2412"/>'+
       '<path d="M'+(cx-w+2)+' '+(y+4)+'h'+(w*2-4)+'" stroke="#8a5a3c" stroke-width="2"/>';
     return one(60-x)+one(60+x);}},
   {id:'plaidscarf', n:'格紋圍巾', p:100, slot:'neck', only:'a-bear', d:a=>{
@@ -2767,13 +2770,13 @@ const ITEMS=[
       '<path d="M'+(60-w)+' '+y+'q'+w+' 9 '+(w*2)+' 0" stroke="#7d3a12" stroke-width="2.4" fill="none"/>';}},
   {id:'lantern', n:'小提燈', p:200, slot:'hand', only:'a-fox', d:a=>{
     const x=60-(a.bw+6), y=a.by+a.bh*.35;
-    return '<path d="M'+x+' '+(y-10)+'a6 6 0 0 1 0 8" stroke="#7d3a12" stroke-width="2" fill="none"/>'+
+    return '<path d="M'+x+' '+(y-10)+'a6 6 0 0 0 0 8" stroke="#7d3a12" stroke-width="2" fill="none"/>'+
       '<rect x="'+(x-7)+'" y="'+(y-2)+'" width="14" height="16" rx="3" fill="#ffe58a"/>'+
       '<rect x="'+(x-8)+'" y="'+(y-4)+'" width="16" height="4" rx="2" fill="#7d3a12"/>'+
       '<rect x="'+(x-8)+'" y="'+(y+13)+'" width="16" height="4" rx="2" fill="#7d3a12"/>';}},
   {id:'longboot', n:'長靴', p:200, slot:'foot', only:'a-fox', d:a=>{
-    const y=(a.fy||107)-9, x=a.fx||13, w=(a.fw||9)+2;
-    const one=cx=>'<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="17" rx="4" fill="#7d3a12"/>'+
+    const y=(a.fy||107)-8, x=a.fx||13, w=(a.fw||9)+1;
+    const one=cx=>'<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="14" rx="4" fill="#7d3a12"/>'+
       '<rect x="'+(cx-w-1)+'" y="'+y+'" width="'+(w*2+2)+'" height="5" rx="2.5" fill="#c94a1e"/>';
     return one(60-x)+one(60+x);}},
   {id:'leaf', n:'楓葉帽', p:100, slot:'head', only:'a-fox', d:a=>{
@@ -2822,10 +2825,10 @@ const ITEMS=[
       '<ellipse cx="'+(x+2)+'" cy="'+(y-6)+'" rx="6" ry="3" fill="#9fd8f0" '+
       'transform="rotate(-24,'+(x+2)+','+(y-6)+')"/>';}},
   {id:'boot', n:'雪靴', p:200, slot:'foot', only:'a-peng', d:a=>{
-    const y=(a.fy||107)-4, x=a.fx||13;
-    return '<rect x="'+(60-x-12)+'" y="'+y+'" width="24" height="13" rx="5" fill="#5aa9ff"/>'+
-      '<rect x="'+(60+x-12)+'" y="'+y+'" width="24" height="13" rx="5" fill="#5aa9ff"/>'+
-      '<rect x="'+(60-x-13)+'" y="'+(y-4)+'" width="26" height="6" rx="3" fill="#f7f4ec"/>'+
+    const y=(a.fy||107)-3, x=a.fx||13, w=(a.fw||9)+1.5;
+    return '<rect x="'+(60-x-w)+'" y="'+y+'" width="'+(w*2)+'" height="11" rx="5" fill="#5aa9ff"/>'+
+      '<rect x="'+(60+x-w)+'" y="'+y+'" width="'+(w*2)+'" height="11" rx="5" fill="#5aa9ff"/>'+
+      '<rect x="'+(60-x-w-1)+'" y="'+(y-3.5)+'" width="'+(w*2+2)+'" height="5.5" rx="2.7" fill="#f7f4ec"/>'+
       '<rect x="'+(60+x-13)+'" y="'+(y-4)+'" width="26" height="6" rx="3" fill="#f7f4ec"/>';}},
   {id:'bowtie', n:'領結', p:100, slot:'neck', only:'a-peng', d:a=>{
     const y=HB(a)+7;                     /* 企鵝沒脖子，要閃開喙 */
@@ -2883,14 +2886,14 @@ const ITEMS=[
       '<circle cx="66" cy="'+(y+12.5)+'" r="2" fill="#e39b12"/>';}},
   {id:'fins', n:'蛙鞋', p:200, slot:'foot', only:'a-frog', d:a=>{
     /* 要把整隻腳掌包進去，不然腳會從蛙鞋旁邊露出來 */
-    const y=(a.fy||107)-7, x=a.fx||13, w=(a.fw||9)+1;
-    const one=cx=>'<path d="M'+(cx-w)+' '+(y+5)+'h'+(w*2)+'l'+(w*.3)+' 12h-'+(w*2+w*.6)+'z" fill="#5aa9ff"/>'+
+    const y=(a.fy||107)-6, x=a.fx||13, w=(a.fw||9)+.5;
+    const one=cx=>'<path d="M'+(cx-w)+' '+(y+5)+'h'+(w*2)+'l'+(w*.22)+' 9h-'+(w*2+w*.44)+'z" fill="#5aa9ff"/>'+
       '<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="7" rx="3.5" fill="#3d7fd6"/>';
     return one(60-x)+one(60+x);}},
   {id:'lotus', n:'荷葉傘', p:200, slot:'hand', only:'a-frog', d:a=>{
     const x=60-(a.bw+6), y=a.by-6;
     return '<path d="M'+x+' '+(y+26)+'V'+(y+4)+'" stroke="#5aa83c" stroke-width="3"/>'+
-      '<path d="M'+(x-16)+' '+(y+4)+'a16 9 0 0 1 32 0z" fill="#4a8f32"/>'+
+      '<path d="M'+(x-15)+' '+(y+4)+'a13 8 0 0 1 26 0z" fill="#4a8f32"/>'+
       '<path d="M'+x+' '+(y+4)+'l-9-7M'+x+' '+(y+4)+'l9-7" stroke="#2c5c23" stroke-width="1.4"/>';}},
   {id:'aloha', n:'花襯衫', p:200, slot:'body', only:'a-frog', d:a=>{
     /* 敞開的，中間那條露出身體 */
@@ -2923,7 +2926,7 @@ const ITEMS=[
       'l'+(w-a.bw*.75)+' '+(h*.72)+'q-'+w+' 9 -'+(w*2)+' 0z" fill="#3a2560"/>'+
       '<path d="M'+(60-w)+' '+(t+h*.77)+'q'+w+' 9 '+(w*2)+' 0" stroke="#ffc233" stroke-width="3" fill="none"/>';}},
   {id:'shoes', n:'小皮鞋', p:200, slot:'foot', only:'a-owl', d:a=>{
-    const y=(a.fy||107)-3, x=a.fx||13, w=(a.fw||9)+2;
+    const y=(a.fy||107)-3, x=a.fx||13, w=(a.fw||9)+1.5;
     const one=cx=>'<path d="M'+(cx-w)+' '+y+'h'+(w*2)+'v6a4 4 0 0 1-4 4h-'+(w*2-8)+
       'a4 4 0 0 1-4-4z" fill="#3b2412"/>'+
       '<rect x="'+(cx-w)+'" y="'+(y-2)+'" width="'+(w*2)+'" height="4" rx="2" fill="#5f3a22"/>';
