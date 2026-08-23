@@ -2146,7 +2146,7 @@ const HWAT=(a,k)=>a.sq?a.hr:a.hr*Math.sqrt(Math.max(.04,1-k*k));
 const HATW=a=>a.hatW!==undefined?a.hatW:HWAT(a,.45);
 const ITEMS=[
   /* ── 貓 ── */
-  {id:'catband', n:'貓耳髮箍', p:80, slot:'head', only:'a-cat', d:a=>{
+  {id:'catband', n:'貓耳髮箍', p:100, slot:'head', only:'a-cat', d:a=>{
     /* 粉紅耳直接照貓耳的三角形放大一點蓋上去，不是另外長兩隻小的 */
     const hr=a.hr, hy=a.hy, k=1.14;
     const tri=p=>{
@@ -2164,7 +2164,7 @@ const ITEMS=[
       '<path d="'+tri(R.map(([x,y2],i)=>i===1?[x-3,y2+7]:[x+(i?2:-3),y2-(i?0:3)]))+'" fill="#ffd0e2"/>'+
       '<path d="M'+(60-w)+' '+y+'a'+w+' '+(HRY(a)*.85)+' 0 0 1 '+(w*2)+' 0" '+
       'stroke="#ff5c8a" stroke-width="5" fill="none"/>';}},
-  {id:'heartglass', n:'愛心眼鏡', p:80, slot:'face', only:'a-cat', d:a=>{
+  {id:'heartglass', n:'愛心眼鏡', p:100, slot:'face', only:'a-cat', d:a=>{
     const y=eyeY(a), g=a.gap, r=Math.max(7,g*.8);
     /* 標準的兩段三次曲線：下面收成尖角，上面兩個圓弧 */
     const heart=cx=>{
@@ -2175,7 +2175,7 @@ const ITEMS=[
     };
     return '<path d="M'+(60-g+r*.8)+' '+(y-1)+'h'+((g-r*.8)*2)+'" stroke="#e8447a" stroke-width="2.6"/>'+
       heart(60-g)+heart(60+g);}},
-  {id:'sweater', n:'針織毛衣', p:100, slot:'body', only:'a-cat', d:a=>{
+  {id:'sweater', n:'針織毛衣', p:200, slot:'body', only:'a-cat', d:a=>{
     const t=a.by-a.bh, h=a.bh*2;
     return '<path d="'+garment(a,.06,.9)+'" fill="#ffb3cf"/>'+
       '<path d="M'+(60-a.bw*.75)+' '+(t+h*.22)+'h'+(a.bw*1.5)+
@@ -2183,60 +2183,60 @@ const ITEMS=[
       'M'+(60-a.bw*.85)+' '+(t+h*.68)+'h'+(a.bw*1.7)+
       '" stroke="#f58cb4" stroke-width="2.2" fill="none"/>'+
       '<path d="'+garment(a,.06,.14)+'" fill="#f58cb4"/>';}},
-  {id:'socks', n:'條紋襪', p:100, slot:'foot', only:'a-cat', d:a=>{
+  {id:'socks', n:'條紋襪', p:200, slot:'foot', only:'a-cat', d:a=>{
     const y=(a.fy||107)-6, x=a.fx||13, w=(a.fw||9)+1;
     const one=cx=>'<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="12" rx="4" fill="#ffc233"/>'+
       '<path d="M'+(cx-w)+' '+(y+4)+'h'+(w*2)+'M'+(cx-w)+' '+(y+8)+'h'+(w*2)+
       '" stroke="#e39b12" stroke-width="2"/>';
     return one(60-x)+one(60+x);}},
-  {id:'fish', n:'小魚乾', p:100, slot:'hand', only:'a-cat', d:a=>{
+  {id:'fish', n:'小魚乾', p:200, slot:'hand', only:'a-cat', d:a=>{
     const x=60-(a.bw+5), y=a.by+a.bh*.5;
     return '<ellipse cx="'+x+'" cy="'+y+'" rx="10" ry="5.5" fill="#9fd8f0"/>'+
       '<path d="M'+(x+9)+' '+y+'l7-5v10z" fill="#7fb6d9"/>'+
       '<circle cx="'+(x-5)+'" cy="'+(y-1)+'" r="1.6" fill="#12142a"/>';}},
-  {id:'bell', n:'鈴鐺項圈', p:80, slot:'neck', only:'a-cat', d:a=>{
+  {id:'bell', n:'鈴鐺項圈', p:100, slot:'neck', only:'a-cat', d:a=>{
     const y=HB(a)-2, w=a.bw*.8;
     return '<path d="M'+(60-w)+' '+y+'q'+w+' 9 '+(w*2)+' 0v6q-'+w+' 9 -'+(w*2)+' 0z" fill="#e8447a"/>'+
       '<circle cx="60" cy="'+(y+9)+'" r="6" fill="#ffc233"/><path d="M56 '+(y+9)+'h8" stroke="#a86f00" stroke-width="1.6"/>'+
       '<circle cx="60" cy="'+(y+11)+'" r="1.6" fill="#a86f00"/>';}},
-  {id:'yarn', n:'毛線球', p:100, slot:'hand', only:'a-cat', d:a=>{
+  {id:'yarn', n:'毛線球', p:200, slot:'hand', only:'a-cat', d:a=>{
     const x=60-(a.bw+5), y=a.by+a.bh*.5;
     return '<circle cx="'+x+'" cy="'+y+'" r="10" fill="#e86a9e"/>'+
       '<path d="M'+(x-8)+' '+(y-3)+'q8 5 16 0M'+(x-7)+' '+(y+4)+'q7-7 14-2" stroke="#b34477" stroke-width="1.6" fill="none"/>';}},
   /* ── 狗 ── */
-  {id:'newsboy', n:'報童帽', p:80, slot:'head', only:'a-dog', d:a=>{
+  {id:'newsboy', n:'報童帽', p:100, slot:'head', only:'a-dog', d:a=>{
     const y=HLINE(a), w=HATW(a), dome=HRY(a)*.62;
     return '<path d="M'+(60-w)+' '+y+'a'+w+' '+dome+' 0 0 1 '+(w*2)+' 0z" fill="#8a5a3c"/>'+
       '<circle cx="60" cy="'+(y-dome+1)+'" r="4" fill="#5f3a22"/>'+
       '<path d="M'+(60-w-4)+' '+(y-1)+'h'+(w*1.1)+'a4 4 0 0 1 0 7h-'+(w*1.1)+'z" fill="#5f3a22"/>';}},
-  {id:'aviator', n:'飛行員眼鏡', p:80, slot:'face', only:'a-dog', d:a=>{
+  {id:'aviator', n:'飛行員眼鏡', p:100, slot:'face', only:'a-dog', d:a=>{
     const y=eyeY(a), g=a.gap, r=Math.max(7,g*.78);
     return '<g fill="#bfe9f7" stroke="#8a5a3c" stroke-width="3">'+
       '<circle cx="'+(60-g)+'" cy="'+y+'" r="'+r+'"/><circle cx="'+(60+g)+'" cy="'+y+'" r="'+r+'"/></g>'+
       '<path d="M'+(60-g+r)+' '+y+'h'+((g-r)*2)+'" stroke="#8a5a3c" stroke-width="3"/>'+
       '<path d="M'+(60-g-r)+' '+y+'h-6M'+(60+g+r)+' '+y+'h6" stroke="#5f3a22" stroke-width="3"/>';}},
-  {id:'sneaker', n:'運動鞋', p:100, slot:'foot', only:'a-dog', d:a=>{
+  {id:'sneaker', n:'運動鞋', p:200, slot:'foot', only:'a-dog', d:a=>{
     const y=(a.fy||107)-4, x=a.fx||13, w=(a.fw||9)+3;
     const one=cx=>'<path d="M'+(cx-w)+' '+(y+4)+'q0-8 '+(w*.8)+'-8h'+(w*.6)+'l'+(w*.7)+' 8z" fill="#ff5c8a"/>'+
       '<rect x="'+(cx-w)+'" y="'+(y+3)+'" width="'+(w*2)+'" height="6" rx="3" fill="#f7f4ec"/>';
     return one(60-x)+one(60+x);}},
-  {id:'rain', n:'小雨衣', p:100, slot:'body', only:'a-dog', d:a=>{
+  {id:'rain', n:'小雨衣', p:200, slot:'body', only:'a-dog', d:a=>{
     const t=a.by-a.bh, h=a.bh*2;
     return '<path d="'+garment(a,.05,.97)+'" fill="#ffc233"/>'+
       '<path d="M'+(60-a.bw*.85)+' '+(t+h*.35)+'h'+(a.bw*1.7)+'" stroke="#e39b12" stroke-width="2.4"/>'+
       '<circle cx="60" cy="'+(t+h*.55)+'" r="3" fill="#e39b12"/>';}},
-  {id:'bone', n:'骨頭項圈', p:80, slot:'neck', only:'a-dog', d:a=>{
+  {id:'bone', n:'骨頭項圈', p:100, slot:'neck', only:'a-dog', d:a=>{
     const y=HB(a)-2, w=a.bw*.8;
     return '<path d="M'+(60-w)+' '+y+'q'+w+' 9 '+(w*2)+' 0v6q-'+w+' 9 -'+(w*2)+' 0z" fill="#5aa9ff"/>'+
       '<g transform="translate(60,'+(y+10)+')"><rect x="-7" y="-2" width="14" height="4" rx="2" fill="#f3ddd0"/>'+
       '<circle cx="-7" cy="-2.5" r="3" fill="#f3ddd0"/><circle cx="-7" cy="2.5" r="3" fill="#f3ddd0"/>'+
       '<circle cx="7" cy="-2.5" r="3" fill="#f3ddd0"/><circle cx="7" cy="2.5" r="3" fill="#f3ddd0"/></g>';}},
-  {id:'disc', n:'飛盤', p:100, slot:'hand', only:'a-dog', d:a=>{
+  {id:'disc', n:'飛盤', p:200, slot:'hand', only:'a-dog', d:a=>{
     const x=60-(a.bw+6), y=a.by+a.bh*.4;
     return '<ellipse cx="'+x+'" cy="'+y+'" rx="12" ry="5" fill="#3ce0d0"/>'+
       '<ellipse cx="'+x+'" cy="'+(y-1.5)+'" rx="7" ry="2.6" fill="#1b8f85"/>';}},
   /* ── 熊 ── */
-  {id:'strawhat', n:'草帽', p:80, slot:'head', only:'a-bear', hide:'ear', d:a=>{
+  {id:'strawhat', n:'草帽', p:100, slot:'head', only:'a-bear', hide:'ear', d:a=>{
     /* 帽身做深、往上戴，圓耳朵收在帽子裡，帽簷落在耳朵下面 */
     const brim=a.hy-HRY(a)*.42;                 /* 帽簷要在眼睛上面 */
     const top=a.hy-a.hr-6, w=HATW(a)*.9, r=7;
@@ -2247,19 +2247,19 @@ const ITEMS=[
       '<ellipse cx="60" cy="'+brim+'" rx="'+(w+11)+'" ry="6.5" fill="#e3c98a"/>'+
       '<path d="M'+(60-w*.78)+' '+(brim-7)+'q'+(w*.78)+' 7 '+(w*1.56)+' 0" '+
       'stroke="#c94a1e" stroke-width="4" fill="none"/>';}},
-  {id:'bearglass', n:'老花眼鏡', p:80, slot:'face', only:'a-bear', d:a=>{
+  {id:'bearglass', n:'老花眼鏡', p:100, slot:'face', only:'a-bear', d:a=>{
     const y=eyeY(a), g=a.gap, r=Math.max(7,g*.72);
     return '<g fill="none" stroke="#8a5a3c" stroke-width="2.6">'+
       '<rect x="'+(60-g-r)+'" y="'+(y-r*.8)+'" width="'+(r*2)+'" height="'+(r*1.6)+'" rx="3"/>'+
       '<rect x="'+(60+g-r)+'" y="'+(y-r*.8)+'" width="'+(r*2)+'" height="'+(r*1.6)+'" rx="3"/>'+
       '<path d="M'+(60-g+r)+' '+y+'h'+((g-r)*2)+'"/></g>';}},
-  {id:'workboot', n:'工作靴', p:100, slot:'foot', only:'a-bear', d:a=>{
+  {id:'workboot', n:'工作靴', p:200, slot:'foot', only:'a-bear', d:a=>{
     const y=(a.fy||107)-7, x=a.fx||13, w=(a.fw||9)+3;
     const one=cx=>'<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="15" rx="4" fill="#5f3a22"/>'+
       '<rect x="'+(cx-w-2)+'" y="'+(y+11)+'" width="'+(w*2+4)+'" height="5" rx="2.5" fill="#3b2412"/>'+
       '<path d="M'+(cx-w+2)+' '+(y+4)+'h'+(w*2-4)+'" stroke="#8a5a3c" stroke-width="2"/>';
     return one(60-x)+one(60+x);}},
-  {id:'plaidscarf', n:'格紋圍巾', p:80, slot:'neck', only:'a-bear', d:a=>{
+  {id:'plaidscarf', n:'格紋圍巾', p:100, slot:'neck', only:'a-bear', d:a=>{
     /* 不能跟樵夫格子衫同色，不然疊上去整條看不見 */
     const y=HB(a)-3, w=a.bw*.86;
     return '<path d="M'+(60-w)+' '+y+'q'+w+' 10 '+(w*2)+' 0v11q-'+w+' 10 -'+(w*2)+' 0z" fill="#3f7d55"/>'+
@@ -2267,44 +2267,44 @@ const ITEMS=[
       'M'+(60-w)+' '+(y+6)+'q'+w+' 10 '+(w*2)+' 0" stroke="#f7f4ec" stroke-width="2" fill="none"/>'+
       '<path d="M'+(60+w*.34)+' '+(y+12)+'l10 17-9 4-5-19z" fill="#2f6242"/>'+
       '<path d="M'+(60+w*.34+3)+' '+(y+17)+'l7 11" stroke="#f7f4ec" stroke-width="1.8"/>';}},
-  {id:'honey', n:'蜂蜜罐', p:100, slot:'hand', only:'a-bear', d:a=>{
+  {id:'honey', n:'蜂蜜罐', p:200, slot:'hand', only:'a-bear', d:a=>{
     const x=60-(a.bw+5), y=a.by+a.bh*.45;
     return '<path d="M'+(x-8)+' '+(y-5)+'h16l-2 16h-12z" fill="#e39b12"/>'+
       '<rect x="'+(x-10)+'" y="'+(y-9)+'" width="20" height="5" rx="2.5" fill="#c98209"/>'+
       '<path d="M'+(x-4)+' '+(y+3)+'h8" stroke="#8a5a05" stroke-width="2"/>';}},
-  {id:'plaid', n:'樵夫格子衫', p:100, slot:'body', only:'a-bear', d:a=>{
+  {id:'plaid', n:'樵夫格子衫', p:200, slot:'body', only:'a-bear', d:a=>{
     const t=a.by-a.bh, h=a.bh*2, y1=t+h*.1, y2=t+h*.95;
     return '<path d="'+garment(a,.1,.95)+'" fill="#c94a1e"/>'+
       '<path d="M'+(60-a.bw*.35)+' '+y1+'V'+y2+'M'+(60+a.bw*.35)+' '+y1+'V'+y2+
       'M'+(60-a.bw*.8)+' '+(t+h*.35)+'h'+(a.bw*1.6)+'M'+(60-a.bw*.9)+' '+(t+h*.6)+'h'+(a.bw*1.8)+
       '" stroke="#7d2a0e" stroke-width="2" fill="none" opacity=".75"/>';}},
   /* ── 狐狸 ── */
-  {id:'bandana', n:'領巾', p:80, slot:'neck', only:'a-fox', d:a=>{
+  {id:'bandana', n:'領巾', p:100, slot:'neck', only:'a-fox', d:a=>{
     const y=HB(a)-2, w=a.bw*.8;
     return '<path d="M'+(60-w)+' '+y+'q'+w+' 9 '+(w*2)+' 0l-'+w+' '+(a.bh*.8)+'z" fill="#c94a1e"/>'+
       '<path d="M'+(60-w)+' '+y+'q'+w+' 9 '+(w*2)+' 0" stroke="#7d3a12" stroke-width="2.4" fill="none"/>';}},
-  {id:'lantern', n:'小提燈', p:100, slot:'hand', only:'a-fox', d:a=>{
+  {id:'lantern', n:'小提燈', p:200, slot:'hand', only:'a-fox', d:a=>{
     const x=60-(a.bw+6), y=a.by+a.bh*.35;
     return '<path d="M'+x+' '+(y-10)+'a6 6 0 0 1 0 8" stroke="#7d3a12" stroke-width="2" fill="none"/>'+
       '<rect x="'+(x-7)+'" y="'+(y-2)+'" width="14" height="16" rx="3" fill="#ffe58a"/>'+
       '<rect x="'+(x-8)+'" y="'+(y-4)+'" width="16" height="4" rx="2" fill="#7d3a12"/>'+
       '<rect x="'+(x-8)+'" y="'+(y+13)+'" width="16" height="4" rx="2" fill="#7d3a12"/>';}},
-  {id:'longboot', n:'長靴', p:100, slot:'foot', only:'a-fox', d:a=>{
+  {id:'longboot', n:'長靴', p:200, slot:'foot', only:'a-fox', d:a=>{
     const y=(a.fy||107)-9, x=a.fx||13, w=(a.fw||9)+2;
     const one=cx=>'<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="17" rx="4" fill="#7d3a12"/>'+
       '<rect x="'+(cx-w-1)+'" y="'+y+'" width="'+(w*2+2)+'" height="5" rx="2.5" fill="#c94a1e"/>';
     return one(60-x)+one(60+x);}},
-  {id:'leaf', n:'楓葉帽', p:80, slot:'head', only:'a-fox', d:a=>{
+  {id:'leaf', n:'楓葉帽', p:100, slot:'head', only:'a-fox', d:a=>{
     const y=HLINE(a)-2;
     return '<path d="M60 '+(y-14)+'l-5 6-7-3 3 7-8 2 9 4-2 4 10-3 10 3-2-4 9-4-8-2 3-7-7 3z" fill="#c94a1e"/>'+
       '<path d="M60 '+(y-7)+'v9" stroke="#7d3a12" stroke-width="2"/>';}},
-  {id:'cape', n:'披風', p:100, slot:'body', only:'a-fox', back:1, d:a=>{
+  {id:'cape', n:'披風', p:200, slot:'body', only:'a-fox', back:1, d:a=>{
     const t=a.by-a.bh, h=a.bh*2, w=a.bw+7;
     return '<path d="M'+(60-a.bw*.7)+' '+t+'q'+(a.bw*.7)+' 7 '+(a.bw*1.4)+' 0'+
       'l'+(w-a.bw*.7)+' '+(h*.95)+'q-'+w+' 10 -'+(w*2)+' 0z" fill="#7b4ce0"/>'+
       '<path d="M'+(60-a.bw*.7)+' '+t+'q'+(a.bw*.7)+' 7 '+(a.bw*1.4)+' 0" '+
       'stroke="#ffc233" stroke-width="3" fill="none"/>';}},
-  {id:'mask', n:'狐狸面具', p:80, slot:'face', only:'a-fox', d:a=>{
+  {id:'mask', n:'狐狸面具', p:100, slot:'face', only:'a-fox', d:a=>{
     /* 整張臉都蓋住，只留兩個眼洞 */
     const cy=a.hy, rx=a.hr*.98, ry=HRY(a)*.98, y=eyeY(a), g=a.gap;
     return '<ellipse cx="60" cy="'+cy+'" rx="'+rx+'" ry="'+ry+'" fill="#fff0e2"/>'+
@@ -2316,12 +2316,12 @@ const ITEMS=[
         'stroke="#c94a1e" stroke-width="2" stroke-linecap="round"/>'+
       '<ellipse cx="60" cy="'+cy+'" rx="'+rx+'" ry="'+ry+'" fill="none" stroke="#c94a1e" stroke-width="1.6"/>';}},
   /* ── 企鵝 ── */
-  {id:'snowmask', n:'雪鏡', p:80, slot:'face', only:'a-peng', d:a=>{
+  {id:'snowmask', n:'雪鏡', p:100, slot:'face', only:'a-peng', d:a=>{
     const y=eyeY(a), g=a.gap, w=g+9;
     return '<path d="M'+(60-w)+' '+(y-6)+'h'+(w*2)+'a4 4 0 0 1 4 4v5a7 7 0 0 1-7 7h-'+(w*2-6)+
       'a7 7 0 0 1-7-7v-5a4 4 0 0 1 4-4z" fill="#3d7fd6"/>'+
       '<path d="M'+(60-w+3)+' '+(y-2)+'h'+(w*2-6)+'v6h-'+(w*2-6)+'z" fill="#bfe9f7" opacity=".85"/>';}},
-  {id:'vest', n:'小背心', p:100, slot:'body', only:'a-peng', d:a=>{
+  {id:'vest', n:'小背心', p:200, slot:'body', only:'a-peng', d:a=>{
     /* 企鵝的頭是身體的一部分，穿太高會蓋到臉。從肚子開始 */
     const t=a.by-a.bh, h=a.bh*2, top=t+h*.53, bot=t+h*.96, gt=7, gb=3.5;
     return '<path d="'+garment(a,.53,.96)+'" fill="#c94a1e"/>'+
@@ -2333,55 +2333,55 @@ const ITEMS=[
       '<path d="M'+(60+gt)+' '+top+'l9 3-7 8z" fill="#e0673a"/>'+
       '<circle cx="'+(60-a.bw*.5)+'" cy="'+(t+h*.72)+'" r="2.6" fill="#ffc233"/>'+
       '<circle cx="'+(60+a.bw*.5)+'" cy="'+(t+h*.72)+'" r="2.6" fill="#ffc233"/>';}},
-  {id:'bucket', n:'一桶魚', p:100, slot:'hand', only:'a-peng', d:a=>{
+  {id:'bucket', n:'一桶魚', p:200, slot:'hand', only:'a-peng', d:a=>{
     const x=60-(a.bw+7), y=a.by+a.bh*.5;
     return '<path d="M'+(x-9)+' '+(y-4)+'h18l-2 15h-14z" fill="#8fa3c8"/>'+
       '<rect x="'+(x-10)+'" y="'+(y-7)+'" width="20" height="4" rx="2" fill="#6c7fa8"/>'+
       '<ellipse cx="'+(x+2)+'" cy="'+(y-6)+'" rx="6" ry="3" fill="#9fd8f0" '+
       'transform="rotate(-24,'+(x+2)+','+(y-6)+')"/>';}},
-  {id:'boot', n:'雪靴', p:100, slot:'foot', only:'a-peng', d:a=>{
+  {id:'boot', n:'雪靴', p:200, slot:'foot', only:'a-peng', d:a=>{
     const y=(a.fy||107)-4, x=a.fx||13;
     return '<rect x="'+(60-x-12)+'" y="'+y+'" width="24" height="13" rx="5" fill="#5aa9ff"/>'+
       '<rect x="'+(60+x-12)+'" y="'+y+'" width="24" height="13" rx="5" fill="#5aa9ff"/>'+
       '<rect x="'+(60-x-13)+'" y="'+(y-4)+'" width="26" height="6" rx="3" fill="#f7f4ec"/>'+
       '<rect x="'+(60+x-13)+'" y="'+(y-4)+'" width="26" height="6" rx="3" fill="#f7f4ec"/>';}},
-  {id:'bowtie', n:'領結', p:80, slot:'neck', only:'a-peng', d:a=>{
+  {id:'bowtie', n:'領結', p:100, slot:'neck', only:'a-peng', d:a=>{
     const y=HB(a)+7;                     /* 企鵝沒脖子，要閃開喙 */
     return '<path d="M60 '+y+'l-13-7v14zM60 '+y+'l13-7v14z" fill="#ff5c8a"/>'+
       '<circle cx="60" cy="'+y+'" r="4" fill="#e8447a"/>';}},
-  {id:'beanie', n:'毛線帽', p:80, slot:'head', only:'a-peng', d:a=>{
+  {id:'beanie', n:'毛線帽', p:100, slot:'head', only:'a-peng', d:a=>{
     const y=HLINE(a), w=HATW(a), dome=HRY(a)*.7;
     return '<path d="M'+(60-w)+' '+y+'a'+w+' '+dome+' 0 0 1 '+(w*2)+' 0z" fill="#ff5c8a"/>'+
       '<rect x="'+(60-w-2)+'" y="'+(y-3)+'" width="'+(w*2+4)+'" height="6.5" rx="3.25" fill="#f7f4ec"/>'+
       '<circle cx="60" cy="'+(y-dome-3)+'" r="5.5" fill="#f7f4ec"/>';}},
   /* ── 機器人 ── */
-  {id:'visor', n:'掃描護目鏡', p:80, slot:'face', only:'a-bot', d:a=>{
+  {id:'visor', n:'掃描護目鏡', p:100, slot:'face', only:'a-bot', d:a=>{
     const y=eyeY(a), w=a.hr*.86;
     return '<rect x="'+(60-w)+'" y="'+(y-7)+'" width="'+(w*2)+'" height="14" rx="6" fill="#1b2440"/>'+
       '<rect x="'+(60-w+3)+'" y="'+(y-3)+'" width="'+(w*2-6)+'" height="4" rx="2" fill="#3ce0d0"/>'+
       '<circle cx="'+(60+w-6)+'" cy="'+(y+3)+'" r="1.8" fill="#ff5c8a"/>';}},
-  {id:'tie', n:'條碼領帶', p:80, slot:'neck', only:'a-bot', d:a=>{
+  {id:'tie', n:'條碼領帶', p:100, slot:'neck', only:'a-bot', d:a=>{
     const y=HB(a)+1;
     return '<path d="M54 '+y+'h12l-3 5 5 16-8 5-8-5 5-16z" fill="#f7f4ec"/>'+
       '<path d="M57 '+(y+9)+'v10M60 '+(y+9)+'v10M63 '+(y+9)+'v10" stroke="#1b2440" stroke-width="1.6"/>';}},
-  {id:'wrench', n:'扳手', p:100, slot:'hand', only:'a-bot', d:a=>{
+  {id:'wrench', n:'扳手', p:200, slot:'hand', only:'a-bot', d:a=>{
     const x=60-(a.bw+6), y=a.by+a.bh*.45;
     return '<rect x="'+(x-2.5)+'" y="'+(y-9)+'" width="5" height="20" rx="2.5" fill="#cdd7ee"/>'+
       '<path d="M'+(x-6)+' '+(y-13)+'a6 6 0 1 1 12 0l-4 3h-4z" fill="#cdd7ee"/>'+
       '<circle cx="'+x+'" cy="'+(y-13)+'" r="2.6" fill="#8fa3c8"/>';}},
-  {id:'rocket', n:'火箭背包', p:100, slot:'body', only:'a-bot', back:1, d:a=>{
+  {id:'rocket', n:'火箭背包', p:200, slot:'body', only:'a-bot', back:1, d:a=>{
     const y=a.by-a.bh*.6, w=a.bw+8;
     return '<rect x="'+(60-w)+'" y="'+y+'" width="10" height="'+(a.bh*1.5)+'" rx="5" fill="#cdd7ee"/>'+
       '<rect x="'+(60+w-10)+'" y="'+y+'" width="10" height="'+(a.bh*1.5)+'" rx="5" fill="#cdd7ee"/>'+
       '<path d="M'+(60-w+5)+' '+(y+a.bh*1.5)+'q5 12 10 0z" fill="#ff9f45"/>'+
       '<path d="M'+(60+w-5)+' '+(y+a.bh*1.5)+'q-5 12 -10 0z" fill="#ff9f45"/>';}},
-  {id:'jet', n:'噴射底座', p:100, slot:'foot', only:'a-bot', hide:'base', d:a=>{
+  {id:'jet', n:'噴射底座', p:200, slot:'foot', only:'a-bot', hide:'base', d:a=>{
     const y=a.by+a.bh-2;                 /* 換掉原本的底座，火焰要留在畫布內 */
     return '<path d="M47 '+y+'h26l-5 12h-16z" fill="#8fa3c8"/>'+
       '<path d="M47 '+y+'h26" stroke="#6c7fa8" stroke-width="3" stroke-linecap="round"/>'+
       '<path d="M53 '+(y+12)+'q7 11 14 0z" fill="#ff9f45"/>'+
       '<path d="M56.5 '+(y+12)+'q3.5 6.5 7 0z" fill="#ffe58a"/>';}},
-  {id:'dish', n:'雷達天線', p:80, slot:'head', only:'a-bot', hide:'ant', d:a=>{
+  {id:'dish', n:'雷達天線', p:100, slot:'head', only:'a-bot', hide:'ant', d:a=>{
     const t=HT(a)+2;                     /* 換掉原本那根天線，不是插兩根 */
     return '<path d="M60 '+t+'V'+(t-7)+'" stroke="#8fa3c8" stroke-width="4"/>'+
       '<path d="M60 '+(t-7)+'l-12-9q12-6.5 24 0z" fill="#cdd7ee"/>'+
@@ -2389,28 +2389,28 @@ const ITEMS=[
       '<path d="M60 '+(t-11)+'v-5" stroke="#8fa3c8" stroke-width="2.4"/>'+
       '<circle cx="60" cy="'+(t-18)+'" r="3.6" fill="#ff5c8a"/>';}},
   /* ── 青蛙 ── */
-  {id:'bamboohat', n:'斗笠', p:80, slot:'head', only:'a-frog', d:a=>{
+  {id:'bamboohat', n:'斗笠', p:100, slot:'head', only:'a-frog', d:a=>{
     const y=HLINE(a)-2;                 /* 青蛙的眼睛長在頭頂，斗笠要再往上一點 */
     return '<path d="M'+(60-29)+' '+(y+3)+'q29-18 58 0q-29 7-58 0z" fill="#e3c98a"/>'+
       '<path d="M'+(60-17)+' '+(y-1)+'q17-9 34 0" stroke="#c9a86a" stroke-width="2" fill="none"/>'+
       '<circle cx="60" cy="'+(y-9)+'" r="2.8" fill="#c9a86a"/>';}},
-  {id:'whistle', n:'救生員哨子', p:80, slot:'neck', only:'a-frog', d:a=>{
+  {id:'whistle', n:'救生員哨子', p:100, slot:'neck', only:'a-frog', d:a=>{
     const y=HB(a)-2, w=a.bw*.75;
     return '<path d="M'+(60-w)+' '+y+'q'+w+' 10 '+(w*2)+' 0" stroke="#ff5c8a" stroke-width="3" fill="none"/>'+
       '<rect x="55" y="'+(y+9)+'" width="12" height="7" rx="3.5" fill="#ffc233"/>'+
       '<circle cx="66" cy="'+(y+12.5)+'" r="2" fill="#e39b12"/>';}},
-  {id:'fins', n:'蛙鞋', p:100, slot:'foot', only:'a-frog', d:a=>{
+  {id:'fins', n:'蛙鞋', p:200, slot:'foot', only:'a-frog', d:a=>{
     /* 要把整隻腳掌包進去，不然腳會從蛙鞋旁邊露出來 */
     const y=(a.fy||107)-7, x=a.fx||13, w=(a.fw||9)+1;
     const one=cx=>'<path d="M'+(cx-w)+' '+(y+5)+'h'+(w*2)+'l'+(w*.3)+' 12h-'+(w*2+w*.6)+'z" fill="#5aa9ff"/>'+
       '<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="7" rx="3.5" fill="#3d7fd6"/>';
     return one(60-x)+one(60+x);}},
-  {id:'lotus', n:'荷葉傘', p:100, slot:'hand', only:'a-frog', d:a=>{
+  {id:'lotus', n:'荷葉傘', p:200, slot:'hand', only:'a-frog', d:a=>{
     const x=60-(a.bw+6), y=a.by-6;
     return '<path d="M'+x+' '+(y+26)+'V'+(y+4)+'" stroke="#5aa83c" stroke-width="3"/>'+
       '<path d="M'+(x-16)+' '+(y+4)+'a16 9 0 0 1 32 0z" fill="#4a8f32"/>'+
       '<path d="M'+x+' '+(y+4)+'l-9-7M'+x+' '+(y+4)+'l9-7" stroke="#2c5c23" stroke-width="1.4"/>';}},
-  {id:'aloha', n:'花襯衫', p:100, slot:'body', only:'a-frog', d:a=>{
+  {id:'aloha', n:'花襯衫', p:200, slot:'body', only:'a-frog', d:a=>{
     /* 敞開的，中間那條露出身體 */
     const t=a.by-a.bh, h=a.bh*2, top=t+h*.08, bot=t+h*.95, gt=6.5, gb=3;
     return '<path d="'+garment(a,.08,.95)+'" fill="#3ce0d0"/>'+
@@ -2423,7 +2423,7 @@ const ITEMS=[
       '<circle cx="'+(60+a.bw*.55)+'" cy="'+(t+h*.58)+'" r="3.2" fill="#ffc233"/>'+
       '<circle cx="'+(60-a.bw*.5)+'" cy="'+(t+h*.75)+'" r="2.6" fill="#fff"/>'+
       '<circle cx="'+(60+a.bw*.48)+'" cy="'+(t+h*.28)+'" r="2.6" fill="#fff"/>';}},
-  {id:'goggle', n:'蛙鏡', p:80, slot:'face', only:'a-frog', d:a=>{
+  {id:'goggle', n:'蛙鏡', p:100, slot:'face', only:'a-frog', d:a=>{
     const y=eyeY(a), g=a.gap;
     return '<g fill="none" stroke="#5aa9ff" stroke-width="3.4">'+
       '<circle cx="'+(60-g)+'" cy="'+y+'" r="9"/><circle cx="'+(60+g)+'" cy="'+y+'" r="9"/></g>'+
@@ -2431,27 +2431,27 @@ const ITEMS=[
       '<circle cx="'+(60+g)+'" cy="'+y+'" r="8" fill="#bfe9f7" opacity=".55"/>'+
       '<path d="M'+(60-g+9)+' '+y+'h'+((g-9)*2)+'" stroke="#5aa9ff" stroke-width="3"/>';}},
   /* ── 貓頭鷹 ── */
-  {id:'cravat', n:'學者領巾', p:80, slot:'neck', only:'a-owl', d:a=>{
+  {id:'cravat', n:'學者領巾', p:100, slot:'neck', only:'a-owl', d:a=>{
     const y=HB(a)-1, w=a.bw*.7;
     return '<path d="M'+(60-w)+' '+y+'q'+w+' 9 '+(w*2)+' 0v6q-'+w+' 9 -'+(w*2)+' 0z" fill="#f7f4ec"/>'+
       '<path d="M60 '+(y+7)+'l-7 6 7 10 7-10z" fill="#8a5ce0"/>';}},
-  {id:'shawl', n:'學者披肩', p:100, slot:'body', only:'a-owl', back:1, d:a=>{
+  {id:'shawl', n:'學者披肩', p:200, slot:'body', only:'a-owl', back:1, d:a=>{
     const t=a.by-a.bh, h=a.bh*2, w=a.bw+6;
     return '<path d="M'+(60-a.bw*.75)+' '+(t+h*.05)+'q'+(a.bw*.75)+' 8 '+(a.bw*1.5)+' 0'+
       'l'+(w-a.bw*.75)+' '+(h*.72)+'q-'+w+' 9 -'+(w*2)+' 0z" fill="#3a2560"/>'+
       '<path d="M'+(60-w)+' '+(t+h*.77)+'q'+w+' 9 '+(w*2)+' 0" stroke="#ffc233" stroke-width="3" fill="none"/>';}},
-  {id:'shoes', n:'小皮鞋', p:100, slot:'foot', only:'a-owl', d:a=>{
+  {id:'shoes', n:'小皮鞋', p:200, slot:'foot', only:'a-owl', d:a=>{
     const y=(a.fy||107)-3, x=a.fx||13, w=(a.fw||9)+2;
     const one=cx=>'<path d="M'+(cx-w)+' '+y+'h'+(w*2)+'v6a4 4 0 0 1-4 4h-'+(w*2-8)+
       'a4 4 0 0 1-4-4z" fill="#3b2412"/>'+
       '<rect x="'+(cx-w)+'" y="'+(y-2)+'" width="'+(w*2)+'" height="4" rx="2" fill="#5f3a22"/>';
     return one(60-x)+one(60+x);}},
-  {id:'book', n:'厚厚的書', p:100, slot:'hand', only:'a-owl', d:a=>{
+  {id:'book', n:'厚厚的書', p:200, slot:'hand', only:'a-owl', d:a=>{
     const x=60-(a.bw+5), y=a.by+a.bh*.45;
     return '<rect x="'+(x-11)+'" y="'+(y-8)+'" width="22" height="17" rx="2" fill="#8a5ce0"/>'+
       '<rect x="'+(x-8)+'" y="'+(y-6)+'" width="16" height="13" fill="#f7f4ec"/>'+
       '<path d="M'+x+' '+(y-6)+'v13" stroke="#c9b8e8" stroke-width="1.4"/>';}},
-  {id:'grad', n:'學士帽', p:80, slot:'head', only:'a-owl', d:a=>{
+  {id:'grad', n:'學士帽', p:100, slot:'head', only:'a-owl', d:a=>{
     /* 帽身要夠深，連耳羽一起罩進去——把耳朵藏起來會讓頭看起來變矮。
        下緣貼著頭的寬度，往上略收，板子壓在帽頂 */
     const k1=.42, y1=a.hy-HRY(a)*k1, w1=HWAT(a,k1);
@@ -2466,7 +2466,7 @@ const ITEMS=[
       '<path d="'+board+'" fill="none" stroke="#1b1030" stroke-width="1.2"/>'+
       '<path d="M'+tx+' '+(yc+2)+'v11" stroke="#ffc233" stroke-width="2.4"/>'+
       '<circle cx="'+tx+'" cy="'+(yc+16)+'" r="3.4" fill="#ffc233"/>';}},
-  {id:'mono', n:'單片眼鏡', p:80, slot:'face', only:'a-owl', d:a=>{
+  {id:'mono', n:'單片眼鏡', p:100, slot:'face', only:'a-owl', d:a=>{
     const y=eyeY(a), g=a.gap;
     return '<circle cx="'+(60+g)+'" cy="'+y+'" r="11" fill="none" stroke="#ffc233" stroke-width="2.6"/>'+
       '<path d="M'+(60+g+9)+' '+(y+7)+'l7 13" stroke="#ffc233" stroke-width="2"/>';}}
