@@ -78,7 +78,7 @@ svg.i{width:1em;height:1em;fill:currentColor;vertical-align:-.13em}
 @media(max-width:900px){.hud{grid-template-columns:1fr;gap:16px}}
 @media(max-width:400px){.pet{width:104px;height:104px}}
 .ava{display:none}
-.pet .edit{position:absolute;inset:7px;border-radius:50%;background:rgba(6,4,20,.62);color:#fff;display:grid;
+.pet .edit{position:absolute;inset:7px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;display:grid;
   place-items:center;gap:2px;font-size:12px;font-weight:700;opacity:0;transition:color .16s,background-color .16s,border-color .16s,opacity .16s,transform .16s,box-shadow .16s,filter .16s}
 .ava:hover .edit{opacity:1}
 .pet .edit svg{width:18px;height:18px;fill:#fff}
@@ -2189,21 +2189,21 @@ const HATW=a=>a.hatW!==undefined?a.hatW:HWAT(a,.45);
 const BGS=[
   {id:'bg-violet',n:'紫藤',     p:0,   h:252, s:.52},
   {id:'bg-night', n:'夜空',     p:150, h:224, s:.50},
-  {id:'bg-dawn',  n:'清晨',     p:150, h:352, s:.42, light:1},
+  {id:'bg-dawn',  n:'清晨',     p:150, h:200, s:.45, light:1},
   {id:'bg-grass', n:'草地',     p:150, h:132, s:.40},
   {id:'bg-sea',   n:'海邊',     p:150, h:198, s:.48},
   {id:'bg-sunset',n:'夕陽',     p:200, h:18,  s:.46},
   {id:'bg-mint',  n:'薄荷',     p:150, h:168, s:.42, light:1},
   {id:'bg-cocoa', n:'可可',     p:150, h:32,  s:.34},
-  {id:'bg-neon',  n:'霓虹',     p:200, h:288, s:.58},
+  {id:'bg-neon',  n:'霓虹',     p:200, h:288, s:.62, light:1},
   /* dl 是亮度微調。灰白跟淡色系稍微淺一點，但仍然是暗色調 */
   {id:'bg-ink',   n:'墨黑',     p:150, h:250, s:.04, dl:-6},
-  {id:'bg-mist',  n:'霧灰',     p:150, h:218, s:.10, light:1},
-  {id:'bg-sakura',n:'櫻花',     p:150, h:340, s:.40, light:1},
+  {id:'bg-mist',  n:'霧灰',     p:150, h:218, s:.07, dl:3},
+  {id:'bg-sakura',n:'櫻花',     p:150, h:334, s:.50, light:1},
   {id:'bg-cream', n:'奶油',     p:150, h:44,  s:.52, light:1},
   {id:'bg-matcha',n:'抹茶',     p:150, h:88,  s:.34},
   {id:'bg-grape', n:'葡萄',     p:200, h:308, s:.44},
-  {id:'bg-peach', n:'蜜桃',     p:150, h:4,   s:.46, light:1}
+  {id:'bg-peach', n:'蜜桃',     p:150, h:20,  s:.62, light:1}
 ];
 /* 深色那組。亮度全部壓在同一個帶裡，換色相不會變亮 */
 const THEME=[
@@ -2281,7 +2281,8 @@ const myBg=()=>bgById(db.settings.bg)||null;
 const myWin=()=>winById(db.settings.win)||WINS[0];
 /* 生物身後那塊的樣式。沒買背景就用原本的暈影 */
 function bgCSS(id){
-  const b=bgById(id)||defBg();         /* 沒買過任何背景就用預設那款 */
+  /* 沒有另外指定就跟著目前的佈景走，不然換成淡色主題只有生物那塊還是深的 */
+  const b=bgById(id)||bgById(db.settings.theme)||defBg();
   const d=b.dl||0;
   return b.light
     ? 'linear-gradient(160deg,'+hsl(b.h,b.s*.55,93)+' 0%,'+hsl(b.h,b.s*.75,76)+' 100%)'
@@ -6216,8 +6217,9 @@ $('btnTheme').onclick=()=>{
   if(list.length<2){ SFX.play('err'); toast('先去商店買個背景吧'); return; }
   const i=list.findIndex(b=>b.id===(db.settings.theme||DEFBG));
   const nx=list[(i+1)%list.length];
-  applyTheme(nx.id,1); save(); renderTheme(); SFX.play('tick');
-  renderChart(); renderBars();
+  db.settings.bg=nx.id; applyTheme(nx.id,1); save();
+  renderTheme(); renderHud(); renderWork(); SFX.play('tick');
+  renderChart(); renderBars(); pushLook();
   toast('佈景換成「'+nx.n+'」');
 };
 
