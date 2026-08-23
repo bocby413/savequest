@@ -2213,9 +2213,8 @@ const myBg=()=>bgById(db.settings.bg)||null;
 const myWin=()=>winById(db.settings.win)||WINS[0];
 /* 生物身後那塊的樣式。沒買背景就用原本的暈影 */
 function bgCSS(id){
-  const b=bgById(id);
-  return b ? 'linear-gradient(160deg,'+hsl(b.h,b.s*.9,34)+' 0%,'+hsl(b.h,b.s,17)+' 100%)'
-           : 'radial-gradient(ellipse at 50% 92%,var(--panel2) 0%,transparent 70%)';
+  const b=bgById(id)||BGS[0];          /* 沒買過任何背景就用預設那款 */
+  return 'linear-gradient(160deg,'+hsl(b.h,b.s*.9,34)+' 0%,'+hsl(b.h,b.s,17)+' 100%)';
 }
 const ITEMS=[
   /* ── 貓 ── */
@@ -5304,7 +5303,7 @@ function renderShopExtra(){
     const own=hasItem(it.id), on=now===it.id, poor=!own&&coins()<it.p;
     const tag=on?'使用中':own?(it.p===0?'預設':'已擁有'):'';
     const icon=bg
-      ? '<span class="bgchip" style="background:linear-gradient(160deg,'+it.c1+' 0%,'+it.c2+' 100%)"></span>'
+      ? '<span class="bgchip" style="background:'+bgCSS(it.id)+'"></span>'
       : '<span class="winchip">'+esc(it.n.slice(0,2))+'</span>';
     return '<button class="sitem'+(on?' on':own?' own':'')+(poor?' poor':'')+
       (sel===it.id&&!on?' try':'')+'" data-extra="'+it.id+'">'+
