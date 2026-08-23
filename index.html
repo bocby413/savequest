@@ -522,6 +522,17 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   background:rgba(255,194,51,.16);color:var(--gold);font-weight:700;font-size:12px;margin-right:6px}
 .fri .ops{display:flex;gap:6px;flex:none}
 .friempty{color:var(--txt3);font-size:13.5px;padding:14px 2px}
+.mecard{margin-top:14px;border-top:1px solid var(--edge);padding-top:12px}
+.mehd{font-size:12px;letter-spacing:1px;color:var(--gold);font-weight:800;margin-bottom:8px}
+.mebody{display:flex;align-items:center;gap:13px}
+.mepic{width:84px;height:84px;flex:none;border-radius:16px;border:2px solid var(--edge);
+  display:grid;place-items:end center;overflow:visible}
+.mepic svg{width:104%;height:104%;overflow:visible}
+.mewho{flex:1;min-width:0}
+.menm{font-size:16px;font-weight:800}
+.mett{font-size:12.5px;color:var(--gold);font-weight:700;margin-top:1px}
+.mewear{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.mefoot{font-size:11.5px;color:var(--txt3);line-height:1.6;margin-top:9px}
 .fridiag{margin-top:12px;padding-top:10px;border-top:1px dashed var(--edge);font-size:11.5px;color:var(--txt3);line-height:1.6}
 /* 好友個人主頁 */
 .friopen{display:flex;align-items:center;gap:12px;flex:1;min-width:0;text-align:left;
@@ -1271,6 +1282,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
     <button class="btn" id="btnGroups">揪團去<span class="dot" id="gDot"></span></button>
   </div>
   <div class="say" id="friMsg" style="min-height:20px;margin-top:8px"></div>
+  <div class="mecard" id="meCard"></div>
   <div id="friBody"></div>
   <div class="dfoot"><button class="btn ghost" data-close>關閉</button></div>
 </div></div>
@@ -2180,7 +2192,12 @@ const BGS=[
   {id:'bg-sunset',n:'夕陽',     p:200, h:18,  s:.46},
   {id:'bg-mint',  n:'薄荷',     p:150, h:168, s:.42},
   {id:'bg-cocoa', n:'可可',     p:150, h:28,  s:.34},
-  {id:'bg-neon',  n:'霓虹',     p:200, h:288, s:.58}
+  {id:'bg-neon',  n:'霓虹',     p:200, h:288, s:.58},
+  /* dl 是亮度微調。灰白跟淡色系稍微淺一點，但仍然是暗色調 */
+  {id:'bg-ink',   n:'墨黑',     p:150, h:250, s:.05, dl:-3},
+  {id:'bg-mist',  n:'霧灰',     p:150, h:218, s:.08, dl:5},
+  {id:'bg-sakura',n:'櫻花',     p:150, h:340, s:.22, dl:4},
+  {id:'bg-cream', n:'奶油',     p:150, h:46,  s:.26, dl:4}
 ];
 /* 一整套深色調。亮度全部壓在同一個帶裡，換色相不會變亮 */
 const THEME=[
@@ -2192,8 +2209,14 @@ const THEME=[
 ];
 const hsl=(h,s,l)=>'hsl('+h+' '+Math.round(s*100)+'% '+l+'%)';
 function themeVars(b){
-  const o={};
-  THEME.forEach(([k,l,f])=>o[k]=hsl(b.h,b.s*f,l));
+  const o={}, d=b.dl||0;
+  THEME.forEach(([k,l,f])=>{
+    /* 底變亮，淺色的字就要更亮才拉得開對比 */
+    const txt=k.indexOf('--txt')===0;
+    const lv=txt ? Math.max(40,Math.min(97,l+d*1.9))
+                 : Math.max(4,Math.min(60,l+d));
+    o[k]=hsl(b.h,b.s*f,lv);
+  });
   return o;
 }
 /* remember 才會記進設定。預覽的時候只換畫面，不動存起來的值，
@@ -2222,7 +2245,8 @@ const myWin=()=>winById(db.settings.win)||WINS[0];
 /* 生物身後那塊的樣式。沒買背景就用原本的暈影 */
 function bgCSS(id){
   const b=bgById(id)||BGS[0];          /* 沒買過任何背景就用預設那款 */
-  return 'linear-gradient(160deg,'+hsl(b.h,b.s*.9,34)+' 0%,'+hsl(b.h,b.s,17)+' 100%)';
+  const d=b.dl||0;
+  return 'linear-gradient(160deg,'+hsl(b.h,b.s*.9,34+d)+' 0%,'+hsl(b.h,b.s,17+d)+' 100%)';
 }
 const ITEMS=[
   /* ── 貓 ── */
@@ -4227,15 +4251,11 @@ function renderFriends(){
   else html+=FRIENDS.map(f=>{
     const d=SHARED[f.uid], g=(d&&d.grant)||{};
     const bits=[];
-    if(d){
-      if(g.lv&&d.title) bits.push('<span class="lvtag">'+esc(d.title)+'</span>');
-      if(g.streak&&d.streak!==undefined) bits.push('連續達標 '+d.streak+' 個月');
-      if(g.goals&&d.goalsAll!==undefined) bits.push('任務 '+d.goalsDone+'/'+d.goalsAll);
-      if(g.month&&d.monthDelta!==undefined) bits.push('這個月 '+(d.monthDelta>=0?'+':'')+short(d.monthDelta));
-      if(g.assets&&d.assets!==undefined) bits.push('資產 '+short(d.assets));
-    }
+    /* 分享了什麼一律進去他的主頁才看得到。列在外面的話，
+       分享多的人那一列就會變高變寬，整排參差不齊 */
+    if(d&&g.lv&&d.title) bits.push('<span class="lvtag">'+esc(d.title)+'</span>');
     if(!bits.length) bits.push('<span style="color:var(--txt3)">'+
-      (d?'對方沒有分享其他資訊':'等對方開啟 app 後才會同步進度')+'</span>');
+      (d?'點進去看他分享了什麼':'等對方開啟 app 後才會同步進度')+'</span>');
     const p=PROFILES[f.uid]||{};
     return '<div class="fri">'+
       '<button class="friopen" data-prof="'+f.uid+'">'+
@@ -4246,6 +4266,7 @@ function renderFriends(){
         '<svg class="chev"><use href="#i-down"/></svg>'+
       '</button></div>';
   }).join('');
+  renderMeCard();
   const me=CLOUD.user?(CLOUD.user.email||CLOUD.user.uid):'（未登入）';
   renderProf();
   box.innerHTML=html+'</div>'+
@@ -4254,6 +4275,29 @@ function renderFriends(){
     '　好友：'+FRIENDS.length+' 位'+
     (CLOUD.err?'<br><span style="color:var(--red)">雲端錯誤：'+esc(CLOUD.err)+'</span>':'　狀態正常')+
     '</div>';
+}
+/* 好友那頁下面放一張自己的卡，換頭貼換裝之後看得到別人看到的樣子 */
+function renderMeCard(){
+  const box=$('meCard'); if(!box) return;
+  const a=petChar(), wear=wornList(a.k);
+  const L=levelInfo();
+  const on=GRANTS.filter(x=>(db.settings.grantAll||DEFAULT_GRANT)[x.k]);
+  box.innerHTML='<div class="mehd">別人看到的你</div>'+
+    '<div class="mebody">'+
+      '<div class="mepic" style="background:'+bgCSS(db.settings.bg)+'">'+charPortrait(a.k,wear,1)+'</div>'+
+      '<div class="mewho">'+
+        '<div class="menm">'+esc(db.settings.name||'還沒取名字')+'</div>'+
+        '<div class="mett">'+esc(myTitle()||'Lv.'+L.lv)+'</div>'+
+        '<div class="mewear">'+
+          (wear.length?wear.map(id=>{const it=itemById(id);
+            return it?'<span class="wtag">'+esc(it.n)+'</span>':'';}).join('')
+            :'<span class="wnone">還沒穿任何配件</span>')+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="mefoot">換角色、換裝、換背景之後，好友那邊看到的就是這樣。'+
+    '每位好友各自看得到什麼，用他那一列的「我分享給他什麼」設定。</div>';
+  const pet=window.MECARDPET||(window.MECARDPET=makePet('meStage'));
 }
 /* 個人主頁：看得到什麼完全由對方的分享設定決定 */
 let profFor=null, profBackTo=null;   /* 從哪個視窗進來的，返回要回得去 */
