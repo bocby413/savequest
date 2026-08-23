@@ -122,7 +122,14 @@ for (const u of users) {
       else console.error(u.id, 'push 失敗', code || e.message);
     }
   }
-  if (okAny) { await mark.set({ shiftAt: at, at: now, subs: subs.size }); }
+  if (okAny) {
+    await mark.set({ shiftAt: at, at: now, subs: subs.size });
+    /* 同一班如果每輪都出現在這裡，就是防重複那層沒生效，要查 */
+    notes.push(`${u.id.slice(0, 6)} 推了 ${subs.size} 台　shiftAt=${at}　` +
+               `下班於 ${Math.round((now - end) / 60000)} 分鐘前`);
+  } else {
+    notes.push(`${u.id.slice(0, 6)} ${subs.size} 台訂閱全部推失敗，這班不標記，下輪會再試`);
+  }
 }
 
 /* 訂閱總數：一則都推不出去的時候，最先要看的就是這個數字 */
