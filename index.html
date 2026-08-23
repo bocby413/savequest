@@ -3368,18 +3368,25 @@ const ITEMS=[
     '<circle cx="60" cy="'+(y-16)+'" r="3.4" fill="#e2452f"/>';}},
   {id:'cte1', n:'貓框眼鏡', p:100, slot:'face', only:'a-cat', d:a=>{
   const y=eyeY(a),g=a.gap,r=AC.ew(a);
-  const lens=sg=>'<path d="M'+(60+sg*(g-r))+' '+(y-r*.2)+'q0 -'+(r*.9)+' '+(sg*r)+' -'+(r*.9)+
-    'q'+(sg*r)+' 0 '+(sg*r*.9)+' '+(r*.5)+'q-'+(sg*r*.2)+' '+(r*1.3)+' -'+(sg*r*1.1)+' '+(r*1.3)+
-    'q-'+(sg*r*.8)+' 0 -'+(sg*r*.8)+' -'+(r*.9)+'z" fill="#f7f4ec" opacity=".55" stroke="#e8447a" stroke-width="2.4"/>';
+  const lens=sg=>{const cx=60+sg*g;
+    return '<ellipse cx="'+cx.toFixed(1)+'" cy="'+y+'" rx="'+r.toFixed(1)+'" ry="'+(r*.82).toFixed(1)+
+      '" fill="#f7f4ec" opacity=".5" stroke="#e8447a" stroke-width="2.4"/>'+
+      '<path d="M'+(cx+sg*r*.55).toFixed(1)+' '+(y-r*.62).toFixed(1)+
+      'L'+(cx+sg*r*1.5).toFixed(1)+' '+(y-r*1.2).toFixed(1)+
+      'L'+(cx+sg*r*.95).toFixed(1)+' '+(y-r*.18).toFixed(1)+'Z" fill="#e8447a"/>';};
   return lens(-1)+lens(1)+
-    '<path d="M'+(60-g+r*.5)+' '+(y-1)+'h'+((g-r*.5)*2)+'" stroke="#e8447a" stroke-width="2.4"/>';}},
+    '<path d="M'+(60-g+r).toFixed(1)+' '+(y-1)+'h'+((g-r)*2).toFixed(1)+'" stroke="#e8447a" stroke-width="2.4"/>';}},
   {id:'cte2', n:'午後墨鏡', p:100, slot:'face', only:'a-cat', d:a=>{
   const y=eyeY(a),g=a.gap,r=AC.ew(a)*1.05;
-  const lens=sg=>'<path d="M'+(60+sg*(g-r))+' '+(y-r*.5)+'h'+(sg*r*2)+'q'+(sg*r*.4)+' '+(r*1.5)+
-    ' -'+(sg*r*1.1)+' '+(r*1.5)+'q-'+(sg*r)+' 0 -'+(sg*r*.9)+' -'+(r*1.5)+'z" fill="#3a3a8c"/>'+
-    '<path d="M'+(60+sg*(g-r*.7))+' '+(y-r*.2)+'l'+(sg*r*.5)+' '+(r*.4)+'" stroke="#ffffff" stroke-width="1.8" opacity=".5"/>';
+  const lens=sg=>{const cx=60+sg*g;
+    return '<g transform="rotate('+(sg*-8)+','+cx.toFixed(1)+','+y+')">'+
+      '<rect x="'+(cx-r).toFixed(1)+'" y="'+(y-r*.62).toFixed(1)+'" width="'+(r*2).toFixed(1)+
+      '" height="'+(r*1.24).toFixed(1)+'" rx="'+(r*.42).toFixed(1)+'" fill="#3a3a8c"/>'+
+      '<path d="M'+(cx-r*.66).toFixed(1)+' '+(y-r*.2).toFixed(1)+'l'+(r*.5).toFixed(1)+' '+(r*.4).toFixed(1)+
+      '" stroke="#ffffff" stroke-width="1.8" opacity=".45"/></g>';};
   return lens(-1)+lens(1)+
-    '<path d="M'+(60-g+r*.6)+' '+(y-r*.5)+'h'+((g-r*.6)*2)+'" stroke="#151541" stroke-width="3"/>';}},
+    '<path d="M'+(60-g+r*.7).toFixed(1)+' '+(y-r*.4).toFixed(1)+'h'+((g-r*.7)*2).toFixed(1)+
+    '" stroke="#151541" stroke-width="3"/>';}},
   {id:'cte3', n:'睡眠眼罩', p:100, slot:'face', only:'a-cat', d:a=>{
   const y=eyeY(a),g=a.gap,w=g+AC.ew(a)+2;
   return '<path d="M'+(60-a.hr)+' '+(y-7)+'h'+(a.hr*2)+'" stroke="#8f5ce0" stroke-width="2.4"/>'+
@@ -3485,13 +3492,17 @@ const ITEMS=[
     '<circle cx="'+(60+a.bw*.44)+'" cy="'+(t+h*p+2)+'" r="2.6" fill="#ffd84d"/>'+
     '<rect x="'+(60-a.bw*.3)+'" y="'+(t+h*(p+.12))+'" width="'+(a.bw*.6)+'" height="9" rx="2" fill="#2b2b6b"/>';}},
   {id:'ctb6', n:'毛毯披風', p:200, slot:'body', only:'a-cat', back:1, d:a=>{
-  const t=a.by-a.bh,h=a.bh*2,w=a.bw+8;
-  let o='<path d="M'+(60-a.bw*.7)+' '+t+'q'+(a.bw*.7)+' 7 '+(a.bw*1.4)+' 0'+
-    'l'+(w-a.bw*.7)+' '+(h*.95)+'q-'+w+' 10 -'+(w*2)+' 0z" fill="#1f9b96"/>';
-  for(let i=0;i<4;i++){const k=.25+i*.2;
-    o+='<path d="M'+(60-w*k*1.6).toFixed(1)+' '+(t+h*.2)+'V'+(t+h*.9)+
-       '" stroke="#0d5c58" stroke-width="1.6" opacity=".6"/>';}
-  return o+'<path d="M'+(60-w)+' '+(t+h*.95)+'q'+w+' 10 '+(w*2)+' 0" stroke="#7ed9c0" stroke-width="3" fill="none"/>';}},
+  const t=a.by-a.bh,h=a.bh*2,w=a.bw+8,tw=a.bw*.7;
+  const y1=t+h*.22,y2=t+h*.92,f1=.22/.95,f2=.92/.95;
+  const half=f=>tw+(w-tw)*f;
+  let o='<path d="M'+(60-tw)+' '+t+'q'+tw+' 7 '+(tw*2)+' 0'+
+    'l'+(w-tw)+' '+(h*.95)+'q-'+w+' 10 -'+(w*2)+' 0z" fill="#1f9b96"/>';
+  [-.68,-.24,.24,.68].forEach(k=>{
+    o+='<path d="M'+(60+k*half(f1)).toFixed(1)+' '+y1.toFixed(1)+
+       'L'+(60+k*half(f2)).toFixed(1)+' '+y2.toFixed(1)+
+       '" stroke="#0d5c58" stroke-width="1.8" opacity=".65"/>';});
+  return o+'<path d="M'+(60-w)+' '+(t+h*.95)+'q'+w+' 10 '+(w*2)+
+    ' 0" stroke="#7ed9c0" stroke-width="3" fill="none"/>';}},
   {id:'ctd1', rot:-9, n:'鮮奶杯', p:200, slot:'hand', only:'a-cat', d:a=>{
   const x=AC.gx(a),y=AC.gy(a)-4;
   return '<path d="M'+(x-7)+' '+(y-7)+'h14l-2 17h-10z" fill="#f7f4ec"/>'+
