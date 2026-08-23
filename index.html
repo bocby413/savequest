@@ -3028,10 +3028,11 @@ const ITEMS=[
       '<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="7" rx="3.5" fill="#3d7fd6"/>';
     return one(60-x)+one(60+x);}},
   {id:'lotus', rot:-15, n:'荷葉傘', p:200, slot:'hand', only:'a-frog', d:a=>{
-    const x=AC.gx(a), y=AC.gy(a)-18;         /* 柄穿過手掌，葉子撐在上面 */
-    return '<path d="M'+x+' '+(y+26)+'V'+(y+4)+'" stroke="#2c5c23" stroke-width="3"/>'+
-      '<path d="M'+(x-15)+' '+(y+4)+'a13 8 0 0 1 26 0z" fill="#4a8f32"/>'+
-      '<path d="M'+x+' '+(y+4)+'l-9-7M'+x+' '+(y+4)+'l9-7" stroke="#2c5c23" stroke-width="1.4"/>';}},
+    /* 跟雨傘同一個道理：握在柄的中段偏下，葉子要撐高才像在遮雨 */
+    const x=AC.gx(a), y=AC.gy(a);
+    return '<path d="M'+x+' '+(y+5)+'V'+(y-23)+'" stroke="#2c5c23" stroke-width="3"/>'+
+      '<path d="M'+(x-13)+' '+(y-23)+'a13 8 0 0 1 26 0z" fill="#4a8f32"/>'+
+      '<path d="M'+x+' '+(y-23)+'l-8-6M'+x+' '+(y-23)+'l8-6" stroke="#2c5c23" stroke-width="1.4"/>';}},
   {id:'aloha', n:'花襯衫', p:200, slot:'body', only:'a-frog', d:a=>{
     /* 敞開的，中間那條露出身體 */
     const t=a.by-a.bh, h=a.bh*2, top=t+h*.08, bot=t+h*.95, gt=6.5, gb=3;
