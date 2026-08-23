@@ -680,15 +680,15 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 @media(max-width:480px){.shoptop{grid-template-columns:112px 1fr;gap:12px;padding:10px}}
 .shopstage{position:relative;border-radius:13px;overflow:hidden;
   background:radial-gradient(ellipse at 50% 92%,var(--panel3) 0%,transparent 70%)}
-.themerow{border-bottom:0;padding-bottom:2px}
-.themepick{display:flex;flex-wrap:wrap;gap:7px;padding:0 0 14px}
-.thchip{display:inline-flex;align-items:center;gap:7px;font-family:inherit;cursor:pointer;
-  border:1.5px solid var(--edge2);background:var(--panel2);color:var(--txt2);
-  border-radius:99px;padding:5px 12px 5px 5px;font-size:13px;font-weight:700}
-.thchip .sw{width:22px;height:22px;border-radius:50%;flex:none;border:1.5px solid rgba(255,255,255,.22)}
-.thchip.on{border-color:var(--gold);color:var(--gold)}
-.thchip.lock{opacity:.45;cursor:default}
-.thchip i{font-style:normal;font-size:11px;color:var(--txt3)}
+/* 預覽佈景時那條回商店的橫幅 */
+.prevbar{position:fixed;left:50%;bottom:20px;transform:translate(-50%,120%);z-index:80;
+  display:flex;align-items:center;gap:10px;cursor:pointer;
+  background:var(--panel);border:2.5px solid var(--gold);border-radius:99px;
+  padding:11px 20px;font-size:14px;color:var(--txt2);
+  box-shadow:0 6px 0 var(--deep),0 10px 26px rgba(0,0,0,.4);
+  transition:transform .26s}
+.prevbar.on{transform:translate(-50%,0)}
+.prevbar b{color:var(--gold);font-weight:800}
 .bigtabs{margin-bottom:8px}
 .bigtabs button{font-size:13.5px;font-weight:800}
 .bgchip{display:block;width:100%;max-width:70px;aspect-ratio:1;border-radius:11px;margin:0 auto;
@@ -1242,8 +1242,8 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
     <button class="btn sm ghost" id="btnSfx"><svg class="i" id="sfxIcon"><use href="#i-vol"/></svg></button></div>
   <div class="setrow volrow"><div class="lb"><b>音量</b><span id="volTxt">中</span></div>
     <input type="range" id="volBar" min="0" max="100" step="5"></div>
-  <div class="setrow themerow"><div class="lb"><b>佈景</b><span>在商店買到的背景可以拿來換整個畫面的色調</span></div></div>
-  <div class="themepick" id="themePick"></div>
+  <div class="setrow"><div class="lb"><b>佈景</b><span id="themeSub">畫面的色調，在商店買到的背景都會出現在這裡</span></div>
+    <button class="btn sm ghost" id="btnTheme">紫藤</button></div>
   <div class="setrow"><div class="lb"><b>備份</b><span>把所有資料存成一個檔案</span></div>
     <button class="btn sm ghost" id="btnExport">匯出</button></div>
   <div class="setrow"><div class="lb"><b>還原</b><span>讀回備份檔，會蓋掉現在的資料</span></div>
@@ -1275,6 +1275,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
       <div class="coinbar" id="shopCoins"></div>
       <div class="tryon" id="shopPick"></div>
       <button class="btn go" id="shopAct" style="width:100%">選一件來試穿</button>
+      <button class="btn sm ghost" id="shopPrev" style="width:100%;margin-top:7px;display:none">整個畫面看看</button>
       <button class="btn sm ghost" id="shopReset" style="width:100%;margin-top:7px">回到現在的樣子</button>
     </div>
   </div>
@@ -1287,6 +1288,8 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   <div class="shopgrid" id="shopBody"></div>
   <div class="dfoot"><button class="btn ghost" data-close>關閉</button></div>
 </div></div>
+
+<div class="prevbar" id="prevBar"><span id="prevTxt"></span><b>點這裡回商店</b></div>
 
 <div class="veil" id="vWork"><div class="dlg">
   <h3>打工</h3>
@@ -2161,7 +2164,7 @@ const HATW=a=>a.hatW!==undefined?a.hatW:HWAT(a,.45);
 /* h 是色相、s 是彩度。整個 App 的配色都從這兩個數字算出來，
    所以每一款都跟原本那組紫的一樣深，不會有刺眼的亮色 */
 const BGS=[
-  {id:'bg-violet',n:'原本的紫', p:0,   h:252, s:.52},
+  {id:'bg-violet',n:'紫藤',     p:0,   h:252, s:.52},
   {id:'bg-night', n:'夜空',     p:150, h:224, s:.50},
   {id:'bg-dawn',  n:'清晨',     p:150, h:342, s:.42},
   {id:'bg-grass', n:'草地',     p:150, h:132, s:.40},
@@ -2185,12 +2188,14 @@ function themeVars(b){
   THEME.forEach(([k,l,f])=>o[k]=hsl(b.h,b.s*f,l));
   return o;
 }
-function applyTheme(id){
+/* remember 才會記進設定。預覽的時候只換畫面，不動存起來的值，
+   免得預覽到一半剛好存檔就把預覽的佈景記住了 */
+function applyTheme(id,remember){
   const b=bgById(id)||BGS[0];
   const st=document.documentElement.style;
   const v=themeVars(b);
   Object.keys(v).forEach(k=>st.setProperty(k,v[k]));
-  db.settings.theme=b.id;
+  if(remember) db.settings.theme=b.id;
 }
 /* ── 勝利動作 ──
    領薪水、轉盤中獎、升級的時候牠會做的動作 */
@@ -2589,7 +2594,9 @@ function loadWallet(){
   if(db&&db.settings){ delete db.settings.coins; delete db.settings.owned; delete db.settings.spunOn; }
 }
 const coinsOwned=()=>WALLET.owned;
-const hasItem=id=>WALLET.owned.indexOf(id)>=0;
+/* 價格 0 的（預設佈景）一開始就當作已經有了，不用買 */
+const isFree=id=>{ const it=itemById(id); return !!it&&it.p===0; };
+const hasItem=id=>isFree(id)||WALLET.owned.indexOf(id)>=0;
 function wearMap(){ return db.settings.wear||(db.settings.wear={}); }
 /* 只算真的買過的，免得改了本機資料就穿著沒買的東西去給好友看。
    畫好友的時候要關掉這層（他有沒有買過是他那邊的規則在管，不是我的清單） */
@@ -5295,14 +5302,16 @@ function renderShopExtra(){
   const sel=pick!==null?pick:now;
   $('shopBody').innerHTML=list.map(it=>{
     const own=hasItem(it.id), on=now===it.id, poor=!own&&coins()<it.p;
+    const tag=on?'使用中':own?(it.p===0?'預設':'已擁有'):'';
     const icon=bg
       ? '<span class="bgchip" style="background:linear-gradient(160deg,'+it.c1+' 0%,'+it.c2+' 100%)"></span>'
       : '<span class="winchip">'+esc(it.n.slice(0,2))+'</span>';
     return '<button class="sitem'+(on?' on':own?' own':'')+(poor?' poor':'')+
       (sel===it.id&&!on?' try':'')+'" data-extra="'+it.id+'">'+
-      (on?'<span class="tag">使用中</span>':own?'<span class="tag">已擁有</span>':'')+
+      (tag?'<span class="tag">'+tag+'</span>':'')+
       icon+'<div class="nm">'+esc(it.n)+'</div>'+
-      '<div class="pr">'+(own?'已擁有':'<svg class="i"><use href="#i-coin"/></svg>'+it.p)+'</div></button>';
+      '<div class="pr">'+(own?(it.p===0?'免費':'已擁有'):'<svg class="i"><use href="#i-coin"/></svg>'+it.p)+
+      '</div></button>';
   }).join('');
   const act=$('shopAct'), info=$('shopPick');
   const chosen=pick!==null&&pick!==now?itemById(pick):null;
@@ -5318,6 +5327,27 @@ function renderShopExtra(){
     act.disabled=poor; act.style.opacity=poor?.45:1;
   }
   $('shopReset').style.display=chosen?'':'none';
+  /* 背景那頁才有「整個畫面看看」 */
+  const pv=$('shopPrev');
+  pv.style.display=(bg&&sel)?'':'none';
+  pv.textContent='整個畫面看看';
+}
+/* 預覽：把佈景暫時套上去、收起商店，讓你四處滑一滑 */
+let themeBefore=null, prevId=null;
+function startPreview(){
+  const id=tryBg||db.settings.bg; if(!id) return;
+  themeBefore=db.settings.theme||BGS[0].id; prevId=id;
+  applyTheme(id); renderChart(); renderBars();
+  shut(); $('prevBar').classList.add('on');
+  $('prevTxt').textContent='正在預覽「'+bgById(id).n+'」';
+  SFX.play('tick');
+}
+function endPreview(){
+  if(themeBefore===null) return;
+  applyTheme(themeBefore,1); themeBefore=null;
+  renderChart(); renderBars(); renderTheme();
+  $('prevBar').classList.remove('on');
+  shopCat='bg'; tryBg=prevId; renderShop(); open('vShop'); SFX.play('tick');
 }
 function openShop(){ shopSlot='head'; shopCat='char'; shopTry={};
   tryBg=null; tryWin=null; renderShop(); open('vShop'); }
@@ -5327,14 +5357,15 @@ async function shopAction(){
     const bg=shopCat==='bg';
     const id=bg?tryBg:tryWin; if(!id) return;
     const it=itemById(id);
-    if(!hasItem(id)){
+    if(!hasItem(id)){          /* 免費的（預設佈景）不用買 */
       if(coins()<it.p){ SFX.play('err'); toast('Bo士幣不夠'); return; }
       const act=$('shopAct'); act.disabled=true; act.textContent='結帳中…';
       const r=await walletBuy([id]);
       act.disabled=false;
       if(!r.ok){ SFX.play('err'); renderShop(); toast('結帳沒過，等一下再試'); return; }
     }
-    if(bg){ db.settings.bg=id; applyTheme(id); tryBg=null; }
+    if(bg){ db.settings.bg=id; applyTheme(id,1); tryBg=null; themeBefore=null;
+            $('prevBar').classList.remove('on'); }
     else { db.settings.win=id; tryWin=null; }
     save(); SFX.play('level'); toast('換好了：'+it.n);
     renderShop(); renderHud(); renderWork(); renderTheme(); pushLook();
@@ -6075,25 +6106,28 @@ document.body.addEventListener('click',e=>{
       else{ SFX.play('tick'); toast('放回未完成'); } } }
 });
 
-/* 佈景：買到的背景才能選，原本的紫免費 */
+/* 佈景：跟以前的亮色暗色一樣，按一下換下一款。只在買過的之間輪 */
+const myThemes=()=>BGS.filter(b=>hasItem(b.id));
 function renderTheme(){
-  const box=$('themePick'); if(!box) return;
-  const now=db.settings.theme||BGS[0].id;
-  box.innerHTML=BGS.map(b=>{
-    const own=b.p===0||hasItem(b.id);
-    return '<button class="thchip'+(now===b.id?' on':'')+(own?'':' lock')+'" data-theme="'+b.id+'"'+
-      (own?'':' disabled')+'>'+
-      '<span class="sw" style="background:linear-gradient(160deg,'+hsl(b.h,b.s*.9,34)+' 0%,'+
-        hsl(b.h,b.s,17)+' 100%)"></span>'+esc(b.n)+
-      (own?'':'<i>還沒買</i>')+'</button>';
-  }).join('');
+  const btn=$('btnTheme'); if(!btn) return;
+  const now=bgById(db.settings.theme)||BGS[0];
+  btn.textContent=now.n;
+  btn.style.borderColor=hsl(now.h,now.s,52);
+  btn.style.color=hsl(now.h,now.s*.9,78);
+  const n=myThemes().length;
+  $('themeSub').textContent = n>1
+    ? '畫面的色調，按一下換下一款（有 '+n+' 款）'
+    : '畫面的色調，去商店買背景就會多幾款可以換';
 }
-$('themePick').addEventListener('click',e=>{
-  const b=e.target.closest('button[data-theme]'); if(!b||b.disabled) return;
-  applyTheme(b.dataset.theme); save(); renderTheme(); SFX.play('tick');
+$('btnTheme').onclick=()=>{
+  const list=myThemes();
+  if(list.length<2){ SFX.play('err'); toast('先去商店買個背景吧'); return; }
+  const i=list.findIndex(b=>b.id===(db.settings.theme||BGS[0].id));
+  const nx=list[(i+1)%list.length];
+  applyTheme(nx.id,1); save(); renderTheme(); SFX.play('tick');
   renderChart(); renderBars();
-  toast('佈景換成「'+bgById(b.dataset.theme).n+'」');
-});
+  toast('佈景換成「'+nx.n+'」');
+};
 
 function swPaint(){
   $('swLoan').classList.toggle('on',db.settings.showLoan!==false);
@@ -6147,6 +6181,8 @@ $('shopBody').addEventListener('click',e=>{
 });
 $('shopAct').onclick=shopAction;
 $('shopReset').onclick=()=>{ shopTry={}; tryBg=null; tryWin=null; SFX.play('tick'); renderShop(); };
+$('shopPrev').onclick=startPreview;
+$('prevBar').onclick=endPreview;
 $('btnSpin').onclick=spin;
 $('catKind').addEventListener('click',e=>{
   const b=e.target.closest('button[data-ck]'); if(!b) return;
