@@ -24,8 +24,10 @@ for (const k of ['FIREBASE_SA', 'VAPID_PRIVATE']) {
 let sa;
 try { sa = JSON.parse(process.env.FIREBASE_SA); }
 catch { console.error('FIREBASE_SA 不是合法的 JSON，要貼整份 service account 檔案的內容'); process.exit(1); }
-initializeApp({ cert: cert(sa), projectId: sa.project_id });
-const db = getFirestore(DB_ID);
+/* getFirestore(字串) 會被當成「另一個 app 的名字」，結果是開一個沒有憑證的 app，
+   錯誤訊息長得像「找不到預設憑證」。要傳 app 本身再帶資料庫名稱 */
+const app = initializeApp({ credential: cert(sa), projectId: sa.project_id });
+const db = getFirestore(app, DB_ID);
 
 webpush.setVapidDetails(
   process.env.VAPID_SUBJECT || 'mailto:noreply@example.com',
