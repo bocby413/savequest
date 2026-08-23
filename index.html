@@ -2553,60 +2553,166 @@ const AC={
     return '<path d="M'+(60-a.bw*.7)+' '+t+'q'+(a.bw*.7)+' 7 '+(a.bw*1.4)+' 0'+
       'l'+(w-a.bw*.7)+' '+(h*.95)+'q-'+w+' 10 -'+(w*2)+' 0z" fill="'+c+'"/>'+
       '<path d="M'+(60-a.bw*.7)+' '+t+'q'+(a.bw*.7)+' 7 '+(a.bw*1.4)+' 0" stroke="'+d+'" stroke-width="3" fill="none"/>';},
-  /* ── 手上。東西掛在左手邊，跟原本那批同一個位置 ── */
+  /* ── 手上 ──
+     gx/gy 是真正的手掌：手臂是一顆從肩膀垂下來的橢圓，旋轉的支點在下端，
+     所以下端那個點不管手怎麼擺都在原地，那裡才是手掌。
+     有握把的東西握把要壓在這個點上，不然就會變成握在火焰或旗面上。
+     hx/hy 是舊的那批用的位置，留著不動 */
+  gx:a=>60-(a.bw+(a.armW||7)-2),
+  gy:a=>(a.apy||(a.by-a.bh*.45))+(a.armH||12)*2-2,
   hx:a=>60-(a.bw+5), hy:a=>a.by+a.bh*.5,
-  cup:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a);
+  /* 杯子：握把朝外，杯身在手上 */
+  cup:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a)-4;
     return '<path d="M'+(x-7)+' '+(y-7)+'h14l-2 17h-10z" fill="'+c+'"/>'+
       '<rect x="'+(x-8)+'" y="'+(y-10)+'" width="16" height="4.5" rx="2.2" fill="'+d+'"/>'+
-      /* 把手朝外，朝內會卡到身體 */
       '<path d="M'+(x-7)+' '+(y-3)+'a5 5 0 0 0 0 9" stroke="'+d+'" stroke-width="2.4" fill="none"/>';},
-  ball:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a);
-    return '<circle cx="'+x+'" cy="'+y+'" r="10" fill="'+c+'"/>'+
-      '<path d="M'+(x-9)+' '+(y-3)+'q9 6 18 0M'+(x-9)+' '+(y+3)+'q9-6 18 0" stroke="'+d+'" stroke-width="1.8" fill="none"/>';},
-  book:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a);
-    return '<rect x="'+(x-9)+'" y="'+(y-11)+'" width="18" height="22" rx="2" fill="'+c+'"/>'+
-      '<rect x="'+(x-6)+'" y="'+(y-11)+'" width="3" height="22" fill="'+d+'"/>'+
-      '<path d="M'+(x-2)+' '+(y-5)+'h8M'+(x-2)+' '+y+'h8M'+(x-2)+' '+(y+5)+'h8" stroke="'+d+'" stroke-width="1.6"/>';},
-  balloon:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a)-6;
-    return '<path d="M'+x+' '+(y+2)+'V'+(y+20)+'" stroke="'+d+'" stroke-width="1.8" fill="none"/>'+
-      '<ellipse cx="'+x+'" cy="'+(y-8)+'" rx="9" ry="10.5" fill="'+c+'"/>'+
-      '<path d="M'+x+' '+(y+2)+'l-3-4h6z" fill="'+c+'"/>';},
-  umbrella:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a)-4;
-    return '<path d="M'+x+' '+(y-2)+'V'+(y+20)+'a4 4 0 0 1-8 0" stroke="'+d+'" stroke-width="2.4" fill="none"/>'+
-      '<path d="M'+(x-14)+' '+(y-2)+'a13 10 0 0 1 26 0z" fill="'+c+'"/>'+
-      '<path d="M'+(x-5)+' '+(y-2)+'a5 8 0 0 1 9 0" stroke="'+d+'" stroke-width="1.4" fill="none"/>';},
-  flag:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a);   /* 旗子往外飄，不然整面蓋在肚子上 */
-    return '<path d="M'+(x+4)+' '+(y-14)+'V'+(y+12)+'" stroke="'+d+'" stroke-width="2.6"/>'+
-      '<path d="M'+(x+4)+' '+(y-14)+'h-16l4 6-4 6h16z" fill="'+c+'"/>';},
-  icecream:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a);
-    return '<path d="M'+(x-7)+' '+(y-1)+'L'+x+' '+(y+15)+'L'+(x+7)+' '+(y-1)+'z" fill="'+d+'"/>'+
-      '<circle cx="'+x+'" cy="'+(y-6)+'" r="8" fill="'+c+'"/>';},
-  camera:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a);
+  /* 網球：兩條弧線是球縫，不是隨便畫兩條 */
+  ball:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a)-3;
+    return '<circle cx="'+x+'" cy="'+y+'" r="9.5" fill="'+c+'"/>'+
+      '<path d="M'+(x-9.5)+' '+y+'a9.5 9.5 0 0 1 19 0" transform="rotate(35,'+x+','+y+')" '+
+      'stroke="'+d+'" stroke-width="1.8" fill="none"/>'+
+      '<path d="M'+(x-9.5)+' '+y+'a9.5 9.5 0 0 0 19 0" transform="rotate(35,'+x+','+y+')" '+
+      'stroke="'+d+'" stroke-width="1.8" fill="none"/>';},
+  /* 抱枕：方的，四角有小揪 */
+  pillow:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a)-3;
+    return '<rect x="'+(x-10)+'" y="'+(y-8)+'" width="20" height="17" rx="5" fill="'+c+'"/>'+
+      '<rect x="'+(x-7)+'" y="'+(y-5)+'" width="14" height="11" rx="3.5" fill="none" '+
+      'stroke="'+d+'" stroke-width="1.6"/>'+
+      '<circle cx="'+(x-10)+'" cy="'+(y-8)+'" r="2.2" fill="'+d+'"/>'+
+      '<circle cx="'+(x+10)+'" cy="'+(y+9)+'" r="2.2" fill="'+d+'"/>';},
+  /* 水球：上窄下圓，頭上還有一個綁起來的結 */
+  waterball:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a)-2;
+    return '<path d="M'+x+' '+(y-12)+'C'+(x+10)+' '+(y-4)+' '+(x+9)+' '+(y+9)+' '+x+' '+(y+9)+
+      'C'+(x-9)+' '+(y+9)+' '+(x-10)+' '+(y-4)+' '+x+' '+(y-12)+'Z" fill="'+c+'"/>'+
+      '<path d="M'+(x-2.5)+' '+(y-12)+'h5l-1.5 4h-2z" fill="'+d+'"/>'+
+      '<ellipse cx="'+(x-3.5)+'" cy="'+(y-1)+'" rx="2.6" ry="4" fill="#ffffff" opacity=".45"/>';},
+  /* 雪球：捏出來的，表面有壓痕跟亮點 */
+  snowball:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a)-3;
+    return '<circle cx="'+x+'" cy="'+y+'" r="9.5" fill="'+c+'"/>'+
+      '<path d="M'+(x-6)+' '+(y+3)+'a4 4 0 0 1 5-3M'+(x+1)+' '+(y+5)+'a4.5 4.5 0 0 1 6-2" '+
+      'stroke="'+d+'" stroke-width="1.8" fill="none" stroke-linecap="round"/>'+
+      '<circle cx="'+(x-3)+'" cy="'+(y-4)+'" r="2.4" fill="#ffffff" opacity=".8"/>';},
+  /* 磁力球：外面兩圈軌道 */
+  orb:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a)-3;
+    return '<circle cx="'+x+'" cy="'+y+'" r="7.5" fill="'+c+'"/>'+
+      '<ellipse cx="'+x+'" cy="'+y+'" rx="11" ry="4.2" fill="none" stroke="'+d+'" stroke-width="1.8"/>'+
+      '<ellipse cx="'+x+'" cy="'+y+'" rx="11" ry="4.2" fill="none" stroke="'+d+'" stroke-width="1.8" '+
+      'transform="rotate(62,'+x+','+y+')"/>'+
+      '<circle cx="'+(x-2.5)+'" cy="'+(y-2.5)+'" r="2" fill="#ffffff" opacity=".55"/>';},
+  book:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a)-4;
+    return '<rect x="'+(x-9)+'" y="'+(y-10)+'" width="18" height="21" rx="2" fill="'+c+'"/>'+
+      '<rect x="'+(x-6)+'" y="'+(y-10)+'" width="3" height="21" fill="'+d+'"/>'+
+      '<path d="M'+(x-2)+' '+(y-4)+'h8M'+(x-2)+' '+(y+1)+'h8M'+(x-2)+' '+(y+6)+'h8" stroke="'+d+'" stroke-width="1.6"/>';},
+  /* 氣球：線從手上往上拉，球在線的上端 */
+  balloon:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a);
+    return '<path d="M'+x+' '+y+'V'+(y-16)+'" stroke="'+d+'" stroke-width="1.8" fill="none"/>'+
+      '<path d="M'+x+' '+(y-16)+'l-3-4h6z" fill="'+c+'"/>'+
+      '<ellipse cx="'+x+'" cy="'+(y-29)+'" rx="9" ry="10.5" fill="'+c+'"/>';},
+  /* 傘：傘柄穿過手掌，傘面撐在上面 */
+  umbrella:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a);
+    return '<path d="M'+x+' '+(y-15)+'V'+(y+9)+'a4 4 0 0 1-8 0" stroke="'+d+'" stroke-width="2.4" fill="none"/>'+
+      '<path d="M'+(x-13)+' '+(y-15)+'a13 10 0 0 1 26 0z" fill="'+c+'"/>'+
+      '<path d="M'+(x-4.5)+' '+(y-15)+'a4.5 8 0 0 1 9 0" stroke="'+d+'" stroke-width="1.4" fill="none"/>';},
+  /* 旗子：手握旗桿下段，旗面飄在上面而且朝外 */
+  flag:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a);
+    return '<path d="M'+x+' '+(y+8)+'V'+(y-30)+'" stroke="'+d+'" stroke-width="2.6"/>'+
+      '<path d="M'+x+' '+(y-30)+'h-16l4 6-4 6h16z" fill="'+c+'"/>';},
+  /* 甜筒：握在餅乾那一截，冰淇淋在上面 */
+  icecream:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a);
+    return '<path d="M'+(x-6)+' '+(y-6)+'L'+x+' '+(y+9)+'L'+(x+6)+' '+(y-6)+'z" fill="'+d+'"/>'+
+      '<path d="M'+(x-4)+' '+(y-2)+'l3 4M'+(x+1)+' '+(y-4)+'l3 4" stroke="#ffffff" stroke-width="1.2" opacity=".45"/>'+
+      '<circle cx="'+x+'" cy="'+(y-12)+'" r="7.5" fill="'+c+'"/>';},
+  camera:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a)-4;
     return '<rect x="'+(x-11)+'" y="'+(y-7)+'" width="22" height="16" rx="3" fill="'+c+'"/>'+
       '<rect x="'+(x-4)+'" y="'+(y-10)+'" width="8" height="4" rx="1.5" fill="'+d+'"/>'+
       '<circle cx="'+x+'" cy="'+(y+1)+'" r="5" fill="'+d+'"/>'+
       '<circle cx="'+x+'" cy="'+(y+1)+'" r="2.2" fill="#f7f4ec"/>';},
-  wand:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a);   /* 星星舉向外側 */
-    return '<path d="M'+(x-5)+' '+(y-4)+'L'+(x+4)+' '+(y+14)+'" stroke="'+d+'" stroke-width="2.6"/>'+
-      '<path d="M'+(x-6)+' '+(y-14)+'l2.6 6 6.4 1-4.6 4.4 1.2 6.4-5.6-3.2-5.6 3.2 1.2-6.4-4.6-4.4 6.4-1z" fill="'+c+'"/>';},
-  donut:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a);
+  /* 魔杖：握在杖的下段，星星在上面而且朝外 */
+  wand:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a);
+    return '<path d="M'+(x+3)+' '+(y+8)+'L'+(x-4)+' '+(y-16)+'" stroke="'+d+'" stroke-width="2.6"/>'+
+      '<path d="M'+(x-5)+' '+(y-24)+'l2.6 6 6.4 1-4.6 4.4 1.2 6.4-5.6-3.2-5.6 3.2 1.2-6.4-4.6-4.4 6.4-1z" fill="'+c+'"/>';},
+  donut:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a)-3;
     return '<circle cx="'+x+'" cy="'+y+'" r="10" fill="'+d+'"/>'+
       '<path d="M'+x+' '+(y-10)+'a10 10 0 0 1 0 20 10 10 0 0 1 0-20" fill="'+c+'"/>'+
       '<circle cx="'+x+'" cy="'+y+'" r="3.6" fill="#3a2a1a" opacity=".25"/>';},
-  key:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a);
-    return '<circle cx="'+x+'" cy="'+(y-7)+'" r="6" fill="none" stroke="'+c+'" stroke-width="3.4"/>'+
-      '<path d="M'+x+' '+(y-1)+'V'+(y+14)+'M'+x+' '+(y+7)+'h-5M'+x+' '+(y+12)+'h-5" stroke="'+c+'" stroke-width="3"/>'+
-      '<circle cx="'+x+'" cy="'+(y-7)+'" r="2" fill="'+d+'"/>';},
-  torch:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a);
-    return '<rect x="'+(x-3)+'" y="'+(y-2)+'" width="6" height="18" rx="3" fill="'+d+'"/>'+
-      '<path d="M'+x+' '+(y-16)+'q8 8 5 13t-10 0 5-13z" fill="'+c+'"/>';},
-  gift:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a);
-    return '<rect x="'+(x-10)+'" y="'+(y-6)+'" width="20" height="17" rx="2" fill="'+c+'"/>'+
+  key:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a)-4;
+    return '<circle cx="'+x+'" cy="'+(y-6)+'" r="6" fill="none" stroke="'+c+'" stroke-width="3.4"/>'+
+      '<path d="M'+x+' '+y+'V'+(y+13)+'M'+x+' '+(y+7)+'h-5M'+x+' '+(y+11)+'h-5" stroke="'+c+'" stroke-width="3"/>'+
+      '<circle cx="'+x+'" cy="'+(y-6)+'" r="2" fill="'+d+'"/>';},
+  /* 火把：握在木柄中段，火在柄的上面 */
+  torch:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a);
+    return '<rect x="'+(x-3)+'" y="'+(y-8)+'" width="6" height="17" rx="3" fill="'+d+'"/>'+
+      '<path d="M'+x+' '+(y-24)+'q8 8 5 13t-10 0 5-13z" fill="'+c+'"/>';},
+  gift:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a)-3;
+    return '<rect x="'+(x-10)+'" y="'+(y-6)+'" width="20" height="16" rx="2" fill="'+c+'"/>'+
       '<rect x="'+(x-11)+'" y="'+(y-9)+'" width="22" height="5" rx="2" fill="'+d+'"/>'+
-      '<path d="M'+x+' '+(y-9)+'V'+(y+11)+'" stroke="'+d+'" stroke-width="3"/>';},
-  bag:(a,c,d)=>{const x=AC.hx(a),y=AC.hy(a);
-    return '<path d="M'+(x-9)+' '+(y-3)+'h18l-2 16h-14z" fill="'+c+'"/>'+
-      '<path d="M'+(x-4.5)+' '+(y-3)+'a4.5 6 0 0 1 9 0" stroke="'+d+'" stroke-width="2.4" fill="none"/>';},
+      '<path d="M'+x+' '+(y-9)+'V'+(y+10)+'" stroke="'+d+'" stroke-width="3"/>';},
+  /* 提袋：提把套在手上，袋身垂在下面 */
+  bag:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a);
+    return '<path d="M'+(x-4.5)+' '+y+'a4.5 6 0 0 1 9 0" stroke="'+d+'" stroke-width="2.4" fill="none"/>'+
+      '<path d="M'+(x-9)+' '+y+'h18l-2 15h-14z" fill="'+c+'"/>';},
+  /* 提燈：提把套在手上，燈罩垂在下面 */
+  lamp:(a,c,d)=>{const x=AC.gx(a),y=Math.min(AC.gy(a)+3,101);   /* 手臂長的別讓燈掉出畫布 */
+    return '<path d="M'+x+' '+(y-9)+'a6 6 0 0 0 0 8" stroke="'+d+'" stroke-width="2" fill="none"/>'+
+      '<rect x="'+(x-7)+'" y="'+(y-1)+'" width="14" height="15" rx="3" fill="'+c+'"/>'+
+      '<rect x="'+(x-8)+'" y="'+(y-3)+'" width="16" height="4" rx="2" fill="'+d+'"/>'+
+      '<rect x="'+(x-8)+'" y="'+(y+13)+'" width="16" height="4" rx="2" fill="'+d+'"/>'+
+      '<path d="M'+x+' '+(y+2)+'v9" stroke="'+d+'" stroke-width="1.4"/>';},
+  /* 電池：上面一個正極凸點 */
+  battery:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a)-3;
+    return '<rect x="'+(x-4)+'" y="'+(y-12)+'" width="8" height="3.5" rx="1.5" fill="'+d+'"/>'+
+      '<rect x="'+(x-7.5)+'" y="'+(y-9)+'" width="15" height="20" rx="3" fill="'+c+'"/>'+
+      '<rect x="'+(x-7.5)+'" y="'+(y+2)+'" width="15" height="9" rx="3" fill="'+d+'"/>'+
+      '<path d="M'+(x-3)+' '+(y-4)+'h6M'+x+' '+(y-7)+'v6" stroke="#ffffff" stroke-width="1.8" opacity=".8"/>';},
+  /* 冰棒：一根扁扁的，下面露出木棍 */
+  popsicle:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a);
+    return '<rect x="'+(x-2)+'" y="'+(y-2)+'" width="4" height="12" rx="2" fill="#d8b98a"/>'+
+      '<rect x="'+(x-7)+'" y="'+(y-21)+'" width="14" height="19" rx="5" fill="'+c+'"/>'+
+      '<path d="M'+(x-4)+' '+(y-17)+'v9" stroke="'+d+'" stroke-width="2" stroke-linecap="round"/>';},
+  /* 烤地瓜：橢圓的，一半包著錫箔 */
+  yam:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a)-3;
+    return '<ellipse cx="'+x+'" cy="'+y+'" rx="7" ry="11" fill="'+c+'" transform="rotate(-18,'+x+','+y+')"/>'+
+      '<path d="M'+(x-8)+' '+(y+2)+'a7 11 0 0 0 14 3z" fill="'+d+'" transform="rotate(-18,'+x+','+y+')"/>'+
+      '<path d="M'+(x-4)+' '+(y-6)+'l2 3M'+(x+1)+' '+(y-9)+'l2 3" stroke="'+d+'" stroke-width="1.4"/>';},
+  /* 木柴：兩根綁在一起，沒有火 */
+  firewood:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a)-2;
+    const log=(dx,dy,rot)=>'<rect x="'+(x+dx-4)+'" y="'+(y+dy-9)+'" width="8" height="19" rx="3.5" fill="'+c+
+      '" transform="rotate('+rot+','+(x+dx)+','+(y+dy)+')"/>'+
+      '<ellipse cx="'+(x+dx)+'" cy="'+(y+dy-8)+'" rx="4" ry="1.8" fill="'+d+
+      '" transform="rotate('+rot+','+(x+dx)+','+(y+dy)+')"/>';
+    return log(-4,1,-16)+log(4,0,14)+
+      '<path d="M'+(x-8)+' '+(y+2)+'h16" stroke="'+d+'" stroke-width="2.6"/>';},
+  /* 提籃：上寬下窄，籃身是編的 */
+  basket:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a);
+    return '<path d="M'+(x-8)+' '+y+'a8 7 0 0 1 16 0" stroke="'+d+'" stroke-width="2.4" fill="none"/>'+
+      '<path d="M'+(x-10)+' '+y+'h20l-3 15h-14z" fill="'+c+'"/>'+
+      '<path d="M'+(x-9.4)+' '+(y+5)+'h18.8M'+(x-8.8)+' '+(y+10)+'h17.6'+
+      'M'+(x-5)+' '+y+'l-1 15M'+(x+5)+' '+y+'l1 15" stroke="'+d+'" stroke-width="1.3" fill="none"/>'+
+      '<rect x="'+(x-10)+'" y="'+(y-2)+'" width="20" height="4" rx="2" fill="'+d+'"/>';},
+  /* 卷軸：捲起來的紙，兩頭有軸 */
+  scroll:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a)-3;
+    return '<rect x="'+(x-9)+'" y="'+(y-6)+'" width="18" height="13" fill="'+c+'"/>'+
+      '<ellipse cx="'+(x-9)+'" cy="'+y+'" rx="3.4" ry="7.5" fill="'+d+'"/>'+
+      '<ellipse cx="'+(x+9)+'" cy="'+y+'" rx="3.4" ry="7.5" fill="'+d+'"/>'+
+      '<path d="M'+(x-5)+' '+(y-2)+'h9M'+(x-5)+' '+(y+2)+'h6" stroke="'+d+'" stroke-width="1.3"/>';},
+  /* 逗貓棒：一根桿子，末端垂一根羽毛 */
+  feather:(a,c,d)=>{const x=AC.gx(a),y=AC.gy(a);
+    return '<path d="M'+(x+3)+' '+(y+8)+'L'+(x-3)+' '+(y-14)+'" stroke="'+d+'" stroke-width="2.4"/>'+
+      '<path d="M'+(x-3)+' '+(y-14)+'q-9 2-8 10" stroke="'+d+'" stroke-width="1.4" fill="none"/>'+
+      '<path d="M'+(x-11)+' '+(y-4)+'q7-9 3 12-8-3-3-12z" fill="'+c+'"/>';},
+  /* 項圈上掛什麼吊牌：k 0=圓牌 1=小魚 2=鈴鐺 3=閃電 */
+  collar2:(a,c,d,k)=>{const y=HB(a)-2,w=a.bw*.8,cy=y+11;
+    const tag=k===1
+      ? '<ellipse cx="60" cy="'+cy+'" rx="6" ry="3.6" fill="'+d+'"/>'+
+        '<path d="M66 '+cy+'l4-3v6z" fill="'+d+'"/>'
+      : k===2
+      ? '<circle cx="60" cy="'+cy+'" r="5" fill="'+d+'"/>'+
+        '<path d="M56 '+cy+'h8" stroke="'+c+'" stroke-width="1.6"/>'+
+        '<circle cx="60" cy="'+(cy+2)+'" r="1.5" fill="'+c+'"/>'
+      : k===3
+      ? '<path d="M61.5 '+(cy-6)+'l-5 6h3.5l-1.5 6 5-6h-3.5z" fill="'+d+'"/>'
+      : '<circle cx="60" cy="'+cy+'" r="4.6" fill="'+d+'"/>';
+    return '<path d="M'+(60-w)+' '+y+'q'+w+' 9 '+(w*2)+' 0v6q-'+w+' 9 -'+(w*2)+' 0z" fill="'+c+'"/>'+tag;},
   /* ── 腳下 ── */
   feet:(a,fn)=>{const x=a.fx||13;return fn(60-x)+fn(60+x);},
   sneak:(a,c,d)=>{const y=(a.fy||107)-3,w=(a.fw||9)+1;
@@ -2693,7 +2799,7 @@ const ITEMS=[
       '" stroke="#e39b12" stroke-width="2"/>';
     return one(60-x)+one(60+x);}},
   {id:'fish', n:'小魚乾', p:200, slot:'hand', only:'a-cat', d:a=>{
-    const x=60-(a.bw+5), y=a.by+a.bh*.5;
+    const x=AC.gx(a), y=AC.gy(a)-3;
     return '<ellipse cx="'+x+'" cy="'+y+'" rx="10" ry="5.5" fill="#9fd8f0"/>'+
       '<path d="M'+(x-9)+' '+y+'l-7-5v10z" fill="#7fb6d9"/>'+
       '<circle cx="'+(x+5)+'" cy="'+(y-1)+'" r="1.6" fill="#12142a"/>';}},
@@ -2703,9 +2809,13 @@ const ITEMS=[
       '<circle cx="60" cy="'+(y+9)+'" r="6" fill="#ffc233"/><path d="M56 '+(y+9)+'h8" stroke="#a86f00" stroke-width="1.6"/>'+
       '<circle cx="60" cy="'+(y+11)+'" r="1.6" fill="#a86f00"/>';}},
   {id:'yarn', n:'毛線球', p:200, slot:'hand', only:'a-cat', d:a=>{
-    const x=60-(a.bw+5), y=a.by+a.bh*.5;
-    return '<circle cx="'+x+'" cy="'+y+'" r="10" fill="#e86a9e"/>'+
-      '<path d="M'+(x-8)+' '+(y-3)+'q8 5 16 0M'+(x-7)+' '+(y+4)+'q7-7 14-2" stroke="#b34477" stroke-width="1.6" fill="none"/>';}},
+    const x=AC.gx(a), y=AC.gy(a)-3;
+    /* 毛線是一圈一圈纏出來的，還有一條線頭垂下來，才不會跟其他球一樣 */
+    const wind=(rx,ry,rot)=>'<ellipse cx="'+x+'" cy="'+y+'" rx="'+rx+'" ry="'+ry+
+      '" fill="none" stroke="#b34477" stroke-width="1.5" transform="rotate('+rot+','+x+','+y+')"/>';
+    return '<circle cx="'+x+'" cy="'+y+'" r="9.5" fill="#e86a9e"/>'+
+      wind(9,4.2,25)+wind(9,4.2,-35)+wind(4.5,9,10)+
+      '<path d="M'+(x-6)+' '+(y+7.5)+'q-5 5-2 10" stroke="#e86a9e" stroke-width="2" fill="none" stroke-linecap="round"/>';}},
   /* ── 狗 ── */
   {id:'newsboy', n:'報童帽', p:100, slot:'head', only:'a-dog', d:a=>{
     const y=HLINE(a), w=HATW(a), dome=HRY(a)*.62;
@@ -2735,7 +2845,7 @@ const ITEMS=[
       '<circle cx="-7" cy="-2.5" r="3" fill="#f3ddd0"/><circle cx="-7" cy="2.5" r="3" fill="#f3ddd0"/>'+
       '<circle cx="7" cy="-2.5" r="3" fill="#f3ddd0"/><circle cx="7" cy="2.5" r="3" fill="#f3ddd0"/></g>';}},
   {id:'disc', n:'飛盤', p:200, slot:'hand', only:'a-dog', d:a=>{
-    const x=60-(a.bw+6), y=a.by+a.bh*.4;
+    const x=AC.gx(a), y=AC.gy(a)-2;
     return '<ellipse cx="'+x+'" cy="'+y+'" rx="12" ry="5" fill="#3ce0d0"/>'+
       '<ellipse cx="'+x+'" cy="'+(y-1.5)+'" rx="7" ry="2.6" fill="#1b8f85"/>';}},
   /* ── 熊 ── */
@@ -2771,7 +2881,7 @@ const ITEMS=[
       '<path d="M'+(60+w*.34)+' '+(y+12)+'l10 17-9 4-5-19z" fill="#2f6242"/>'+
       '<path d="M'+(60+w*.34+3)+' '+(y+17)+'l7 11" stroke="#f7f4ec" stroke-width="1.8"/>';}},
   {id:'honey', n:'蜂蜜罐', p:200, slot:'hand', only:'a-bear', d:a=>{
-    const x=60-(a.bw+5), y=a.by+a.bh*.45;
+    const x=AC.gx(a), y=AC.gy(a)-5;
     return '<path d="M'+(x-8)+' '+(y-5)+'h16l-2 16h-12z" fill="#e39b12"/>'+
       '<rect x="'+(x-10)+'" y="'+(y-9)+'" width="20" height="5" rx="2.5" fill="#c98209"/>'+
       '<path d="M'+(x-4)+' '+(y+3)+'h8" stroke="#8a5a05" stroke-width="2"/>';}},
@@ -2787,7 +2897,7 @@ const ITEMS=[
     return '<path d="M'+(60-w)+' '+y+'q'+w+' 9 '+(w*2)+' 0l-'+w+' '+(a.bh*.8)+'z" fill="#c94a1e"/>'+
       '<path d="M'+(60-w)+' '+y+'q'+w+' 9 '+(w*2)+' 0" stroke="#7d3a12" stroke-width="2.4" fill="none"/>';}},
   {id:'lantern', n:'小提燈', p:200, slot:'hand', only:'a-fox', d:a=>{
-    const x=60-(a.bw+6), y=a.by+a.bh*.35;
+    const x=AC.gx(a), y=AC.gy(a)+4;          /* 提把落在手掌上，燈身垂在下面 */
     return '<path d="M'+x+' '+(y-10)+'a6 6 0 0 0 0 8" stroke="#7d3a12" stroke-width="2" fill="none"/>'+
       '<rect x="'+(x-7)+'" y="'+(y-2)+'" width="14" height="16" rx="3" fill="#ffe58a"/>'+
       '<rect x="'+(x-8)+'" y="'+(y-4)+'" width="16" height="4" rx="2" fill="#7d3a12"/>'+
@@ -2837,7 +2947,7 @@ const ITEMS=[
       '<circle cx="'+(60-a.bw*.5)+'" cy="'+(t+h*.72)+'" r="2.6" fill="#ffc233"/>'+
       '<circle cx="'+(60+a.bw*.5)+'" cy="'+(t+h*.72)+'" r="2.6" fill="#ffc233"/>';}},
   {id:'bucket', n:'一桶魚', p:200, slot:'hand', only:'a-peng', d:a=>{
-    const x=60-(a.bw+7), y=a.by+a.bh*.5;
+    const x=AC.gx(a), y=AC.gy(a)+5;          /* 提把落在手掌上 */
     return '<path d="M'+(x-9)+' '+(y-4)+'h18l-2 15h-14z" fill="#8fa3c8"/>'+
       '<rect x="'+(x-10)+'" y="'+(y-7)+'" width="20" height="4" rx="2" fill="#6c7fa8"/>'+
       '<ellipse cx="'+(x+2)+'" cy="'+(y-6)+'" rx="6" ry="3" fill="#9fd8f0" '+
@@ -2868,7 +2978,7 @@ const ITEMS=[
     return '<path d="M54 '+y+'h12l-3 5 5 16-8 5-8-5 5-16z" fill="#f7f4ec"/>'+
       '<path d="M57 '+(y+9)+'v10M60 '+(y+9)+'v10M63 '+(y+9)+'v10" stroke="#1b2440" stroke-width="1.6"/>';}},
   {id:'wrench', n:'扳手', p:200, slot:'hand', only:'a-bot', d:a=>{
-    const x=60-(a.bw+6), y=a.by+a.bh*.45;
+    const x=AC.gx(a), y=AC.gy(a)-2;          /* 握在柄的中段 */
     return '<rect x="'+(x-2.5)+'" y="'+(y-9)+'" width="5" height="20" rx="2.5" fill="#cdd7ee"/>'+
       '<path d="M'+(x-6)+' '+(y-13)+'a6 6 0 1 1 12 0l-4 3h-4z" fill="#cdd7ee"/>'+
       '<circle cx="'+x+'" cy="'+(y-13)+'" r="2.6" fill="#8fa3c8"/>';}},
@@ -2909,7 +3019,7 @@ const ITEMS=[
       '<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="7" rx="3.5" fill="#3d7fd6"/>';
     return one(60-x)+one(60+x);}},
   {id:'lotus', n:'荷葉傘', p:200, slot:'hand', only:'a-frog', d:a=>{
-    const x=60-(a.bw+6), y=a.by-6;
+    const x=AC.gx(a), y=AC.gy(a)-18;         /* 柄穿過手掌，葉子撐在上面 */
     return '<path d="M'+x+' '+(y+26)+'V'+(y+4)+'" stroke="#5aa83c" stroke-width="3"/>'+
       '<path d="M'+(x-15)+' '+(y+4)+'a13 8 0 0 1 26 0z" fill="#4a8f32"/>'+
       '<path d="M'+x+' '+(y+4)+'l-9-7M'+x+' '+(y+4)+'l9-7" stroke="#2c5c23" stroke-width="1.4"/>';}},
@@ -2950,7 +3060,7 @@ const ITEMS=[
       '<rect x="'+(cx-w)+'" y="'+(y-2)+'" width="'+(w*2)+'" height="4" rx="2" fill="#5f3a22"/>';
     return one(60-x)+one(60+x);}},
   {id:'book', n:'厚厚的書', p:200, slot:'hand', only:'a-owl', d:a=>{
-    const x=60-(a.bw+5), y=a.by+a.bh*.45;
+    const x=AC.gx(a), y=AC.gy(a)-4;
     return '<rect x="'+(x-11)+'" y="'+(y-8)+'" width="22" height="17" rx="2" fill="#8a5ce0"/>'+
       '<rect x="'+(x-8)+'" y="'+(y-6)+'" width="16" height="13" fill="#f7f4ec"/>'+
       '<path d="M'+x+' '+(y-6)+'v13" stroke="#c9b8e8" stroke-width="1.4"/>';}},
@@ -2988,7 +3098,7 @@ const ITEMS=[
   {id:'cte6', n:'方框文青眼鏡', p:100, slot:'face', only:'a-cat', d:a=>AC.square(a,'#fff3e0','#8a5a3c')},
   {id:'ctn1', n:'緞帶蝴蝶結', p:100, slot:'neck', only:'a-cat', d:a=>AC.bowN(a,'#ff5c8a','#ffd0e2')},
   {id:'ctn2', n:'珍珠項鍊', p:100, slot:'neck', only:'a-cat', d:a=>AC.beads(a,'#f7f4ec','#ffc233')},
-  {id:'ctn3', n:'小魚吊牌', p:100, slot:'neck', only:'a-cat', d:a=>AC.collar(a,'#5aa9ff','#9fd8f0')},
+  {id:'ctn3', n:'小魚吊牌', p:100, slot:'neck', only:'a-cat', d:a=>AC.collar2(a,'#5aa9ff','#eaf6ff',1)},
   {id:'ctn4', n:'毛絨圍巾', p:100, slot:'neck', only:'a-cat', d:a=>AC.scarf(a,'#ffb3cf','#e8447a')},
   {id:'ctn5', n:'荷葉領', p:100, slot:'neck', only:'a-cat', d:a=>AC.ruff(a,'#fff3e0','#ffc233')},
   {id:'ctn6', n:'最佳貓咪獎牌', p:100, slot:'neck', only:'a-cat', d:a=>AC.medalN(a,'#ffc233','#e39b12')},
@@ -2999,9 +3109,9 @@ const ITEMS=[
   {id:'ctb5', n:'吊帶褲', p:200, slot:'body', only:'a-cat', d:a=>AC.overall(a,'#5aa9ff','#ffc233')},
   {id:'ctb6', n:'毛毯披風', p:200, slot:'body', only:'a-cat', back:1, d:a=>AC.capeB(a,'#e8447a','#ffd0e2')},
   {id:'ctd1', n:'鮮奶杯', p:200, slot:'hand', only:'a-cat', d:a=>AC.cup(a,'#f7f4ec','#5aa9ff')},
-  {id:'ctd2', n:'逗貓棒', p:200, slot:'hand', only:'a-cat', d:a=>AC.wand(a,'#ffc233','#e8447a')},
+  {id:'ctd2', n:'逗貓棒', p:200, slot:'hand', only:'a-cat', d:a=>AC.feather(a,'#ffc233','#b34477')},
   {id:'ctd3', n:'草莓甜甜圈', p:200, slot:'hand', only:'a-cat', d:a=>AC.donut(a,'#ff9ec4','#e0c48f')},
-  {id:'ctd4', n:'午睡抱枕', p:200, slot:'hand', only:'a-cat', d:a=>AC.ball(a,'#ffd0e2','#e8447a')},
+  {id:'ctd4', n:'午睡抱枕', p:200, slot:'hand', only:'a-cat', d:a=>AC.pillow(a,'#ffd0e2','#e8447a')},
   {id:'ctd5', n:'罐頭提袋', p:200, slot:'hand', only:'a-cat', d:a=>AC.bag(a,'#5aa9ff','#f7f4ec')},
   {id:'ctd6', n:'生日禮物', p:200, slot:'hand', only:'a-cat', d:a=>AC.gift(a,'#a879ff','#ffc233')},
   {id:'ctf1', n:'肉球拖鞋', p:200, slot:'foot', only:'a-cat', d:a=>AC.slipper(a,'#ff9ec4','#e8447a')},
@@ -3072,9 +3182,9 @@ const ITEMS=[
   {id:'brb4', n:'木工圍裙', p:200, slot:'body', only:'a-bear', d:a=>AC.apron(a,'#8a5a3c','#e3c98a')},
   {id:'brb5', n:'工作吊帶褲', p:200, slot:'body', only:'a-bear', d:a=>AC.overall(a,'#5f3a22','#e39b12')},
   {id:'brb6', n:'熊掌上衣', p:200, slot:'body', only:'a-bear', d:a=>AC.tee(a,'#e3c98a','#7d5a44')},
-  {id:'brd1', n:'木柴', p:200, slot:'hand', only:'a-bear', d:a=>AC.torch(a,'#ff9f45','#5f3a22')},
-  {id:'brd2', n:'野餐籃', p:200, slot:'hand', only:'a-bear', d:a=>AC.bag(a,'#c9a86a','#7d5a44')},
-  {id:'brd3', n:'露營燈', p:200, slot:'hand', only:'a-bear', d:a=>AC.cup(a,'#ffe58a','#5f3a22')},
+  {id:'brd1', n:'木柴', p:200, slot:'hand', only:'a-bear', d:a=>AC.firewood(a,'#a97243','#5f3a22')},
+  {id:'brd2', n:'野餐籃', p:200, slot:'hand', only:'a-bear', d:a=>AC.basket(a,'#d8b071','#7d5a44')},
+  {id:'brd3', n:'露營燈', p:200, slot:'hand', only:'a-bear', d:a=>AC.lamp(a,'#ffe58a','#5f3a22')},
   {id:'brd4', n:'大書', p:200, slot:'hand', only:'a-bear', d:a=>AC.book(a,'#3f7d55','#e3c98a')},
   {id:'brd5', n:'營地旗', p:200, slot:'hand', only:'a-bear', d:a=>AC.flag(a,'#3f7d55','#5f3a22')},
   {id:'brd6', n:'莓果甜筒', p:200, slot:'hand', only:'a-bear', d:a=>AC.icecream(a,'#e8447a','#c9a86a')},
@@ -3098,7 +3208,7 @@ const ITEMS=[
   {id:'fxe5', n:'方框學者鏡', p:100, slot:'face', only:'a-fox', d:a=>AC.square(a,'#fff3e0','#7d3a12')},
   {id:'fxe6', n:'腮紅印', p:100, slot:'face', only:'a-fox', d:a=>AC.blush(a,'#e8447a','#fff3e0')},
   {id:'fxn1', n:'秋楓圍巾', p:100, slot:'neck', only:'a-fox', d:a=>AC.scarf(a,'#f2e2c4','#7d3a12')},
-  {id:'fxn2', n:'鈴鐺項圈', p:100, slot:'neck', only:'a-fox', d:a=>AC.collar(a,'#c94a1e','#ffc233')},
+  {id:'fxn2', n:'鈴鐺項圈', p:100, slot:'neck', only:'a-fox', d:a=>AC.collar2(a,'#7d3a12','#ffc233',2)},
   {id:'fxn3', n:'祭典珠鍊', p:100, slot:'neck', only:'a-fox', d:a=>AC.beads(a,'#ffc233','#c94a1e')},
   {id:'fxn4', n:'旅人領結', p:100, slot:'neck', only:'a-fox', d:a=>AC.bowN(a,'#7d3a12','#e3c98a')},
   {id:'fxn5', n:'狡智獎牌', p:100, slot:'neck', only:'a-fox', d:a=>AC.medalN(a,'#ffc233','#7d3a12')},
@@ -3109,7 +3219,7 @@ const ITEMS=[
   {id:'fxb4', n:'條紋衫', p:200, slot:'body', only:'a-fox', d:a=>AC.stripes(a,'#fff3e0','#e39b12')},
   {id:'fxb5', n:'茶屋圍裙', p:200, slot:'body', only:'a-fox', d:a=>AC.apron(a,'#3a2560','#e3c98a')},
   {id:'fxb6', n:'吊帶短褲', p:200, slot:'body', only:'a-fox', d:a=>AC.overall(a,'#3f7d55','#e39b12')},
-  {id:'fxd1', n:'烤地瓜', p:200, slot:'hand', only:'a-fox', d:a=>AC.icecream(a,'#e39b12','#7d3a12')},
+  {id:'fxd1', n:'烤地瓜', p:200, slot:'hand', only:'a-fox', d:a=>AC.yam(a,'#b5651d','#e0dccf')},
   {id:'fxd2', n:'油紙傘', p:200, slot:'hand', only:'a-fox', d:a=>AC.umbrella(a,'#2f2a5c','#e3c98a')},
   {id:'fxd3', n:'旅人提袋', p:200, slot:'hand', only:'a-fox', d:a=>AC.bag(a,'#e3c98a','#7d3a12')},
   {id:'fxd4', n:'古書', p:200, slot:'hand', only:'a-fox', d:a=>AC.book(a,'#7d3a12','#e3c98a')},
@@ -3147,11 +3257,11 @@ const ITEMS=[
   {id:'pgb5', n:'吊帶工作褲', p:200, slot:'body', only:'a-peng', d:a=>AC.overall(a,'#c94a1e','#ffc233', .62,.96)},
   {id:'pgb6', n:'冰原披風', p:200, slot:'body', only:'a-peng', back:1, d:a=>AC.capeB(a,'#bfe9f7','#5aa9ff')},
   {id:'pgd1', n:'熱可可', p:200, slot:'hand', only:'a-peng', d:a=>AC.cup(a,'#8a5a3c','#f7f4ec')},
-  {id:'pgd2', n:'冰棒', p:200, slot:'hand', only:'a-peng', d:a=>AC.icecream(a,'#bfe9f7','#5aa9ff')},
-  {id:'pgd3', n:'航海圖', p:200, slot:'hand', only:'a-peng', d:a=>AC.book(a,'#1b3a6b','#ffc233')},
+  {id:'pgd2', n:'冰棒', p:200, slot:'hand', only:'a-peng', d:a=>AC.popsicle(a,'#5aa9ff','#bfe9f7')},
+  {id:'pgd3', n:'航海圖', p:200, slot:'hand', only:'a-peng', d:a=>AC.scroll(a,'#f2e6c8','#1b3a6b')},
   {id:'pgd4', n:'救生氣球', p:200, slot:'hand', only:'a-peng', d:a=>AC.balloon(a,'#ff5c8a','#f7f4ec')},
   {id:'pgd5', n:'船錨鑰匙', p:200, slot:'hand', only:'a-peng', d:a=>AC.key(a,'#cdd7ee','#1b3a6b')},
-  {id:'pgd6', n:'雪球', p:200, slot:'hand', only:'a-peng', d:a=>AC.ball(a,'#f7f4ec','#bfe9f7')},
+  {id:'pgd6', n:'雪球', p:200, slot:'hand', only:'a-peng', d:a=>AC.snowball(a,'#f7f4ec','#8fbfe0')},
   {id:'pgf1', n:'雪地短靴', p:200, slot:'foot', only:'a-peng', d:a=>AC.bootF(a,'#1b3a6b','#f7f4ec')},
   {id:'pgf2', n:'溜冰鞋', p:200, slot:'foot', only:'a-peng', d:a=>AC.skate(a,'#5aa9ff','#cdd7ee')},
   {id:'pgf3', n:'毛絨腳套', p:200, slot:'foot', only:'a-peng', d:a=>AC.padF(a,'#f7f4ec','#bfe9f7')},
@@ -3171,7 +3281,7 @@ const ITEMS=[
   {id:'bte4', n:'圓框鏡片', p:100, slot:'face', only:'a-bot', d:a=>AC.round(a,'#eaf6ff','#6c7fa8')},
   {id:'bte5', n:'濾網口罩', p:100, slot:'face', only:'a-bot', d:a=>AC.maskLow(a,'#cdd7ee','#6c7fa8')},
   {id:'bte6', n:'單邊感測器', p:100, slot:'face', only:'a-bot', d:a=>AC.patch(a,'#3ce0d0','#6c7fa8')},
-  {id:'btn1', n:'電源項圈', p:100, slot:'neck', only:'a-bot', d:a=>AC.collar(a,'#6c7fa8','#3ce0d0')},
+  {id:'btn1', n:'電源項圈', p:100, slot:'neck', only:'a-bot', d:a=>AC.collar2(a,'#3a4a68','#3ce0d0',3)},
   {id:'btn2', n:'資料線圍巾', p:100, slot:'neck', only:'a-bot', d:a=>AC.scarf(a,'#3ce0d0','#1b8f85')},
   {id:'btn3', n:'正式領帶', p:100, slot:'neck', only:'a-bot', d:a=>AC.tieN(a,'#ff5c8a','#6c7fa8')},
   {id:'btn4', n:'接頭領結', p:100, slot:'neck', only:'a-bot', d:a=>AC.bowN(a,'#3ce0d0','#cdd7ee')},
@@ -3183,11 +3293,11 @@ const ITEMS=[
   {id:'btb4', n:'工程圍裙', p:200, slot:'body', only:'a-bot', d:a=>AC.apron(a,'#6c7fa8','#3ce0d0')},
   {id:'btb5', n:'吊帶工裝', p:200, slot:'body', only:'a-bot', d:a=>AC.overall(a,'#3d7fd6','#ffc233')},
   {id:'btb6', n:'散熱背心', p:200, slot:'body', only:'a-bot', d:a=>AC.vestOpen(a,'#cdd7ee','#6c7fa8')},
-  {id:'btd1', n:'電池', p:200, slot:'hand', only:'a-bot', d:a=>AC.cup(a,'#3ce0d0','#6c7fa8')},
-  {id:'btd2', n:'說明書', p:200, slot:'hand', only:'a-bot', d:a=>AC.book(a,'#6c7fa8','#3ce0d0')},
+  {id:'btd1', n:'電池', p:200, slot:'hand', only:'a-bot', d:a=>AC.battery(a,'#3ce0d0','#6c7fa8')},
+  {id:'btd2', n:'維修手冊', p:200, slot:'hand', only:'a-bot', d:a=>AC.book(a,'#6c7fa8','#3ce0d0')},
   {id:'btd3', n:'訊號旗', p:200, slot:'hand', only:'a-bot', d:a=>AC.flag(a,'#3ce0d0','#6c7fa8')},
   {id:'btd4', n:'零件袋', p:200, slot:'hand', only:'a-bot', d:a=>AC.bag(a,'#ff9f45','#6c7fa8')},
-  {id:'btd5', n:'磁力球', p:200, slot:'hand', only:'a-bot', d:a=>AC.ball(a,'#e34a4a','#e8edf7')},
+  {id:'btd5', n:'磁力球', p:200, slot:'hand', only:'a-bot', d:a=>AC.orb(a,'#e34a4a','#cdd7ee')},
   {id:'btd6', n:'主鑰匙', p:200, slot:'hand', only:'a-bot', d:a=>AC.key(a,'#cdd7ee','#3ce0d0')},
   {id:'btf1', n:'履帶底座', p:200, slot:'foot', only:'a-bot', hide:'base', d:a=>AC.wheelB(a,'#6c7fa8','#cdd7ee')},
   {id:'btf2', n:'懸浮底座', p:200, slot:'foot', only:'a-bot', hide:'base', d:a=>AC.hoverB(a,'#cdd7ee','#3ce0d0')},
@@ -3222,9 +3332,9 @@ const ITEMS=[
   {id:'fgb6', n:'荷葉披風', p:200, slot:'body', only:'a-frog', back:1, d:a=>AC.capeB(a,'#1f5c46','#c8e64a')},
   {id:'fgd1', n:'雨傘', p:200, slot:'hand', only:'a-frog', d:a=>AC.umbrella(a,'#5aa9ff','#3d7fd6')},
   {id:'fgd2', n:'青草茶', p:200, slot:'hand', only:'a-frog', d:a=>AC.cup(a,'#4a8f32','#c8e64a')},
-  {id:'fgd3', n:'水球', p:200, slot:'hand', only:'a-frog', d:a=>AC.ball(a,'#5aa9ff','#bfe9f7')},
+  {id:'fgd3', n:'水球', p:200, slot:'hand', only:'a-frog', d:a=>AC.waterball(a,'#5aa9ff','#1b5c9e')},
   {id:'fgd4', n:'池畔氣球', p:200, slot:'hand', only:'a-frog', d:a=>AC.balloon(a,'#3ce0d0','#5aa83c')},
-  {id:'fgd5', n:'田野提籃', p:200, slot:'hand', only:'a-frog', d:a=>AC.bag(a,'#c9a86a','#8a5a3c')},
+  {id:'fgd5', n:'田野提籃', p:200, slot:'hand', only:'a-frog', d:a=>AC.basket(a,'#d8b071','#8a5a3c')},
   {id:'fgd6', n:'抹茶甜筒', p:200, slot:'hand', only:'a-frog', d:a=>AC.icecream(a,'#c8e64a','#c9a86a')},
   {id:'fgf1', n:'雨鞋', p:200, slot:'foot', only:'a-frog', d:a=>AC.bootF(a,'#ffc233','#e39b12')},
   {id:'fgf2', n:'池畔涼鞋', p:200, slot:'foot', only:'a-frog', d:a=>AC.sandal(a,'#3ce0d0','#1b8f85')},
@@ -3258,12 +3368,12 @@ const ITEMS=[
   {id:'owb5', n:'吊帶書裝', p:200, slot:'body', only:'a-owl', d:a=>AC.overall(a,'#3a2560','#ffc233')},
   {id:'owb6', n:'講師背心', p:200, slot:'body', only:'a-owl', d:a=>AC.vestOpen(a,'#3a2560','#241540')},
   {id:'owd1', n:'厚書', p:200, slot:'hand', only:'a-owl', d:a=>AC.book(a,'#3a2560','#ffc233')},
-  {id:'owd2', n:'夜燈', p:200, slot:'hand', only:'a-owl', d:a=>AC.torch(a,'#ffe58a','#5c3aa8')},
+  {id:'owd2', n:'夜燈', p:200, slot:'hand', only:'a-owl', d:a=>AC.lamp(a,'#ffe58a','#5c3aa8')},
   {id:'owd3', n:'咖啡杯', p:200, slot:'hand', only:'a-owl', d:a=>AC.cup(a,'#8a5a3c','#f7f4ec')},
   {id:'owd4', n:'星星魔杖', p:200, slot:'hand', only:'a-owl', d:a=>AC.wand(a,'#ffe58a','#5c3aa8')},
   {id:'owd5', n:'書袋', p:200, slot:'hand', only:'a-owl', d:a=>AC.bag(a,'#5c3aa8','#ffc233')},
   {id:'owd6', n:'藏書鑰匙', p:200, slot:'hand', only:'a-owl', d:a=>AC.key(a,'#ffc233','#3a2560')},
-  {id:'owf1', n:'書齋皮鞋', p:200, slot:'foot', only:'a-owl', d:a=>AC.clog(a,'#3a2560','#5c3aa8')},
+  {id:'owf1', n:'木底便鞋', p:200, slot:'foot', only:'a-owl', d:a=>AC.clog(a,'#3a2560','#5c3aa8')},
   {id:'owf2', n:'夜行短靴', p:200, slot:'foot', only:'a-owl', d:a=>AC.bootF(a,'#2a1a4a','#ffc233')},
   {id:'owf3', n:'星紋襪', p:200, slot:'foot', only:'a-owl', d:a=>AC.sockF(a,'#c9a6ff','#3a2560')},
   {id:'owf4', n:'講堂涼鞋', p:200, slot:'foot', only:'a-owl', d:a=>AC.sandal(a,'#e3c98a','#7a5230')},
