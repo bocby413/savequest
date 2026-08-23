@@ -10098,6 +10098,15 @@ async function pushEnable(){
     endpoint:sub.endpoint, p256dh:j.keys.p256dh, auth:j.keys.auth,
     ua:navigator.userAgent.slice(0,180), at:Date.now()
   });
+  /* 立刻在這台裝置上跳一則，不用真的去打工 2 小時才知道收不收得到。
+     這則是本機直接顯示的，不經過雲端，所以只驗「權限跟顯示」這一段；
+     雲端那段在打工做完的時候才會走到 */
+  try{
+    await reg.showNotification('通知打開了',{
+      body:'打工做完的時候會像這樣提醒你',
+      icon:'./icon-192.png', badge:'./icon-32.png', tag:'push-test'
+    });
+  }catch(e){ toast('訂閱好了，但這台裝置跳不出通知：'+(e.message||e.name)); }
   toast('打工做完會通知你了');
   pushRefresh();
 }
