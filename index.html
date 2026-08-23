@@ -4354,6 +4354,11 @@ function picBg(d,p,own){
   const k=d.ch||p.ch||((d.avatar||p.avatar||{}).id);
   return knownCh(k)?'background:'+bgCSS(d.bg||p.bg,own)+';':'';
 }
+/* 團裡那排 19px 小圖示：底色塞進 svg 自己的 style，排版一行都不用改 */
+function friPicOn(d,p,own){
+  const h=friPic(d,p), b=picBg(d,p,own);
+  return b?h.replace('<svg ','<svg style="'+b+'" '):h;
+}
 function friAvatar(a){
   if(a&&a.type==='photo'&&a.data) return '<img src="'+a.data+'" alt="">';
   return '<svg viewBox="0 0 64 64"><use href="#'+((a&&a.id)||AVATARS[0])+'"/></svg>';
@@ -5150,9 +5155,10 @@ function renderGHome(){
     const info=g.info||{}, mem=g.members||[];
     const faces=mem.slice(0,4).map(uid=>{
       const i=info[uid]||{};
-      const look=uid===me?{ch:petChar().k,wear:wornList(petChar().k),avatar:db.settings.avatar}
-                         :{ch:i.ch,wear:i.wear,avatar:i.a};
-      return '<span>'+friPic(null,look)+'</span>';
+      const look=uid===me?{ch:petChar().k,wear:wornList(petChar().k),
+                           avatar:db.settings.avatar,bg:db.settings.bg}
+                         :{ch:i.ch,wear:i.wear,avatar:i.a,bg:i.bg};
+      return '<span>'+friPicOn(null,look,uid===me)+'</span>';
     }).join('');
     /* 我在這團的淨額。每個團都有監聽，所以不用先點開就算得出來 */
     const recs=GALL[g.id]||[];
@@ -5213,9 +5219,10 @@ function renderGroups(){
         '<div class="gmem">'+(g.members||[]).map(uid=>{
           const i=info[uid]||{};
           /* 自己用當下的，別人用他自己更新上來的那份，都不是入團當時的快照 */
-          const look=uid===me?{ch:petChar().k,wear:wornList(petChar().k),avatar:db.settings.avatar}
-                             :{ch:i.ch,wear:i.wear,avatar:i.a};
-          return '<button class="gm" data-gmem="'+uid+'">'+friPic(null,look)+esc(gMemName(g,uid))+
+          const look=uid===me?{ch:petChar().k,wear:wornList(petChar().k),
+                               avatar:db.settings.avatar,bg:db.settings.bg}
+                             :{ch:i.ch,wear:i.wear,avatar:i.a,bg:i.bg};
+          return '<button class="gm" data-gmem="'+uid+'">'+friPicOn(null,look,uid===me)+esc(gMemName(g,uid))+
             (per[uid]?'<b>'+short(per[uid])+'</b>':'')+'</button>';
         }).join('')+'</div>'+
         (shut?groupPhoto(g)+
@@ -5956,14 +5963,15 @@ async function doWork(){
 /* 轉盤。w 是格子的大小（相對值），越小越難中。
    v='again' 那格不算今天的次數，可以再轉一次 */
 const WHEEL=[
-  {v:20,   w:1.40, c:'#ffc233'},
-  {v:30,   w:1.32, c:'#3ce0d0'},
-  {v:100,  w:0.42, c:'#a879ff'},
-  {v:20,   w:1.40, c:'#e39b12'},
-  {v:50,   w:0.74, c:'#ff5c8a'},
-  {v:'again', w:0.95, c:'#3a3273'},
-  {v:30,   w:1.32, c:'#2bb5a8'},
-  {v:50,   w:0.74, c:'#c94a1e'}
+  {v:20,   w:1.35, c:'#ffc233'},
+  {v:30,   w:1.25, c:'#3ce0d0'},
+  {v:100,  w:0.82, c:'#a879ff'},
+  {v:20,   w:1.35, c:'#e39b12'},
+  {v:50,   w:0.95, c:'#ff5c8a'},
+  {v:'again', w:0.90, c:'#3a3273'},
+  {v:30,   w:1.25, c:'#2bb5a8'},
+  {v:0,    w:0.82, c:'#2a2540'},      /* 再接再厲，跟 100 一樣小格 */
+  {v:50,   w:0.95, c:'#c94a1e'}
 ];
 /* 每一格的起始角度與角度大小，照 w 分配整個 360 度 */
 function wheelSlices(){
@@ -5990,14 +5998,21 @@ function wheelSVG(){
     const big=x.deg>180?1:0;
     out+='<path d="M100 100 L'+x0.toFixed(2)+' '+y0.toFixed(2)+
          ' A'+R+' '+R+' 0 '+big+' 1 '+x1.toFixed(2)+' '+y1.toFixed(2)+' Z" fill="'+x.c+'"/>';
-    const am=(x.mid-90)*Math.PI/180, tr=x.deg<30?68:64;
+    /* 每一格的字都一樣大、都橫著擺。字擺得夠外面，窄格的弧長才容得下，
+       格子大小也照這個下限配，最窄的一格剛好放得下三位數 */
+    const txt=typeof x.v!=='number';
+    const tr=txt?74:78;
+    const am=(x.mid-90)*Math.PI/180;
     const tx=100+tr*Math.cos(am), ty=100+tr*Math.sin(am);
+    const two=(a,b,f,c)=>'<text y="'+(-f*.16).toFixed(1)+'" text-anchor="middle" font-size="'+f+
+      '" font-weight="800" fill="'+c+'">'+a+'</text>'+
+      '<text y="'+(f*1.02).toFixed(1)+'" text-anchor="middle" font-size="'+f+
+      '" font-weight="800" fill="'+c+'">'+b+'</text>';
     out+='<g transform="translate('+tx.toFixed(2)+','+ty.toFixed(2)+') rotate('+x.mid.toFixed(2)+')">'+
-      (x.v==='again'
-        ? '<text y="-2" text-anchor="middle" font-size="13" font-weight="800" fill="#e6e0ff">再轉</text>'+
-          '<text y="13" text-anchor="middle" font-size="13" font-weight="800" fill="#e6e0ff">一次</text>'
-        : '<text y="6" text-anchor="middle" font-size="'+(x.deg<30?21:26)+
-          '" font-weight="800" fill="#1a1633">'+x.v+'</text>')+
+      (x.v==='again' ? two('再轉','一次',12.5,'#e6e0ff')
+      : x.v===0      ? two('再接','再厲',12.5,'#b6aae2')
+      : '<text y="6.2" text-anchor="middle" font-size="18" font-weight="800" '+
+        'fill="#1a1633">'+x.v+'</text>')+
       '</g>';
   });
   return out+'<circle cx="100" cy="100" r="99" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="2"/></svg>';
@@ -6030,7 +6045,7 @@ async function spin(){
   const sl=wheelSlices(), tot=sl.reduce((n,x)=>n+x.w,0);
   let pick=Math.random()*tot, hit=sl[0];
   for(const x of sl){ pick-=x.w; if(pick<=0){ hit=x; break; } }
-  const got=hit.v, free=got==='again';
+  const got=hit.v, free=got==='again';    /* free 那格不算今天的次數 */
   /* 再轉一次那格不寫進雲端，今天的次數就不算掉 */
   if(!free){
     const r=await walletSpin(got);
@@ -6052,6 +6067,10 @@ async function spin(){
       $('wheelRes').className='wheelres';
       $('wheelRes').innerHTML='<div><b>再轉一次</b>這次不算，再來一把</div>';
       SFX.play('win');
+    }else if(!got){
+      $('wheelRes').className='wheelres none';
+      $('wheelRes').innerHTML='<div><b>再接再厲</b>明天再來一次</div>';
+      SFX.play('err');
     }else{
       $('wheelRes').className='wheelres';
       $('wheelRes').innerHTML='<div><b>+'+got+' Bo士幣</b>現在總共 '+money(coins())+' 枚</div>';
@@ -6740,12 +6759,13 @@ window.CLOUD={
     if(!this.user||!this.api||!GROUPS.length) return;
     const {F}=this.api, me=this.user.uid;
     const val={n:db.settings.name||'某人', a:db.settings.avatar||null,
-               ch:petChar().k, wear:wornList(petChar().k)};
+               ch:petChar().k, wear:wornList(petChar().k), bg:db.settings.bg||null};
     const now=JSON.stringify(val);
     for(const g of GROUPS){
       const old=((g.info||{})[me])||null;
       if(old&&JSON.stringify({n:old.n,a:old.a===undefined?null:old.a,
-                              ch:old.ch,wear:old.wear})===now) continue;
+                              ch:old.ch,wear:old.wear,
+                              bg:old.bg===undefined?null:old.bg})===now) continue;
       try{ await F.updateDoc(F.doc(this.api.fs,'groups',g.id),{['info.'+me]:val}); }catch(e){}
     }
   },
