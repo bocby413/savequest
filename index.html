@@ -523,16 +523,17 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .fri .ops{display:flex;gap:6px;flex:none}
 .friempty{color:var(--txt3);font-size:13.5px;padding:14px 2px}
 .mecard{margin-top:14px;border-top:1px solid var(--edge);padding-top:12px}
-.mehd{font-size:12px;letter-spacing:1px;color:var(--gold);font-weight:800;margin-bottom:8px}
 .mebody{display:flex;align-items:center;gap:13px}
 .mepic{width:84px;height:84px;flex:none;border-radius:16px;border:2px solid var(--edge);
   display:grid;place-items:end center;overflow:visible}
 .mepic svg{width:104%;height:104%;overflow:visible}
 .mewho{flex:1;min-width:0}
-.menm{font-size:16px;font-weight:800}
+.menm{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:800}
+.mesmall{width:34px;height:34px;flex:none;border-radius:50%;overflow:hidden;background:var(--panel3);
+  border:1.5px solid var(--edge2);display:grid;place-items:center}
+.mesmall svg{width:82%;height:82%}
 .mett{font-size:12.5px;color:var(--gold);font-weight:700;margin-top:1px}
 .mewear{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
-.mefoot{font-size:11.5px;color:var(--txt3);line-height:1.6;margin-top:9px}
 .fridiag{margin-top:12px;padding-top:10px;border-top:1px dashed var(--edge);font-size:11.5px;color:var(--txt3);line-height:1.6}
 /* 好友個人主頁 */
 .friopen{display:flex;align-items:center;gap:12px;flex:1;min-width:0;text-align:left;
@@ -2197,7 +2198,7 @@ const BGS=[
   {id:'bg-ink',   n:'墨黑',     p:150, h:250, s:.05, dl:-3},
   {id:'bg-mist',  n:'霧灰',     p:150, h:218, s:.08, dl:5},
   {id:'bg-sakura',n:'櫻花',     p:150, h:340, s:.22, dl:4},
-  {id:'bg-cream', n:'奶油',     p:150, h:46,  s:.26, dl:4},
+  {id:'bg-cream', n:'奶油',     p:150, h:44,  s:.15, dl:9},
   {id:'bg-matcha',n:'抹茶',     p:150, h:88,  s:.34},
   {id:'bg-grape', n:'葡萄',     p:200, h:308, s:.44},
   {id:'bg-peach', n:'蜜桃',     p:150, h:4,   s:.34, dl:3}
@@ -4298,11 +4299,13 @@ function renderMeCard(){
   const a=petChar(), wear=wornList(a.k);
   const L=levelInfo();
   const on=GRANTS.filter(x=>(db.settings.grantAll||DEFAULT_GRANT)[x.k]);
-  box.innerHTML='<div class="mehd">別人看到的你</div>'+
-    '<div class="mebody">'+
+  box.innerHTML='<div class="mebody">'+
       '<div class="mepic" style="background:'+bgCSS(db.settings.bg)+'">'+charPortrait(a.k,wear,1)+'</div>'+
       '<div class="mewho">'+
-        '<div class="menm">'+esc(db.settings.name||'還沒取名字')+'</div>'+
+        '<div class="menm">'+
+          /* 名字旁邊放好友清單那種小頭貼 */
+          '<span class="mesmall">'+friPic(null,{ch:a.k,wear:wear})+'</span>'+
+          '<b>'+esc(db.settings.name||'還沒取名字')+'</b></div>'+
         '<div class="mett">'+esc(myTitle()||'Lv.'+L.lv)+'</div>'+
         '<div class="mewear">'+
           (wear.length?wear.map(id=>{const it=itemById(id);
@@ -4310,10 +4313,7 @@ function renderMeCard(){
             :'<span class="wnone">還沒穿任何配件</span>')+
         '</div>'+
       '</div>'+
-    '</div>'+
-    '<div class="mefoot">換角色、換裝、換背景之後，好友那邊看到的就是這樣。'+
-    '每位好友各自看得到什麼，用他那一列的「我分享給他什麼」設定。</div>';
-  const pet=window.MECARDPET||(window.MECARDPET=makePet('meStage'));
+    '</div>';
 }
 /* 個人主頁：看得到什麼完全由對方的分享設定決定 */
 let profFor=null, profBackTo=null;   /* 從哪個視窗進來的，返回要回得去 */
