@@ -1933,6 +1933,7 @@ $('saveAva').onclick=()=>{
 /* ── HUD ── */
 function renderHud(){
   renderPet();                       /* 牠站在 HUD 上，換頭貼也要跟著換 */
+  paintCoins();                      /* 錢有可能剛剛才變，這裡一起更新 */
   const r=recs(), cash=now(), sv=stockValue(), ov=othersValue(), cur=cash+sv+ov, L=levelInfo();
   roll($('amt'),cur);
   $('amtK').textContent=(sv||ov)?'總資產':'目前存款';
@@ -7187,7 +7188,7 @@ async function shopAction(){
       const act=$('shopAct'); act.disabled=true; act.textContent='結帳中…';
       const r=await walletBuy([id]);
       act.disabled=false;
-      if(!r.ok){ SFX.play('err'); renderShop(); toast('結帳沒過，等一下再試'); return; }
+      if(!r.ok){ SFX.play('err'); renderShop(); toast(buyErr(r)); return; }
     }
     /* 已經有的東西只是換上去，不用放升級那種大音效 */
     SFX.play(paid?'level':'tick');
@@ -7206,8 +7207,7 @@ async function shopAction(){
     act.disabled=true; act.textContent='結帳中…';
     const r=await walletBuy(buy);
     act.disabled=false;
-    if(!r.ok){ SFX.play('err'); renderShop();
-      toast(r.e==='coins'?'Bo士幣不夠':'結帳沒過，等一下再試'); return; }
+    if(!r.ok){ SFX.play('err'); renderShop(); toast(buyErr(r)); return; }
   }
   wearMap()[a.k]=tryOutfit(a);
   shopTry={}; save();
@@ -7234,12 +7234,19 @@ async function walletBuy(ids){
     if(coins()<it.p) return {ok:0,e:'coins'};
     if(onCloud()){
       const r=await CLOUD.walletBuy(id,it.p);
-      if(!r.ok) return r;
+      if(!r.ok){ r.id=id; r.n=it.n; return r; }
     }else{
       WALLET.coins-=it.p; WALLET.owned.push(id); saveWallet();
     }
   }
   return {ok:1};
+}
+/* 結帳失敗的說法。permission-denied 幾乎都是雲端的價目表還沒更新 */
+function buyErr(r){
+  if(r.e==='coins') return 'Bo士幣不夠';
+  if(r.e==='permission-denied')
+    return '「'+(r.n||r.id)+'」雲端還沒認得這件商品，價目表要更新';
+  return '結帳沒過（'+(r.e||'不明')+'），等一下再試';
 }
 /* ── 打工 ──
    點下去隨機抽到 2／4／8 小時，一天兩次。每隻角色的工作都不一樣，
@@ -7683,11 +7690,18 @@ function wheelSVG(){
   return out+'<circle cx="100" cy="100" r="99" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="2"/></svg>';
 }
 let spinning=false, wheelAngle=0;
+/* 幣數：所有會動到錢的地方都要重畫，所以掛在 renderHud 裡，
+   不要只掛在轉盤那個函式上（買背景、買動作、收工就不會更新） */
+function paintCoins(){
+  const cb=$('coinBar');
+  if(cb) cb.innerHTML='<svg class="i"><use href="#i-coin"/></svg>'+money(coins())+' Bo士幣';
+  const sc=$('shopCoins');
+  if(sc) sc.innerHTML='<svg class="i"><use href="#i-coin"/></svg>'+money(coins())+' Bo士幣';
+}
 function renderWheel(){
   const b=$('btnWheel'); if(!b) return;
   $('wheelDot').className='dot'+(canSpin()?' on':'');
-  const cb=$('coinBar');
-  if(cb) cb.innerHTML='<svg class="i"><use href="#i-coin"/></svg>'+money(coins())+' Bo士幣';
+  paintCoins();
 }
 function openWheel(){
   if(!$('wheelSpin').innerHTML) $('wheelSpin').innerHTML=wheelSVG();
