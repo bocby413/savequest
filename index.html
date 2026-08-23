@@ -7896,9 +7896,14 @@ function renderMeCard(){
           '<b>'+esc(db.settings.name||'還沒取名字')+'</b></div>'+
         '<div class="mett">'+esc(myTitle()||'Lv.'+L.lv)+'</div>'+
         '<div class="mewear">'+
-          (wear.length?wear.map(id=>{const it=itemById(id);
-            return it?'<span class="wtag">'+esc(it.n)+'</span>':'';}).join('')
-            :'<span class="wnone">還沒穿任何配件</span>')+
+          /* 背景跟勝利動作也是買來的，跟好友那頁一樣一起列出來 */
+          (()=>{
+            const tags=wear.map(id=>{const it=itemById(id);
+              return it?'<span class="wtag">'+esc(it.n)+'</span>':'';}).filter(Boolean);
+            const bo=myBg()||BGS[0]; if(bo) tags.push('<span class="wtag alt">背景・'+esc(bo.n)+'</span>');
+            const wo=myWin(); if(wo) tags.push('<span class="wtag alt">動作・'+esc(wo.n)+'</span>');
+            return tags.length?tags.join(''):'<span class="wnone">還沒穿任何配件</span>';
+          })()+
         '</div>'+
       '</div>'+
     '</div>';
@@ -7939,8 +7944,8 @@ function renderProf(){
   /* 背景跟勝利動作也是買來的東西，一起列出來才看得出對方換了什麼 */
   const pbg=(d&&d.bg)||p.bg||f.bg, pwin=(d&&d.win)||p.win||f.win;
   const extra=[];
-  const bo=BGS.find(x=>x.id===pbg); if(bo) extra.push('背景・'+bo.n);
-  const wo=WINS.find(x=>x.id===pwin); if(wo) extra.push('動作・'+wo.n);
+  const bo=BGS.find(x=>x.id===pbg)||BGS[0]; if(bo) extra.push('背景・'+bo.n);
+  const wo=WINS.find(x=>x.id===pwin)||WINS[0]; if(wo) extra.push('動作・'+wo.n);
   const tags=wr.map(it=>'<span class="wtag">'+esc(it.n)+'</span>')
     .concat(extra.map(t=>'<span class="wtag alt">'+esc(t)+'</span>'));
   $('profWear').innerHTML=knownCh(pk)
