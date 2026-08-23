@@ -2361,9 +2361,10 @@ const winById=id=>WINS.find(x=>x.id===id);
 const myBg=()=>bgById(db.settings.bg)||null;
 const myWin=()=>winById(db.settings.win)||WINS[0];
 /* 生物身後那塊的樣式。沒買背景就用原本的暈影 */
-function bgCSS(id){
-  /* 沒有另外指定就跟著目前的佈景走，不然換成淡色主題只有生物那塊還是深的 */
-  const b=bgById(id)||bgById(db.settings.theme)||defBg();
+/* own=1 是自己的畫面，沒買背景就跟著自己的佈景走，不然只有生物那塊還是深的。
+   別人的背景是他自己買的，沒有就退回預設那款，絕對不能跟著我的佈景跑 */
+function bgCSS(id,own){
+  const b=bgById(id)||(own?bgById(db.settings.theme):null)||defBg();
   const d=b.dl||0;
   return b.light
     ? 'linear-gradient(160deg,'+hsl(b.h,b.s*.55,93)+' 0%,'+hsl(b.h,b.s*.75,76)+' 100%)'
@@ -4347,6 +4348,12 @@ function friPic(d,p){
   const k=d.ch||p.ch||((d.avatar||p.avatar||{}).id);
   return knownCh(k)?charPortrait(k,d.wear||p.wear||[]):friAvatar(d.avatar||p.avatar);
 }
+/* 小頭像的底色。用那個人自己的背景顏色，畫不出角色就維持原本的灰底 */
+function picBg(d,p,own){
+  d=d||{}; p=p||{};
+  const k=d.ch||p.ch||((d.avatar||p.avatar||{}).id);
+  return knownCh(k)?'background:'+bgCSS(d.bg||p.bg,own)+';':'';
+}
 function friAvatar(a){
   if(a&&a.type==='photo'&&a.data) return '<img src="'+a.data+'" alt="">';
   return '<svg viewBox="0 0 64 64"><use href="#'+((a&&a.id)||AVATARS[0])+'"/></svg>';
@@ -4380,7 +4387,7 @@ function renderFriends(){
     const p=PROFILES[f.uid]||{};
     return '<div class="fri">'+
       '<button class="friopen" data-prof="'+f.uid+'">'+
-        '<span class="pic">'+friPic(d,p)+'</span>'+
+        '<span class="pic" style="'+picBg(d,p)+'">'+friPic(d,p)+'</span>'+
         '<span class="info"><span class="nm"><b>'+esc(friName(f))+'</b>'+
           (p.lastSeen?'<i class="seen">'+seenText(p.lastSeen)+'</i>':'')+'</span>'+
         '<span class="sub">'+bits.join('　')+'</span></span>'+
@@ -4404,11 +4411,12 @@ function renderMeCard(){
   const L=levelInfo();
   const on=GRANTS.filter(x=>(db.settings.grantAll||DEFAULT_GRANT)[x.k]);
   box.innerHTML='<div class="mebody">'+
-      '<div class="mepic" style="background:'+bgCSS(db.settings.bg)+'">'+charPortrait(a.k,wear,1)+'</div>'+
+      '<div class="mepic" style="background:'+bgCSS(db.settings.bg,1)+'">'+charPortrait(a.k,wear,1)+'</div>'+
       '<div class="mewho">'+
         '<div class="menm">'+
           /* 名字旁邊放好友清單那種小頭貼 */
-          '<span class="mesmall">'+friPic(null,{ch:a.k,wear:wear})+'</span>'+
+          '<span class="mesmall" style="'+picBg(null,{ch:a.k,bg:db.settings.bg},1)+'">'+
+            friPic(null,{ch:a.k,wear:wear})+'</span>'+
           '<b>'+esc(db.settings.name||'還沒取名字')+'</b></div>'+
         '<div class="mett">'+esc(myTitle()||'Lv.'+L.lv)+'</div>'+
         '<div class="mewear">'+
@@ -4904,7 +4912,7 @@ function petChar(){
 }
 function renderPet(){
   const box=$('petBox'); if(!box) return;
-  box.style.background=bgCSS(db.settings.bg);      /* 買來的背景顏色 */
+  box.style.background=bgCSS(db.settings.bg,1);    /* 買來的背景顏色 */
   const a=petChar(), key=a.k+'|'+wornList(a.k).join(',');   /* 換角色或換配件都要重畫 */
   if(box.dataset.k!==key){
     box.dataset.k=key; PET.el=null;
@@ -5421,7 +5429,7 @@ function renderShop(){
   /* 本來就沒有這個鍵的話要刪掉。寫回 undefined 會讓整包同步被 Firestore 退件 */
   if(had) m[a.k]=keep; else delete m[a.k];
   $('shopCoins').innerHTML='<svg class="i"><use href="#i-coin"/></svg>'+money(coins())+' Bo士幣';
-  $('shopStage').style.background=bgCSS(tryBg!==null?tryBg:db.settings.bg);
+  $('shopStage').style.background=bgCSS(tryBg!==null?tryBg:db.settings.bg,1);
   $('shopCats').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.sc===shopCat));
   $('shopTabs').style.display=shopCat==='char'?'':'none';
   $('shopPrev').style.display='none';        /* 只有背景那頁才會再打開 */
@@ -5865,7 +5873,7 @@ function renderWork(){
   const dot=$('workDot');
   if(dot) dot.className='dot'+((shiftDone()||(!onShift()&&workLeft()>0))?' on':'');
   const box=$('workStage'); if(!box) return;
-  box.style.background=bgCSS(db.settings.bg);
+  box.style.background=bgCSS(db.settings.bg,1);
   const a=petChar(), left=workLeft();
   if(box.dataset.k!==a.k){ box.dataset.k=a.k; WORKPET.el=null; box.innerHTML=chSVG(a,'idle'); }
   WORKPET.watch(); WORKPET.start();
