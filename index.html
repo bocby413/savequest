@@ -2020,7 +2020,7 @@ const TCHARS=[
    hatY:28, hatW:21},
   {k:'a-peng',n:'企鵝',   c:'#4a5885', d:'#36406b', ink:'#12142a', beak:'#f5a623', foot:'#f5a623',
    hr:25, hy:48, bw:26, bh:36, by:72, gap:11, eo:2, mo:14, pup:4.2,
-   armW:7.5, armH:14, apy:74, fx:13, fy:109, fw:11, egg:1},
+   armW:7.5, armH:14, apy:74, fx:13, fy:109, fw:11, egg:1, avaK:.95},
   {k:'a-bot', n:'機器人', c:'#8fa3c8', d:'#6c7fa8', ink:'#3ce0d0',
    hr:27, hy:43, hry:23, bw:19, bh:17, by:82, gap:11, eo:1, mo:12, sq:1, base:1},
   {k:'a-frog',n:'青蛙',   c:'#7ed957', d:'#5aa83c', ink:'#1d2b17',
@@ -2030,7 +2030,8 @@ const TCHARS=[
    hr:31, hy:46, bw:21, bh:16, by:88, gap:13, eo:1, mo:15, pup:7, fx:12, fy:106, fw:8},
   /* 耳朵很長，所以頭要往下擺一點，耳尖才不會頂出畫布 */
   {k:'a-rab', n:'兔子',   c:'#f3ece2', d:'#d9cbbb', ink:'#4a3b33', tailC:'#ffffff',
-   hr:24, hy:50, bw:17, bh:17, by:88, gap:10, eo:1, mo:12, fx:13, fy:107, fw:9, tilt:12},
+   hr:24, hy:50, bw:17, bh:17, by:88, gap:10, eo:1, mo:12, fx:13, fy:107, fw:9, tilt:12,
+   avaK:.62},
   /* 脖子是另外畫的，所以頭擺得特別高，身體照樣在下面 */
   {k:'a-gir', n:'長頸鹿', c:'#f0c76a', d:'#d9a441', ink:'#4a3418', tailC:'#d9a441',
    hr:20, hy:40, hry:18, bw:17, bh:15, by:90, gap:8, eo:1, mo:9, pup:4,
@@ -2038,7 +2039,7 @@ const TCHARS=[
   /* 白毛身體、深色的頭跟四肢分開來，臉上是兩顆大白眼 */
   {k:'a-shp', n:'綿羊',   c:'#f7f3ea', d:'#4a4a52', ink:'#23232a', wool:'#fffdf8',
    hr:22, hy:44, hry:20, bw:21, bh:17, by:82, gap:9, eo:-4, mo:11, pup:4.6,
-   hatY:27, hatW:19, fx:14, fy:107, fw:9, legs:1},
+   hatY:27, hatW:19, fx:14, fy:107, fw:9, legs:1, avaK:.72},
   {k:'a-sqr', n:'松鼠',   c:'#d98b4a', d:'#b56a2e', ink:'#3a2414', tailC:'#e0a468',
    hr:23, hy:46, bw:16, bh:18, by:86, gap:10, eo:1, mo:12, fx:12, fy:106, fw:8, tilt:13}
 ];
@@ -2103,8 +2104,9 @@ function chBack(a,noTail){
              '<path d="M'+(60+a.bw-1)+' '+(a.by+2)+'q13 4 11 16" stroke="'+a.tailC+
              '" stroke-width="4" fill="none" stroke-linecap="round"/>'+
              '<circle cx="'+(60+a.bw+11)+'" cy="'+(a.by+19)+'" r="4" fill="'+a.ink+'"/></g>')+
-           '<rect x="'+(60-nw)+'" y="'+nt+'" width="'+(nw*2)+'" height="'+(nb-nt)+
-           '" rx="6" fill="'+a.c+'"/>'+sp+
+           /* 頭貼只取頭，脖子不畫 */
+           T('<rect x="'+(60-nw)+'" y="'+nt+'" width="'+(nw*2)+'" height="'+(nb-nt)+
+           '" rx="6" fill="'+a.c+'"/>'+sp)+
            E('<path d="M'+(60-8)+' '+(hy-a.hry+3)+'V'+(hy-a.hry-4)+'M'+(60+8)+' '+(hy-a.hry+3)+
              'V'+(hy-a.hry-4)+'" stroke="'+a.d+'" stroke-width="4" stroke-linecap="round"/>'+
              '<circle cx="'+(60-8)+'" cy="'+(hy-a.hry-6)+'" r="3.6" fill="'+a.ink+'"/>'+
@@ -2119,6 +2121,7 @@ function chBack(a,noTail){
       const an=Math.PI*(.46+i/17*2.08);
       body+=puff(60+Math.cos(an)*(a.bw+2), a.by+Math.sin(an)*(a.bh+2), 7);
     }
+    body=T(body);                                      /* 頭貼只取頭，身上的毛不畫 */
     /* 耳朵：從深色的頭往兩側平伸出去，微微下垂 */
     const ear=(x,g)=>'<ellipse cx="'+x+'" cy="'+(hy-3)+'" rx="11" ry="6" fill="'+a.d+
       '" transform="rotate('+(g*13)+','+x+','+(hy-3)+')"/>'+
@@ -2255,7 +2258,8 @@ function chBodyMark(a){
 }
 /* 頭貼＝生物的頭部放大置中，所以兩邊永遠一致 */
 function avaBody(a){
-  const k=(a.egg?18/a.bw:20/a.hr), cy=(a.egg?a.hy+4:a.hy);
+  /* avaK：耳朵特別大的角色自己指定縮放，不然耳朵會被 64x64 的框切掉 */
+  const k=a.avaK||(a.egg?18/a.bw:20/a.hr), cy=(a.egg?a.hy+4:a.hy);
   return '<g transform="translate(32,34) scale('+k.toFixed(3)+') translate(-60,'+(-cy)+')">'+
     chBack(a,1)+(a.egg?chBody(a)+chBodyMark(a):'')+chHead(a)+chFaceMark(a)+chFace(a,'idle')+wearSVG(a,'head')+'</g>';
 }
