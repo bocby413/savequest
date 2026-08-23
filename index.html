@@ -562,6 +562,8 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .ppic.full svg{width:106%;height:106%;overflow:visible}
 .pwear{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
 .wtag.alt{background:rgba(60,224,208,.16);color:var(--cyan)}
+/* 背景與勝利動作不是穿在身上的配件，各自獨佔一行才不會跟配件混在一起 */
+.wrow{flex-basis:100%;display:flex;gap:5px;margin-top:1px}
 .wtag{font-size:11px;padding:2px 8px;border-radius:99px;background:rgba(255,194,51,.16);
   color:var(--gold);font-weight:700}
 .wnone{font-size:11.5px;color:var(--txt3)}
@@ -7900,9 +7902,10 @@ function renderMeCard(){
           (()=>{
             const tags=wear.map(id=>{const it=itemById(id);
               return it?'<span class="wtag">'+esc(it.n)+'</span>':'';}).filter(Boolean);
-            const bo=myBg()||BGS[0]; if(bo) tags.push('<span class="wtag alt">背景・'+esc(bo.n)+'</span>');
-            const wo=myWin(); if(wo) tags.push('<span class="wtag alt">動作・'+esc(wo.n)+'</span>');
-            return tags.length?tags.join(''):'<span class="wnone">還沒穿任何配件</span>';
+            const bo=myBg()||BGS[0], wo=myWin();
+            const rows=(bo?'<div class="wrow"><span class="wtag alt">背景・'+esc(bo.n)+'</span></div>':'')+
+                       (wo?'<div class="wrow"><span class="wtag alt">動作・'+esc(wo.n)+'</span></div>':'');
+            return (tags.length?tags.join(''):'<span class="wnone">還沒穿任何配件</span>')+rows;
           })()+
         '</div>'+
       '</div>'+
@@ -7946,10 +7949,10 @@ function renderProf(){
   const extra=[];
   const bo=BGS.find(x=>x.id===pbg)||BGS[0]; if(bo) extra.push('背景・'+bo.n);
   const wo=WINS.find(x=>x.id===pwin)||WINS[0]; if(wo) extra.push('動作・'+wo.n);
-  const tags=wr.map(it=>'<span class="wtag">'+esc(it.n)+'</span>')
-    .concat(extra.map(t=>'<span class="wtag alt">'+esc(t)+'</span>'));
+  const tags=wr.map(it=>'<span class="wtag">'+esc(it.n)+'</span>');
+  const rows=extra.map(t=>'<div class="wrow"><span class="wtag alt">'+esc(t)+'</span></div>').join('');
   $('profWear').innerHTML=knownCh(pk)
-    ? (tags.length?tags.join(''):'<span class="wnone">還沒穿任何配件</span>')
+    ? (tags.length?tags.join(''):'<span class="wnone">還沒穿任何配件</span>')+rows
     : '';
   let h='';
   h+=(g.streak&&d.streak!==undefined)
