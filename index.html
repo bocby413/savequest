@@ -2186,18 +2186,21 @@ const HATW=a=>a.hatW!==undefined?a.hatW:HWAT(a,.45);
 const BGS=[
   {id:'bg-violet',n:'紫藤',     p:0,   h:252, s:.52},
   {id:'bg-night', n:'夜空',     p:150, h:224, s:.50},
-  {id:'bg-dawn',  n:'清晨',     p:150, h:342, s:.42},
+  {id:'bg-dawn',  n:'清晨',     p:150, h:352, s:.42},
   {id:'bg-grass', n:'草地',     p:150, h:132, s:.40},
   {id:'bg-sea',   n:'海邊',     p:150, h:198, s:.48},
   {id:'bg-sunset',n:'夕陽',     p:200, h:18,  s:.46},
   {id:'bg-mint',  n:'薄荷',     p:150, h:168, s:.42},
-  {id:'bg-cocoa', n:'可可',     p:150, h:28,  s:.34},
+  {id:'bg-cocoa', n:'可可',     p:150, h:32,  s:.34},
   {id:'bg-neon',  n:'霓虹',     p:200, h:288, s:.58},
   /* dl 是亮度微調。灰白跟淡色系稍微淺一點，但仍然是暗色調 */
   {id:'bg-ink',   n:'墨黑',     p:150, h:250, s:.05, dl:-3},
   {id:'bg-mist',  n:'霧灰',     p:150, h:218, s:.08, dl:5},
   {id:'bg-sakura',n:'櫻花',     p:150, h:340, s:.22, dl:4},
-  {id:'bg-cream', n:'奶油',     p:150, h:46,  s:.26, dl:4}
+  {id:'bg-cream', n:'奶油',     p:150, h:46,  s:.26, dl:4},
+  {id:'bg-matcha',n:'抹茶',     p:150, h:88,  s:.34},
+  {id:'bg-grape', n:'葡萄',     p:200, h:308, s:.44},
+  {id:'bg-peach', n:'蜜桃',     p:150, h:4,   s:.34, dl:3}
 ];
 /* 一整套深色調。亮度全部壓在同一個帶裡，換色相不會變亮 */
 const THEME=[
@@ -2222,7 +2225,7 @@ function themeVars(b){
 /* remember 才會記進設定。預覽的時候只換畫面，不動存起來的值，
    免得預覽到一半剛好存檔就把預覽的佈景記住了 */
 function applyTheme(id,remember){
-  const b=bgById(id)||BGS[0];
+  const b=bgById(id)||defBg();
   const st=document.documentElement.style;
   const v=themeVars(b);
   Object.keys(v).forEach(k=>st.setProperty(k,v[k]));
@@ -2238,13 +2241,26 @@ const WINS=[
   {id:'win-cheer',n:'歡呼',     p:200, pose:{y:-12,sx:.98,sy:1.05, rot:0, aL:-165,aR:165}, face:'joy'},
   {id:'win-shy',  n:'害羞',     p:150, pose:{y:2,  sx:1,   sy:1,   rot:10,aL:-118,aR:-40}, face:'blush'}
 ];
+/* 預設那款用 id 認，不要靠陣列位置——下面會依深淺重排 */
+const DEFBG='bg-violet';
 const bgById=id=>BGS.find(x=>x.id===id);
+const defBg=()=>bgById(DEFBG)||BGS[0];
+/* 商店與設定的排列：從深排到淺 */
+(function(){
+  const lum=b=>{
+    const h=b.h/360, sa=b.s, l=(12+(b.dl||0))/100;
+    const f=n=>{const k=(n+h*12)%12; return l-sa*Math.min(l,1-l)*Math.max(-1,Math.min(k-3,9-k,1));};
+    const g=[f(0),f(8),f(4)].map(v=>v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4));
+    return .2126*g[0]+.7152*g[1]+.0722*g[2];
+  };
+  BGS.sort((a,b)=>lum(a)-lum(b));
+})();
 const winById=id=>WINS.find(x=>x.id===id);
 const myBg=()=>bgById(db.settings.bg)||null;
 const myWin=()=>winById(db.settings.win)||WINS[0];
 /* 生物身後那塊的樣式。沒買背景就用原本的暈影 */
 function bgCSS(id){
-  const b=bgById(id)||BGS[0];          /* 沒買過任何背景就用預設那款 */
+  const b=bgById(id)||defBg();         /* 沒買過任何背景就用預設那款 */
   const d=b.dl||0;
   return 'linear-gradient(160deg,'+hsl(b.h,b.s*.9,34+d)+' 0%,'+hsl(b.h,b.s,17+d)+' 100%)';
 }
@@ -5388,7 +5404,7 @@ function renderShopExtra(){
 let themeBefore=null, prevId=null;
 function startPreview(){
   const id=tryBg||db.settings.bg; if(!id) return;
-  themeBefore=db.settings.theme||BGS[0].id; prevId=id;
+  themeBefore=db.settings.theme||DEFBG; prevId=id;
   applyTheme(id); renderChart(); renderBars();
   shut(); $('prevBar').classList.add('on');
   $('prevTxt').textContent='正在預覽「'+bgById(id).n+'」';
@@ -6162,7 +6178,7 @@ document.body.addEventListener('click',e=>{
 const myThemes=()=>BGS.filter(b=>hasItem(b.id));
 function renderTheme(){
   const btn=$('btnTheme'); if(!btn) return;
-  const now=bgById(db.settings.theme)||BGS[0];
+  const now=bgById(db.settings.theme)||defBg();
   btn.textContent=now.n;
   btn.style.borderColor=hsl(now.h,now.s,52);
   btn.style.color=hsl(now.h,now.s*.9,78);
@@ -6174,7 +6190,7 @@ function renderTheme(){
 $('btnTheme').onclick=()=>{
   const list=myThemes();
   if(list.length<2){ SFX.play('err'); toast('先去商店買個背景吧'); return; }
-  const i=list.findIndex(b=>b.id===(db.settings.theme||BGS[0].id));
+  const i=list.findIndex(b=>b.id===(db.settings.theme||DEFBG));
   const nx=list[(i+1)%list.length];
   applyTheme(nx.id,1); save(); renderTheme(); SFX.play('tick');
   renderChart(); renderBars();
@@ -6903,7 +6919,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
 }
 
 loadPrices();
-applyTheme(db.settings.theme||BGS[0].id);
+applyTheme(db.settings.theme||DEFBG);
 sfxIcon(); swPaint();
 loadWallet();            /* 幣跟擁有的東西自己一份，不跟著 db 備份走 */
 setTimeout(renderWork,0);
