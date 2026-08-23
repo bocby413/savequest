@@ -2023,7 +2023,7 @@ const TCHARS=[
   {k:'a-bot', n:'機器人', c:'#8fa3c8', d:'#6c7fa8', ink:'#3ce0d0',
    hr:27, hy:43, hry:23, bw:19, bh:17, by:82, gap:11, eo:1, mo:12, sq:1, base:1},
   {k:'a-frog',n:'青蛙',   c:'#7ed957', d:'#5aa83c', ink:'#1d2b17',
-   hr:24, hy:44, bw:19, bh:19, by:78, gap:15, eo:-14, mo:11, pup:4, hatY:18, hatW:30,
+   hr:24, hy:44, bw:19, bh:19, by:78, gap:15, eo:-14, mo:11, pup:4, hatY:18, hatW:21,
    fx:14, fy:108, fw:12, legs:1, tilt:14},
   {k:'a-owl', n:'貓頭鷹', c:'#a879ff', d:'#8a5ce0', ink:'#2a1a4a', beak:'#ffc233',
    hr:31, hy:46, bw:21, bh:16, by:88, gap:13, eo:1, mo:15, pup:7, fx:12, fy:106, fw:8}
@@ -2386,56 +2386,74 @@ function bgCSS(id,own){
    青蛙的眼睛長在頭頂，帽子的高度會自動縮，才不會頂出畫布 */
 const AC={
   top:(a,want)=>Math.max(4,HLINE(a)-want),        /* 帽子最高能到哪 */
+  /* 頭在某個高度有多寬。眼睛長在頭頂的（青蛙）超過頭頂就用帽寬當備援 */
+  wAtY:(a,y)=>{const d=y-HT(a);
+    if(a.sq) return a.hr;
+    if(d<=0) return HATW(a)*.8;
+    const k=1-d/HRY(a);
+    return a.hr*Math.sqrt(Math.max(.04,1-k*k));},
+  /* 頭頂線。派對帽、廚師帽、皇冠這類是擺在頭頂上的，
+     用帽沿線去畫會變成戴進頭裡面 */
+  crest:a=>Math.min(HT(a)+4,HLINE(a)),
+  crestW:a=>a.sq?a.hr*.62:AC.wAtY(a,AC.crest(a)),
   /* ── 頭 ── */
-  cap:(a,c,d)=>{const y=HLINE(a),w=HATW(a),dm=y-AC.top(a,HRY(a)*.62);
+  hugW:a=>a.sq?a.hr*.9:HATW(a),        /* 貼著頭戴的那種帽子有多寬 */
+  cap:(a,c,d)=>{const y=HLINE(a),w=AC.hugW(a),dm=y-AC.top(a,HRY(a)*.62);
+    /* 正面看過去帽舌是往前伸的，畫成側邊一片會像帽子戴歪 */
     return '<path d="M'+(60-w)+' '+y+'a'+w+' '+dm+' 0 0 1 '+(w*2)+' 0z" fill="'+c+'"/>'+
-      '<path d="M'+(60-w-5)+' '+(y-1)+'h'+(w*1.15).toFixed(1)+'a4 4 0 0 1 0 7h-'+(w*1.15).toFixed(1)+'z" fill="'+d+'"/>';},
-  beanie:(a,c,d)=>{const y=HLINE(a),w=HATW(a)+1,dm=Math.max(6,y-AC.top(a,HRY(a)*.78)-6);
+      '<path d="M'+(60-w-3.5)+' '+(y-1.5)+'a'+(w+3.5)+' 7 0 0 0 '+(w*2+7)+' 0z" fill="'+d+'"/>';},
+  beanie:(a,c,d)=>{const y=HLINE(a),w=AC.hugW(a)+1,dm=Math.max(6,y-AC.top(a,HRY(a)*.78)-6);
     return '<path d="M'+(60-w)+' '+y+'a'+w+' '+dm+' 0 0 1 '+(w*2)+' 0z" fill="'+c+'"/>'+
       '<rect x="'+(60-w-2)+'" y="'+(y-3.5)+'" width="'+(w*2+4)+'" height="7" rx="3.5" fill="'+d+'"/>'+
-      '<circle cx="60" cy="'+(y-dm-4)+'" r="4.5" fill="'+d+'"/>';},
-  cone:(a,c,d)=>{const y=HLINE(a)+4,w=HATW(a)*.62,t=AC.top(a,26);
-    return '<path d="M'+(60-w)+' '+y+'L60 '+t+'L'+(60+w)+' '+y+'z" fill="'+c+'"/>'+
-      '<circle cx="60" cy="'+t+'" r="3.6" fill="'+d+'"/>'+
-      '<path d="M'+(60-w*.62)+' '+(y-(y-t)*.38)+'h'+(w*1.24)+'" stroke="'+d+'" stroke-width="2.6"/>';},
-  band:(a,c,d)=>{const w=HATW(a),y=HLINE(a)+HRY(a)*.16;
+      '<circle cx="60" cy="'+Math.max(y-dm-4,8.5).toFixed(1)+'" r="4.5" fill="'+d+'"/>';},
+  cone:(a,c,d)=>{const y=AC.crest(a)+2,w=AC.crestW(a)*.85,t=Math.max(8,y-24);
+    return '<path d="M'+(60-w).toFixed(1)+' '+y.toFixed(1)+'L60 '+t.toFixed(1)+
+      'L'+(60+w).toFixed(1)+' '+y.toFixed(1)+'z" fill="'+c+'"/>'+
+      '<ellipse cx="60" cy="'+y.toFixed(1)+'" rx="'+w.toFixed(1)+'" ry="2.6" fill="'+d+'"/>'+
+      '<circle cx="60" cy="'+t.toFixed(1)+'" r="3.4" fill="'+d+'"/>'+
+      '<path d="M'+(60-w*.58).toFixed(1)+' '+(y-(y-t)*.36).toFixed(1)+
+      'h'+(w*1.16).toFixed(1)+'" stroke="'+d+'" stroke-width="2.4"/>';},
+  band:(a,c,d)=>{const w=AC.hugW(a),y=HLINE(a)+HRY(a)*.16;
     return '<path d="M'+(60-w)+' '+y+'a'+w+' '+(HRY(a)*.85)+' 0 0 1 '+(w*2)+' 0" stroke="'+c+
       '" stroke-width="5" fill="none"/>'+
       (d?'<circle cx="'+(60-w*.62)+'" cy="'+(y-HRY(a)*.5)+'" r="4.6" fill="'+d+'"/>':'');},
-  crown:(a,c,g)=>{const w=HATW(a)*.8,y=HLINE(a)+3-(CROWNUP[a.k]||0),
-      h=Math.min(15,Math.max(6,(y-4)/1.4)),L=60-w,R=60+w;   /* 尖端不能頂出畫布 */
+  crown:(a,c,g)=>{const w=AC.crestW(a)*1.06,y=AC.crest(a)+3,
+      h=Math.min(14,Math.max(7,(y-4)/1.45)),L=(60-w).toFixed(1),R=(60+w).toFixed(1);   /* 尖端不能頂出畫布 */
     return '<path d="M'+L+' '+y+'L'+L+' '+(y-h)+'L'+(60-w*.5)+' '+(y-h*.45)+'L60 '+(y-h*1.4)+
       'L'+(60+w*.5)+' '+(y-h*.45)+'L'+R+' '+(y-h)+'L'+R+' '+y+'Z" fill="'+c+'"/>'+
       '<circle cx="60" cy="'+(y-h*.3)+'" r="3.4" fill="'+g+'"/>';},
-  bow:(a,c,d)=>{const y=HT(a)+5,w=HATW(a)*.4;    /* 綁在頭頂，不是貼在額頭上 */
+  bow:(a,c,d)=>{const y=AC.crest(a)+1,w=AC.crestW(a)*.78;   /* 綁在頭頂，不是貼在額頭上 */
     return '<path d="M60 '+y+'l-'+w+' -6v12z" fill="'+c+'"/><path d="M60 '+y+'l'+w+' -6v12z" fill="'+c+'"/>'+
       '<circle cx="60" cy="'+y+'" r="3.8" fill="'+d+'"/>';},
-  flower:(a,c,m)=>{const y=HLINE(a)-2,x=60-HATW(a)*.62;let s='';
+  flower:(a,c,m)=>{const y=Math.min(HT(a)+9,HLINE(a)+2),x=60-AC.wAtY(a,y)*.7;let s='';
     for(let i=0;i<5;i++){const an=i*72*Math.PI/180;
       s+='<circle cx="'+(x+Math.cos(an)*5.6).toFixed(1)+'" cy="'+(y+Math.sin(an)*5.6).toFixed(1)+
          '" r="4.8" fill="'+c+'"/>';}
     return s+'<circle cx="'+x+'" cy="'+y+'" r="3.4" fill="'+m+'"/>';},
-  horn:(a,c,d)=>{const y=HLINE(a)+1,w=HATW(a)*.6,t=AC.top(a,15);
+  horn:(a,c,d)=>{const y=AC.crest(a)+4,w=AC.crestW(a)*.92,t=Math.max(4,y-14);
     const one=(x,s)=>'<path d="M'+(x-s*4)+' '+y+'L'+(x+s*6)+' '+t+'L'+(x+s*5)+' '+y+'Z" fill="'+c+'"/>';
     return one(60-w,-1)+one(60+w,1)+
-      '<path d="M'+(60-w-2)+' '+y+'a'+(w+2)+' '+(HRY(a)*.7)+' 0 0 1 '+(w*2+4)+' 0" stroke="'+d+
-      '" stroke-width="4.5" fill="none"/>';},
+      '<path d="M'+(60-w-2).toFixed(1)+' '+y.toFixed(1)+'a'+(w+2).toFixed(1)+' '+(HRY(a)*.5).toFixed(1)+
+      ' 0 0 1 '+(w*2+4).toFixed(1)+' 0" stroke="'+d+'" stroke-width="4.5" fill="none"/>';},
   halo:(a,c)=>{const y=AC.top(a,15);
     return '<ellipse cx="60" cy="'+y+'" rx="14" ry="4.6" fill="none" stroke="'+c+'" stroke-width="3.6"/>';},
-  tophat:(a,c,b)=>{const y=HLINE(a),w=HATW(a)*.7,h=Math.min(19,Math.max(9,y-AC.top(a,19)));
+  tophat:(a,c,b)=>{const y=HLINE(a),w=AC.hugW(a)*.7,h=Math.min(19,Math.max(9,y-AC.top(a,19)));
     return '<rect x="'+(60-w-6)+'" y="'+(y-2)+'" width="'+(w*2+12)+'" height="5" rx="2.5" fill="'+c+'"/>'+
       '<rect x="'+(60-w)+'" y="'+(y-h)+'" width="'+(w*2)+'" height="'+h+'" rx="2" fill="'+c+'"/>'+
       '<rect x="'+(60-w)+'" y="'+(y-h*.42)+'" width="'+(w*2)+'" height="5" fill="'+b+'"/>';},
-  helm:(a,c,d)=>{const y=HLINE(a),w=HATW(a)+2,dm=y-AC.top(a,HRY(a)*.72);
+  helm:(a,c,d)=>{const y=HLINE(a),w=AC.hugW(a)+1,dm=y-AC.top(a,HRY(a)*.72);
     return '<path d="M'+(60-w)+' '+y+'a'+w+' '+dm+' 0 0 1 '+(w*2)+' 0z" fill="'+c+'"/>'+
       '<rect x="'+(60-w-4)+'" y="'+(y-2)+'" width="'+(w*2+8)+'" height="5" rx="2.5" fill="'+d+'"/>'+
       '<path d="M60 '+(y-1)+'V'+(y-dm)+'" stroke="'+d+'" stroke-width="3"/>';},
-  chef:(a,c,d)=>{const y=HLINE(a),w=HATW(a)*.78,t=AC.top(a,19),r=Math.min(9,Math.max(4,(y-t)*.5));
-    return '<circle cx="'+(60-w*.55)+'" cy="'+(t+r)+'" r="'+r+'" fill="'+c+'"/>'+
-      '<circle cx="60" cy="'+(t+r*.8)+'" r="'+(r*1.1)+'" fill="'+c+'"/>'+
-      '<circle cx="'+(60+w*.55)+'" cy="'+(t+r)+'" r="'+r+'" fill="'+c+'"/>'+
-      '<rect x="'+(60-w)+'" y="'+(y-8)+'" width="'+(w*2)+'" height="10" rx="3" fill="'+c+'"/>'+
-      '<rect x="'+(60-w)+'" y="'+(y-3.5)+'" width="'+(w*2)+'" height="4" fill="'+d+'"/>';},
+  chef:(a,c,d)=>{const y=AC.crest(a)+2,w=AC.crestW(a),t=Math.max(8,y-20),
+      r=Math.min(8,Math.max(3.6,(y-8-t)*.62));
+    return '<circle cx="'+(60-w*.6).toFixed(1)+'" cy="'+(t+r).toFixed(1)+'" r="'+r.toFixed(1)+'" fill="'+c+'"/>'+
+      '<circle cx="60" cy="'+(t+r*.72).toFixed(1)+'" r="'+(r*1.15).toFixed(1)+'" fill="'+c+'"/>'+
+      '<circle cx="'+(60+w*.6).toFixed(1)+'" cy="'+(t+r).toFixed(1)+'" r="'+r.toFixed(1)+'" fill="'+c+'"/>'+
+      '<rect x="'+(60-w).toFixed(1)+'" y="'+(y-8).toFixed(1)+'" width="'+(w*2).toFixed(1)+
+      '" height="9" rx="3" fill="'+c+'"/>'+
+      '<rect x="'+(60-w).toFixed(1)+'" y="'+(y-4).toFixed(1)+'" width="'+(w*2).toFixed(1)+
+      '" height="4" fill="'+d+'"/>';},
   /* ── 臉 ──
      鏡片照眼距算，但不能寬過臉頰。青蛙眼距大、頭卻小，不夾住會掛到臉外面 */
   ew:a=>Math.max(6,Math.min(a.gap*.78,a.hr-a.gap-1)),
@@ -2470,8 +2488,8 @@ const AC={
     return '<rect x="'+(60-w)+'" y="'+(y-7)+'" width="'+(w*2)+'" height="14" rx="5" fill="'+c+'"/>'+
       '<rect x="'+(60-w+2.5)+'" y="'+(y-4.5)+'" width="'+(w*2-5)+'" height="9" rx="4" fill="#bfe9f7" opacity=".85"/>'+
       '<path d="M'+(60+w)+' '+(y-4)+'h5V'+Math.max(6,y-18)+'" stroke="'+d+'" stroke-width="3.4" fill="none"/>';},
-  visorF:(a,c,d)=>{const y=eyeY(a),w=a.hr*.82;
-    return '<path d="M'+(60-w)+' '+(y-7)+'h'+(w*2)+'v7a'+w+' '+(w*.75)+' 0 0 1 -'+(w*2)+' 0z" fill="'+c+'" opacity=".92"/>'+
+  visorF:(a,c,d)=>{const y=eyeY(a),w=a.hr*.82,dp=Math.min(w*.75,mouY(a)-y-4);
+    return '<path d="M'+(60-w)+' '+(y-7)+'h'+(w*2)+'v7a'+w+' '+dp.toFixed(1)+' 0 0 1 -'+(w*2)+' 0z" fill="'+c+'" opacity=".92"/>'+
       '<path d="M'+(60-w)+' '+(y-7)+'h'+(w*2)+'" stroke="'+d+'" stroke-width="3.4"/>';},
   /* ── 脖子 ── */
   collar:(a,c,d)=>{const y=HB(a)-2,w=a.bw*.8;
@@ -2734,7 +2752,7 @@ const ITEMS=[
       'stroke="#c94a1e" stroke-width="4" fill="none"/>';}},
   {id:'bearglass', n:'老花眼鏡', p:100, slot:'face', only:'a-bear', d:a=>{
     const y=eyeY(a), g=a.gap, r=Math.max(7,g*.72);
-    return '<g fill="none" stroke="#8a5a3c" stroke-width="2.6">'+
+    return '<g fill="none" stroke="#4a2f18" stroke-width="2.6">'+
       '<rect x="'+(60-g-r)+'" y="'+(y-r*.8)+'" width="'+(r*2)+'" height="'+(r*1.6)+'" rx="3"/>'+
       '<rect x="'+(60+g-r)+'" y="'+(y-r*.8)+'" width="'+(r*2)+'" height="'+(r*1.6)+'" rx="3"/>'+
       '<path d="M'+(60-g+r)+' '+y+'h'+((g-r)*2)+'"/></g>';}},
@@ -2867,7 +2885,7 @@ const ITEMS=[
       '<path d="M53 '+(y+12)+'q7 11 14 0z" fill="#ff9f45"/>'+
       '<path d="M56.5 '+(y+12)+'q3.5 6.5 7 0z" fill="#ffe58a"/>';}},
   {id:'dish', n:'雷達天線', p:100, slot:'head', only:'a-bot', hide:'ant', d:a=>{
-    const t=HT(a)+2;                     /* 換掉原本那根天線，不是插兩根 */
+    const t=HT(a)+5;                     /* 換掉原本那根天線，不是插兩根 */
     return '<path d="M60 '+t+'V'+(t-7)+'" stroke="#8fa3c8" stroke-width="4"/>'+
       '<path d="M60 '+(t-7)+'l-12-9q12-6.5 24 0z" fill="#cdd7ee"/>'+
       '<path d="M60 '+(t-7)+'l-12-9q12-6.5 24 0z" fill="none" stroke="#8fa3c8" stroke-width="1.2"/>'+
@@ -3019,7 +3037,7 @@ const ITEMS=[
   {id:'dgb6', n:'英雄披風', p:200, slot:'body', only:'a-dog', back:1, d:a=>AC.capeB(a,'#c94a1e','#ffc233')},
   {id:'dgd1', n:'網球', p:200, slot:'hand', only:'a-dog', d:a=>AC.ball(a,'#c8e64a','#8fb52a')},
   {id:'dgd2', n:'水壺', p:200, slot:'hand', only:'a-dog', d:a=>AC.cup(a,'#3d7fd6','#f7f4ec')},
-  {id:'dgd3', n:'報紙提袋', p:200, slot:'hand', only:'a-dog', d:a=>AC.bag(a,'#c9a86a','#8a5a3c')},
+  {id:'dgd3', n:'報紙提袋', p:200, slot:'hand', only:'a-dog', d:a=>AC.bag(a,'#f0e6d2','#7a5f3a')},
   {id:'dgd4', n:'隊旗', p:200, slot:'hand', only:'a-dog', d:a=>AC.flag(a,'#c94a1e','#8a5a3c')},
   {id:'dgd5', n:'相機', p:200, slot:'hand', only:'a-dog', d:a=>AC.camera(a,'#3b2412','#8fa3c8')},
   {id:'dgd6', n:'甜筒', p:200, slot:'hand', only:'a-dog', d:a=>AC.icecream(a,'#f7e3c0','#c9a86a')},
@@ -3028,10 +3046,10 @@ const ITEMS=[
   {id:'dgf3', n:'海灘拖', p:200, slot:'foot', only:'a-dog', d:a=>AC.sandal(a,'#ffc233','#c94a1e')},
   {id:'dgf4', n:'球襪', p:200, slot:'foot', only:'a-dog', d:a=>AC.sockF(a,'#f7f4ec','#3d7fd6')},
   {id:'dgf5', n:'直排輪', p:200, slot:'foot', only:'a-dog', d:a=>AC.skate(a,'#c94a1e','#cdd7ee')},
-  {id:'dgf6', n:'室內拖鞋', p:200, slot:'foot', only:'a-dog', d:a=>AC.slipper(a,'#c9a86a','#8a5a3c')},
+  {id:'dgf6', n:'室內拖鞋', p:200, slot:'foot', only:'a-dog', d:a=>AC.slipper(a,'#d8d4c8','#6f6a5e')},
   /* ── 熊 加開 ── */
   {id:'brh1', n:'露營毛帽', p:100, slot:'head', only:'a-bear', d:a=>AC.beanie(a,'#3f7d55','#e3c98a')},
-  {id:'brh2', n:'獵人帽', p:100, slot:'head', only:'a-bear', d:a=>AC.cap(a,'#5f3a22','#c94a1e')},
+  {id:'brh2', n:'獵人帽', p:100, slot:'head', only:'a-bear', d:a=>AC.cap(a,'#3f5c3a','#c94a1e')},
   {id:'brh3', n:'蜂蜜皇冠', p:100, slot:'head', only:'a-bear', d:a=>AC.crown(a,'#ffc233','#e39b12')},
   {id:'brh4', n:'木匠安全帽', p:100, slot:'head', only:'a-bear', d:a=>AC.helm(a,'#e39b12','#8a5a3c')},
   {id:'brh5', n:'野餐花圈', p:100, slot:'head', only:'a-bear', d:a=>AC.flower(a,'#f7f4ec','#ffc233')},
@@ -3039,7 +3057,7 @@ const ITEMS=[
   {id:'bre1', n:'木框眼鏡', p:100, slot:'face', only:'a-bear', d:a=>AC.square(a,'#fff3e0','#5f3a22')},
   {id:'bre2', n:'溪釣墨鏡', p:100, slot:'face', only:'a-bear', d:a=>AC.shades(a,'#12142a','#3f7d55')},
   {id:'bre3', n:'護林面罩', p:100, slot:'face', only:'a-bear', d:a=>AC.visorF(a,'#c8e64a','#3f7d55')},
-  {id:'bre4', n:'大鬍子', p:100, slot:'face', only:'a-bear', d:a=>AC.stache(a,'#7d5a44')},
+  {id:'bre4', n:'大鬍子', p:100, slot:'face', only:'a-bear', d:a=>AC.stache(a,'#e8ddc8')},
   {id:'bre5', n:'工作口罩', p:100, slot:'face', only:'a-bear', d:a=>AC.maskLow(a,'#e3c98a','#c9a86a')},
   {id:'bre6', n:'圓框老鏡', p:100, slot:'face', only:'a-bear', d:a=>AC.round(a,'#fff3e0','#e39b12')},
   {id:'brn1', n:'毛料圍巾', p:100, slot:'neck', only:'a-bear', d:a=>AC.scarf(a,'#c94a1e','#7d2a0e')},
@@ -3050,7 +3068,7 @@ const ITEMS=[
   {id:'brn6', n:'獵人領帶', p:100, slot:'neck', only:'a-bear', d:a=>AC.tieN(a,'#3f7d55','#e3c98a')},
   {id:'brb1', n:'野營背心', p:200, slot:'body', only:'a-bear', d:a=>AC.vestOpen(a,'#3f7d55','#2f6242')},
   {id:'brb2', n:'厚針織衫', p:200, slot:'body', only:'a-bear', d:a=>AC.stripes(a,'#e3c98a','#c9a86a')},
-  {id:'brb3', n:'柴火帽T', p:200, slot:'body', only:'a-bear', d:a=>AC.hoodie(a,'#7d2a0e','#c94a1e')},
+  {id:'brb3', n:'柴火帽T', p:200, slot:'body', only:'a-bear', d:a=>AC.hoodie(a,'#8a2f10','#f0d9a8')},
   {id:'brb4', n:'木工圍裙', p:200, slot:'body', only:'a-bear', d:a=>AC.apron(a,'#8a5a3c','#e3c98a')},
   {id:'brb5', n:'工作吊帶褲', p:200, slot:'body', only:'a-bear', d:a=>AC.overall(a,'#5f3a22','#e39b12')},
   {id:'brb6', n:'熊掌上衣', p:200, slot:'body', only:'a-bear', d:a=>AC.tee(a,'#e3c98a','#7d5a44')},
@@ -3067,7 +3085,7 @@ const ITEMS=[
   {id:'brf5', n:'溪邊涼鞋', p:200, slot:'foot', only:'a-bear', d:a=>AC.sandal(a,'#5f3a22','#e39b12')},
   {id:'brf6', n:'熊掌拖鞋', p:200, slot:'foot', only:'a-bear', d:a=>AC.padF(a,'#7d5a44','#e3c98a')},
   /* ── 狐狸 加開 ── */
-  {id:'fxh1', n:'楓紅毛帽', p:100, slot:'head', only:'a-fox', d:a=>AC.beanie(a,'#c94a1e','#e3c98a')},
+  {id:'fxh1', n:'楓紅毛帽', p:100, slot:'head', only:'a-fox', d:a=>AC.beanie(a,'#7d2a3a','#e3c98a')},
   {id:'fxh2', n:'秋葉花冠', p:100, slot:'head', only:'a-fox', d:a=>AC.flower(a,'#e39b12','#c94a1e')},
   {id:'fxh3', n:'狐狸皇冠', p:100, slot:'head', only:'a-fox', d:a=>AC.crown(a,'#ffc233','#c94a1e')},
   {id:'fxh4', n:'旅人報童帽', p:100, slot:'head', only:'a-fox', d:a=>AC.cap(a,'#7d3a12','#e3c98a')},
@@ -3076,10 +3094,10 @@ const ITEMS=[
   {id:'fxe1', n:'狐狸墨鏡', p:100, slot:'face', only:'a-fox', d:a=>AC.shades(a,'#2b1a12','#e39b12')},
   {id:'fxe2', n:'圓框金鏡', p:100, slot:'face', only:'a-fox', d:a=>AC.round(a,'#fff3e0','#e39b12')},
   {id:'fxe3', n:'獨行眼罩', p:100, slot:'face', only:'a-fox', d:a=>AC.patch(a,'#7d3a12','#2b1a12')},
-  {id:'fxe4', n:'祭典口罩', p:100, slot:'face', only:'a-fox', d:a=>AC.maskLow(a,'#c94a1e','#7d3a12')},
+  {id:'fxe4', n:'祭典口罩', p:100, slot:'face', only:'a-fox', d:a=>AC.maskLow(a,'#f7f4ec','#c9a86a')},
   {id:'fxe5', n:'方框學者鏡', p:100, slot:'face', only:'a-fox', d:a=>AC.square(a,'#fff3e0','#7d3a12')},
   {id:'fxe6', n:'腮紅印', p:100, slot:'face', only:'a-fox', d:a=>AC.blush(a,'#e8447a','#fff3e0')},
-  {id:'fxn1', n:'秋楓圍巾', p:100, slot:'neck', only:'a-fox', d:a=>AC.scarf(a,'#e39b12','#c94a1e')},
+  {id:'fxn1', n:'秋楓圍巾', p:100, slot:'neck', only:'a-fox', d:a=>AC.scarf(a,'#f2e2c4','#7d3a12')},
   {id:'fxn2', n:'鈴鐺項圈', p:100, slot:'neck', only:'a-fox', d:a=>AC.collar(a,'#c94a1e','#ffc233')},
   {id:'fxn3', n:'祭典珠鍊', p:100, slot:'neck', only:'a-fox', d:a=>AC.beads(a,'#ffc233','#c94a1e')},
   {id:'fxn4', n:'旅人領結', p:100, slot:'neck', only:'a-fox', d:a=>AC.bowN(a,'#7d3a12','#e3c98a')},
@@ -3092,7 +3110,7 @@ const ITEMS=[
   {id:'fxb5', n:'茶屋圍裙', p:200, slot:'body', only:'a-fox', d:a=>AC.apron(a,'#3a2560','#e3c98a')},
   {id:'fxb6', n:'吊帶短褲', p:200, slot:'body', only:'a-fox', d:a=>AC.overall(a,'#3f7d55','#e39b12')},
   {id:'fxd1', n:'烤地瓜', p:200, slot:'hand', only:'a-fox', d:a=>AC.icecream(a,'#e39b12','#7d3a12')},
-  {id:'fxd2', n:'油紙傘', p:200, slot:'hand', only:'a-fox', d:a=>AC.umbrella(a,'#c94a1e','#7d3a12')},
+  {id:'fxd2', n:'油紙傘', p:200, slot:'hand', only:'a-fox', d:a=>AC.umbrella(a,'#2f2a5c','#e3c98a')},
   {id:'fxd3', n:'旅人提袋', p:200, slot:'hand', only:'a-fox', d:a=>AC.bag(a,'#e3c98a','#7d3a12')},
   {id:'fxd4', n:'古書', p:200, slot:'hand', only:'a-fox', d:a=>AC.book(a,'#7d3a12','#e3c98a')},
   {id:'fxd5', n:'狐火', p:200, slot:'hand', only:'a-fox', d:a=>AC.torch(a,'#ffe58a','#7d3a12')},
@@ -3160,7 +3178,7 @@ const ITEMS=[
   {id:'btn5', n:'軸承串鍊', p:100, slot:'neck', only:'a-bot', d:a=>AC.beads(a,'#cdd7ee','#6c7fa8')},
   {id:'btn6', n:'出廠獎牌', p:100, slot:'neck', only:'a-bot', d:a=>AC.medalN(a,'#ffc233','#6c7fa8')},
   {id:'btb1', n:'電路上衣', p:200, slot:'body', only:'a-bot', d:a=>AC.tee(a,'#1b8f85','#3ce0d0')},
-  {id:'btb2', n:'橫紋外殼', p:200, slot:'body', only:'a-bot', d:a=>AC.stripes(a,'#6c7fa8','#cdd7ee')},
+  {id:'btb2', n:'橫紋外殼', p:200, slot:'body', only:'a-bot', d:a=>AC.stripes(a,'#e8edf7','#1b8f85')},
   {id:'btb3', n:'維修帽T', p:200, slot:'body', only:'a-bot', d:a=>AC.hoodie(a,'#ff9f45','#c9691e')},
   {id:'btb4', n:'工程圍裙', p:200, slot:'body', only:'a-bot', d:a=>AC.apron(a,'#6c7fa8','#3ce0d0')},
   {id:'btb5', n:'吊帶工裝', p:200, slot:'body', only:'a-bot', d:a=>AC.overall(a,'#3d7fd6','#ffc233')},
@@ -3169,7 +3187,7 @@ const ITEMS=[
   {id:'btd2', n:'說明書', p:200, slot:'hand', only:'a-bot', d:a=>AC.book(a,'#6c7fa8','#3ce0d0')},
   {id:'btd3', n:'訊號旗', p:200, slot:'hand', only:'a-bot', d:a=>AC.flag(a,'#3ce0d0','#6c7fa8')},
   {id:'btd4', n:'零件袋', p:200, slot:'hand', only:'a-bot', d:a=>AC.bag(a,'#ff9f45','#6c7fa8')},
-  {id:'btd5', n:'磁力球', p:200, slot:'hand', only:'a-bot', d:a=>AC.ball(a,'#6c7fa8','#3ce0d0')},
+  {id:'btd5', n:'磁力球', p:200, slot:'hand', only:'a-bot', d:a=>AC.ball(a,'#e34a4a','#e8edf7')},
   {id:'btd6', n:'主鑰匙', p:200, slot:'hand', only:'a-bot', d:a=>AC.key(a,'#cdd7ee','#3ce0d0')},
   {id:'btf1', n:'履帶底座', p:200, slot:'foot', only:'a-bot', hide:'base', d:a=>AC.wheelB(a,'#6c7fa8','#cdd7ee')},
   {id:'btf2', n:'懸浮底座', p:200, slot:'foot', only:'a-bot', hide:'base', d:a=>AC.hoverB(a,'#cdd7ee','#3ce0d0')},
@@ -3201,7 +3219,7 @@ const ITEMS=[
   {id:'fgb3', n:'池畔帽T', p:200, slot:'body', only:'a-frog', d:a=>AC.hoodie(a,'#2c5c23','#5aa83c')},
   {id:'fgb4', n:'田邊圍裙', p:200, slot:'body', only:'a-frog', d:a=>AC.apron(a,'#e3c98a','#c9a86a')},
   {id:'fgb5', n:'吊帶青蛙裝', p:200, slot:'body', only:'a-frog', d:a=>AC.overall(a,'#5aa9ff','#ffc233')},
-  {id:'fgb6', n:'荷葉披風', p:200, slot:'body', only:'a-frog', back:1, d:a=>AC.capeB(a,'#4a8f32','#c8e64a')},
+  {id:'fgb6', n:'荷葉披風', p:200, slot:'body', only:'a-frog', back:1, d:a=>AC.capeB(a,'#1f5c46','#c8e64a')},
   {id:'fgd1', n:'雨傘', p:200, slot:'hand', only:'a-frog', d:a=>AC.umbrella(a,'#5aa9ff','#3d7fd6')},
   {id:'fgd2', n:'青草茶', p:200, slot:'hand', only:'a-frog', d:a=>AC.cup(a,'#4a8f32','#c8e64a')},
   {id:'fgd3', n:'水球', p:200, slot:'hand', only:'a-frog', d:a=>AC.ball(a,'#5aa9ff','#bfe9f7')},
@@ -3248,12 +3266,10 @@ const ITEMS=[
   {id:'owf1', n:'書齋皮鞋', p:200, slot:'foot', only:'a-owl', d:a=>AC.clog(a,'#3a2560','#5c3aa8')},
   {id:'owf2', n:'夜行短靴', p:200, slot:'foot', only:'a-owl', d:a=>AC.bootF(a,'#2a1a4a','#ffc233')},
   {id:'owf3', n:'星紋襪', p:200, slot:'foot', only:'a-owl', d:a=>AC.sockF(a,'#c9a6ff','#3a2560')},
-  {id:'owf4', n:'講堂涼鞋', p:200, slot:'foot', only:'a-owl', d:a=>AC.sandal(a,'#8a5ce0','#ffc233')},
+  {id:'owf4', n:'講堂涼鞋', p:200, slot:'foot', only:'a-owl', d:a=>AC.sandal(a,'#e3c98a','#7a5230')},
   {id:'owf5', n:'軟底便鞋', p:200, slot:'foot', only:'a-owl', d:a=>AC.sneak(a,'#5c3aa8','#f7f4ec')},
   {id:'owf6', n:'絨毛拖鞋', p:200, slot:'foot', only:'a-owl', d:a=>AC.slipper(a,'#c9a6ff','#8a5ce0')},
 ];
-/* 皇冠在這幾隻頭上戴得太低，各自往上提這麼多。數字上限是帽圈兩端還壓在頭上 */
-const CROWNUP={'a-cat':6,'a-dog':7,'a-bear':5,'a-bot':6,'a-owl':7};
 /* 背景跟勝利動作也是買來的，價格與擁有狀態走同一套 */
 const EXTRAS=()=>BGS.map(b=>({id:b.id,n:b.n,p:b.p,cat:'bg'}))
                  .concat(WINS.map(w=>({id:w.id,n:w.n,p:w.p,cat:'win'})));
