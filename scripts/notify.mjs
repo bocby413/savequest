@@ -93,13 +93,13 @@ for (const u of users) {
     if (CHARS[id]) who = CHARS[id];
   } catch (e) { /* 讀不到就算了 */ }
 
-  const pay = Number(d.shiftPay) || 0;
+  /* 不講金額。講了就沒有「回來看一下」的動機，而且點進去自己看比較有回饋感 */
   const job = d.shiftJob || '打工';
   const say = d.shiftSay || '';
   const payload = JSON.stringify({
     title: who + '下班了！',
     body: '「' + job + '做了 ' + h + ' 小時。' + (say ? say + '。' : '') +
-          '這 ' + pay + ' 枚給你。」',
+          '薪水我收好了，快來拿。」',
     tag: 'shift-' + at,
     url: './'
   });
