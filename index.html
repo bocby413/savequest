@@ -100,9 +100,9 @@ svg.i{width:1em;height:1em;fill:currentColor;vertical-align:-.13em}
 .titlepick button:hover{color:var(--txt)}
 .titlepick button.on{border-color:var(--title);background:var(--titleBg);color:var(--title);font-weight:700}
 .avapick{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:6px}
-.avapick button{aspect-ratio:1;border-radius:50%;border:2.5px solid var(--edge);background:var(--panel2);cursor:pointer;
+.avapick button{aspect-ratio:1;border-radius:50%;overflow:hidden;border:2.5px solid var(--edge);background:var(--panel2);cursor:pointer;
   display:grid;place-items:center;padding:5px;transition:color .15s,background-color .15s,border-color .15s,opacity .15s,transform .15s,box-shadow .15s,filter .15s}
-.avapick button:hover{transform:scale(1.07);border-color:var(--edge2);box-shadow:0 4px 10px rgba(0,0,0,.24)}
+.avapick button:hover{border-color:var(--gold);box-shadow:0 0 0 3px rgba(255,194,51,.2)}
 .avapick button.sel{border-color:var(--gold);box-shadow:0 0 10px rgba(255,194,51,.45)}
 .avapick svg{width:100%;height:100%}
 .avapick button.photo{overflow:hidden;padding:0}
@@ -230,10 +230,11 @@ svg.i{width:1em;height:1em;fill:currentColor;vertical-align:-.13em}
 
 /* ── 任務卡 ── */
 .quests{display:grid;grid-template-columns:repeat(auto-fill,minmax(266px,1fr));gap:16px}
-.q{padding:17px 18px 14px;position:relative;overflow:hidden;transition:transform .18s,box-shadow .18s}
-/* hover 一律用放大，不要用往上位移。位移會讓卡片從游標下面移開，hover 斷掉又彈
-   回來，游標壓在下緣就會一直抖；放大只會把範圍撐大，不會離開游標 */
-.q:hover{transform:scale(1.018);box-shadow:0 6px 16px rgba(0,0,0,.26)}
+.q{padding:17px 18px 14px;position:relative;overflow:hidden;transition:box-shadow .18s}
+/* hover 不准改變任何幾何（不位移、不縮放）。只要卡片會動，游標壓在邊緣時
+   hover 就會斷掉又接上，整片跟著抖；而且縮放會撐出捲軸，捲軸一出現整個版面
+   寬度就變，畫面就跳。所以只改顏色跟陰影 */
+.q:hover{box-shadow:0 0 0 1px var(--edge2) inset,0 6px 16px rgba(0,0,0,.26)}
 .q.fin{border-color:var(--gold)}
 .q.fin:before{content:"";position:absolute;inset:0;background:linear-gradient(160deg,rgba(255,194,51,.14),transparent 55%);pointer-events:none}
 .q .qtop{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px}
@@ -467,7 +468,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .chpick button{width:34px;height:34px;border-radius:50%;padding:0;cursor:pointer;
   background:var(--panel2);border:2px solid var(--edge);display:grid;place-items:center;
   transition:border-color .14s,background-color .14s,transform .14s}
-.chpick button:hover{transform:scale(1.12);box-shadow:0 4px 10px rgba(0,0,0,.24)}
+.chpick button:hover{border-color:var(--gold);box-shadow:0 0 0 3px rgba(255,194,51,.2)}
 .chpick button.on{border-color:var(--gold);background:rgba(255,194,51,.18)}
 .chpick svg{width:26px;height:26px;overflow:visible}
 .zz{font:700 15px system-ui;fill:var(--txt3)}
@@ -498,7 +499,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   border-radius:14px;background:var(--panel2);border:2px solid var(--edge);color:var(--txt2);
   font:inherit;font-size:12px;font-weight:600;cursor:pointer;
   transition:color .14s,border-color .14s,background-color .14s,box-shadow .14s,transform .14s}
-.chgrid button:hover{transform:scale(1.05);color:var(--txt);border-color:var(--edge2);box-shadow:0 6px 15px rgba(0,0,0,.26)}
+.chgrid button:hover{color:var(--txt);border-color:var(--gold);box-shadow:0 0 0 3px rgba(255,194,51,.16)}
 .chgrid button svg{width:40px;height:40px}
 .monplay{position:absolute;left:50%;top:50%;width:30px;height:30px;margin:-15px 0 0 -15px;
   border-radius:50%;border:2px solid var(--gold);background:rgba(18,15,46,.72);color:var(--gold);
@@ -560,6 +561,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   background:radial-gradient(ellipse at 50% 90%,var(--panel2) 0%,transparent 68%)}
 .ppic.full svg{width:106%;height:106%;overflow:visible}
 .pwear{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.wtag.alt{background:rgba(60,224,208,.16);color:var(--cyan)}
 .wtag{font-size:11px;padding:2px 8px;border-radius:99px;background:rgba(255,194,51,.16);
   color:var(--gold);font-weight:700}
 .wnone{font-size:11.5px;color:var(--txt3)}
@@ -750,7 +752,8 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .sitem{background:var(--panel2);border:2px solid var(--edge);border-radius:14px;padding:8px 6px 9px;
   text-align:center;cursor:pointer;font:inherit;color:inherit;position:relative;
   transition:border-color .14s,box-shadow .14s,background-color .14s,transform .14s}
-.sitem:hover{transform:scale(1.05);border-color:var(--edge2);box-shadow:0 6px 15px rgba(0,0,0,.26);z-index:2}
+.sitem:hover{border-color:var(--gold);background:rgba(255,194,51,.09);
+  box-shadow:0 0 0 3px rgba(255,194,51,.16)}
 .sitem svg{width:100%;height:auto;max-width:70px;overflow:visible;pointer-events:none}
 .sitem.try{border-color:var(--cyan);background:rgba(60,224,208,.12)}
 .sitem .nm{font-size:12.5px;font-weight:700;margin-top:2px}
@@ -843,7 +846,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .veil.on{opacity:1;pointer-events:auto;visibility:visible}
 .dlg{width:min(410px,100%);background:var(--panel);border:2px solid var(--edge2);border-radius:20px;
   box-shadow:0 10px 0 var(--deep);padding:24px;transform:translateY(12px) scale(.97);transition:color .22s,background-color .22s,border-color .22s,opacity .22s,transform .22s,box-shadow .22s,filter .22s;
-  max-height:min(88vh,860px);overflow-y:auto;overscroll-behavior:contain}
+  max-height:min(88vh,860px);overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
 .veil.on .dlg{transform:none}
 .dlg h3{font-size:20px;font-weight:800;letter-spacing:.4px}
 .dlg .say{font-size:13px;color:var(--txt3);margin-bottom:17px}
@@ -1008,7 +1011,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   <symbol id="i-pen" viewBox="0 0 24 24"><path d="M3 17.2V21h3.8L17.8 10 14 6.2 3 17.2zM20.7 7.1a1 1 0 0 0 0-1.4l-2.4-2.4a1 1 0 0 0-1.4 0l-1.8 1.8L19 8.9l1.7-1.8z"/></symbol>
   <symbol id="i-cam" viewBox="0 0 24 24"><path d="M9 3h6l1.5 2H21v16H3V5h4.5L9 3zm3 5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zm0 2a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7z"/></symbol>
 </svg>
-<svg id="avaDefs" style="display:none"></svg>
+<svg id="avaDefs" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true"></svg>
 
 <div class="wrap">
 
@@ -2038,8 +2041,8 @@ const TCHARS=[
   /* 脖子是另外畫的，所以頭擺得特別高，身體照樣在下面 */
   {k:'a-gir', n:'長頸鹿', c:'#f0c76a', d:'#d9a441', ink:'#4a3418', tailC:'#d9a441',
    /* 眼睛大、拉開、擺在臉的中線上，鼻口收在下面：這樣看起來才幼 */
-   hr:20, hy:40, hry:18, bw:17, bh:15, by:90, gap:10.5, eo:0, mo:15, pup:5.2, spark:1,
-   armW:6.5, armH:11, apy:80, fx:13, fy:108, fw:9, neck:1, hatY:26, hatW:14, tilt:12},
+   hr:24, hy:40, hry:21, bw:17, bh:15, by:90, gap:11, eo:0, mo:16, pup:5.6, spark:1,
+   armW:6.5, armH:11, apy:80, fx:13, fy:108, fw:9, neck:1, hatY:28, hatW:18, tilt:12},
   /* 白毛身體、深色的頭跟四肢分開來，臉上是兩顆大白眼 */
   {k:'a-shp', n:'綿羊',   c:'#f7f3ea', d:'#4a4a52', ink:'#23232a', wool:'#fffdf8',
    hr:22, hy:44, hry:20, bw:21, bh:17, by:82, gap:9, eo:-4, mo:11, pup:4.6,
@@ -2222,12 +2225,12 @@ function chFaceMark(a){
            '<path d="M60 '+(my-6)+'l-3.5 3.5h7z" fill="#e8899c"/>'+
            '<path d="M60 '+(my-2.5)+'v4" stroke="'+a.ink+'" stroke-width="1.6"/>';
   if(a.k==='a-gir')                                    /* 鼻孔要在嘴巴上面，不然會黏成一團 */
-    return '<ellipse cx="60" cy="'+(my-1)+'" rx="10" ry="6.6" fill="#f7e6bd"/>'+
-           '<ellipse cx="60" cy="'+(my-3.4)+'" rx="6.4" ry="3.4" fill="#fdf4dc"/>'+
-           '<circle cx="'+(60-3.4)+'" cy="'+(my-4)+'" r="1.5" fill="'+a.ink+'"/>'+
-           '<circle cx="'+(60+3.4)+'" cy="'+(my-4)+'" r="1.5" fill="'+a.ink+'"/>'+
-           '<ellipse cx="'+(60-a.hr*.66)+'" cy="'+(my-6)+'" rx="4" ry="2.6" fill="#ef9f8c" opacity=".45"/>'+
-           '<ellipse cx="'+(60+a.hr*.66)+'" cy="'+(my-6)+'" rx="4" ry="2.6" fill="#ef9f8c" opacity=".45"/>';
+    return '<ellipse cx="60" cy="'+(my-2)+'" rx="10.5" ry="6.2" fill="#f7e6bd"/>'+
+           '<ellipse cx="60" cy="'+(my-4)+'" rx="6.6" ry="3.2" fill="#fdf4dc"/>'+
+           '<circle cx="'+(60-3.4)+'" cy="'+(my-5)+'" r="1.5" fill="'+a.ink+'"/>'+
+           '<circle cx="'+(60+3.4)+'" cy="'+(my-5)+'" r="1.5" fill="'+a.ink+'"/>'+
+           '<ellipse cx="'+(60-a.hr*.58)+'" cy="'+(my-7)+'" rx="4.2" ry="2.8" fill="#ef9f8c" opacity=".45"/>'+
+           '<ellipse cx="'+(60+a.hr*.58)+'" cy="'+(my-7)+'" rx="4.2" ry="2.8" fill="#ef9f8c" opacity=".45"/>';
   if(a.k==='a-shp')                                    /* 深色的臉壓在頭上，頭頂一撮毛蓋下來 */
     /* 深色的臉要比頭再大一點點，不然頭的白邊會露出來一圈 */
     return '<ellipse cx="60" cy="'+a.hy+'" rx="'+(a.hr+.8)+'" ry="'+(a.hry+.8)+'" fill="'+a.d+'"/>'+
@@ -5448,11 +5451,16 @@ const ITEMS=[
     '<ellipse cx="8" cy="-6" rx="5" ry="2.8" fill="#4a9b3f" transform="rotate(-28,8,-6)"/>'+
     '<ellipse cx="14" cy="-13" rx="5" ry="2.8" fill="#266b45" transform="rotate(-40,14,-13)"/>');}},
   {id:'gfe4', n:'臉頰斑紋', p:100, slot:'face', only:'a-gir', d:a=>{
-  const y=AC.cheekY(a),w=AC.cheekX(a);
-  const sp=x=>'<ellipse cx="'+x.toFixed(1)+'" cy="'+y+'" rx="4.6" ry="3.6" fill="#a8763f"/>';
-  return sp(60-w)+sp(60+w)+
-    '<ellipse cx="'+(60-w-3).toFixed(1)+'" cy="'+(y+6)+'" rx="2.6" ry="2" fill="#a8763f"/>'+
-    '<ellipse cx="'+(60+w+3).toFixed(1)+'" cy="'+(y+6)+'" rx="2.6" ry="2" fill="#a8763f"/>';}},
+  /* 斑紋要貼在頭上。用固定偏移的話，臉往下收窄的地方整片會飛到臉外面，
+     所以每一塊都照頭在那個高度的實際半寬去擺，太窄的那一層就不畫 */
+  const row=(yy,r)=>{const half=AC.wAtY(a,yy);
+    if(half<r+5) return '';
+    const x=half-r-1.5;
+    return '<ellipse cx="'+(60-x).toFixed(1)+'" cy="'+yy.toFixed(1)+'" rx="'+r+'" ry="'+(r*.78).toFixed(1)+
+      '" fill="#a8763f"/>'+
+      '<ellipse cx="'+(60+x).toFixed(1)+'" cy="'+yy.toFixed(1)+'" rx="'+r+'" ry="'+(r*.78).toFixed(1)+
+      '" fill="#a8763f"/>';};
+  return row(HT(a)+7,3.4)+row(eyeY(a)+8,4.4)+row(eyeY(a)+12,3.2);}},
   {id:'gfe5', n:'腮紅印', p:100, slot:'face', only:'a-gir', d:a=>AC.blush(a,'#ff9ec4','#f7f4ec')},
   {id:'gfe6', n:'扇形濃睫', p:100, slot:'face', only:'a-gir', d:a=>{
   const y=eyeY(a),g=a.gap;
@@ -7905,9 +7913,15 @@ function renderProf(){
   $('profSeen').textContent=p.lastSeen?seenText(p.lastSeen):'還沒有上線紀錄';
   /* 身上的配件 */
   const wr=pw.map(id=>itemById(id)).filter(Boolean);
+  /* 背景跟勝利動作也是買來的東西，一起列出來才看得出對方換了什麼 */
+  const pbg=(d&&d.bg)||p.bg||f.bg, pwin=(d&&d.win)||p.win||f.win;
+  const extra=[];
+  const bo=BGS.find(x=>x.id===pbg); if(bo) extra.push('背景・'+bo.n);
+  const wo=WINS.find(x=>x.id===pwin); if(wo) extra.push('動作・'+wo.n);
+  const tags=wr.map(it=>'<span class="wtag">'+esc(it.n)+'</span>')
+    .concat(extra.map(t=>'<span class="wtag alt">'+esc(t)+'</span>'));
   $('profWear').innerHTML=knownCh(pk)
-    ? (wr.length?wr.map(it=>'<span class="wtag">'+esc(it.n)+'</span>').join('')
-                :'<span class="wnone">還沒穿任何配件</span>')
+    ? (tags.length?tags.join(''):'<span class="wnone">還沒穿任何配件</span>')
     : '';
   let h='';
   h+=(g.streak&&d.streak!==undefined)
