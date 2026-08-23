@@ -35,6 +35,16 @@ webpush.setVapidDetails(
   process.env.VAPID_PRIVATE
 );
 
+/* 收尾那句。每次隨機挑一句，同樣的班只會推一次，所以不會看到同一句連發。
+   一律不講金額 —— 數字自己點進去看到比較有回饋感 */
+const ENDINGS = [
+  '薪水我收好了，快來拿。',
+  '錢我放桌上了，記得來收。',
+  '快來領薪水，我等你喔。',
+  '薪水在我這裡，你來就給你。',
+  '錢先幫你保管著，早點來拿。'
+];
+
 /* 角色的中文名字。這份要跟 index.html 的 TCHARS 對得起來 */
 const CHARS = {
   'a-cat': '貓', 'a-dog': '狗', 'a-bear': '熊', 'a-fox': '狐狸',
@@ -96,10 +106,10 @@ for (const u of users) {
   /* 不講金額。講了就沒有「回來看一下」的動機，而且點進去自己看比較有回饋感 */
   const job = d.shiftJob || '打工';
   const say = d.shiftSay || '';
+  const end2 = ENDINGS[Math.floor(Math.random() * ENDINGS.length)];
   const payload = JSON.stringify({
     title: who + '下班了！',
-    body: '「' + job + '做了 ' + h + ' 小時。' + (say ? say + '。' : '') +
-          '薪水我收好了，快來拿。」',
+    body: '「' + job + '做了 ' + h + ' 小時。' + (say ? say + '。' : '') + end2 + '」',
     tag: 'shift-' + at,
     url: './'
   });
