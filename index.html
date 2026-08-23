@@ -7903,8 +7903,9 @@ function renderMeCard(){
             const tags=wear.map(id=>{const it=itemById(id);
               return it?'<span class="wtag">'+esc(it.n)+'</span>':'';}).filter(Boolean);
             const bo=myBg()||BGS[0], wo=myWin();
-            const rows=(bo?'<div class="wrow"><span class="wtag alt">背景・'+esc(bo.n)+'</span></div>':'')+
-                       (wo?'<div class="wrow"><span class="wtag alt">動作・'+esc(wo.n)+'</span></div>':'');
+            const rows='<div class="wrow">'+
+              (bo?'<span class="wtag alt">背景・'+esc(bo.n)+'</span>':'')+
+              (wo?'<span class="wtag alt">動作・'+esc(wo.n)+'</span>':'')+'</div>';
             return (tags.length?tags.join(''):'<span class="wnone">還沒穿任何配件</span>')+rows;
           })()+
         '</div>'+
@@ -7950,7 +7951,8 @@ function renderProf(){
   const bo=BGS.find(x=>x.id===pbg)||BGS[0]; if(bo) extra.push('背景・'+bo.n);
   const wo=WINS.find(x=>x.id===pwin)||WINS[0]; if(wo) extra.push('動作・'+wo.n);
   const tags=wr.map(it=>'<span class="wtag">'+esc(it.n)+'</span>');
-  const rows=extra.map(t=>'<div class="wrow"><span class="wtag alt">'+esc(t)+'</span></div>').join('');
+  const rows='<div class="wrow">'+
+    extra.map(t=>'<span class="wtag alt">'+esc(t)+'</span>').join('')+'</div>';
   $('profWear').innerHTML=knownCh(pk)
     ? (tags.length?tags.join(''):'<span class="wnone">還沒穿任何配件</span>')+rows
     : '';
