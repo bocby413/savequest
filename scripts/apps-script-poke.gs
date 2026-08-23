@@ -14,24 +14,8 @@ const REPO = 'bocby413/savequest';
 const WORKFLOW = 'work-notify.yml';
 const BRANCH = 'main';
 
-/* 幾分鐘觸發一次。想改就改這個數字，改完存檔即可，不用重跑 setupTrigger。
-   Apps Script 的分鐘觸發器只有 1／5／10／15／30 可以選，沒有 3、7 這種，
-   所以固定掛「每分鐘」，真正的間隔在下面自己擋。
-   被擋掉的那幾次幾乎不花時間，一天的執行時間反而比每分鐘都去打 API 少很多。 */
-const EVERY_MIN = 3;
-
 function poke() {
-  const props = PropertiesService.getScriptProperties();
-
-  /* 用「距離上次多久」來擋，不要用 分鐘 % 3 —— 觸發器不會準時在整分觸發，
-     會飄個幾秒，用取餘數的話飄過頭那一輪就整個被跳掉。
-     留 20 秒容差，免得早到一點點就白等一輪 */
-  const last = Number(props.getProperty('LAST_POKE') || 0);
-  const now = Date.now();
-  if (now - last < (EVERY_MIN * 60 - 20) * 1000) return;
-  props.setProperty('LAST_POKE', String(now));
-
-  const token = props.getProperty('GH_TOKEN');
+  const token = PropertiesService.getScriptProperties().getProperty('GH_TOKEN');
   if (!token) {
     console.error('還沒設 GH_TOKEN。左邊齒輪「專案設定」→ 指令碼屬性 → 新增指令碼屬性');
     return;
@@ -64,8 +48,8 @@ function setupTrigger() {
   ScriptApp.getProjectTriggers().forEach(function (t) {
     if (t.getHandlerFunction() === 'poke') ScriptApp.deleteTrigger(t);
   });
-  ScriptApp.newTrigger('poke').timeBased().everyMinutes(1).create();
-  console.log('好了，觸發器每分鐘叫一次 poke，實際打 API 的間隔是 ' + EVERY_MIN + ' 分鐘');
+  ScriptApp.newTrigger('poke').timeBased().everyMinutes(5).create();
+  console.log('好了，每 5 分鐘會跑一次 poke');
 }
 
 /* 想確認現在掛了哪些觸發器的時候跑這支 */
