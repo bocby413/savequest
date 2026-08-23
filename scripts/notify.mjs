@@ -44,7 +44,8 @@ const ms = v => {
 };
 
 const now = Date.now();
-let checked = 0, due = 0, sent = 0, dropped = 0;
+let checked = 0, due = 0, sent = 0, dropped = 0, subsAll = 0;
+const notes = [];
 
 const users = await db.collection('users').listDocuments();
 for (const u of users) {
@@ -65,10 +66,15 @@ for (const u of users) {
      錢包的規則有鎖死欄位清單，多寫一個欄位客戶端就寫不進去了 */
   const mark = db.doc(`pushSent/${u.id}`);
   const prev = await mark.get();
-  if (prev.exists && Number(prev.data().shiftAt) === at) continue;
+  if (prev.exists && Number(prev.data().shiftAt) === at) {
+    notes.push(`${u.id.slice(0, 6)} 這一班之前推過了`);
+    continue;
+  }
 
   const subs = await db.collection(`users/${u.id}/push`).get();
-  if (subs.empty) { await mark.set({ shiftAt: at, at: now, subs: 0 }); continue; }
+  /* 沒有訂閱就先不要標記。標下去的話，他晚幾分鐘才開通知，
+     這一班就永遠補不回來了 */
+  if (subs.empty) { notes.push(`${u.id.slice(0, 6)} 有班到點但沒訂閱任何裝置`); continue; }
 
   const payload = JSON.stringify({
     title: '打工做完了',
@@ -99,4 +105,10 @@ for (const u of users) {
   if (okAny) { await mark.set({ shiftAt: at, at: now, subs: subs.size }); }
 }
 
-console.log(`看了 ${checked} 個人，${due} 班到點，推出 ${sent} 則，清掉 ${dropped} 個失效訂閱`);
+/* 訂閱總數：一則都推不出去的時候，最先要看的就是這個數字 */
+for (const u of users) {
+  const c = await db.collection(`users/${u.id}/push`).count().get().catch(() => null);
+  if (c) subsAll += c.data().count;
+}
+console.log(`看了 ${checked} 個人，全部裝置訂閱數 ${subsAll}，${due} 班到點，推出 ${sent} 則，清掉 ${dropped} 個失效訂閱`);
+notes.forEach(n => console.log('  · ' + n));
