@@ -2033,10 +2033,10 @@ const TCHARS=[
    hr:24, hy:50, bw:17, bh:17, by:88, gap:10, eo:1, mo:12, fx:13, fy:107, fw:9, tilt:12},
   /* 脖子是另外畫的，所以頭擺得特別高，身體照樣在下面 */
   {k:'a-gir', n:'長頸鹿', c:'#f0c76a', d:'#d9a441', ink:'#4a3418', tailC:'#d9a441',
-   hr:20, hy:31, hry:18, bw:17, bh:15, by:90, gap:8, eo:1, mo:9, pup:3.8,
+   hr:20, hy:40, hry:18, bw:17, bh:15, by:90, gap:8, eo:1, mo:9, pup:4,
    armW:6.5, armH:11, apy:80, fx:13, fy:108, fw:9, neck:1},
-  {k:'a-shp', n:'綿羊',   c:'#e0cdb2', d:'#c7b193', ink:'#463a30', wool:'#f9f5ee',
-   hr:23, hy:47, bw:20, bh:18, by:86, gap:11, eo:2, mo:13, fx:14, fy:107, fw:9},
+  {k:'a-shp', n:'綿羊',   c:'#f4e2c8', d:'#d9bf9c', ink:'#4a3d31', wool:'#fffaf2',
+   hr:22, hy:48, bw:20, bh:18, by:86, gap:10, eo:3, mo:13, pup:5.2, fx:14, fy:107, fw:9},
   {k:'a-sqr', n:'松鼠',   c:'#d98b4a', d:'#b56a2e', ink:'#3a2414', tailC:'#e0a468',
    hr:23, hy:46, bw:16, bh:18, by:86, gap:10, eo:1, mo:12, fx:12, fy:106, fw:8, tilt:13}
 ];
@@ -2092,17 +2092,17 @@ function chBack(a,noTail){
            E(ear(60-9,-9)+ear(60+9,9));
   }
   if(a.k==='a-gir'){                                   /* 脖子畫在身體與頭的後面 */
-    const nt=hy+a.hry-3, nb=a.by-a.bh+6, nw=11;
+    const nt=hy+a.hry-4, nb=a.by-a.bh+6, nw=8;
     let sp='';
-    [[0,.18],[-5,.42],[6,.62],[-3,.84]].forEach(([dx,t])=>{
-      sp+='<ellipse cx="'+(60+dx)+'" cy="'+(nt+(nb-nt)*t).toFixed(1)+'" rx="4.6" ry="3.6" fill="'+a.d+'"/>';
+    [[0,.2],[-3.5,.46],[3.5,.68],[-1,.9]].forEach(([dx,t])=>{
+      sp+='<ellipse cx="'+(60+dx)+'" cy="'+(nt+(nb-nt)*t).toFixed(1)+'" rx="3.2" ry="2.6" fill="'+a.d+'"/>';
     });
     return T('<g class="tail" data-p="'+(60+a.bw-1)+','+(a.by+2)+'">'+
              '<path d="M'+(60+a.bw-1)+' '+(a.by+2)+'q13 4 11 16" stroke="'+a.tailC+
              '" stroke-width="4" fill="none" stroke-linecap="round"/>'+
              '<circle cx="'+(60+a.bw+11)+'" cy="'+(a.by+19)+'" r="4" fill="'+a.ink+'"/></g>')+
            '<rect x="'+(60-nw)+'" y="'+nt+'" width="'+(nw*2)+'" height="'+(nb-nt)+
-           '" rx="8" fill="'+a.c+'"/>'+sp+
+           '" rx="6" fill="'+a.c+'"/>'+sp+
            E('<path d="M'+(60-8)+' '+(hy-a.hry+3)+'V'+(hy-a.hry-4)+'M'+(60+8)+' '+(hy-a.hry+3)+
              'V'+(hy-a.hry-4)+'" stroke="'+a.d+'" stroke-width="4" stroke-linecap="round"/>'+
              '<circle cx="'+(60-8)+'" cy="'+(hy-a.hry-6)+'" r="3.6" fill="'+a.ink+'"/>'+
@@ -2110,22 +2110,27 @@ function chBack(a,noTail){
              '<ellipse cx="'+(60-hr-4)+'" cy="'+(hy+2)+'" rx="7" ry="4.5" fill="'+a.d+'"/>'+
              '<ellipse cx="'+(60+hr+4)+'" cy="'+(hy+2)+'" rx="7" ry="4.5" fill="'+a.d+'"/>');
   }
-  if(a.k==='a-shp'){                                   /* 一圈羊毛，衣服穿上去也還看得到 */
-    const puff=(x,y,r)=>'<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+r+'" fill="'+a.wool+'"/>';
+  if(a.k==='a-shp'){                                   /* 一整團羊毛，衣服穿上去邊邊還是看得到 */
+    const puff=(x,y,r)=>'<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+r.toFixed(1)+'" fill="'+a.wool+'"/>';
+    /* 身體：沿著身體外緣密排一圈小球，連起來就是雲一樣的邊 */
     let body='';
-    for(let i=0;i<11;i++){
-      const t=i/10, an=Math.PI*(.62+t*1.76);
-      body+=puff(60+Math.cos(an)*(a.bw+3), a.by+Math.sin(an)*(a.bh+2), 8);
+    for(let i=0;i<16;i++){
+      const an=Math.PI*(.52+i/15*1.96);
+      body+=puff(60+Math.cos(an)*(a.bw+1.5), a.by+Math.sin(an)*(a.bh+1), 6.6);
     }
+    /* 頭：從左耳上方繞到右耳上方，像一頂毛帽扣著 */
     let head='';
-    for(let i=0;i<7;i++){
-      const an=Math.PI*(1.06+i/6*.88);
-      head+=puff(60+Math.cos(an)*(hr-1), hy+Math.sin(an)*(a.hr*.94-1), 8);
+    for(let i=0;i<9;i++){
+      const an=Math.PI*(1.02+i/8*.96);
+      head+=puff(60+Math.cos(an)*(hr-2), hy+Math.sin(an)*(a.hr*.94-2), 7.4);
     }
-    return T('<g class="tail" data-p="'+(60+a.bw)+','+(a.by+8)+'">'+
-             puff(60+a.bw+4,a.by+8,7)+'</g>')+body+E(head+
-             '<ellipse cx="'+(60-hr-2)+'" cy="'+(hy+3)+'" rx="8" ry="5" fill="'+a.d+'"/>'+
-             '<ellipse cx="'+(60+hr+2)+'" cy="'+(hy+3)+'" rx="8" ry="5" fill="'+a.d+'"/>');
+    head+=puff(60,hy-a.hr*.94+1,8.4);
+    return T('<g class="tail" data-p="'+(60+a.bw)+','+(a.by+9)+'">'+
+             puff(60+a.bw+3,a.by+9,6.4)+puff(60+a.bw+6,a.by+5,4.6)+'</g>')+body+E(
+             '<ellipse cx="'+(60-hr-3)+'" cy="'+(hy+5)+'" rx="8.5" ry="5.2" fill="'+a.d+
+             '" transform="rotate(14,'+(60-hr-3)+','+(hy+5)+')"/>'+
+             '<ellipse cx="'+(60+hr+3)+'" cy="'+(hy+5)+'" rx="8.5" ry="5.2" fill="'+a.d+
+             '" transform="rotate(-14,'+(60+hr+3)+','+(hy+5)+')"/>'+head);
   }
   if(a.k==='a-sqr'){                                   /* 大尾巴從屁股捲到頭旁邊 */
     return T('<g class="tail" data-p="'+(60+a.bw-1)+','+(a.by+8)+'">'+
@@ -2208,12 +2213,15 @@ function chFaceMark(a){
     return '<ellipse cx="60" cy="'+(my+1)+'" rx="9" ry="7" fill="#f7e6bd"/>'+
            '<ellipse cx="'+(60-3.4)+'" cy="'+(my-1)+'" rx="1.5" ry="2" fill="'+a.ink+'"/>'+
            '<ellipse cx="'+(60+3.4)+'" cy="'+(my-1)+'" rx="1.5" ry="2" fill="'+a.ink+'"/>';
-  if(a.k==='a-shp')                                    /* 額頭那撮瀏海 */
-    return '<circle cx="'+(60-9)+'" cy="'+(ey-11)+'" r="7.5" fill="'+a.wool+'"/>'+
-           '<circle cx="60" cy="'+(ey-14)+'" r="8.5" fill="'+a.wool+'"/>'+
-           '<circle cx="'+(60+9)+'" cy="'+(ey-11)+'" r="7.5" fill="'+a.wool+'"/>'+
-           '<ellipse cx="60" cy="'+(my+2)+'" rx="10" ry="7" fill="#f2e6d6"/>'+
-           '<ellipse cx="60" cy="'+(my-3)+'" rx="3.6" ry="2.8" fill="'+a.ink+'"/>';
+  if(a.k==='a-shp')                                    /* 額頭那撮瀏海壓在眼睛上面一點才可愛 */
+    return '<circle cx="'+(60-13)+'" cy="'+(ey-9)+'" r="6.2" fill="'+a.wool+'"/>'+
+           '<circle cx="'+(60-5)+'" cy="'+(ey-12)+'" r="7.4" fill="'+a.wool+'"/>'+
+           '<circle cx="'+(60+5)+'" cy="'+(ey-12)+'" r="7.4" fill="'+a.wool+'"/>'+
+           '<circle cx="'+(60+13)+'" cy="'+(ey-9)+'" r="6.2" fill="'+a.wool+'"/>'+
+           '<ellipse cx="60" cy="'+(my+2)+'" rx="10.5" ry="7.5" fill="#fdf3e6"/>'+
+           '<path d="M60 '+(my-4)+'l-3.4 3.2h6.8z" fill="'+a.ink+'"/>'+
+           '<ellipse cx="'+(60-15)+'" cy="'+(my-3)+'" rx="5" ry="3.4" fill="#f7b8bd" opacity=".7"/>'+
+           '<ellipse cx="'+(60+15)+'" cy="'+(my-3)+'" rx="5" ry="3.4" fill="#f7b8bd" opacity=".7"/>';
   if(a.k==='a-sqr')
     return '<ellipse cx="60" cy="'+(my+1)+'" rx="10" ry="8" fill="#f6dcc0"/>'+
            '<path d="M60 '+(my-6)+'l-3.4 3.4h6.8z" fill="'+a.ink+'"/>'+
@@ -3224,7 +3232,7 @@ const ITEMS=[
   {id:'cth3', n:'小魚皇冠', p:100, slot:'head', only:'a-cat', d:a=>AC.crown(a,'#e0921a','#825207')},
   {id:'cth4', n:'午睡蝴蝶結', p:100, slot:'head', only:'a-cat', d:a=>AC.bow(a,'#2f7fd0','#13477c')},
   {id:'cth5', n:'薰衣草髮夾', p:100, slot:'head', only:'a-cat', d:a=>AC.flower(a,'#c9a6ff','#8536ff')},
-  {id:'cth6', n:'生日尖帽', p:100, slot:'head', only:'a-cat', d:a=>AC.cone(a,'#f2e3c0','#e8bd5a')},
+  {id:'cth6', n:'生日尖帽', p:100, slot:'head', only:'a-cat', d:a=>AC.cone(a,'#f2e3c0','#d2e543')},
   {id:'cte1', n:'檸檬圓框', p:100, slot:'face', only:'a-cat', d:a=>AC.round(a,'#d8e84a','#a4b60c')},
   {id:'cte2', n:'午後墨鏡', p:100, slot:'face', only:'a-cat', d:a=>AC.shades(a,'#3a3a8c','#151541')},
   {id:'cte3', n:'毛線眼罩', p:100, slot:'face', only:'a-cat', d:a=>AC.patch(a,'#33363d','#111318')},
@@ -3236,14 +3244,14 @@ const ITEMS=[
   {id:'ctn3', n:'小魚吊牌', p:100, slot:'neck', only:'a-cat', d:a=>AC.collar2(a,'#e2452f','#951d0c',1)},
   {id:'ctn4', n:'毛絨圍巾', p:100, slot:'neck', only:'a-cat', d:a=>AC.scarf(a,'#e8447a','#b10b42')},
   {id:'ctn5', n:'荷葉領', p:100, slot:'neck', only:'a-cat', d:a=>AC.ruff(a,'#4a9b3f','#205119')},
-  {id:'ctn6', n:'最佳貓咪獎牌', p:100, slot:'neck', only:'a-cat', d:a=>AC.medalN(a,'#ffc233','#c28800')},
+  {id:'ctn6', n:'最佳貓咪獎牌', p:100, slot:'neck', only:'a-cat', d:a=>AC.medalN(a,'#d8e84a','#a4b60c')},
   {id:'ctb1', n:'薄荷T恤', p:200, slot:'body', only:'a-cat', d:a=>AC.tee(a,'#7ed9c0','#29be95')},
   {id:'ctb2', n:'橫條上衣', p:200, slot:'body', only:'a-cat', d:a=>AC.stripes(a,'#4a9b3f','#205119')},
   {id:'ctb3', n:'檸檬帽T', p:200, slot:'body', only:'a-cat', d:a=>AC.hoodie(a,'#d8e84a','#a4b60c')},
   {id:'ctb4', n:'點心圍裙', p:200, slot:'body', only:'a-cat', d:a=>AC.apron(a,'#266b45','#092013')},
   {id:'ctb5', n:'吊帶褲', p:200, slot:'body', only:'a-cat', d:a=>AC.overall(a,'#8a9b3c','#454f18')},
   {id:'ctb6', n:'毛毯披風', p:200, slot:'body', only:'a-cat', back:1, d:a=>AC.capeB(a,'#1f9b96','#09413f')},
-  {id:'ctd1', rot:-9, n:'鮮奶杯', p:200, slot:'hand', only:'a-cat', d:a=>AC.cup(a,'#f2e3c0','#7a94b8')},
+  {id:'ctd1', rot:-9, n:'鮮奶杯', p:200, slot:'hand', only:'a-cat', d:a=>AC.cup(a,'#f2e3c0','#d2e543')},
   {id:'ctd2', rot:-16, n:'逗貓棒', p:200, slot:'hand', only:'a-cat', d:a=>AC.feather(a,'#e0921a','#825207')},
   {id:'ctd3', n:'巧克力甜甜圈', p:200, slot:'hand', only:'a-cat', d:a=>AC.donut(a,'#7a4a24','#261508')},
   {id:'ctd4', n:'午睡抱枕', p:200, slot:'hand', only:'a-cat', d:a=>AC.pillow(a,'#e2452f','#951d0c')},
@@ -3371,7 +3379,7 @@ const ITEMS=[
   {id:'pgh2', n:'遠航船長帽', p:100, slot:'head', only:'a-peng', d:a=>AC.cap(a,'#5aa9ff','#006fe9')},
   {id:'pgh3', n:'冰晶皇冠', p:100, slot:'head', only:'a-peng', d:a=>AC.crown(a,'#e6f4fb','#7eccf3')},
   {id:'pgh4', n:'生日尖帽', p:100, slot:'head', only:'a-peng', d:a=>AC.cone(a,'#ff9ec4','#ff2e80')},
-  {id:'pgh5', n:'深海髮飾', p:100, slot:'head', only:'a-peng', d:a=>AC.flower(a,'#2f7fd0','#13477c')},
+  {id:'pgh5', n:'深海髮飾', p:100, slot:'head', only:'a-peng', d:a=>AC.flower(a,'#2f7fd0','#101666')},
   {id:'pgh6', n:'晚宴禮帽', p:100, slot:'head', only:'a-peng', d:a=>AC.tophat(a,'#22232a','#101119')},
   {id:'pge1', n:'冰原護目鏡', p:100, slot:'face', only:'a-peng', d:a=>AC.shades(a,'#e6f4fb','#7eccf3')},
   {id:'pge2', n:'潛水面鏡', p:100, slot:'face', only:'a-peng', d:a=>AC.snork(a,'#1f9b96','#09413f')},
@@ -3386,14 +3394,14 @@ const ITEMS=[
   {id:'pgn5', n:'潛水獎牌', p:100, slot:'neck', only:'a-peng', d:a=>AC.medalN(a,'#ffc233','#c28800')},
   {id:'pgn6', n:'毛絨領圈', p:100, slot:'neck', only:'a-peng', d:a=>AC.ruff(a,'#ff7a5c','#eb2b00')},
   {id:'pgb1', n:'暖陽毛衣', p:200, slot:'body', only:'a-peng', d:a=>AC.tee(a,'#ffd84d','#dcac00', .53,.96)},
-  {id:'pgb2', n:'橫紋泳衣', p:200, slot:'body', only:'a-peng', d:a=>AC.stripes(a,'#2f7fd0','#13477c', .53,.96)},
+  {id:'pgb2', n:'橫紋泳衣', p:200, slot:'body', only:'a-peng', d:a=>AC.stripes(a,'#2f7fd0','#101666', .53,.96)},
   {id:'pgb3', n:'禦寒帽T', p:200, slot:'body', only:'a-peng', d:a=>AC.hoodie(a,'#9fd8f0','#33b5ec', .53,.96)},
   {id:'pgb4', n:'漁夫圍裙', p:200, slot:'body', only:'a-peng', d:a=>AC.apron(a,'#4a9b3f','#205119', .58,.96)},
   {id:'pgb5', n:'吊帶工作褲', p:200, slot:'body', only:'a-peng', d:a=>AC.overall(a,'#8a9b3c','#454f18', .62,.96)},
   {id:'pgb6', n:'冰原披風', p:200, slot:'body', only:'a-peng', back:1, d:a=>AC.capeB(a,'#e6f4fb','#7eccf3')},
   {id:'pgd1', rot:-9, n:'熱可可', p:200, slot:'hand', only:'a-peng', d:a=>AC.cup(a,'#22232a','#101119')},
   {id:'pgd2', rot:-15, n:'冰棒', p:200, slot:'hand', only:'a-peng', d:a=>AC.popsicle(a,'#7ed9c0','#29be95')},
-  {id:'pgd3', n:'航海圖', p:200, slot:'hand', only:'a-peng', d:a=>AC.scroll(a,'#2f7fd0','#a8783c')},
+  {id:'pgd3', n:'航海圖', p:200, slot:'hand', only:'a-peng', d:a=>AC.scroll(a,'#2f7fd0','#101666')},
   {id:'pgd4', rot:-18, n:'救生氣球', p:200, slot:'hand', only:'a-peng', d:a=>AC.balloon(a,'#ff8a3c','#cb5100')},
   {id:'pgd5', n:'船錨鑰匙', p:200, slot:'hand', only:'a-peng', d:a=>AC.key(a,'#c9a86a','#99722a')},
   {id:'pgd6', n:'珊瑚球', p:200, slot:'hand', only:'a-peng', d:a=>AC.snowball(a,'#e2452f','#951d0c')},
@@ -3519,7 +3527,7 @@ const ITEMS=[
   {id:'rbh2', n:'花園草帽', p:100, slot:'head', only:'a-rab', d:a=>AC.cap(a,'#ffd84d','#dcac00')},
   {id:'rbh3', n:'紅蘿蔔皇冠', p:100, slot:'head', only:'a-rab', d:a=>AC.crown(a,'#ff8a3c','#cb5100')},
   {id:'rbh4', n:'三葉草髮飾', p:100, slot:'head', only:'a-rab', d:a=>AC.flower(a,'#4a9b3f','#205119')},
-  {id:'rbh5', n:'生日尖帽', p:100, slot:'head', only:'a-rab', d:a=>AC.cone(a,'#c9a86a','#99722a')},
+  {id:'rbh5', n:'生日尖帽', p:100, slot:'head', only:'a-rab', d:a=>AC.cone(a,'#c9a6ff','#8536ff')},
   {id:'rbh6', n:'午茶禮帽', p:100, slot:'head', only:'a-rab', d:a=>AC.tophat(a,'#22232a','#101119')},
   {id:'rbe1', n:'圓框眼鏡', p:100, slot:'face', only:'a-rab', d:a=>AC.round(a,'#9fd8f0','#33b5ec')},
   {id:'rbe2', n:'方框書呆鏡', p:100, slot:'face', only:'a-rab', d:a=>AC.square(a,'#c9a6ff','#8536ff')},
@@ -3529,7 +3537,7 @@ const ITEMS=[
   {id:'rbe6', n:'毛線眼罩', p:100, slot:'face', only:'a-rab', d:a=>AC.patch(a,'#33363d','#111318')},
   {id:'rbn1', n:'緞帶領結', p:100, slot:'neck', only:'a-rab', d:a=>AC.bowN(a,'#c9a6ff','#8536ff')},
   {id:'rbn2', n:'鈴鐺項圈', p:100, slot:'neck', only:'a-rab', d:a=>AC.collar2(a,'#e2452f','#951d0c',2)},
-  {id:'rbn3', n:'珍珠項鍊', p:100, slot:'neck', only:'a-rab', d:a=>AC.beads(a,'#cdd7ee','#7090da')},
+  {id:'rbn3', n:'珍珠項鍊', p:100, slot:'neck', only:'a-rab', d:a=>AC.beads(a,'#9fd8f0','#33b5ec')},
   {id:'rbn4', n:'毛絨圍巾', p:100, slot:'neck', only:'a-rab', d:a=>AC.scarf(a,'#e8447a','#b10b42')},
   {id:'rbn5', n:'荷葉領', p:100, slot:'neck', only:'a-rab', d:a=>AC.ruff(a,'#4a9b3f','#205119')},
   {id:'rbn6', n:'跳遠獎牌', p:100, slot:'neck', only:'a-rab', d:a=>AC.medalN(a,'#ffc233','#c28800')},
@@ -3541,9 +3549,9 @@ const ITEMS=[
   {id:'rbb6', n:'毛毯披風', p:200, slot:'body', only:'a-rab', back:1, d:a=>AC.capeB(a,'#7c8797','#404e63')},
   {id:'rbd1', n:'紅蘿蔔', p:200, slot:'hand', only:'a-rab', d:a=>AC.icecream(a,'#ff8a3c','#cb5100')},
   {id:'rbd2', n:'花籃', p:200, slot:'hand', only:'a-rab', d:a=>AC.basket(a,'#c9a86a','#99722a')},
-  {id:'rbd3', n:'鮮奶杯', p:200, slot:'hand', only:'a-rab', d:a=>AC.cup(a,'#9fd8f0','#33b5ec')},
+  {id:'rbd3', n:'鮮奶杯', p:200, slot:'hand', only:'a-rab', d:a=>AC.cup(a,'#c9a6ff','#8536ff')},
   {id:'rbd4', n:'午睡抱枕', p:200, slot:'hand', only:'a-rab', d:a=>AC.pillow(a,'#ffc233','#c28800')},
-  {id:'rbd5', n:'生日禮物', p:200, slot:'hand', only:'a-rab', d:a=>AC.gift(a,'#c9a6ff','#8536ff')},
+  {id:'rbd5', n:'生日禮物', p:200, slot:'hand', only:'a-rab', d:a=>AC.gift(a,'#e8447a','#b10b42')},
   {id:'rbd6', n:'氣球', p:200, slot:'hand', only:'a-rab', d:a=>AC.balloon(a,'#a8763f','#5c3d1a')},
   {id:'rbf1', n:'軟底便鞋', p:200, slot:'foot', only:'a-rab', d:a=>AC.sneak(a,'#7a4a24','#261508')},
   {id:'rbf2', n:'雨天短靴', p:200, slot:'foot', only:'a-rab', d:a=>AC.bootF(a,'#9c3055','#4b1125')},
@@ -3567,9 +3575,9 @@ const ITEMS=[
   {id:'gfn1', n:'長圍巾', p:100, slot:'neck', only:'a-gir', d:a=>AC.scarf(a,'#e2452f','#951d0c')},
   {id:'gfn2', n:'旅人領結', p:100, slot:'neck', only:'a-gir', d:a=>AC.bowN(a,'#e8447a','#b10b42')},
   {id:'gfn3', n:'木珠串鍊', p:100, slot:'neck', only:'a-gir', d:a=>AC.beads(a,'#7a4a24','#261508')},
-  {id:'gfn4', n:'嚮導領帶', p:100, slot:'neck', only:'a-gir', d:a=>AC.tieN(a,'#ff7a5c','#eb2b00')},
-  {id:'gfn5', n:'登高獎牌', p:100, slot:'neck', only:'a-gir', d:a=>AC.medalN(a,'#ffc233','#c28800')},
-  {id:'gfn6', n:'皮革項圈', p:100, slot:'neck', only:'a-gir', d:a=>AC.collar2(a,'#9c3055','#4b1125',0)},
+  {id:'gfn4', n:'嚮導領帶', p:100, slot:'neck', only:'a-gir', d:a=>AC.tieN(a,'#9c3055','#4b1125')},
+  {id:'gfn5', n:'登高獎牌', p:100, slot:'neck', only:'a-gir', d:a=>AC.medalN(a,'#ff7a5c','#eb2b00')},
+  {id:'gfn6', n:'皮革項圈', p:100, slot:'neck', only:'a-gir', d:a=>AC.collar2(a,'#a8763f','#5c3d1a',0)},
   {id:'gfb1', n:'草原上衣', p:200, slot:'body', only:'a-gir', d:a=>AC.tee(a,'#4a9b3f','#205119')},
   {id:'gfb2', n:'橫紋衫', p:200, slot:'body', only:'a-gir', d:a=>AC.stripes(a,'#266b45','#092013')},
   {id:'gfb3', n:'旅行帽T', p:200, slot:'body', only:'a-gir', d:a=>AC.hoodie(a,'#8a9b3c','#454f18')},
@@ -3580,7 +3588,7 @@ const ITEMS=[
   {id:'gfd2', n:'地圖卷軸', p:200, slot:'hand', only:'a-gir', d:a=>AC.scroll(a,'#a8763f','#5c3d1a')},
   {id:'gfd3', n:'水壺', p:200, slot:'hand', only:'a-gir', d:a=>AC.cup(a,'#5aa9ff','#006fe9')},
   {id:'gfd4', n:'嫩葉', p:200, slot:'hand', only:'a-gir', d:a=>AC.feather(a,'#4a9b3f','#205119')},
-  {id:'gfd5', n:'旅行提袋', p:200, slot:'hand', only:'a-gir', d:a=>AC.bag(a,'#ff7a5c','#eb2b00')},
+  {id:'gfd5', n:'旅行提袋', p:200, slot:'hand', only:'a-gir', d:a=>AC.bag(a,'#e8447a','#b10b42')},
   {id:'gfd6', n:'營地旗', p:200, slot:'hand', only:'a-gir', d:a=>AC.flag(a,'#3a3a8c','#151541')},
   {id:'gff1', n:'長途跑鞋', p:200, slot:'foot', only:'a-gir', d:a=>AC.sneak(a,'#7a4a24','#261508')},
   {id:'gff2', n:'探險長靴', p:200, slot:'foot', only:'a-gir', d:a=>AC.bootF(a,'#9c3055','#4b1125')},
@@ -3593,13 +3601,13 @@ const ITEMS=[
   {id:'shh2', n:'牧場鴨舌帽', p:100, slot:'head', only:'a-shp', d:a=>AC.cap(a,'#2f7fd0','#13477c')},
   {id:'shh3', n:'牧羊皇冠', p:100, slot:'head', only:'a-shp', d:a=>AC.crown(a,'#ffc233','#c28800')},
   {id:'shh4', n:'雛菊髮飾', p:100, slot:'head', only:'a-shp', d:a=>AC.flower(a,'#9fd8f0','#33b5ec')},
-  {id:'shh5', n:'生日尖帽', p:100, slot:'head', only:'a-shp', d:a=>AC.cone(a,'#f7f4ec','#ddc996')},
+  {id:'shh5', n:'生日尖帽', p:100, slot:'head', only:'a-shp', d:a=>AC.cone(a,'#c9a6ff','#8536ff')},
   {id:'shh6', n:'小捲角', p:100, slot:'head', only:'a-shp', d:a=>AC.horn(a,'#7ed9c0','#29be95')},
-  {id:'she1', n:'圓框眼鏡', p:100, slot:'face', only:'a-shp', d:a=>AC.round(a,'#cdd7ee','#7090da')},
-  {id:'she2', n:'方框老鏡', p:100, slot:'face', only:'a-shp', d:a=>AC.square(a,'#f7f4ec','#ddc996')},
+  {id:'she1', n:'圓框眼鏡', p:100, slot:'face', only:'a-shp', d:a=>AC.round(a,'#9fd8f0','#33b5ec')},
+  {id:'she2', n:'方框老鏡', p:100, slot:'face', only:'a-shp', d:a=>AC.square(a,'#c9a6ff','#8536ff')},
   {id:'she3', n:'牧場墨鏡', p:100, slot:'face', only:'a-shp', d:a=>AC.shades(a,'#3a3a8c','#151541')},
   {id:'she4', n:'睡眠眼罩', p:100, slot:'face', only:'a-shp', d:a=>AC.patch(a,'#33363d','#111318')},
-  {id:'she5', n:'保暖口罩', p:100, slot:'face', only:'a-shp', d:a=>AC.maskLow(a,'#c9a6ff','#8536ff')},
+  {id:'she5', n:'保暖口罩', p:100, slot:'face', only:'a-shp', d:a=>AC.maskLow(a,'#ff9ec4','#ff2e80')},
   {id:'she6', n:'腮紅貼紙', p:100, slot:'face', only:'a-shp', d:a=>AC.blush(a,'#ff7a5c','#eb2b00')},
   {id:'shn1', n:'牧羊鈴鐺', p:100, slot:'neck', only:'a-shp', d:a=>AC.collar2(a,'#e2452f','#951d0c',2)},
   {id:'shn2', n:'手織圍巾', p:100, slot:'neck', only:'a-shp', d:a=>AC.scarf(a,'#e8447a','#b10b42')},
@@ -3615,7 +3623,7 @@ const ITEMS=[
   {id:'shb6', n:'毛毯披風', p:200, slot:'body', only:'a-shp', back:1, d:a=>AC.capeB(a,'#7c8797','#404e63')},
   {id:'shd1', n:'毛線球', p:200, slot:'hand', only:'a-shp', d:a=>AC.ball(a,'#e0921a','#825207')},
   {id:'shd2', n:'牧羊杖', p:200, slot:'hand', only:'a-shp', d:a=>AC.torch(a,'#ffc233','#c28800')},
-  {id:'shd3', n:'熱牛奶', p:200, slot:'hand', only:'a-shp', d:a=>AC.cup(a,'#f7f4ec','#4a6b8a')},
+  {id:'shd3', n:'熱牛奶', p:200, slot:'hand', only:'a-shp', d:a=>AC.cup(a,'#9fd8f0','#33b5ec')},
   {id:'shd4', n:'午睡抱枕', p:200, slot:'hand', only:'a-shp', d:a=>AC.pillow(a,'#ff7a5c','#eb2b00')},
   {id:'shd5', n:'草料籃', p:200, slot:'hand', only:'a-shp', d:a=>AC.basket(a,'#d8e84a','#a4b60c')},
   {id:'shd6', n:'甜甜圈', p:200, slot:'hand', only:'a-shp', d:a=>AC.donut(a,'#a8763f','#5c3d1a')},
