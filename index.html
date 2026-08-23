@@ -6109,7 +6109,9 @@ function normWallet(w){
           shiftAt:msOf(w&&w.shiftAt),
           shiftH:Math.max(0,Math.round(+(w&&w.shiftH)||0)),
           shiftPay:Math.max(0,Math.round(+(w&&w.shiftPay)||0)),
-          shiftJob:(w&&w.shiftJob)||''};
+          shiftJob:(w&&w.shiftJob)||'',
+          /* 那句吐槽。存起來是為了打工完成的推播用得到 */
+          shiftSay:(w&&w.shiftSay)||''};
 }
 function saveWallet(){ try{ localStorage.setItem(WKEY,JSON.stringify(WALLET)); }catch(e){} }
 function loadWallet(){
@@ -9401,13 +9403,13 @@ function hms(ms){
   return h+':'+p2(m)+':'+p2(sec);
 }
 /* 開工：把這一班寫下來。時間以伺服器為準，不然把手機時鐘調快就能秒領 */
-async function startShift(sh,pay,job){
+async function startShift(sh,pay,job,say){
   if(onShift()||workLeft()<=0) return {ok:0,e:'busy'};
   const day=todayStr();
-  if(onCloud()) return CLOUD.shiftStart(sh.h,pay,job,day);
+  if(onCloud()) return CLOUD.shiftStart(sh.h,pay,job,say,day);
   WALLET.workN=(WALLET.workOn===day?WALLET.workN:0)+1;
   WALLET.workOn=day; WALLET.shiftAt=Date.now(); WALLET.shiftH=sh.h;
-  WALLET.shiftPay=pay; WALLET.shiftJob=job; saveWallet();
+  WALLET.shiftPay=pay; WALLET.shiftJob=job; WALLET.shiftSay=say||''; saveWallet();
   return {ok:1};
 }
 /* 收工：時間到才領得到 */
@@ -9415,7 +9417,7 @@ async function claimShift(){
   if(!shiftDone()) return {ok:0,e:'early'};
   if(onCloud()) return CLOUD.shiftClaim();
   WALLET.coins+=WALLET.shiftPay;
-  WALLET.shiftAt=0; WALLET.shiftH=0; WALLET.shiftPay=0; WALLET.shiftJob='';
+  WALLET.shiftAt=0; WALLET.shiftH=0; WALLET.shiftPay=0; WALLET.shiftJob=''; WALLET.shiftSay='';
   saveWallet();
   return {ok:1};
 }
@@ -9493,7 +9495,7 @@ async function doWork(){
   const pay=sh.lo+Math.floor(Math.random()*(sh.hi-sh.lo+1));
   const job=jobOf(a.k,sh.h);
   workBusy=true; renderWork();
-  const r=await startShift(sh,pay,job[0]);
+  const r=await startShift(sh,pay,job[0],job[1]);
   workBusy=false;
   if(!r.ok){ SFX.play('err');
     toast(r.e==='busy'?'現在有工作在進行':'雲端沒收到，等一下再試');
@@ -10301,7 +10303,8 @@ window.CLOUD={
     const {F}=this.api;
     const next={coins:WALLET.coins+got, owned:WALLET.owned, spunOn:day,
                 workOn:WALLET.workOn, workN:WALLET.workN, shiftH:WALLET.shiftH,
-                shiftPay:WALLET.shiftPay, shiftJob:WALLET.shiftJob};
+                shiftPay:WALLET.shiftPay, shiftJob:WALLET.shiftJob,
+                shiftSay:WALLET.shiftSay};
     try{
       await F.updateDoc(this.wref(),next);
       WALLET=normWallet(next); saveWallet();
@@ -10309,11 +10312,12 @@ window.CLOUD={
     }catch(e){ return {ok:0,e:e.code||'x'}; }
   },
   /* 開工。時間用伺服器的，手機時鐘調快也沒用 */
-  async shiftStart(h,pay,job,day){
+  async shiftStart(h,pay,job,say,day){
     const {F}=this.api;
     const next={coins:WALLET.coins, owned:WALLET.owned, spunOn:WALLET.spunOn,
                 workOn:day, workN:(WALLET.workOn===day?WALLET.workN:0)+1,
-                shiftAt:F.serverTimestamp(), shiftH:h, shiftPay:pay, shiftJob:job};
+                shiftAt:F.serverTimestamp(), shiftH:h, shiftPay:pay, shiftJob:job,
+                shiftSay:say||''};
     try{
       await F.updateDoc(this.wref(),next);
       WALLET=normWallet(Object.assign({},next,{shiftAt:Date.now()}));
@@ -10325,7 +10329,7 @@ window.CLOUD={
     const {F}=this.api;
     const next={coins:WALLET.coins+WALLET.shiftPay, owned:WALLET.owned, spunOn:WALLET.spunOn,
                 workOn:WALLET.workOn, workN:WALLET.workN,
-                shiftAt:null, shiftH:0, shiftPay:0, shiftJob:''};
+                shiftAt:null, shiftH:0, shiftPay:0, shiftJob:'', shiftSay:''};
     try{
       await F.updateDoc(this.wref(),next);
       WALLET=normWallet(next); saveWallet();
@@ -10336,7 +10340,8 @@ window.CLOUD={
     const {F}=this.api;
     const next={coins:WALLET.coins-price, owned:WALLET.owned.concat([id]), spunOn:WALLET.spunOn,
                 workOn:WALLET.workOn, workN:WALLET.workN, shiftH:WALLET.shiftH,
-                shiftPay:WALLET.shiftPay, shiftJob:WALLET.shiftJob};
+                shiftPay:WALLET.shiftPay, shiftJob:WALLET.shiftJob,
+                shiftSay:WALLET.shiftSay};
     try{
       await F.updateDoc(this.wref(),next);
       WALLET=normWallet(next); saveWallet();

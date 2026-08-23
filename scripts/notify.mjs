@@ -35,6 +35,13 @@ webpush.setVapidDetails(
   process.env.VAPID_PRIVATE
 );
 
+/* 角色的中文名字。這份要跟 index.html 的 TCHARS 對得起來 */
+const CHARS = {
+  'a-cat': '貓', 'a-dog': '狗', 'a-bear': '熊', 'a-fox': '狐狸',
+  'a-peng': '企鵝', 'a-bot': '機器人', 'a-frog': '青蛙', 'a-owl': '貓頭鷹',
+  'a-rab': '兔子', 'a-gir': '長頸鹿', 'a-shp': '綿羊', 'a-sqr': '松鼠'
+};
+
 const ms = v => {
   if (!v) return 0;
   if (typeof v === 'number') return v;
@@ -76,10 +83,23 @@ for (const u of users) {
      這一班就永遠補不回來了 */
   if (subs.empty) { notes.push(`${u.id.slice(0, 6)} 有班到點但沒訂閱任何裝置`); continue; }
 
+  /* 用哪隻角色。這個存在整包備份裡，不在錢包裡，所以要多讀一次。
+     讀不到就退回「牠」，不要因為這個就不發通知 */
+  let who = '牠';
+  try {
+    const prof = await db.doc(`users/${u.id}`).get();
+    const id = prof.exists && prof.data().settings && prof.data().settings.avatar
+      ? prof.data().settings.avatar.id : null;
+    if (CHARS[id]) who = CHARS[id];
+  } catch (e) { /* 讀不到就算了 */ }
+
+  const pay = Number(d.shiftPay) || 0;
+  const job = d.shiftJob || '打工';
+  const say = d.shiftSay || '';
   const payload = JSON.stringify({
-    title: '打工做完了',
-    body: (d.shiftJob ? d.shiftJob + '　' : '') +
-          '做滿 ' + h + ' 小時，' + (Number(d.shiftPay) || 0) + ' 枚 Bo士幣等你領',
+    title: who + '下班了！',
+    body: '「' + job + '做了 ' + h + ' 小時。' + (say ? say + '。' : '') +
+          '這 ' + pay + ' 枚給你。」',
     tag: 'shift-' + at,
     url: './'
   });
