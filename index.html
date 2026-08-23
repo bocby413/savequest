@@ -687,8 +687,14 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .shoptop{display:grid;grid-template-columns:150px 1fr;gap:16px;align-items:center;
   background:var(--panel2);border:1.5px solid var(--edge);border-radius:16px;padding:12px 14px;margin-bottom:14px}
 @media(max-width:480px){.shoptop{grid-template-columns:112px 1fr;gap:12px;padding:10px}}
-.shopstage{position:relative;border-radius:13px;
+.shopstage{position:relative;border-radius:13px;overflow:hidden;
   background:radial-gradient(ellipse at 50% 92%,var(--panel3) 0%,transparent 70%)}
+.bigtabs{margin-bottom:8px}
+.bigtabs button{font-size:13.5px;font-weight:800}
+.bgchip{display:block;width:100%;max-width:70px;aspect-ratio:1;border-radius:11px;margin:0 auto;
+  border:1.5px solid rgba(255,255,255,.25)}
+.winchip{display:grid;place-items:center;width:100%;max-width:70px;aspect-ratio:1;margin:0 auto;
+  border-radius:11px;background:var(--panel3);color:var(--gold);font-size:19px;font-weight:800}
 .shopstage svg{width:100%;height:auto;overflow:visible;display:block}
 .shopinfo{min-width:0}
 .tryon{font-size:13px;color:var(--txt2);margin:8px 0 9px;min-height:38px}
@@ -721,7 +727,7 @@ html[data-skin="light"] .logbar input{color-scheme:light}
 .sitem.poor{opacity:.5}
 .shopempty{grid-column:1/-1;color:var(--txt3);font-size:13.5px;padding:20px 2px;text-align:center}
 /* 打工 */
-.workstage{width:150px;margin:4px auto 0;border-radius:14px;
+.workstage{width:150px;margin:4px auto 0;border-radius:14px;overflow:hidden;
   background:radial-gradient(ellipse at 50% 92%,var(--panel2) 0%,transparent 70%)}
 .workstage svg{width:100%;height:auto;overflow:visible;display:block}
 .workcard{min-height:96px;display:flex;flex-direction:column;justify-content:center;
@@ -1271,6 +1277,11 @@ html[data-skin="light"] .logbar input{color-scheme:light}
       <button class="btn go" id="shopAct" style="width:100%">選一件來試穿</button>
       <button class="btn sm ghost" id="shopReset" style="width:100%;margin-top:7px">回到現在的樣子</button>
     </div>
+  </div>
+  <div class="segs bigtabs" id="shopCats">
+    <button data-sc="char" class="on">角色</button>
+    <button data-sc="bg">背景顏色</button>
+    <button data-sc="win">勝利動作</button>
   </div>
   <div class="segs slottabs" id="shopTabs"></div>
   <div class="shopgrid" id="shopBody"></div>
@@ -2144,6 +2155,39 @@ const HLINE=a=>a.hatY!==undefined?a.hatY:a.hy-HRY(a)*.45;
 /* 頭在某個高度有多寬，k 是從頭中心往上算的比例 */
 const HWAT=(a,k)=>a.sq?a.hr:a.hr*Math.sqrt(Math.max(.04,1-k*k));
 const HATW=a=>a.hatW!==undefined?a.hatW:HWAT(a,.45);
+/* ── 背景顏色 ──
+   生物身後那塊底色。HUD、商店、打工、好友看到的都會跟著換。
+   c1/c2 是漸層的兩個顏色，全部角色共用 */
+const BGS=[
+  {id:'bg-night', n:'夜空',   p:150, c1:'#2a2160', c2:'#141a3a'},
+  {id:'bg-dawn',  n:'清晨',   p:150, c1:'#ffd0a8', c2:'#ff9ec4'},
+  {id:'bg-grass', n:'草地',   p:150, c1:'#a8e08a', c2:'#4a8f32'},
+  {id:'bg-sea',   n:'海邊',   p:150, c1:'#9fd8f0', c2:'#3d7fd6'},
+  {id:'bg-sunset',n:'夕陽',   p:200, c1:'#ffc233', c2:'#e8447a'},
+  {id:'bg-mint',  n:'薄荷',   p:150, c1:'#c9f7ef', c2:'#3ce0d0'},
+  {id:'bg-cocoa', n:'可可',   p:150, c1:'#e3c98a', c2:'#8a5a3c'},
+  {id:'bg-neon',  n:'霓虹',   p:200, c1:'#a879ff', c2:'#3ce0d0'}
+];
+/* ── 勝利動作 ──
+   領薪水、轉盤中獎、升級的時候牠會做的動作 */
+const WINS=[
+  {id:'win-jump', n:'原地大跳', p:150, pose:{y:-19,sx:.96,sy:1.09,rot:0,aL:-150,aR:150}, face:'joy'},
+  {id:'win-spin', n:'轉一圈',   p:150, pose:{y:-8, sx:1.02,sy:1.02,rot:22,aL:-95, aR:95},  face:'win'},
+  {id:'win-pose', n:'擺姿勢',   p:150, pose:{y:0,  sx:1.03,sy:.97, rot:-8,aL:-30, aR:150}, face:'win'},
+  {id:'win-bow',  n:'鞠躬',     p:150, pose:{y:5,  sx:1.05,sy:.93, rot:16,aL:60,  aR:-60}, face:'up'},
+  {id:'win-cheer',n:'歡呼',     p:200, pose:{y:-12,sx:.98,sy:1.05, rot:0, aL:-165,aR:165}, face:'joy'},
+  {id:'win-shy',  n:'害羞',     p:150, pose:{y:2,  sx:1,   sy:1,   rot:10,aL:-118,aR:-40}, face:'blush'}
+];
+const bgById=id=>BGS.find(x=>x.id===id);
+const winById=id=>WINS.find(x=>x.id===id);
+const myBg=()=>bgById(db.settings.bg)||null;
+const myWin=()=>winById(db.settings.win)||WINS[0];
+/* 生物身後那塊的樣式。沒買背景就用原本的暈影 */
+function bgCSS(id){
+  const b=bgById(id);
+  return b ? 'linear-gradient(160deg,'+b.c1+' 0%,'+b.c2+' 100%)'
+           : 'radial-gradient(ellipse at 50% 92%,var(--panel2) 0%,transparent 70%)';
+}
 const ITEMS=[
   /* ── 貓 ── */
   {id:'catband', n:'貓耳髮箍', p:100, slot:'head', only:'a-cat', d:a=>{
@@ -2473,7 +2517,10 @@ const ITEMS=[
 ];
 /* 皇冠在這幾隻頭上戴得太低，各自往上提這麼多。數字上限是帽圈兩端還壓在頭上 */
 const CROWNUP={'a-cat':6,'a-dog':7,'a-bear':5,'a-bot':6,'a-owl':7};
-const itemById=id=>ITEMS.find(x=>x.id===id);
+/* 背景跟勝利動作也是買來的，價格與擁有狀態走同一套 */
+const EXTRAS=()=>BGS.map(b=>({id:b.id,n:b.n,p:b.p,cat:'bg'}))
+                 .concat(WINS.map(w=>({id:w.id,n:w.n,p:w.p,cat:'win'})));
+const itemById=id=>ITEMS.find(x=>x.id===id)||EXTRAS().find(x=>x.id===id);
 /* ── 錢包 ──
    幣跟擁有的東西不放在 db 裡，因為 db 是整包備份、使用者想寫什麼都行。
    登入之後錢包是雲端那份說了算，進出都要過 Firestore 規則：
@@ -4191,6 +4238,7 @@ function renderProf(){
   const full=knownCh(pk);
   $('profPic').innerHTML=full?charPortrait(pk,pw,1):friAvatar((d&&d.avatar)||p.avatar||f.avatar);
   $('profPic').classList.toggle('full',full);
+  $('profPic').style.background=full?bgCSS((d&&d.bg)||p.bg||f.bg):'';
   if(full){                              /* 跟自己那隻一樣會眨眼、歪頭、跳一下 */
     PROFPET.who=()=>TCHARS.find(x=>x.k===pk)||petChar();
     PROFPET.watch(); PROFPET.start();
@@ -4654,6 +4702,7 @@ function petChar(){
 }
 function renderPet(){
   const box=$('petBox'); if(!box) return;
+  box.style.background=bgCSS(db.settings.bg);      /* 買來的背景顏色 */
   const a=petChar(), key=a.k+'|'+wornList(a.k).join(',');   /* 換角色或換配件都要重畫 */
   if(box.dataset.k!==key){
     box.dataset.k=key; PET.el=null;
@@ -5128,7 +5177,8 @@ function openGRec(gid,rid){
 let shopTab='all';
 const SLOTN={head:'頭',face:'臉',neck:'脖子',body:'身體',hand:'手上',foot:'腳下'};
 const SLOTORDER=['head','face','neck','body','hand','foot'];
-let shopSlot='head';
+let shopSlot='head', shopCat='char';
+let tryBg=null, tryWin=null;        /* 正在試的背景／動作 */
 /* 試穿是一個部位記一件，換分類不會清掉。值是物品 id，null 代表這格試著脫掉 */
 let shopTry={};
 /* 物品圖示：只把那個部位那一塊裁出來，不畫整隻 */
@@ -5169,6 +5219,10 @@ function renderShop(){
   /* 本來就沒有這個鍵的話要刪掉。寫回 undefined 會讓整包同步被 Firestore 退件 */
   if(had) m[a.k]=keep; else delete m[a.k];
   $('shopCoins').innerHTML='<svg class="i"><use href="#i-coin"/></svg>'+money(coins())+' Bo士幣';
+  $('shopStage').style.background=bgCSS(tryBg!==null?tryBg:db.settings.bg);
+  $('shopCats').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.sc===shopCat));
+  $('shopTabs').style.display=shopCat==='char'?'':'none';
+  if(shopCat!=='char') return renderShopExtra();
   /* 分類橫幅：正在試穿的那格標星號，已經穿著的標點 */
   const avail=SLOTORDER.filter(sl=>shopFor(a.k).some(x=>x.slot===sl));
   if(avail.indexOf(shopSlot)<0) shopSlot=avail[0];
@@ -5208,9 +5262,59 @@ function renderShop(){
   }
   $('shopReset').style.display=chg.length?'':'none';
 }
-function openShop(){ shopSlot='head'; shopTry={}; renderShop(); open('vShop'); }
+/* 背景顏色／勝利動作那兩頁 */
+function renderShopExtra(){
+  const bg=shopCat==='bg';
+  const list=bg?BGS:WINS;
+  const now=bg?db.settings.bg:db.settings.win;
+  const pick=bg?tryBg:tryWin;
+  const sel=pick!==null?pick:now;
+  $('shopBody').innerHTML=list.map(it=>{
+    const own=hasItem(it.id), on=now===it.id, poor=!own&&coins()<it.p;
+    const icon=bg
+      ? '<span class="bgchip" style="background:linear-gradient(160deg,'+it.c1+' 0%,'+it.c2+' 100%)"></span>'
+      : '<span class="winchip">'+esc(it.n.slice(0,2))+'</span>';
+    return '<button class="sitem'+(on?' on':own?' own':'')+(poor?' poor':'')+
+      (sel===it.id&&!on?' try':'')+'" data-extra="'+it.id+'">'+
+      (on?'<span class="tag">使用中</span>':own?'<span class="tag">已擁有</span>':'')+
+      icon+'<div class="nm">'+esc(it.n)+'</div>'+
+      '<div class="pr">'+(own?'已擁有':'<svg class="i"><use href="#i-coin"/></svg>'+it.p)+'</div></button>';
+  }).join('');
+  const act=$('shopAct'), info=$('shopPick');
+  const chosen=pick!==null&&pick!==now?itemById(pick):null;
+  if(!chosen){
+    info.innerHTML='<span class="no">'+(bg?'點一個顏色就會換到牠身後看看。'
+      :'點一個動作就會在上面演一次，領薪水跟升級的時候會用。')+'</span>';
+    act.textContent=bg?'選一個顏色':'選一個動作'; act.disabled=true; act.style.opacity=.45;
+  }else{
+    const own=hasItem(chosen.id), poor=!own&&coins()<chosen.p;
+    info.innerHTML='<b>'+esc(chosen.n)+'</b>'+(own?'<span class="no">已經有了，直接換上</span>'
+      :'<i>'+chosen.p+' Bo士幣</i>');
+    act.textContent=poor?'還差 '+(chosen.p-coins())+' 枚':own?'就用這個':'買下並使用（'+chosen.p+'）';
+    act.disabled=poor; act.style.opacity=poor?.45:1;
+  }
+  $('shopReset').style.display=chosen?'':'none';
+}
+function openShop(){ shopSlot='head'; shopCat='char'; shopTry={};
+  tryBg=null; tryWin=null; renderShop(); open('vShop'); }
 /* 一次把試穿的都定下來：沒買過的先買，再整套換上 */
 async function shopAction(){
+  if(shopCat!=='char'){                       /* 背景顏色、勝利動作 */
+    const bg=shopCat==='bg';
+    const id=bg?tryBg:tryWin; if(!id) return;
+    const it=itemById(id);
+    if(!hasItem(id)){
+      if(coins()<it.p){ SFX.play('err'); toast('Bo士幣不夠'); return; }
+      const act=$('shopAct'); act.disabled=true; act.textContent='結帳中…';
+      const r=await walletBuy([id]);
+      act.disabled=false;
+      if(!r.ok){ SFX.play('err'); renderShop(); toast('結帳沒過，等一下再試'); return; }
+    }
+    if(bg){ db.settings.bg=id; tryBg=null; } else { db.settings.win=id; tryWin=null; }
+    save(); SFX.play('level'); toast('換好了：'+it.n);
+    renderShop(); renderHud(); renderWork(); pushLook();
+    return;
+  }
   const a=petChar(), chg=tryDiff(a); if(!chg.length) return;
   const buy=chg.map(sl=>shopTry[sl]).filter(id=>id&&!hasItem(id));
   const cost=buy.reduce((n,id)=>n+itemById(id).p,0);
@@ -5495,6 +5599,7 @@ function renderWork(){
   const dot=$('workDot');
   if(dot) dot.className='dot'+((shiftDone()||(!onShift()&&workLeft()>0))?' on':'');
   const box=$('workStage'); if(!box) return;
+  box.style.background=bgCSS(db.settings.bg);
   const a=petChar(), left=workLeft();
   if(box.dataset.k!==a.k){ box.dataset.k=a.k; WORKPET.el=null; box.innerHTML=chSVG(a,'idle'); }
   WORKPET.watch(); WORKPET.start();
@@ -5554,7 +5659,7 @@ async function doWork(){
     workJust=got;
     SFX.play(got.pay>=90?'level':'coin');
     const q=$('workStage').getBoundingClientRect(); burst(q.left+q.width/2,q.top+q.height/2);
-    WORKPET.pose({y:-13,sx:.98,sy:1.06,rot:0,aL:-115,aR:115},'joy',700);
+    const w=myWin(); WORKPET.pose(w.pose,w.face,900);
     renderWork(); renderHud();
     return;
   }
@@ -5650,6 +5755,7 @@ async function spin(){
       SFX.play(got>=50?'level':'coin');
       const r=$('wheelSpin').getBoundingClientRect();
       burst(r.left+r.width/2,r.top+r.height/2);
+      const w=myWin(); PET.pose(w.pose,w.face,900);      /* 買來的勝利動作 */
     }else{
       $('wheelRes').className='wheelres none';
       $('wheelRes').innerHTML='<div><b>再接再厲</b>明天再來一次</div>';
@@ -5973,6 +6079,20 @@ $('catMode').addEventListener('click',e=>{
 $('btnCatEdit').onclick=()=>{ SFX.play('tick'); openCatEdit(); };
 $('btnWheel').onclick=()=>{ SFX.play('tick'); openWheel(); };
 $('btnShop').onclick=()=>{ SFX.play('tick'); openShop(); };
+$('shopCats').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-sc]'); if(!b) return;
+  shopCat=b.dataset.sc; renderShop(); SFX.play('tick');
+});
+$('shopBody').addEventListener('click',e=>{
+  const b=e.target.closest('[data-extra]'); if(!b) return;
+  const id=b.dataset.extra;
+  if(shopCat==='bg'){ tryBg=(tryBg===id?null:id); }
+  else{
+    tryWin=(tryWin===id?null:id);
+    if(tryWin){ const w=winById(id); SHOPPET.pose(w.pose,w.face,900); }   /* 先演一次給你看 */
+  }
+  renderShop(); SFX.play('tick');
+});
 $('shopTabs').addEventListener('click',e=>{
   const b=e.target.closest('button[data-sl]'); if(!b) return;
   shopSlot=b.dataset.sl; renderShop(); SFX.play('tick');   /* 換分類不清掉試穿 */
@@ -5987,7 +6107,7 @@ $('shopBody').addEventListener('click',e=>{
   renderShop(); SFX.play('tick');
 });
 $('shopAct').onclick=shopAction;
-$('shopReset').onclick=()=>{ shopTry={}; SFX.play('tick'); renderShop(); };
+$('shopReset').onclick=()=>{ shopTry={}; tryBg=null; tryWin=null; SFX.play('tick'); renderShop(); };
 $('btnSpin').onclick=spin;
 $('catKind').addEventListener('click',e=>{
   const b=e.target.closest('button[data-ck]'); if(!b) return;
@@ -6399,6 +6519,7 @@ window.CLOUD={
         avatar:db.settings.avatar||null,
         ch:petChar().k,                       /* 角色跟身上穿的，好友要看 */
         wear:wornList(petChar().k),
+        bg:db.settings.bg||null,
         lastSeen:Date.now(),
         updatedAt:Date.now()
       });                       /* 等級屬於授權內容，放在 shares 裡，不放名冊 */
@@ -6525,7 +6646,7 @@ window.CLOUD={
       const L=levelInfo();
       const data={owner:me,viewer:f.uid,updatedAt:Date.now(),
         name:db.settings.name||'某人', avatar:db.settings.avatar||null,
-        ch:petChar().k, wear:wornList(petChar().k),
+        ch:petChar().k, wear:wornList(petChar().k), bg:db.settings.bg||null,
         grant:g};
       if(g.lv) data.title=myTitle();             /* 只給稱號，等級數字不外流 */
       if(g.streak){ const c=calStats(); data.streak=c.streak; data.hit=c.hit; data.has=c.has; }
