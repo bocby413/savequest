@@ -7348,8 +7348,10 @@ const RAID_ONE=0.25;          /* 一次最多摸走那班原本薪水的四分�
 const RAID_CAP=0.30;          /* 一班最多被偷掉三成 */
 const RAID_MIN=5;             /* 少於這個數就不值得動手了 */
 const raidOrig=d=>(+(d&&d.shiftPay)||0)+(+(d&&d.raidTook)||0);
-const raidLeft=d=>Math.round(raidOrig(d)*RAID_CAP)-(+(d&&d.raidTook)||0);
-const raidMax=d=>Math.min(raidLeft(d),Math.max(RAID_MIN,Math.round(raidOrig(d)*RAID_ONE)));
+const raidLeft=d=>Math.floor(raidOrig(d)*RAID_CAP)-(+(d&&d.raidTook)||0);
+/* 上限要跟規則算的一致：一次不超過四分之一（cutNow*4 <= 原本薪水），
+   而且累計不超過三成。規則那邊是純整數乘法，這裡用 floor 對齊 */
+const raidMax=d=>Math.min(raidLeft(d),Math.floor(raidOrig(d)*RAID_ONE));
 const raidRoll=d=>{const hi=raidMax(d);
   return hi<RAID_MIN?0:RAID_MIN+Math.floor(Math.random()*(hi-RAID_MIN+1));};
 /* 被偷光了就不要再去了 */
