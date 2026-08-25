@@ -111,11 +111,12 @@ for (const u of users) {
 
 /* 被偷的人要馬上知道是誰幹的，不然錢少了會以為是 bug */
 for (const [uid, list] of Object.entries(raidPush)) {
-  const total = list.reduce((n, x) => n + x.amount, 0);
   const who = [...new Set(list.map(x => x.byName))].join('、');
+  /* 不講金額 —— 點進去自己看到數字比先被告知有感。
+     也不叫人偷回去，對方不一定在打工，講了只會撲空 */
   await pushTo(uid, JSON.stringify({
     title: '有人偷了你的薪水',
-    body: who + '趁你沒領，偷走了 ' + total + ' 枚。快去領，順便偷回去。',
+    body: who + '趁你沒領，偷走了一筆。快去把剩下的領走，拖越久被偷越多。',
     tag: 'raid-' + now, url: './'
   }));
 }
