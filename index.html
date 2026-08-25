@@ -5744,57 +5744,72 @@ const ITEMS=[
     '<circle cx="'+(60-3)+'" cy="'+(cy+4)+'" r="1.4" fill="#c28800"/>'+
     '<circle cx="'+(60+3)+'" cy="'+(cy+4)+'" r="1.4" fill="#c28800"/>';}},
   {id:'shb1', n:'小羊圖案毛衣', p:200, slot:'body', only:'a-shp', d:a=>{
-    const t=a.by-a.bh, h=a.bh*2;
-    const sheep=(x,y)=>'<ellipse cx="'+x+'" cy="'+y+'" rx="6" ry="4.4" fill="#fffdf8"/>'+
-      '<circle cx="'+(x+5)+'" cy="'+(y-2)+'" r="2.8" fill="#4a4a52"/>';
-    return '<path d="'+garment(a,.06,.92)+'" fill="#5aa9ff"/>'+
-      '<path d="M'+(60-a.bw*.9)+' '+(t+h*.3)+'h'+(a.bw*1.8)+'M'+(60-a.bw*.95)+' '+(t+h*.72)+
-      'h'+(a.bw*1.9)+'" stroke="#2f6fb5" stroke-width="2.4"/>'+
-      sheep(60-a.bw*.4,t+h*.5)+sheep(60+a.bw*.42,t+h*.5);}},
+  const t=a.by-a.bh,h=a.bh*2;
+  return '<path d="'+garment(a,.06,.78)+'" fill="#ffe9a8"/>'+
+    '<path d="M'+(60-bwAt(a,.78)-1.5).toFixed(1)+' '+(t+h*.74).toFixed(1)+'h'+((bwAt(a,.78)+1.5)*2).toFixed(1)+
+    '" stroke="#e8c86a" stroke-width="5"/>'+
+    '<path d="M'+(60-a.bw*.62)+' '+(t+h*.09)+'q'+(a.bw*.62)+' 7 '+(a.bw*1.24)+' 0" stroke="#e8c86a" stroke-width="3.4" fill="none"/>'+
+    /* 胸前那隻小羊：三顆毛球加一顆深色的頭 */
+    '<circle cx="'+(60-4.5)+'" cy="'+(t+h*.44)+'" r="4.2" fill="#fffdf8"/>'+
+    '<circle cx="60" cy="'+(t+h*.4)+'" r="5" fill="#fffdf8"/>'+
+    '<circle cx="'+(60+4.5)+'" cy="'+(t+h*.44)+'" r="4.2" fill="#fffdf8"/>'+
+    '<ellipse cx="'+(60+7.5)+'" cy="'+(t+h*.5)+'" rx="3" ry="3.6" fill="#a690e0"/>'+
+    '<circle cx="'+(60+8.4)+'" cy="'+(t+h*.49)+'" r="0.9" fill="#fffdf8"/>';}},
   {id:'shb2', n:'橫紋針織', p:200, slot:'body', only:'a-shp', d:a=>{
   const t=a.by-a.bh,h=a.bh*2;
-  let o='<path d="'+garment(a,.06,.9)+'" fill="#9fd8f0"/>';
-  for(let i=0;i<4;i++){const k=.16+i*.2;
+  let o='<path d="'+garment(a,.06,.76)+'" fill="#bcd9f7"/>';
+  for(let i=0;i<3;i++){const k=.2+i*.18;
     o+='<path d="M'+(60-bwAt(a,k)-1.5).toFixed(1)+' '+(t+h*k).toFixed(1)+'q'+(bwAt(a,k)+1.5).toFixed(1)+
-       ' 5 '+((bwAt(a,k)+1.5)*2).toFixed(1)+' 0" stroke="#4a9fe0" stroke-width="3" fill="none"/>';}
-  return o;}},
+       ' 5 '+((bwAt(a,k)+1.5)*2).toFixed(1)+' 0" stroke="#ffb3c0" stroke-width="3.4" fill="none"/>';}
+  /* 下襬翻起來一點，露出裡面的毛 */
+  o+='<path d="M'+(60-bwAt(a,.76)-1.5).toFixed(1)+' '+(t+h*.73).toFixed(1)+'h'+((bwAt(a,.76)+1.5)*2).toFixed(1)+
+     '" stroke="#7fa8dd" stroke-width="4.4"/>';
+  return o+'<path d="M'+(60-a.bw*.58)+' '+(t+h*.09)+'q'+(a.bw*.58)+' 6 '+(a.bw*1.16)+
+    ' 0" stroke="#7fa8dd" stroke-width="3.4" fill="none"/>';}},
   {id:'shb3', n:'午睡帽T', p:200, slot:'body', only:'a-shp', d:a=>{
   const t=a.by-a.bh,h=a.bh*2;
-  return '<path d="'+garment(a,.06,.92)+'" fill="#c9a6ff"/>'+
-    '<path d="M'+(60-a.bw*.66)+' '+(t+h*.06)+'q'+(a.bw*.66)+' 14 '+(a.bw*1.32)+' 0" fill="#8536ff"/>'+
-    '<path d="M'+(60-7)+' '+(t+h*.5)+'h7l-7 6h7" stroke="#f7f4ec" stroke-width="2" fill="none"/>'+
-    '<path d="M'+(60+3)+' '+(t+h*.6)+'h5l-5 4h5" stroke="#f7f4ec" stroke-width="1.6" fill="none"/>';}},
+  return '<path d="'+garment(a,.06,.8)+'" fill="#d9cdf5"/>'+
+    '<path d="M'+(60-a.bw*.66)+' '+(t+h*.06)+'q'+(a.bw*.66)+' 15 '+(a.bw*1.32)+' 0" fill="#b9a6ec"/>'+
+    '<rect x="'+(60-a.bw*.36)+'" y="'+(t+h*.5)+'" width="'+(a.bw*.72)+'" height="'+(h*.17).toFixed(1)+
+    '" rx="4" fill="#c6b6f0"/>'+
+    '<path d="M'+(60-7)+' '+(t+h*.3)+'h7l-7 6h7" stroke="#6b5aa8" stroke-width="2" fill="none"/>'+
+    '<path d="M'+(60+3)+' '+(t+h*.22)+'h5l-5 4h5" stroke="#6b5aa8" stroke-width="1.6" fill="none"/>'+
+    '<path d="M'+(60-bwAt(a,.8)-1.5).toFixed(1)+' '+(t+h*.76).toFixed(1)+'h'+((bwAt(a,.8)+1.5)*2).toFixed(1)+
+    '" stroke="#b9a6ec" stroke-width="4.4"/>';}},
   {id:'shb4', n:'牧場圍裙', p:200, slot:'body', only:'a-shp', d:a=>{
   const t=a.by-a.bh,h=a.bh*2;const p=.2;
-  return '<path d="'+garment(a,p,.95,-1)+'" fill="#8a9b3c"/>'+
+  return '<path d="'+garment(a,p,.84,-1)+'" fill="#b8e6d0"/>'+
     '<path d="M'+(60-a.bw*.34)+' '+(t+h*p)+'L'+(60-a.bw*.5)+' '+(t+h*(p-.16))+
     'M'+(60+a.bw*.34)+' '+(t+h*p)+'L'+(60+a.bw*.5)+' '+(t+h*(p-.16))+
-    '" stroke="#8a9b3c" stroke-width="3.4"/>'+
-    '<path d="M'+(60-a.bw*.44)+' '+(t+h*.44)+'h'+(a.bw*.88)+'M'+(60-a.bw*.44)+' '+(t+h*.62)+
-    'h'+(a.bw*.88)+'" stroke="#4a5f1a" stroke-width="2"/>'+
-    '<ellipse cx="60" cy="'+(t+h*.78)+'" rx="6" ry="4.4" fill="#fffdf8"/>'+
-    '<circle cx="'+(60+4)+'" cy="'+(t+h*.75)+'" r="2.4" fill="#4a4a52"/>';}},
+    '" stroke="#8fd4b8" stroke-width="3.8" stroke-linecap="round"/>'+
+    /* 口袋裡探出一隻小羊的頭 */
+    '<path d="M'+(60-a.bw*.34)+' '+(t+h*.5)+'h'+(a.bw*.68)+'v11h-'+(a.bw*.68)+'z" fill="#8fd4b8"/>'+
+    '<circle cx="'+(60-3.4)+'" cy="'+(t+h*.5)+'" r="3.6" fill="#fffdf8"/>'+
+    '<circle cx="'+(60+1.4)+'" cy="'+(t+h*.48)+'" r="4.2" fill="#fffdf8"/>'+
+    '<ellipse cx="'+(60+5.4)+'" cy="'+(t+h*.52)+'" rx="2.6" ry="3.2" fill="#5f7a6e"/>'+
+    '<path d="M'+(60-a.bw*.5)+' '+(t+h*.4)+'h'+a.bw+'" stroke="#8fd4b8" stroke-width="2"/>';}},
   {id:'shb5', n:'吊帶工作褲', p:200, slot:'body', only:'a-shp', d:a=>{
-  const t=a.by-a.bh,h=a.bh*2;const p=.36;
-  return '<path d="'+garment(a,p,.95)+'" fill="#4a9fe0"/>'+
-    '<path d="M'+(60-a.bw*.44)+' '+(t+h*p)+'V'+(t+h*(p-.3))+'M'+(60+a.bw*.44)+' '+(t+h*p)+
-    'V'+(t+h*(p-.3))+'" stroke="#4a9fe0" stroke-width="5"/>'+
-    '<path d="M'+(60-a.bw*.5)+' '+(t+h*(p+.22))+'h'+a.bw+'" stroke="#1b5c9e" stroke-width="3"/>'+
-    '<rect x="'+(60-a.bw*.22)+'" y="'+(t+h*(p+.04))+'" width="'+(a.bw*.44)+'" height="9" rx="2" fill="#1b5c9e"/>'+
-    '<circle cx="'+(60-a.bw*.44)+'" cy="'+(t+h*p+2)+'" r="2.6" fill="#fffdf8"/>'+
-    '<circle cx="'+(60+a.bw*.44)+'" cy="'+(t+h*p+2)+'" r="2.6" fill="#fffdf8"/>';}},
+  const t=a.by-a.bh,h=a.bh*2;const p=.4;
+  return '<path d="'+garment(a,p,.9)+'" fill="#f7dcc4"/>'+
+    '<path d="M'+(60-a.bw*.44)+' '+(t+h*p)+'V'+(t+h*(p-.34))+'M'+(60+a.bw*.44)+' '+(t+h*p)+
+    'V'+(t+h*(p-.34))+'" stroke="#f7dcc4" stroke-width="5.4"/>'+
+    '<rect x="'+(60-a.bw*.26)+'" y="'+(t+h*(p+.06))+'" width="'+(a.bw*.52)+'" height="11" rx="3" fill="#e8c19a"/>'+
+    '<path d="M'+(60-3.4)+' '+(t+h*(p+.14))+'q3.4 3 6.8 0" stroke="#c99a70" stroke-width="1.6" fill="none"/>'+
+    '<circle cx="'+(60-a.bw*.44)+'" cy="'+(t+h*p+2)+'" r="2.8" fill="#f09aa8"/>'+
+    '<circle cx="'+(60+a.bw*.44)+'" cy="'+(t+h*p+2)+'" r="2.8" fill="#f09aa8"/>';}},
   {id:'shb6', n:'毛毯披風', p:200, slot:'body', only:'a-shp', back:1, d:a=>{
   const t=a.by-a.bh,h=a.bh*2;const w=a.bw+8,tw=a.bw*.7;
-  let o='<path d="M'+(60-tw)+' '+t+'q'+tw+' 7 '+(tw*2)+' 0l'+(w-tw)+' '+(h*.95)+
-    'q-'+w+' 10 -'+(w*2)+' 0z" fill="#ff9ec4"/>';
-  const f1=.3/.95,f2=.88/.95,half=f=>tw+(w-tw)*f;
+  let o='<path d="M'+(60-tw)+' '+t+'q'+tw+' 7 '+(tw*2)+' 0l'+(w-tw)+' '+(h*.82)+
+    'q-'+w+' 10 -'+(w*2)+' 0z" fill="#ffd0d6"/>';
+  const f1=.3/.82,f2=.76/.82,half=f=>tw+(w-tw)*f;
   [-.5,.5].forEach(k=>{
     o+='<path d="M'+(60+k*half(f1)).toFixed(1)+' '+(t+h*.3).toFixed(1)+
-       'L'+(60+k*half(f2)).toFixed(1)+' '+(t+h*.88).toFixed(1)+
-       '" stroke="#e8447a" stroke-width="2.6" opacity=".7"/>';});
+       'L'+(60+k*half(f2)).toFixed(1)+' '+(t+h*.76).toFixed(1)+
+       '" stroke="#f09aa8" stroke-width="2.4" opacity=".8"/>';});
+  /* 下襬一排奶油色毛球 */
   for(let i=0;i<5;i++){const k=(i/4-.5)*2;
-    o+='<circle cx="'+(60+k*w*.86).toFixed(1)+'" cy="'+(t+h*.98).toFixed(1)+'" r="3.4" fill="#fffdf8"/>';}
-  return o;}},
+    o+='<circle cx="'+(60+k*w*.86).toFixed(1)+'" cy="'+(t+h*.86).toFixed(1)+'" r="3.6" fill="#ffe9a8"/>';}
+  return o+'<circle cx="60" cy="'+(t+3)+'" r="3.4" fill="#f09aa8"/>';}},
   {id:'shd1', n:'毛線球', p:200, slot:'hand', only:'a-shp', d:a=>{
   const x=AC.gx(a),y=AC.gy(a)-3;
   const wind=(rx,ry,rot)=>'<ellipse cx="'+x+'" cy="'+y+'" rx="'+rx+'" ry="'+ry+
