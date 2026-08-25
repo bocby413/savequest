@@ -7363,7 +7363,9 @@ function raidable(d){
 /* 還偷得動嗎。已經被偷到上限的話，人家已經很慘了 */
 const raidOpen=d=>raidable(d)&&!raidBroke(d);
 /* 我這一班被誰偷了。排程結算完才會有 amount */
-const myRaids=()=>RAIDS.filter(r=>r.shiftAt&&Math.abs(r.shiftAt-WALLET.shiftAt)<2000);
+/* 紙條上的 shiftAt 記的是「下班的時間」（偷的時候用 shiftEnd 當班次代號），
+   不是開工時間。拿 WALLET.shiftAt 去比永遠對不上，被偷紀錄就一直不會出現 */
+const myRaids=()=>RAIDS.filter(r=>r.shiftAt&&onShift()&&Math.abs(r.shiftAt-shiftEnd())<2000);
 const raidedSum=()=>myRaids().reduce((n,r)=>n+(+r.amount||0),0);
 const PKEY='life_goals_prices';
 let PRICES=null;
@@ -9611,8 +9613,13 @@ function renderWork(){
   }
   const card=$('workCard'), b=$('workGo');
   if(workJust){                                   /* 剛領完，先讓結果停一下 */
+    const st=workJust.stolen||[];
     card.innerHTML='<div class="wjob"><b>'+workJust.h+' 小時</b>'+esc(workJust.job)+'</div>'+
-      '<div class="wpay">領到 <b>'+workJust.pay+'</b> 枚 Bo士幣</div>';
+      '<div class="wpay">領到 <b>'+workJust.pay+'</b> 枚 Bo士幣</div>'+
+      /* 錢少了要講清楚是誰拿走的，不然會以為是算錯 */
+      (st.length?'<div class="raidlog">這班原本有 <b>'+(workJust.pay+workJust.lost)+'</b> 枚，'+
+        '被偷走 <b>'+workJust.lost+'</b> 枚<br>'+
+        st.map(r=>'　'+esc(r.n)+'　−'+r.a+' 枚').join('<br>')+'</div>':'');
   }
   else if(shiftDone()){
     /* 被偷了就直說是誰，不然錢少了會以為是 bug */
@@ -9658,7 +9665,11 @@ async function doWork(){
   const a=petChar();
   workJust=null;
   if(shiftDone()){                                /* 收工領錢 */
-    const got={h:WALLET.shiftH, job:WALLET.shiftJob, pay:WALLET.shiftPay};
+    /* 被偷的明細要在清掉這一班之前先抄下來，領完就查不到了 */
+    const stolen=myRaids().filter(r=>+r.amount>0)
+      .map(r=>({n:r.byName||'某人', a:+r.amount}));
+    const got={h:WALLET.shiftH, job:WALLET.shiftJob, pay:WALLET.shiftPay,
+               stolen:stolen, lost:stolen.reduce((n,r)=>n+r.a,0)};
     workBusy=true; renderWork();
     const r=await claimShift();
     workBusy=false;
