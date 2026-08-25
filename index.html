@@ -8101,7 +8101,8 @@ $('btnRaid').onclick=async()=>{
   const r=await CLOUD.raid(f,d.shiftEnd,amount);
   if(!r.ok){
     b.disabled=false; b.textContent='偷走一點';
-    toast(r.e==='permission-denied'?'雲端不讓你偷（規則還沒更新？）'
+    toast(r.e==='permission-denied'
+      ?'雲端擋下來了。要嘛 Firestore 規則還沒更新到「立刻入帳」那版，要嘛他的薪水剛剛被別人偷過、金額對不上，重開一次再試'
       :r.half?'紀錄留下了但錢沒進來，等一下再試':'沒成功，等一下再試');
     SFX.play('err'); return;
   }
@@ -10446,8 +10447,12 @@ window.CLOUD={
     if(this.unsubW) this.unsubW();
     this.unsubW=F.onSnapshot(this.wref(),s=>{
       if(!s.exists()) return;
+      const before=WALLET.shiftPay+'|'+WALLET.shiftH+'|'+WALLET.shiftAt;
       WALLET=normWallet(s.data()); saveWallet();
       renderHud(); renderWheel(); renderShop(); renderWork();
+      /* 打工狀態變了就重推快照。好友那邊算「可以偷多少」是照這份快照算的，
+         舊的話算出來的數字會跟規則自己算的對不上，寫入就被擋 */
+      if(before!==WALLET.shiftPay+'|'+WALLET.shiftH+'|'+WALLET.shiftAt) this.pushShares();
     },()=>{});
   },
   /* 寫完之後一律「指定絕對值」，不要再加減一次。
