@@ -9628,7 +9628,7 @@ function renderWork(){
       '<div class="wsay">下班囉，薪水還沒領</div>'+
       (took.length?'<div class="raidlog">'+took.map(r=>
         '<b>'+esc(r.byName||'某人')+'</b> 趁你沒領，偷走了 <b>'+r.amount+'</b> 枚').join('<br>')+
-        '<br>拖越久被偷越多，早點領。</div>':'');
+        '</div>':'');
   }
   else if(onShift()){
     const act=jobAct(WALLET.shiftJob);
