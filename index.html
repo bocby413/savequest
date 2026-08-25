@@ -1303,7 +1303,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
     <button class="btn sm ghost" id="btnSfx"><svg class="i" id="sfxIcon"><use href="#i-vol"/></svg></button></div>
   <div class="setrow volrow"><div class="lb"><b>音量</b><span id="volTxt">中</span></div>
     <input type="range" id="volBar" min="0" max="100" step="5"></div>
-  <div class="setrow"><div class="lb"><b>佈景</b><span id="themeSub">畫面的色調，點擊換下一款</span></div>
+  <div class="setrow"><div class="lb"><b>佈景</b><span id="themeSub">點擊換下一款</span></div>
     <button class="btn sm ghost" id="btnTheme">紫藤</button></div>
   <div class="setrow"><div class="lb"><b>版本</b><span id="verNow">查詢中…</span></div>
     <button class="btn sm ghost" id="btnUpd">檢查更新</button></div>
@@ -10165,9 +10165,10 @@ function renderTheme(){
   btn.style.borderColor=hsl(now.h,now.s,52);
   btn.style.color=hsl(now.h,now.s*.9,78);
   const n=myThemes().length;
+  /* 標題已經寫著「佈景」了，前綴是多餘的 —— 而且加上去在手機上會折成三行 */
   $('themeSub').textContent = n>1
-    ? '畫面的色調，點擊換下一款（有 '+n+' 款）'
-    : '畫面的色調，去商店買背景就會多幾款可以換';
+    ? '點擊換下一款（有 '+n+' 款）'
+    : '去商店買背景就會多幾款可以換';
 }
 $('btnTheme').onclick=()=>{
   const list=myThemes();
