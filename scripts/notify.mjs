@@ -109,6 +109,31 @@ for (const u of users) {
   }
 }
 
+/* ── 新的一班要把「已被偷」歸零 ──
+   歸零是各自的 app 在開工時寫的（v224 之後才有）。被偷的人在舊版的話，
+   那個數字會一直累積，他每一班看起來都已經被偷滿了，誰都偷不動。
+   這裡直接對帳：這一班沒有任何偷竊紀錄，raidTook 就該是 0。
+   這樣被偷的人完全不需要更新 app。 */
+let zeroed = 0;
+for (const u of users) {
+  const wref = db.doc(`users/${u.id}/wallet/main`);
+  const w = await wref.get();
+  if (!w.exists) continue;
+  const d = w.data();
+  const took = Number(d.raidTook) || 0;
+  if (took <= 0) continue;
+  const h = Number(d.shiftH) || 0, at = ms(d.shiftAt);
+  const end = h > 0 && at > 0 ? at + h * 3600000 : 0;
+  const rs = await db.collection(`users/${u.id}/raids`).get();
+  const real = rs.docs
+    .filter(x => end > 0 && Math.abs(Number(x.data().shiftAt) - end) < 2000)
+    .reduce((n, x) => n + (Number(x.data().amount) || 0), 0);
+  if (real === took) continue;
+  await wref.update({ raidTook: real });
+  zeroed++;
+  console.log(`  ${u.id.slice(0, 6)} 的已被偷 ${took} 與實際紀錄 ${real} 對不上，改成 ${real}`);
+}
+
 /* ── 把打工狀態同步回每個人的分享快照 ──
    快照是各自的 app 在錢包變動時推的，但 app 沒開就不會推。
    被偷過的人如果沒開 app，別人看到的還是舊的薪水與「還沒被偷」，
@@ -213,5 +238,6 @@ for (const u of users) {
   if (c) subsAll += c.data().count;
 }
 console.log(`看了 ${checked} 個人，全部裝置訂閱數 ${subsAll}，${due} 班到點，推出 ${sent} 則，` +
-  `清掉 ${dropped} 個失效訂閱；偷竊通知 ${raidOk} 筆、作廢 ${raidNo} 筆；快照同步 ${synced} 份`);
+  `清掉 ${dropped} 個失效訂閱；偷竊通知 ${raidOk} 筆、作廢 ${raidNo} 筆；` +
+  `已被偷對帳 ${zeroed} 筆、快照同步 ${synced} 份`);
 notes.forEach(n => console.log('  · ' + n));
