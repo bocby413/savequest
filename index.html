@@ -8111,14 +8111,14 @@ function renderProf(){
         : broke
         ? (d.shiftJob||'打工')+'　這班已經被偷光了'
         : (d.shiftJob||'打工')+'　已經下班 '+(hrs?hrs+' 小時 ':'')+mins+' 分鐘了';
-      /* 把算式攤開來。不能偷的時候只寫一句結論，會看不出是哪個數字擋住的 */
-      const nums='　原本 '+raidOrig(d)+'・上限 '+raidCap(d)+'・已被偷 '+
-        (+d.raidTook||0)+'・還剩 '+raidLeft(d);
-      $('raidSay').textContent=(took
+      /* 額度那些數字只印在 console，不要擺到畫面上 —— 講白了就沒有賭的感覺 */
+      console.log('[raid]',f.uid,'原本',raidOrig(d),'上限',raidCap(d),
+        '已被偷',+d.raidTook||0,'還剩',raidLeft(d));
+      $('raidSay').textContent=took
         ? '每個人每一班只能偷一次。剩下的額度留給其他好友。'
         : broke
         ? '他這班的薪水被偷掉三成了，已經夠可憐，放過他吧。'
-        : '能摸到多少全看運氣。他會知道是你，也可以偷回去。')+nums;
+        : '能摸到多少全看運氣。他會知道是你，也可以偷回去。';
       const b=$('btnRaid');
       const off=took||broke;
       b.disabled=!!off; b.style.opacity=off?.5:1;
