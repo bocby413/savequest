@@ -8127,8 +8127,8 @@ $('btnRaid').onclick=async()=>{
     b.disabled=false; b.textContent='偷走一點';
     /* 哪一步掛的直接寫出來，不然三步都回同一種錯誤，查不出是哪條規則 */
     const 步驟=['','①寫偷竊紀錄','②扣他的薪水','③戰利品入帳'][r.step||0]||'?';
-    toast('偷不成：'+步驟+'　'+(r.e||'不明'));
-    console.log('[raid] 失敗於',步驟,r);
+    toast('偷不成：'+步驟+'　'+(r.e||'不明')+(r.step===2&&CLOUD.lastRaid?'  '+CLOUD.lastRaid:''));
+    console.log('[raid] 失敗於',步驟,r,CLOUD.lastRaid);
     SFX.play('err'); return;
   }
   RAIDTOOK[f.uid]=d.shiftEnd;
@@ -10895,9 +10895,12 @@ window.CLOUD={
       try{
       /* 不能先讀他的錢包 —— 讀取規則是「只有自己讀得到」。
          要用的數字他推的快照裡就有，舊的話規則會自己算一次擋下來 */
-      await F.updateDoc(F.doc(this.api.fs,'users',f.uid,'wallet','main'),{
-        shiftPay:Math.max(0,(+snap.shiftPay||0)-n),
-        raidTook:(+snap.raidTook||0)+n});
+      const payTo=Math.max(0,(+snap.shiftPay||0)-n), tookTo=(+snap.raidTook||0)+n;
+      /* 出事的時候要看得到實際送了什麼，不然規則擋下來只有一句 permission-denied */
+      this.lastRaid='pay '+(+snap.shiftPay||0)+'→'+payTo+'　took '+(+snap.raidTook||0)+'→'+tookTo+
+        '　偷 '+n+'　班次 '+at;
+      await F.updateDoc(F.doc(this.api.fs,'users',f.uid,'wallet','main'),
+        {shiftPay:payTo, raidTook:tookTo});
       step=3;
       const next={coins:WALLET.coins+n, owned:WALLET.owned, spunOn:WALLET.spunOn,
                   workOn:WALLET.workOn, workN:WALLET.workN, shiftH:WALLET.shiftH,
