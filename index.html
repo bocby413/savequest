@@ -7338,9 +7338,11 @@ const DEFAULT_GRANT={lv:true,streak:false,goals:false,month:false,assets:false};
 /* 誰偷過我的薪水。排程結算完會把 amount 填進去 */
 let RAIDS=[];
 const RAID_WAIT=30*60000;      /* 下班超過這麼久沒領才偷得動 */
-/* 偷多少。這個算式跟 Firestore 規則裡的 raidAmt() 必須一模一樣，
-   規則會拿對方錢包裡的 shiftPay 自己算一次來對，對不上就寫不進去 */
-const raidAmt=pay=>Math.min(12,Math.max(3,Math.round((+pay||0)*0.1)));
+/* 偷多少是隨機的，事前不告訴你，得手才知道。
+   上限跟 Firestore 規則裡的 raidMax() 必須一模一樣 —— 規則會拿對方錢包裡的
+   shiftPay 自己算一次，超過就寫不進去。下限固定 3。 */
+const raidMax=pay=>Math.min(12,Math.max(3,Math.round((+pay||0)*0.15)));
+const raidRoll=pay=>{const hi=raidMax(pay);return 3+Math.floor(Math.random()*(hi-3+1));};
 /* 這個好友現在偷不偷得動。看的是他分享過來的快照，不是他的錢包 */
 function raidable(d){
   return !!(d && d.shiftEnd > 0 && d.shiftPay > 0 && Date.now() - d.shiftEnd >= RAID_WAIT);
@@ -7926,7 +7928,7 @@ function renderFriends(){
         return '<div class="fri"><button class="friopen" data-prof="'+f.uid+'">'+
           '<span class="pic" style="'+picBg(d,PROFILES[f.uid])+'">'+friPic(d,PROFILES[f.uid])+'</span>'+
           '<span class="info"><span class="nm"><b>'+esc(friName(f))+'</b></span>'+
-          '<span class="sub"><span class="raidtag">可以偷走 '+raidAmt(d.shiftPay)+' 枚</span></span></span>'+
+          '<span class="sub"><span class="raidtag">薪水擺著沒領</span></span></span>'+
           '<svg class="chev"><use href="#i-down"/></svg></button></div>';
       }).join('')+'</div>';
   }
@@ -8074,7 +8076,7 @@ function renderProf(){
       const hrs=Math.floor((Date.now()-d.shiftEnd)/3600000);
       const mins=Math.round((Date.now()-d.shiftEnd)/60000)%60;
       $('raidTitle').textContent=(d.shiftJob||'打工')+'　已經下班 '+(hrs?hrs+' 小時 ':'')+mins+' 分鐘了';
-      $('raidSay').textContent='可以偷走 '+raidAmt(d.shiftPay)+' 枚。他會知道是你，也可以偷回去。';
+      $('raidSay').textContent='能摸到多少全看運氣。他會知道是你，也可以偷回去。';
       const b=$('btnRaid');
       const mine=RAIDTOOK[f.uid];
       const took=mine&&Math.abs(mine-d.shiftEnd)<2000;      /* 這一班我偷過了 */
@@ -8097,7 +8099,7 @@ $('btnRaid').onclick=async()=>{
   const d=SHARED[f.uid];
   if(!raidable(d)){ toast('他已經領走了，來不及'); renderProf(); return; }
   const b=$('btnRaid'); b.disabled=true; b.textContent='下手中…';
-  const amount=raidAmt(d.shiftPay);
+  const amount=raidRoll(d.shiftPay);
   const r=await CLOUD.raid(f,d.shiftEnd,amount);
   if(!r.ok){
     b.disabled=false; b.textContent='偷走一點';
