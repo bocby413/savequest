@@ -50,3 +50,44 @@ for (const rel of (rels.releases || [])) {
     }
   }
 }
+
+
+/* ── 再看一次實際資料：好友關係到底有沒有雙向 ── */
+import { initializeApp, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+const app = initializeApp({ credential: cert(sa), projectId: proj });
+const fdb = getFirestore(app, 'default');
+const short = u => u.slice(0, 6);
+
+console.log('');
+console.log('=== 好友關係（規則要的是「被偷者的名單裡有偷的人」）===');
+const users = await fdb.collection('users').listDocuments();
+const fri = {};
+for (const u of users) {
+  const snap = await fdb.collection(`users/${u.id}/friends`).listDocuments();
+  fri[u.id] = snap.map(d => d.id);
+}
+for (const [uid, list] of Object.entries(fri)) {
+  if (!list.length) continue;
+  console.log('');
+  console.log(`${short(uid)} 的名單：${list.map(short).join(' ')}`);
+  for (const f of list) {
+    const back = (fri[f] || []).includes(uid);
+    console.log(`  ${short(uid)} -> ${short(f)}　對方名單裡有沒有我：${back ? '有' : '沒有 ← 這個方向缺'}`);
+  }
+}
+
+console.log('');
+console.log('=== 誰現在偷得動 ===');
+for (const u of users) {
+  const w = await fdb.doc(`users/${u.id}/wallet/main`).get();
+  if (!w.exists) continue;
+  const d = w.data();
+  const h = Number(d.shiftH) || 0;
+  if (h <= 0) continue;
+  const at = d.shiftAt?.toMillis?.() || Number(d.shiftAt) || 0;
+  const end = at + h * 3600000;
+  const mins = Math.round((Date.now() - end) / 60000);
+  console.log(`${short(u.id)}　${h}小時班　薪水 ${d.shiftPay}　已被偷 ${d.raidTook || 0}　` +
+    (mins >= 0 ? `下班 ${mins} 分鐘了` : `還有 ${-mins} 分鐘下班`));
+}
