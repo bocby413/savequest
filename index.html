@@ -3284,7 +3284,7 @@ const ITEMS=[
       '<path d="M'+(60-17)+' '+(y-1)+'q17-9 34 0" stroke="#c9a86a" stroke-width="2" fill="none"/>'+
       '<circle cx="60" cy="'+(y-9)+'" r="2.8" fill="#c9a86a"/>';}},
   {id:'whistle', n:'救生員哨子', p:100, slot:'neck', only:'a-frog', d:a=>{
-    const y=NKB(a)-2, w=NKW(a)*.75;
+    const y=NKB(a)-1, w=NKW(a)*.75;
     return '<path d="M'+(60-w)+' '+y+'q'+w+' 10 '+(w*2)+' 0" stroke="#ff5c8a" stroke-width="3" fill="none"/>'+
       '<rect x="55" y="'+(y+9)+'" width="12" height="7" rx="3.5" fill="#ffc233"/>'+
       '<circle cx="66" cy="'+(y+12.5)+'" r="2" fill="#e39b12"/>';}},
@@ -4804,7 +4804,7 @@ const ITEMS=[
       '<circle cx="'+(x-1.4).toFixed(1)+'" cy="'+(y-1.6)+'" r="1.4" fill="#ffffff" opacity=".8"/>';};
   return one(-1)+one(1);}},
   {id:'fgn1', n:'保暖圍巾', p:100, slot:'neck', only:'a-frog', d:a=>{
-  const y=NKB(a)-3,w=NKW(a)*.86;
+  const y=NKB(a)-1,w=NKW(a)*.86;
   return '<path d="M'+(60-w)+' '+y+'q'+w+' 10 '+(w*2)+' 0v11q-'+w+' 10 -'+(w*2)+' 0z" fill="#8f5ce0"/>'+
     '<path d="M'+(60-w*.5)+' '+(y+2)+'v12M60 '+(y+4)+'v12M'+(60+w*.5)+' '+(y+2)+
     'v12" stroke="#c9a6ff" stroke-width="2"/>'+
@@ -4815,9 +4815,15 @@ const ITEMS=[
   for(let i=0;i<7;i++){const t=(i/6-.5)*2;
     o+='<path d="M'+(60+t*w-5).toFixed(1)+' '+(y+4)+'q5 -8 10 0z" fill="#ff8a3c"/>';}
   return o+'<path d="M'+(60-w)+' '+(y+4)+'h'+(w*2)+'" stroke="#c9691e" stroke-width="2.4"/>';}},
-  {id:'fgn3', n:'玻璃珠項鍊', p:100, slot:'neck', only:'a-frog', d:a=>AC.beads(a,'#e8447a','#b10b42')},
+  {id:'fgn3', n:'玻璃珠項鍊', p:100, slot:'neck', only:'a-frog', d:a=>{
+  /* 跟 AC.beads 一樣，只是掛低一點，上緣才對得齊青蛙其他的脖子配件。
+     共用的那支不能動，會影響到別隻 */
+  const y=NKB(a)+2,w=NKW(a)*.72;let o='';
+  for(let i=0;i<7;i++){const t=(i/6-.5)*2;
+    o+='<circle cx="'+(60+t*w).toFixed(1)+'" cy="'+(y+(1-t*t)*9).toFixed(1)+'" r="3" fill="#e8447a"/>';}
+  return o+'<circle cx="60" cy="'+(y+12)+'" r="4.2" fill="#b10b42"/>';}},
   {id:'fgn4', n:'池塘領結', p:100, slot:'neck', only:'a-frog', d:a=>{
-  const y=NKB(a)+3,w=NKW(a)*.62,h=w*.55;
+  const y=NKB(a)+7,w=NKW(a)*.62,h=w*.55;
   return '<ellipse cx="'+(60-w*.55)+'" cy="'+y+'" rx="'+(w*.55)+'" ry="'+h+'" fill="#3ce0d0" '+
     'transform="rotate(-18,'+(60-w*.55)+','+y+')"/>'+
     '<ellipse cx="'+(60+w*.55)+'" cy="'+y+'" rx="'+(w*.55)+'" ry="'+h+'" fill="#3ce0d0" '+
@@ -5484,16 +5490,19 @@ const ITEMS=[
     return o;};
   return one(-1)+one(1);}},
   {id:'gfn1', n:'繞三圈長圍巾', p:100, slot:'neck', only:'a-gir', d:a=>{
-    const top=a.hy+(a.hry||a.hr*.94)-2, bot=a.by-a.bh+4, w=10;
+    /* 寬度跟著脖子走。寫死 10 的話會做出 20 寬的圍巾，可是脖子只有 16 */
+    const top=a.hy+(a.hry||a.hr*.94)-2, bot=a.by-a.bh+4, w=NKW(a);
     let o='';
     for(let i=0;i<3;i++){
       const yy=top+(bot-top)*(i/3)+3;
       o+='<path d="M'+(60-w)+' '+yy.toFixed(1)+'q'+w+' 7 '+(w*2)+' 0v6q-'+w+' 7 -'+(w*2)+' 0z" fill="'+
          (i%2?'#e2452f':'#f7f4ec')+'"/>';
     }
-    return o+'<path d="M'+(60+w-3)+' '+(bot+2)+'l7 15-8 3-3-16z" fill="#e2452f"/>';}},
+    return o+'<path d="M'+(60+w-4)+' '+(bot+2)+'l5 15-6 3-2-16z" fill="#e2452f"/>';}},
   {id:'gfn2', n:'旅人領結', p:100, slot:'neck', only:'a-gir', d:a=>{
-  const y=NKB(a)+3,w=NKW(a)*.62,h=w*.52;
+  /* 掛低一點。原本上緣落在 59，長頸鹿的鼻口部畫到 60、嘴巴在 56，
+     結果領結整個疊在嘴上 */
+  const y=NKB(a)+8,w=NKW(a)*.62,h=w*.52;
   return '<path d="M'+(60-w)+' '+(y-h)+'L'+(60-4)+' '+y+'L'+(60-w)+' '+(y+h)+'Z" fill="#7a4a24"/>'+
     '<path d="M'+(60+w)+' '+(y-h)+'L'+(60+4)+' '+y+'L'+(60+w)+' '+(y+h)+'Z" fill="#7a4a24"/>'+
     '<ellipse cx="'+(60-w*.62)+'" cy="'+y+'" rx="2.4" ry="1.8" fill="#e0921a"/>'+
