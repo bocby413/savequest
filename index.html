@@ -10437,7 +10437,9 @@ function showVer(){
   const sw=navigator.serviceWorker;
   if(!sw||!sw.controller){ el.textContent='沒有離線快取（直接讀網路）'; return; }
   let done=false;
-  const on=e=>{ if(e.data&&e.data.ver){ done=true; el.textContent=e.data.ver;
+  /* 只留 v249 那截，前面的 savequest- 每次都一樣，看了礙眼 */
+  const on=e=>{ if(e.data&&e.data.ver){ done=true;
+    el.textContent=String(e.data.ver).replace(/^savequest-/,'');
     sw.removeEventListener('message',on); } };
   sw.addEventListener('message',on);
   sw.controller.postMessage('ver');
