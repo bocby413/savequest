@@ -6715,6 +6715,20 @@ function dayRoll(){
 }
 setInterval(dayRoll,20000);
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden) dayRoll(); });
+
+/* 可以偷的名單會隨時間變 —— 好友下班滿 30 分鐘就變成可以偷，他自己領走就不能偷。
+   這兩件事都沒有任何事件會通知我們，不定時看一下的話，那顆紅點會卡在舊狀態，
+   要重新整理才會對。只有名單真的變了才重畫，不然每半分鐘重畫一次太浪費 */
+let preySig=null;
+function preyWatch(){
+  if(!$('friDot')) return;
+  const sig=FRIENDS.filter(f=>raidOpen(SHARED[f.uid],f.uid)).map(f=>f.uid).join(',');
+  if(sig===preySig) return;
+  preySig=sig;
+  renderFriends();
+}
+setInterval(preyWatch,30000);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) preyWatch(); });
 function chWalk(x){ ANIM.tgt.x=x; ANIM.start(); }
 function chFaceSet(name){
   const st=$('tuneStage'); if(!st) return;
