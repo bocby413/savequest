@@ -7366,8 +7366,10 @@ const raidBroke=d=>raidLeft(d)<=0;
 function raidable(d){
   return !!(d && d.shiftEnd > 0 && d.shiftPay > 0 && Date.now() - d.shiftEnd >= RAID_WAIT);
 }
-/* 還偷得動嗎。已經被偷到上限的話，人家已經很慘了 */
-const raidOpen=d=>raidable(d)&&!raidBroke(d);
+/* 這一班我自己是不是已經偷過了。每人每班只能偷一次 */
+const raidMine=(uid,d)=>{const t=RAIDTOOK[uid];return !!(t&&d&&Math.abs(t-d.shiftEnd)<2000);};
+/* 還輪得到我偷嗎。額度用完、或我這班已經下過手，都不該再列出來 */
+const raidOpen=(d,uid)=>raidable(d)&&!raidBroke(d)&&!raidMine(uid,d);
 /* 我這一班被誰偷了。排程結算完才會有 amount */
 /* 紙條上的 shiftAt 記的是「下班的時間」（偷的時候用 shiftEnd 當班次代號），
    不是開工時間。拿 WALLET.shiftAt 去比永遠對不上，被偷紀錄就一直不會出現 */
@@ -7927,7 +7929,7 @@ function renderFriends(){
   btn.style.display=on?'':'none';
   /* 揪團去那顆在這個視窗裡面，所以群組邀請也要讓外面這顆亮 */
   /* 有人的薪水擺著沒領也要亮，不然「可以偷」這件事藏在好友主頁最下面沒人會發現 */
-  const canRaid=FRIENDS.some(f=>raidOpen(SHARED[f.uid]));
+  const canRaid=FRIENDS.some(f=>raidOpen(SHARED[f.uid],f.uid));
   $('friDot').className='dot'+((REQS.length||GINVS.length||canRaid)?' on':'');
   const box=$('friBody'); if(!box) return;
   let html='';
@@ -7944,7 +7946,7 @@ function renderFriends(){
         '<button class="btn sm ghost" data-rej="'+r.id+'">拒絕</button></span></div>';
       }).join('')+'</div>';
   }
-  const prey=FRIENDS.filter(f=>raidOpen(SHARED[f.uid]));
+  const prey=FRIENDS.filter(f=>raidOpen(SHARED[f.uid],f.uid));
   if(prey.length){
     html+='<div class="frisec"><h4>薪水沒領（'+prey.length+'）</h4>'+
       prey.map(f=>{const d=SHARED[f.uid];
@@ -7963,7 +7965,9 @@ function renderFriends(){
     /* 分享了什麼一律進去他的主頁才看得到。列在外面的話，
        分享多的人那一列就會變高變寬，整排參差不齊 */
     if(d&&g.lv&&d.title) bits.push('<span class="lvtag">'+esc(d.title)+'</span>');
-    if(raidOpen(d)) bits.unshift('<span class="raidtag">薪水沒領，可以偷</span>');
+    if(raidOpen(d,f.uid)) bits.unshift('<span class="raidtag">薪水沒領，可以偷</span>');
+    else if(raidable(d)&&raidMine(f.uid,d))
+      bits.unshift('<span class="raidtag" style="opacity:.55">這班你偷過了</span>');
     else if(raidable(d)) bits.unshift('<span class="raidtag" style="opacity:.55">已經被偷光了</span>');
     if(!bits.length) bits.push('<span style="color:var(--txt3)">'+
       (d?'點進去看他分享了什麼':'等對方開啟 app 後才會同步進度')+'</span>');
@@ -8099,19 +8103,21 @@ function renderProf(){
     if(can){
       const hrs=Math.floor((Date.now()-d.shiftEnd)/3600000);
       const mins=Math.round((Date.now()-d.shiftEnd)/60000)%60;
-      const broke=raidBroke(d);
-      $('raidTitle').textContent=broke
+      const broke=raidBroke(d), took=raidMine(f.uid,d);
+      $('raidTitle').textContent=took
+        ? (d.shiftJob||'打工')+'　這班你已經下過手了'
+        : broke
         ? (d.shiftJob||'打工')+'　這班已經被偷光了'
         : (d.shiftJob||'打工')+'　已經下班 '+(hrs?hrs+' 小時 ':'')+mins+' 分鐘了';
-      $('raidSay').textContent=broke
+      $('raidSay').textContent=took
+        ? '每個人每一班只能偷一次。剩下的額度留給其他好友。'
+        : broke
         ? '他這班的薪水被偷掉三成了，已經夠可憐，放過他吧。'
         : '能摸到多少全看運氣。他會知道是你，也可以偷回去。';
       const b=$('btnRaid');
-      const mine=RAIDTOOK[f.uid];
-      const took=mine&&Math.abs(mine-d.shiftEnd)<2000;      /* 這一班我偷過了 */
       const off=took||broke;
       b.disabled=!!off; b.style.opacity=off?.5:1;
-      b.textContent=broke?'已經被偷光了':took?'這一班你偷過了':'偷走一點';
+      b.textContent=broke?'已經被偷光了':took?'這班你偷過了':'偷走一點';
     }
   }
   $('profFoot').textContent= isFri
@@ -8129,6 +8135,7 @@ $('btnRaid').onclick=async()=>{
   const d=SHARED[f.uid];
   if(!raidable(d)){ toast('他已經領走了，來不及'); renderProf(); return; }
   if(raidBroke(d)){ toast('他這班已經被偷光了，放過他吧'); renderProf(); return; }
+  if(raidMine(f.uid,d)){ toast('這班你已經偷過了，一人一班只能一次'); renderProf(); return; }
   const b=$('btnRaid'); b.disabled=true; b.textContent='下手中…';
   const amount=raidRoll(d);
   if(amount<RAID_MIN){ toast('他這班已經被偷光了，放過他吧'); renderProf(); return; }
