@@ -8125,9 +8125,10 @@ $('btnRaid').onclick=async()=>{
   const r=await CLOUD.raid(f,d.shiftEnd,amount,d);
   if(!r.ok){
     b.disabled=false; b.textContent='偷走一點';
-    toast(r.e==='permission-denied'
-      ?'雲端擋下來了。Firestore 規則要更新到最新那份（有 raidTook 那版）'
-      :'沒成功（'+(r.e||'不明')+'），等一下再試');
+    /* 哪一步掛的直接寫出來，不然三步都回同一種錯誤，查不出是哪條規則 */
+    const 步驟=['','①寫偷竊紀錄','②扣他的薪水','③戰利品入帳'][r.step||0]||'?';
+    toast('偷不成：'+步驟+'　'+(r.e||'不明'));
+    console.log('[raid] 失敗於',步驟,r);
     SFX.play('err'); return;
   }
   RAIDTOOK[f.uid]=d.shiftEnd;
@@ -10881,15 +10882,19 @@ window.CLOUD={
     if(!this.user||!this.api) return {ok:0,e:'還沒登入'};
     const {F}=this.api;
     const at=Math.round(shiftAt);
+    let step=0;
     const once=async n=>{
+      step=1;
       const rref=F.doc(this.api.fs,'users',f.uid,'raids',this.user.uid);
       await F.setDoc(rref,{by:this.user.uid, byName:(db.settings.name||'某人').slice(0,20),
                            shiftAt:at, ts:Date.now(), amount:n});
+      step=2;
       /* 不能先讀他的錢包 —— 讀取規則是「只有自己讀得到」。
          要用的數字他推的快照裡就有，舊的話規則會自己算一次擋下來 */
       await F.updateDoc(F.doc(this.api.fs,'users',f.uid,'wallet','main'),{
         shiftPay:Math.max(0,(+snap.shiftPay||0)-n),
         raidTook:(+snap.raidTook||0)+n});
+      step=3;
       const next={coins:WALLET.coins+n, owned:WALLET.owned, spunOn:WALLET.spunOn,
                   workOn:WALLET.workOn, workN:WALLET.workN, shiftH:WALLET.shiftH,
                   shiftPay:WALLET.shiftPay, shiftJob:WALLET.shiftJob, shiftSay:WALLET.shiftSay,
@@ -10901,10 +10906,10 @@ window.CLOUD={
     };
     try{ return await once(amount0); }
     catch(e){
-      if((e.code||'')!=='permission-denied') return {ok:0,e:e.code||e.message||'x'};
-      if(amount0<=RAID_MIN) return {ok:0,e:'permission-denied'};
+      if((e.code||'')!=='permission-denied') return {ok:0,e:e.code||e.message||'x',step};
+      if(amount0<=RAID_MIN) return {ok:0,e:'permission-denied',step};
       try{ return await once(RAID_MIN); }
-      catch(e2){ return {ok:0,e:e2.code||e2.message||'x'}; }
+      catch(e2){ return {ok:0,e:e2.code||e2.message||'x',step}; }
     }
   },
   /* 誰偷過我。自己的東西，直接讀 */
