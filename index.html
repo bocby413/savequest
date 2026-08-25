@@ -8125,11 +8125,8 @@ $('btnRaid').onclick=async()=>{
   const r=await CLOUD.raid(f,d.shiftEnd,amount,d);
   if(!r.ok){
     b.disabled=false; b.textContent='偷走一點';
-    toast(r.step==='扣他'
-      ?'扣不到他的薪水。他那班剛剛被別人動過，或是你手上的資料舊了，重開一次再試'
-      :r.half?'他的薪水扣掉了但錢沒進你口袋，等一下再試'
-      :r.e==='permission-denied'
-      ?'雲端擋下來了。Firestore 規則還沒更新到最新版（v224 那份）'
+    toast(r.e==='permission-denied'
+      ?'雲端擋下來了。Firestore 規則要更新到最新那份（有 raidTook 那版）'
       :'沒成功（'+(r.e||'不明')+'），等一下再試');
     SFX.play('err'); return;
   }
@@ -10876,43 +10873,38 @@ window.CLOUD={
      真正結算的是那支每 5 分鐘跑的排程，它有 admin 權限，會自己去驗
      「這班真的結束超過 30 分鐘了嗎」「這個人這班偷過了嗎」「被偷的比例到上限了嗎」。
      把驗證放在客戶端或 Firestore 規則裡的話，錢包規則會被改得很危險。 */
-  /* 偷。三個動作：留下紀錄、從對方那班薪水直接扣掉、進自己的錢包。
-     錢是真的從他身上來的，沒有系統補錢，所以三個數字必須一致。 */
-  async raid(f,shiftAt,amount,snap){
+  /* 偷。三個動作要一起成立：留下紙條、從他那班薪水扣掉、進自己的錢包。
+     錢是真的從他身上來的，沒有系統補錢，所以三個數字必須一致。
+     被規則擋下來的話，多半是我手上的快照比他的實際狀況舊（他那班剛被別人偷過），
+     算出來的金額偏高。整組退到最低金額再試一次，還是不行才是規則本身的問題。 */
+  async raid(f,shiftAt,amount0,snap){
     if(!this.user||!this.api) return {ok:0,e:'還沒登入'};
     const {F}=this.api;
     const at=Math.round(shiftAt);
-    try{
-      /* 第一步：留下偷竊紀錄。金額寫在這裡，但規則會自己拿對方的錢包算一次來對 */
-      await F.setDoc(F.doc(this.api.fs,'users',f.uid,'raids',this.user.uid),{
-        by:this.user.uid, byName:db.settings.name||'某人',
-        shiftAt:at, ts:Date.now(), amount:amount
-      });
-    }catch(e){ return {ok:0,e:e.code||'x'}; }
-    try{
-      /* 第二步：從他那班的薪水扣掉。規則只讓好友動 shiftPay 跟 raidTook 兩個欄位，
-         而且扣多少就要記多少、加總不能超過三成。
-         這裡不能先讀他的錢包 —— 讀取規則是「只有自己讀得到」，好友讀不到。
-         要用的數字他推的快照裡就有；快照要是舊的，規則會自己算一次然後擋下來 */
+    const once=async n=>{
+      const rref=F.doc(this.api.fs,'users',f.uid,'raids',this.user.uid);
+      await F.setDoc(rref,{by:this.user.uid, byName:(db.settings.name||'某人').slice(0,20),
+                           shiftAt:at, ts:Date.now(), amount:n});
+      /* 不能先讀他的錢包 —— 讀取規則是「只有自己讀得到」。
+         要用的數字他推的快照裡就有，舊的話規則會自己算一次擋下來 */
       await F.updateDoc(F.doc(this.api.fs,'users',f.uid,'wallet','main'),{
-        shiftPay:Math.max(0,(+snap.shiftPay||0)-amount),
-        raidTook:(+snap.raidTook||0)+amount});
-    }catch(e){ return {ok:0,e:e.code||'x',step:'扣他'}; }
-    try{
-      /* 第三步：立刻入帳。規則會去讀第一步那筆紀錄，確認金額對得上、
-         而且 raidOf／raidShift 跟上一次不同（同一筆不能領兩次） */
-      const next={coins:WALLET.coins+amount, owned:WALLET.owned, spunOn:WALLET.spunOn,
+        shiftPay:Math.max(0,(+snap.shiftPay||0)-n),
+        raidTook:(+snap.raidTook||0)+n});
+      const next={coins:WALLET.coins+n, owned:WALLET.owned, spunOn:WALLET.spunOn,
                   workOn:WALLET.workOn, workN:WALLET.workN, shiftH:WALLET.shiftH,
                   shiftPay:WALLET.shiftPay, shiftJob:WALLET.shiftJob, shiftSay:WALLET.shiftSay,
                   raidOf:f.uid, raidShift:at};
       await F.updateDoc(this.wref(),next);
       WALLET=normWallet(Object.assign({},next,{shiftAt:WALLET.shiftAt}));
       saveWallet(); renderHud(); renderWheel();
-      return {ok:1,amount:amount};
-    }catch(e){
-      /* 紀錄留下了但錢沒進來。排程那支之後會照紀錄把對方的薪水扣掉，
-         這裡只是自己沒領到，回報出去讓使用者知道 */
-      return {ok:0,e:e.code||'x',half:1};
+      return {ok:1,amount:n};
+    };
+    try{ return await once(amount0); }
+    catch(e){
+      if((e.code||'')!=='permission-denied') return {ok:0,e:e.code||e.message||'x'};
+      if(amount0<=RAID_MIN) return {ok:0,e:'permission-denied'};
+      try{ return await once(RAID_MIN); }
+      catch(e2){ return {ok:0,e:e2.code||e2.message||'x'}; }
     }
   },
   /* 誰偷過我。自己的東西，直接讀 */
