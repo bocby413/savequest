@@ -7901,7 +7901,9 @@ function renderFriends(){
   const on=!!(CLOUD.ready()&&CLOUD.user);
   btn.style.display=on?'':'none';
   /* 揪團去那顆在這個視窗裡面，所以群組邀請也要讓外面這顆亮 */
-  $('friDot').className='dot'+((REQS.length||GINVS.length)?' on':'');
+  /* 有人的薪水擺著沒領也要亮，不然「可以偷」這件事藏在好友主頁最下面沒人會發現 */
+  const canRaid=FRIENDS.some(f=>raidable(SHARED[f.uid]));
+  $('friDot').className='dot'+((REQS.length||GINVS.length||canRaid)?' on':'');
   const box=$('friBody'); if(!box) return;
   let html='';
   if(REQS.length){
@@ -7915,6 +7917,17 @@ function renderFriends(){
         '<div class="sub">'+esc(r.fromEmail)+'</div></div>'+
         '<span class="ops"><button class="btn sm go" data-acc="'+r.id+'">接受</button>'+
         '<button class="btn sm ghost" data-rej="'+r.id+'">拒絕</button></span></div>';
+      }).join('')+'</div>';
+  }
+  const prey=FRIENDS.filter(f=>raidable(SHARED[f.uid]));
+  if(prey.length){
+    html+='<div class="frisec"><h4>薪水沒領（'+prey.length+'）</h4>'+
+      prey.map(f=>{const d=SHARED[f.uid];
+        return '<div class="fri"><button class="friopen" data-prof="'+f.uid+'">'+
+          '<span class="pic" style="'+picBg(d,PROFILES[f.uid])+'">'+friPic(d,PROFILES[f.uid])+'</span>'+
+          '<span class="info"><span class="nm"><b>'+esc(friName(f))+'</b></span>'+
+          '<span class="sub"><span class="raidtag">可以偷走 '+raidAmt(d.shiftPay)+' 枚</span></span></span>'+
+          '<svg class="chev"><use href="#i-down"/></svg></button></div>';
       }).join('')+'</div>';
   }
   html+='<div class="frisec"><h4>好友（'+FRIENDS.length+'）</h4>';
