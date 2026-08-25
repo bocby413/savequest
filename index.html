@@ -8167,7 +8167,9 @@ $('btnRaid').onclick=async()=>{
   try{ localStorage.setItem('life_goals_raidtook',JSON.stringify(RAIDTOOK)); }catch(e){}
   SFX.play('win');
   toast('得手，搶到 '+r.amount+' 枚。他等一下會收到通知');
-  renderProf();
+  /* 好友那頁也要重畫。不重畫的話「可以偷」那區跟外面那顆紅點會一直亮著，
+     要等對方的快照下次更新才會熄，看起來像還有事情沒處理 */
+  renderProf(); renderFriends();
 };
 function openProf(uid){
   const f=FRIENDS.find(x=>x.uid===uid); if(!f) return;
