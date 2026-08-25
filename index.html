@@ -4831,7 +4831,8 @@ const ITEMS=[
     '<circle cx="60" cy="'+y+'" r="4" fill="#0d6b66"/>'+
     '<circle cx="'+(60-1.4)+'" cy="'+(y-1.4)+'" r="1.4" fill="#7ed9c0"/>';}},
   {id:'fgn5', n:'跳遠獎牌', p:100, slot:'neck', only:'a-frog', d:a=>{
-  const y=NKB(a)-1,w=NKW(a)*.5,cy=y+20;
+  /* 帶子的起點跟其他脖子配件對齊，獎牌本身掛低一點 */
+  const y=NKB(a)-1,w=NKW(a)*.5,cy=y+26;
   return '<path d="M'+(60-w)+' '+y+'L60 '+(cy-7)+'L'+(60+w)+' '+y+
     '" stroke="#5aa9ff" stroke-width="3.4" fill="none"/>'+
     '<circle cx="60" cy="'+cy+'" r="7.5" fill="#ffc233"/>'+
