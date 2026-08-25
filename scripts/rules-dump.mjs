@@ -102,7 +102,8 @@ for (const u of users) {
   const rs = await fdb.collection(`users/${u.id}/raids`).get();
   for (const doc of rs.docs) {
     const r = doc.data();
-    if (r.doneAt) { kept++; continue; }
+    /* 連已處理的也清掉。那些是 v224/v225 留下的 —— 排程通知過了，
+       但錢從來沒動，而且它們會讓同一班永遠偷不了。一次歸零重來 */
     await doc.ref.delete();
     killed++;
     console.log(`  刪掉 ${short(u.id)} 那邊、${short(r.by || '?')} 留下的一張（金額 ${r.amount}）`);
