@@ -7348,14 +7348,20 @@ const RAID_ONE=0.25;          /* 一次最多摸走那班原本薪水的四分�
 const RAID_CAP=0.30;          /* 一班最多被偷掉三成 */
 const RAID_MIN=5;             /* 少於這個數就不值得動手了 */
 const raidOrig=d=>(+(d&&d.shiftPay)||0)+(+(d&&d.raidTook)||0);
-const raidLeft=d=>Math.floor(raidOrig(d)*RAID_CAP)-(+(d&&d.raidTook)||0);
+const raidCap=d=>Math.floor(raidOrig(d)*RAID_CAP);
+const raidLeft=d=>raidCap(d)-(+(d&&d.raidTook)||0);
 /* 上限要跟規則算的一致：一次不超過四分之一（cutNow*4 <= 原本薪水），
    而且累計不超過三成。規則那邊是純整數乘法，這裡用 floor 對齊 */
 const raidMax=d=>Math.min(raidLeft(d),Math.floor(raidOrig(d)*RAID_ONE));
-const raidRoll=d=>{const hi=raidMax(d);
-  return hi<RAID_MIN?0:RAID_MIN+Math.floor(Math.random()*(hi-RAID_MIN+1));};
-/* 被偷光了就不要再去了 */
-const raidBroke=d=>raidLeft(d)<RAID_MIN;
+const raidRoll=d=>{
+  const left=raidLeft(d);
+  if(left<=0) return 0;
+  const hi=raidMax(d);
+  /* 剩下的不夠一次的最低額就一次拿光，不然最後那幾枚會誰都偷不動 */
+  if(hi<RAID_MIN) return left;
+  return RAID_MIN+Math.floor(Math.random()*(hi-RAID_MIN+1));};
+/* 額度用完才算被偷光 */
+const raidBroke=d=>raidLeft(d)<=0;
 /* 這個好友現在偷不偷得動。看的是他分享過來的快照，不是他的錢包 */
 function raidable(d){
   return !!(d && d.shiftEnd > 0 && d.shiftPay > 0 && Date.now() - d.shiftEnd >= RAID_WAIT);
@@ -10930,13 +10936,19 @@ window.CLOUD={
       return {ok:1,amount:n};
       }catch(e){ await undo(); throw e; }
     };
-    try{ return await once(amount0); }
-    catch(e){
-      if((e.code||'')!=='permission-denied') return {ok:0,e:e.code||e.message||'x',step};
-      if(amount0<=RAID_MIN) return {ok:0,e:'permission-denied',step};
-      try{ return await once(RAID_MIN); }
-      catch(e2){ return {ok:0,e:e2.code||e2.message||'x',step}; }
+    /* 被擋多半是我手上的快照比他的實際狀況舊（他那班已經被別人偷過），
+       算出來的金額超過剩下的額度。依序退到更小的數字，總會撞到剩多少就拿多少。
+       這樣不必等排程同步快照 */
+    const tries=[amount0,4,3,2,1].filter((v,i,a)=>v>0&&a.indexOf(v)===i);
+    let last='permission-denied';
+    for(const n of tries){
+      try{ return await once(n); }
+      catch(e){
+        last=e.code||e.message||'x';
+        if(last!=='permission-denied') return {ok:0,e:last,step};
+      }
     }
+    return {ok:0,e:last,step};
   },
   /* 誰偷過我。自己的東西，直接讀 */
   watchRaids(){
