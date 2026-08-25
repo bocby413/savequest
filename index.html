@@ -8130,7 +8130,6 @@ $('btnRaid').onclick=async()=>{
     /* 哪一步掛的直接寫出來，不然三步都回同一種錯誤，查不出是哪條規則 */
     const 步驟=['','①寫偷竊紀錄','②扣他的薪水','③戰利品入帳'][r.step||0]||'?';
     toast('偷不成：'+步驟+'　'+(r.e||'不明')+(r.step===2&&CLOUD.lastRaid?'  '+CLOUD.lastRaid:''));
-    if(r.step===2) CLOUD.probe(f).then(x=>toast('測試結果：'+x));
     console.log('[raid] 失敗於',步驟,r,CLOUD.lastRaid);
     SFX.play('err'); return;
   }
@@ -10922,17 +10921,6 @@ window.CLOUD={
       try{ return await once(RAID_MIN); }
       catch(e2){ return {ok:0,e:e2.code||e2.message||'x',step}; }
     }
-  },
-  /* 偷不了的時候，逐條試出是卡在哪個條件。查完就可以拿掉 */
-  async probe(f){
-    const {F}=this.api, r=[];
-    for(const p of ['probeA','probeB','probeC','probeD','probeE']){
-      try{
-        await F.setDoc(F.doc(this.api.fs,'users',f.uid,p,this.user.uid),{t:Date.now()});
-        r.push(p.slice(-1)+'過');
-      }catch(e){ r.push(p.slice(-1)+'✗'); }
-    }
-    return r.join(' ');
   },
   /* 誰偷過我。自己的東西，直接讀 */
   watchRaids(){
