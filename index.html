@@ -414,7 +414,9 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 @media(max-width:640px){.logbar{gap:6px}.logbar .segs{margin-left:0;width:100%;justify-content:center}}
 
 /* ── 歷程 ── */
-.logt{width:100%;border-collapse:collapse;contain:content}
+.logt{width:100%;border-collapse:collapse;contain:content;table-layout:auto}
+/* 萬一還是塞不下（欄位太多、視窗太窄），讓它自己橫捲，不要把版面撐破 */
+#logWrap{overflow-x:auto}
 .logt th{font-size:11.5px;letter-spacing:1.2px;color:var(--txt3);font-weight:700;text-align:left;padding:0 14px 10px}
 .logt td{padding:12px 14px;border-top:1px solid var(--edge);font-size:14.5px}
 .logt tbody tr:hover{background:var(--panel2)}
@@ -422,7 +424,10 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .logt .m{font-size:17px;font-weight:800;text-align:right;white-space:nowrap}
 .logt .c{text-align:right;white-space:nowrap;font-weight:600}
 .logt .g{color:var(--txt3);font-size:12.5px;white-space:nowrap}
-.logt .item{line-height:1.4}
+/* 備註可能很長，而且可能是一長串沒有空白的英數字或網址。沒地方斷行的話
+   這一欄的最小寬度會很大，其他欄又都是 nowrap 不能縮，表格就被撐爆，
+   右邊的編輯／刪除直接被擠出容器外面 */
+.logt .item{line-height:1.4;overflow-wrap:anywhere;word-break:break-word;min-width:0}
 .logt .i1{margin-bottom:2px}
 .logt .i2{font-size:12px;color:var(--txt3)}
 .cattag.plain{color:var(--txt3);border-color:var(--edge);background:var(--panel2)}
