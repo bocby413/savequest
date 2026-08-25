@@ -109,6 +109,31 @@ for (const u of users) {
   }
 }
 
+/* ── 把打工狀態同步回每個人的分享快照 ──
+   快照是各自的 app 在錢包變動時推的，但 app 沒開就不會推。
+   被偷過的人如果沒開 app，別人看到的還是舊的薪水與「還沒被偷」，
+   於是算出一個規則不會收的金額，按下去就是 permission-denied。 */
+let synced = 0;
+for (const u of users) {
+  const w = await db.doc(`users/${u.id}/wallet/main`).get();
+  if (!w.exists) continue;
+  const d = w.data();
+  const h = Number(d.shiftH) || 0, at = ms(d.shiftAt);
+  const end = h > 0 && at > 0 ? at + h * 3600000 : 0;
+  const pay = Number(d.shiftPay) || 0, took = Number(d.raidTook) || 0;
+
+  const mine = await db.collection('shares').where('owner', '==', u.id).get();
+  for (const sd of mine.docs) {
+    const cur = sd.data();
+    if ((Number(cur.shiftEnd) || 0) === end
+      && (Number(cur.shiftPay) || 0) === pay
+      && (Number(cur.raidTook) || 0) === took) continue;
+    await sd.ref.update({ shiftEnd: end, shiftPay: pay, raidTook: took,
+                          shiftJob: d.shiftJob || '' });
+    synced++;
+  }
+}
+
 /* 被偷的人要馬上知道是誰幹的，不然錢少了會以為是 bug */
 for (const [uid, list] of Object.entries(raidPush)) {
   const who = [...new Set(list.map(x => x.byName))].join('、');
@@ -188,5 +213,5 @@ for (const u of users) {
   if (c) subsAll += c.data().count;
 }
 console.log(`看了 ${checked} 個人，全部裝置訂閱數 ${subsAll}，${due} 班到點，推出 ${sent} 則，` +
-  `清掉 ${dropped} 個失效訂閱；偷竊結算 ${raidOk} 筆成功、${raidNo} 筆作廢`);
+  `清掉 ${dropped} 個失效訂閱；偷竊通知 ${raidOk} 筆、作廢 ${raidNo} 筆；快照同步 ${synced} 份`);
 notes.forEach(n => console.log('  · ' + n));
