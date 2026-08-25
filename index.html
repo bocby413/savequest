@@ -5494,7 +5494,7 @@ const ITEMS=[
     const top=a.hy+(a.hry||a.hr*.94)-2, bot=a.by-a.bh+4, w=NKW(a);
     let o='';
     for(let i=0;i<3;i++){
-      const yy=top+(bot-top)*(i/3)+3;
+      const yy=top+(bot-top)*(i/3);
       o+='<path d="M'+(60-w)+' '+yy.toFixed(1)+'q'+w+' 7 '+(w*2)+' 0v6q-'+w+' 7 -'+(w*2)+' 0z" fill="'+
          (i%2?'#e2452f':'#f7f4ec')+'"/>';
     }
