@@ -1305,6 +1305,8 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
     <input type="range" id="volBar" min="0" max="100" step="5"></div>
   <div class="setrow"><div class="lb"><b>佈景</b><span id="themeSub">畫面的色調，在商店買到的背景都會出現在這裡</span></div>
     <button class="btn sm ghost" id="btnTheme">紫藤</button></div>
+  <div class="setrow"><div class="lb"><b>版本</b><span id="verNow">查詢中…</span></div>
+    <button class="btn sm ghost" id="btnUpd">檢查更新</button></div>
   <div class="setrow"><div class="lb"><b>備份</b><span>把所有資料存成一個檔案</span></div>
     <button class="btn sm ghost" id="btnExport">匯出</button></div>
   <div class="setrow"><div class="lb"><b>還原</b><span>讀回備份檔，會蓋掉現在的資料</span></div>
@@ -10156,7 +10158,7 @@ $('btnTheme').onclick=()=>{
 };
 
 function swPaint(){
-  pushRefresh();
+  pushRefresh(); showVer();
   $('swLoan').classList.toggle('on',db.settings.showLoan!==false);
   $('swStock').classList.toggle('on',db.settings.splitStock!==false);
   $('catMode').querySelectorAll('button').forEach(b=>
@@ -10349,6 +10351,31 @@ $('swPush').onclick=async()=>{
   try{ pushOn?await pushDisable():await pushEnable(); }
   catch(e){ toast('通知設定沒成功：'+(e.message||e.name||'不明')); pushRefresh(); }
   sw.disabled=false;
+};
+/* 現在跑的是哪一版。問 service worker 最準 —— 它才是決定你看到哪份程式碼的人 */
+function showVer(){
+  const el=$('verNow'); if(!el) return;
+  const sw=navigator.serviceWorker;
+  if(!sw||!sw.controller){ el.textContent='沒有離線快取（直接讀網路）'; return; }
+  let done=false;
+  const on=e=>{ if(e.data&&e.data.ver){ done=true; el.textContent=e.data.ver;
+    sw.removeEventListener('message',on); } };
+  sw.addEventListener('message',on);
+  sw.controller.postMessage('ver');
+  setTimeout(()=>{ if(!done) el.textContent='問不到（重開一次看看）'; },1500);
+}
+$('btnUpd').onclick=async()=>{
+  const b=$('btnUpd'); b.disabled=true; b.textContent='檢查中…';
+  try{
+    const reg=await swReady(6000);
+    await reg.update();
+    /* 有新版在等的話直接叫它上工，不然要關掉所有分頁才會換 */
+    const w=reg.waiting||reg.installing;
+    if(w){ w.postMessage('skipWaiting'); toast('有新版，正在換…');
+           setTimeout(()=>location.reload(),900); return; }
+    toast('已經是最新版了');
+  }catch(e){ toast('檢查不了：'+(e.message||'不明')); }
+  b.disabled=false; b.textContent='檢查更新'; showVer();
 };
 function sfxIcon(){
   $('sfxIcon').innerHTML='<use href="#i-'+(SFX.on?'vol':'mute')+'"/>';

@@ -1,5 +1,5 @@
 /* 存錢Bo士 — 離線快取。改版時把 VER 加一，手機才會抓到新版 */
-const VER = 'savequest-v237';
+const VER = 'savequest-v238';
 const FILES = ['./', './index.html', './manifest.json',
   './prices.json', './icon-192.png', './icon-512.png', './icon-512-maskable.png', './icon-180.png', './icon-32.png', './og.png'];
 
@@ -22,7 +22,12 @@ self.addEventListener('fetch', e => {
       .catch(() => caches.match(e.request).then(r => r || caches.match('./index.html')))
   );
 });
-self.addEventListener('message', e => { if (e.data === 'skipWaiting') self.skipWaiting(); });
+self.addEventListener('message', e => {
+  if (e.data === 'skipWaiting') self.skipWaiting();
+  /* 讓頁面問得到「現在跑的是哪一版」。改版之後最常見的問題就是
+     不知道自己更新了沒，從畫面上看不出來 */
+  if (e.data === 'ver' && e.source) e.source.postMessage({ ver: VER });
+});
 
 /* ── 推播：打工做完了 ──
    2～8 小時的班一定是在 app 關著的時候結束，頁面裡的 setTimeout 撐不到那時候，
