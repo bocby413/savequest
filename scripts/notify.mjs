@@ -108,6 +108,12 @@ for (const u of users) {
     const r = doc.data();
     if (r.amount) continue;                       /* 結算過了 */
 
+    /* 第二道防線：同一個人、同一班只結算一次。
+       規則那邊擋掉了「對同一班再按一次」，但萬一規則版本比較舊，
+       重按會把已結算的金額蓋掉、看起來就像一筆新的。這份帳只有排程寫得到 */
+    const doneRef = db.doc(`users/${u.id}/raidsDone/${doc.id}`);
+    const done = await doneRef.get();
+
     const w = await wref.get();
     if (!w.exists) { raidNo++; continue; }
     const d = w.data();
@@ -115,6 +121,11 @@ for (const u of users) {
     const end = at + h * 3600000;
 
     /* 這一班還在嗎？下班夠久了嗎？偷的是同一班嗎？ */
+    if (done.exists && Math.abs(Number(done.data().shiftAt) - end) < 2000) {
+      await doc.ref.delete();                     /* 這一班他偷過了 */
+      raidNo++; continue;
+    }
+
     const sameShift = h > 0 && at > 0 && Math.abs(Number(r.shiftAt) - end) < 2000;
     if (!sameShift || now - end < RAID_WAIT || pay <= 0) {
       await doc.ref.delete();                     /* 條件不成立，直接作廢 */
@@ -137,6 +148,7 @@ for (const u of users) {
     const t = await tref.get();
     if (t.exists) await tref.update({ coins: (Number(t.data().coins) || 0) + amount });
     await doc.ref.update({ amount, doneAt: now });
+    await doneRef.set({ shiftAt: end, amount, at: now });
 
     (raidPush[u.id] = raidPush[u.id] || []).push({ byName: r.byName || '某人', amount });
     raidOk++;
