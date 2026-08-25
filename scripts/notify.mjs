@@ -116,7 +116,7 @@ for (const [uid, list] of Object.entries(raidPush)) {
      也不叫人偷回去，對方不一定在打工，講了只會撲空 */
   await pushTo(uid, JSON.stringify({
     title: '有人偷了你的薪水',
-    body: who + '趁你沒領，偷走了一筆。快去把剩下的領走，拖越久被偷越多。',
+    body: who + '趁你沒領，偷走了一筆。快去領薪水。',
     tag: 'raid-' + now, url: './'
   }));
 }
