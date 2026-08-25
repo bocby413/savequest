@@ -7369,7 +7369,7 @@ function raidable(d){
   return !!(d && d.shiftEnd > 0 && d.shiftPay > 0 && Date.now() - d.shiftEnd >= RAID_WAIT);
 }
 /* 這一班我自己是不是已經偷過了。每人每班只能偷一次 */
-const raidMine=(uid,d)=>{const t=RAIDTOOK[uid];return !!(t&&d&&Math.abs(t-d.shiftEnd)<2000);};
+const raidMine=(uid,d)=>{const t=RAIDTOOK[rtKey(uid)];return !!(t&&d&&Math.abs(t-d.shiftEnd)<2000);};
 /* 還輪得到我偷嗎。額度用完、或我這班已經下過手，都不該再列出來 */
 const raidOpen=(d,uid)=>raidable(d)&&!raidBroke(d)&&!raidMine(uid,d);
 /* 我這一班被誰偷了。排程結算完才會有 amount */
@@ -8111,11 +8111,14 @@ function renderProf(){
         : broke
         ? (d.shiftJob||'打工')+'　這班已經被偷光了'
         : (d.shiftJob||'打工')+'　已經下班 '+(hrs?hrs+' 小時 ':'')+mins+' 分鐘了';
-      $('raidSay').textContent=took
+      /* 把算式攤開來。不能偷的時候只寫一句結論，會看不出是哪個數字擋住的 */
+      const nums='　原本 '+raidOrig(d)+'・上限 '+raidCap(d)+'・已被偷 '+
+        (+d.raidTook||0)+'・還剩 '+raidLeft(d);
+      $('raidSay').textContent=(took
         ? '每個人每一班只能偷一次。剩下的額度留給其他好友。'
         : broke
         ? '他這班的薪水被偷掉三成了，已經夠可憐，放過他吧。'
-        : '能摸到多少全看運氣。他會知道是你，也可以偷回去。';
+        : '能摸到多少全看運氣。他會知道是你，也可以偷回去。')+nums;
       const b=$('btnRaid');
       const off=took||broke;
       b.disabled=!!off; b.style.opacity=off?.5:1;
@@ -8129,9 +8132,12 @@ function renderProf(){
              : '你們還不是好友，所以看不到他分享的東西。加了之後才看得到。');
 }
 /* 我對每個好友最後偷的是哪一班。純本機記錄，只是為了讓按鈕變灰，
-   真正擋重複的是排程那邊 */
+   真正擋重複的是雲端規則。
+   key 要帶上自己的 uid —— 同一台裝置換帳號登入的話，這份紀錄會被沿用，
+   新帳號一進去就被誤判成「這班你偷過了」 */
 let RAIDTOOK={};
 try{ RAIDTOOK=JSON.parse(localStorage.getItem('life_goals_raidtook')||'{}'); }catch(e){}
+const rtKey=uid=>((CLOUD.user&&CLOUD.user.uid)||'?')+'|'+uid;
 $('btnRaid').onclick=async()=>{
   const f=profFor; if(!f) return;
   const d=SHARED[f.uid];
@@ -8155,7 +8161,7 @@ $('btnRaid').onclick=async()=>{
     console.log('[raid] 失敗於',步驟,r,CLOUD.lastRaid);
     SFX.play('err'); return;
   }
-  RAIDTOOK[f.uid]=d.shiftEnd;
+  RAIDTOOK[rtKey(f.uid)]=d.shiftEnd;
   try{ localStorage.setItem('life_goals_raidtook',JSON.stringify(RAIDTOOK)); }catch(e){}
   SFX.play('win');
   toast('得手，搶到 '+r.amount+' 枚。他等一下會收到通知');
