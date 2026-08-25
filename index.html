@@ -562,6 +562,15 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .ppic.full svg{width:106%;height:106%;overflow:visible}
 .pwear{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
 .wtag.alt{background:rgba(60,224,208,.16);color:var(--cyan)}
+/* 損友模式 */
+.raidtag{font-size:11px;padding:2px 8px;border-radius:99px;background:rgba(255,107,107,.16);
+  color:var(--red);font-weight:700}
+.raidbox{margin-top:12px;padding:11px;border:1.5px dashed var(--red);border-radius:12px;
+  background:rgba(255,107,107,.07)}
+.raidbox .rt{font-size:13px;font-weight:700;margin-bottom:3px}
+.raidbox .rs{font-size:12px;color:var(--txt3);margin-bottom:9px}
+.raidlog{margin-top:9px;font-size:12.5px;color:var(--txt2);line-height:1.7}
+.raidlog b{color:var(--red)}
 /* 背景與勝利動作不是穿在身上的配件，各自獨佔一行才不會跟配件混在一起 */
 .wrow{flex-basis:100%;display:flex;gap:5px;margin-top:1px}
 .wtag{font-size:11px;padding:2px 8px;border-radius:99px;background:rgba(255,194,51,.16);
@@ -1421,6 +1430,11 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
     </div>
   </div>
   <div class="pgrid" id="profBody"></div>
+  <div class="raidbox" id="profRaid" style="display:none">
+    <div class="rt" id="raidTitle"></div>
+    <div class="rs" id="raidSay"></div>
+    <button class="btn sm" id="btnRaid" style="width:100%">偷走一點</button>
+  </div>
   <div class="say" id="profFoot" style="margin-top:12px"></div>
   <div class="dfoot one">
     <button class="btn ghost" id="profBack">返回</button>
@@ -7321,6 +7335,16 @@ const GRANTS=[
   {k:'assets',t:'資產金額',   d:'總資產、現金、股票市值'}
 ];
 const DEFAULT_GRANT={lv:true,streak:false,goals:false,month:false,assets:false};
+/* 誰偷過我的薪水。排程結算完會把 amount 填進去 */
+let RAIDS=[];
+const RAID_WAIT=30*60000;      /* 下班超過這麼久沒領才偷得動 */
+/* 這個好友現在偷不偷得動。看的是他分享過來的快照，不是他的錢包 */
+function raidable(d){
+  return !!(d && d.shiftEnd > 0 && d.shiftPay > 0 && Date.now() - d.shiftEnd >= RAID_WAIT);
+}
+/* 我這一班被誰偷了。排程結算完才會有 amount */
+const myRaids=()=>RAIDS.filter(r=>r.shiftAt&&Math.abs(r.shiftAt-WALLET.shiftAt)<2000);
+const raidedSum=()=>myRaids().reduce((n,r)=>n+(+r.amount||0),0);
 const PKEY='life_goals_prices';
 let PRICES=null;
 try{ PRICES=JSON.parse(localStorage.getItem(PKEY)); }catch(e){}
@@ -7898,6 +7922,7 @@ function renderFriends(){
     /* 分享了什麼一律進去他的主頁才看得到。列在外面的話，
        分享多的人那一列就會變高變寬，整排參差不齊 */
     if(d&&g.lv&&d.title) bits.push('<span class="lvtag">'+esc(d.title)+'</span>');
+    if(raidable(d)) bits.unshift('<span class="raidtag">薪水沒領，可以偷</span>');
     if(!bits.length) bits.push('<span style="color:var(--txt3)">'+
       (d?'點進去看他分享了什麼':'等對方開啟 app 後才會同步進度')+'</span>');
     const p=PROFILES[f.uid]||{};
@@ -8024,12 +8049,50 @@ function renderProf(){
   add.disabled=SENTREQ.has(f.uid);
   add.style.opacity=add.disabled?.5:1;
   add.textContent=inReq?'他也在等你答應':SENTREQ.has(f.uid)?'邀請送出了':'加好友';
+  /* 損友模式那一塊 */
+  const box=$('profRaid');
+  if(box){
+    const can=isFri&&raidable(d);
+    box.style.display=can?'':'none';
+    if(can){
+      const hrs=Math.floor((Date.now()-d.shiftEnd)/3600000);
+      const mins=Math.round((Date.now()-d.shiftEnd)/60000)%60;
+      $('raidTitle').textContent=(d.shiftJob||'打工')+'　已經下班 '+(hrs?hrs+' 小時 ':'')+mins+' 分鐘了';
+      $('raidSay').textContent='薪水擺著沒領。偷走一點他會知道是你，也可以偷回去。';
+      const b=$('btnRaid');
+      const mine=RAIDTOOK[f.uid];
+      const took=mine&&Math.abs(mine-d.shiftEnd)<2000;      /* 這一班我偷過了 */
+      b.disabled=!!took; b.style.opacity=took?.5:1;
+      b.textContent=took?'這一班你偷過了':'偷走一點';
+    }
+  }
   $('profFoot').textContent= isFri
     ? (d ? '資料更新於 '+new Date(d.updatedAt).toLocaleString('zh-TW')
          : '對方還沒開啟過 app，所以這裡還沒有資料。')
     : (inReq ? '他寄了好友邀請給你，回上一頁的好友那邊可以答應。'
              : '你們還不是好友，所以看不到他分享的東西。加了之後才看得到。');
 }
+/* 我對每個好友最後偷的是哪一班。純本機記錄，只是為了讓按鈕變灰，
+   真正擋重複的是排程那邊 */
+let RAIDTOOK={};
+try{ RAIDTOOK=JSON.parse(localStorage.getItem('life_goals_raidtook')||'{}'); }catch(e){}
+$('btnRaid').onclick=async()=>{
+  const f=profFor; if(!f) return;
+  const d=SHARED[f.uid];
+  if(!raidable(d)){ toast('他已經領走了，來不及'); renderProf(); return; }
+  const b=$('btnRaid'); b.disabled=true; b.textContent='下手中…';
+  const r=await CLOUD.raid(f,d.shiftEnd);
+  if(!r.ok){
+    b.disabled=false; b.textContent='偷走一點';
+    toast(r.e==='permission-denied'?'雲端不讓你偷（規則還沒更新？）':'沒成功，等一下再試');
+    SFX.play('err'); return;
+  }
+  RAIDTOOK[f.uid]=d.shiftEnd;
+  try{ localStorage.setItem('life_goals_raidtook',JSON.stringify(RAIDTOOK)); }catch(e){}
+  SFX.play('win');
+  toast('得手了。戰利品幾分鐘後入帳，他也會收到通知');
+  renderProf();
+};
 function openProf(uid){
   const f=FRIENDS.find(x=>x.uid===uid); if(!f) return;
   profFor=f; profBackTo=null; open('vProf'); renderProf(); SFX.play('tick');
@@ -9506,8 +9569,13 @@ function renderWork(){
       '<div class="wpay">領到 <b>'+workJust.pay+'</b> 枚 Bo士幣</div>';
   }
   else if(shiftDone()){
+    /* 被偷了就直說是誰，不然錢少了會以為是 bug */
+    const took=myRaids().filter(r=>+r.amount>0);
     card.innerHTML='<div class="wjob"><b>'+WALLET.shiftH+' 小時</b>'+esc(WALLET.shiftJob)+'</div>'+
-      '<div class="wsay">下班囉，薪水還沒領</div>';
+      '<div class="wsay">下班囉，薪水還沒領</div>'+
+      (took.length?'<div class="raidlog">'+took.map(r=>
+        '<b>'+esc(r.byName||'某人')+'</b> 趁你沒領，偷走了 <b>'+r.amount+'</b> 枚').join('<br>')+
+        '<br>拖越久被偷越多，早點領。</div>':'');
   }
   else if(onShift()){
     const act=jobAct(WALLET.shiftJob);
@@ -10300,6 +10368,7 @@ window.CLOUD={
                await this.ensureWallet();
                this.watchWallet();
                this.publishProfile(); this.watchRequests(); this.watchFriends();
+               this.watchRaids();
                this.watchGroups(); this.watchGInbox(); }
         else{
           if(this.unsub){ this.unsub(); this.unsub=null; }
@@ -10392,6 +10461,7 @@ window.CLOUD={
       await F.updateDoc(this.wref(),next);
       WALLET=normWallet(Object.assign({},next,{shiftAt:Date.now()}));
       saveWallet();
+      this.pushShares();                 /* 好友要馬上看得到我開工了 */
       return {ok:1};
     }catch(e){ return {ok:0,e:e.code||'x'}; }
   },
@@ -10403,6 +10473,7 @@ window.CLOUD={
     try{
       await F.updateDoc(this.wref(),next);
       WALLET=normWallet(next); saveWallet();
+      this.pushShares();                 /* 領完了，好友那邊的「可以偷」要熄掉 */
       return {ok:1};
     }catch(e){ return {ok:0,e:e.code||'x'}; }
   },
@@ -10737,6 +10808,11 @@ window.CLOUD={
         name:db.settings.name||'某人', avatar:db.settings.avatar||null,
         ch:petChar().k, wear:wornList(petChar().k), bg:db.settings.bg||null,
         grant:g};
+      /* 打工狀態不受權限開關控制：損友模式要靠它才知道誰下班了沒領。
+         這裡只給「幾點下班、那班值多少」，不會外流餘額 */
+      data.shiftEnd=(WALLET.shiftH>0&&WALLET.shiftAt>0)?WALLET.shiftAt+WALLET.shiftH*3600000:0;
+      data.shiftPay=WALLET.shiftPay||0;
+      data.shiftJob=WALLET.shiftJob||'';
       if(g.lv) data.title=myTitle();             /* 只給稱號，等級數字不外流 */
       if(g.streak){ const c=calStats(); data.streak=c.streak; data.hit=c.hit; data.has=c.has; }
       if(g.goals){ data.goalsDone=db.goals.filter(x=>x.done).length; data.goalsAll=db.goals.length; }
@@ -10744,6 +10820,30 @@ window.CLOUD={
       if(g.assets){ data.assets=assets(); data.cash=now(); data.stock=stockValue(); }
       try{ await F.setDoc(F.doc(this.api.fs,'shares',me+'__'+f.uid),data); }catch(e){}
     }
+  },
+  /* 損友模式。這裡只寫一筆「我要偷誰的哪一班」，錢完全沒有動。
+     真正結算的是那支每 5 分鐘跑的排程，它有 admin 權限，會自己去驗
+     「這班真的結束超過 30 分鐘了嗎」「這個人這班偷過了嗎」「被偷的比例到上限了嗎」。
+     把驗證放在客戶端或 Firestore 規則裡的話，錢包規則會被改得很危險。 */
+  async raid(f,shiftAt){
+    if(!this.user||!this.api) return {ok:0,e:'還沒登入'};
+    const {F}=this.api;
+    try{
+      await F.setDoc(F.doc(this.api.fs,'users',f.uid,'raids',this.user.uid),{
+        by:this.user.uid, byName:db.settings.name||'某人',
+        shiftAt:Math.round(shiftAt), ts:Date.now()
+      });
+      return {ok:1};
+    }catch(e){ return {ok:0,e:e.code||'x'}; }
+  },
+  /* 誰偷過我。自己的東西，直接讀 */
+  watchRaids(){
+    const {F}=this.api;
+    if(this.unsubRaid) this.unsubRaid();
+    this.unsubRaid=F.onSnapshot(F.collection(this.api.fs,'users',this.user.uid,'raids'),snap=>{
+      RAIDS=[]; snap.forEach(d=>RAIDS.push(d.data()));
+      renderWork(); renderFriends();
+    },()=>{});
   },
   async setGrant(f,grant){
     const {F}=this.api;

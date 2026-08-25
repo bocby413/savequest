@@ -60,11 +60,100 @@ const ms = v => {
   return 0;
 };
 
+/* ── 損友模式的結算 ──
+   客戶端只寫一筆「我要偷誰的哪一班」，完全不碰任何人的錢包。
+   錢在這裡動，因為這支有 admin 權限，可以自己驗證條件，
+   不用把錢包的規則改鬆（那是整個 app 最容易出事的地方）。 */
+const RAID_WAIT = 30 * 60000;    /* 下班超過 30 分鐘沒領才偷得動 */
+const RAID_CUT = 0.10;           /* 一次偷走那班薪水的一成 */
+const RAID_MIN = 3, RAID_MAX = 12;
+const RAID_TOTAL_CAP = 0.30;     /* 同一班最多被偷掉三成 */
+
 const now = Date.now();
 let checked = 0, due = 0, sent = 0, dropped = 0, subsAll = 0;
+let raidOk = 0, raidNo = 0;
 const notes = [];
+const raidPush = {};             /* victimUid -> [{byName, amount}] */
+
+/* 送給某個人的所有裝置。回傳有沒有至少成功一台 */
+async function pushTo(uid, payload) {
+  const subs = await db.collection(`users/${uid}/push`).get();
+  if (subs.empty) return { ok: false, subs: 0 };
+  let ok = false;
+  for (const doc of subs.docs) {
+    const s = doc.data();
+    if (!s.endpoint || !s.p256dh || !s.auth) { await doc.ref.delete(); dropped++; continue; }
+    try {
+      await webpush.sendNotification(
+        { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, payload, { TTL: 3600 });
+      ok = true; sent++;
+    } catch (e) {
+      const code = e.statusCode;
+      if (code === 404 || code === 410) { await doc.ref.delete(); dropped++; }
+      else console.error(uid, 'push 失敗', code || e.message);
+    }
+  }
+  return { ok, subs: subs.size };
+}
 
 const users = await db.collection('users').listDocuments();
+
+/* 先結算偷竊，再發通知 —— 這樣被偷的人收到的通知裡數字才是對的 */
+for (const u of users) {
+  const raids = await db.collection(`users/${u.id}/raids`).get();
+  if (raids.empty) continue;
+  const wref = db.doc(`users/${u.id}/wallet/main`);
+
+  for (const doc of raids.docs) {
+    const r = doc.data();
+    if (r.amount) continue;                       /* 結算過了 */
+
+    const w = await wref.get();
+    if (!w.exists) { raidNo++; continue; }
+    const d = w.data();
+    const at = ms(d.shiftAt), h = Number(d.shiftH) || 0, pay = Number(d.shiftPay) || 0;
+    const end = at + h * 3600000;
+
+    /* 這一班還在嗎？下班夠久了嗎？偷的是同一班嗎？ */
+    const sameShift = h > 0 && at > 0 && Math.abs(Number(r.shiftAt) - end) < 2000;
+    if (!sameShift || now - end < RAID_WAIT || pay <= 0) {
+      await doc.ref.delete();                     /* 條件不成立，直接作廢 */
+      raidNo++; continue;
+    }
+
+    /* 這一班已經被偷掉多少了 */
+    const already = raids.docs
+      .filter(x => x.id !== doc.id && Math.abs(Number(x.data().shiftAt) - end) < 2000)
+      .reduce((n, x) => n + (Number(x.data().amount) || 0), 0);
+    const room = Math.max(0, Math.round(pay * RAID_TOTAL_CAP) - already);
+    const amount = Math.min(room, Math.max(RAID_MIN, Math.min(RAID_MAX, Math.round(pay * RAID_CUT))));
+    if (amount <= 0) { await doc.ref.delete(); raidNo++; continue; }
+
+    /* 被偷的人：那班的薪水直接扣掉。動 shiftPay 而不是餘額，
+       收工的規則才不用改（它要求領到的錢剛好等於 shiftPay） */
+    await wref.update({ shiftPay: pay - amount });
+    /* 偷的人：進他的錢包 */
+    const tref = db.doc(`users/${r.by}/wallet/main`);
+    const t = await tref.get();
+    if (t.exists) await tref.update({ coins: (Number(t.data().coins) || 0) + amount });
+    await doc.ref.update({ amount, doneAt: now });
+
+    (raidPush[u.id] = raidPush[u.id] || []).push({ byName: r.byName || '某人', amount });
+    raidOk++;
+  }
+}
+
+/* 被偷的人要馬上知道是誰幹的，不然錢少了會以為是 bug */
+for (const [uid, list] of Object.entries(raidPush)) {
+  const total = list.reduce((n, x) => n + x.amount, 0);
+  const who = [...new Set(list.map(x => x.byName))].join('、');
+  await pushTo(uid, JSON.stringify({
+    title: '有人偷了你的薪水',
+    body: who + '趁你沒領，偷走了 ' + total + ' 枚。快去領，順便偷回去。',
+    tag: 'raid-' + now, url: './'
+  }));
+}
+
 for (const u of users) {
   checked++;
   const w = await db.doc(`users/${u.id}/wallet/main`).get();
@@ -114,24 +203,8 @@ for (const u of users) {
     url: './'
   });
 
-  let okAny = false;
-  for (const doc of subs.docs) {
-    const s = doc.data();
-    if (!s.endpoint || !s.p256dh || !s.auth) { await doc.ref.delete(); dropped++; continue; }
-    try {
-      await webpush.sendNotification(
-        { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-        payload,
-        { TTL: 3600 }
-      );
-      okAny = true; sent++;
-    } catch (e) {
-      const code = e.statusCode;
-      /* 404／410 = 這個訂閱死了（換裝置、清資料、關通知），清掉免得每次都重試 */
-      if (code === 404 || code === 410) { await doc.ref.delete(); dropped++; }
-      else console.error(u.id, 'push 失敗', code || e.message);
-    }
-  }
+  const res = await pushTo(u.id, payload);
+  const okAny = res.ok;
   if (okAny) {
     await mark.set({ shiftAt: at, at: now, subs: subs.size });
     /* 同一班如果每輪都出現在這裡，就是防重複那層沒生效，要查 */
@@ -147,5 +220,6 @@ for (const u of users) {
   const c = await db.collection(`users/${u.id}/push`).count().get().catch(() => null);
   if (c) subsAll += c.data().count;
 }
-console.log(`看了 ${checked} 個人，全部裝置訂閱數 ${subsAll}，${due} 班到點，推出 ${sent} 則，清掉 ${dropped} 個失效訂閱`);
+console.log(`看了 ${checked} 個人，全部裝置訂閱數 ${subsAll}，${due} 班到點，推出 ${sent} 則，` +
+  `清掉 ${dropped} 個失效訂閱；偷竊結算 ${raidOk} 筆成功、${raidNo} 筆作廢`);
 notes.forEach(n => console.log('  · ' + n));
