@@ -8146,7 +8146,9 @@ $('btnRaid').onclick=async()=>{
   if(raidMine(f.uid,d)){ toast('這班你已經偷過了，一人一班只能一次'); renderProf(); return; }
   const b=$('btnRaid'); b.disabled=true; b.textContent='下手中…';
   const amount=raidRoll(d);
-  if(amount<RAID_MIN){ toast('他這班已經被偷光了，放過他吧'); renderProf(); return; }
+  /* 這裡要比 0 不是 RAID_MIN —— 剩下的額度不到 5 的時候 raidRoll 會回傳
+     「剩多少就拿多少」，拿舊的最低額去擋會把最後那幾枚永遠鎖住 */
+  if(amount<=0){ toast('他這班已經被偷光了，放過他吧'); renderProf(); return; }
   const r=await CLOUD.raid(f,d.shiftEnd,amount,d);
   if(!r.ok){
     b.disabled=false; b.textContent='偷走一點';
