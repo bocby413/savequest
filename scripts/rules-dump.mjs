@@ -91,3 +91,21 @@ for (const u of users) {
   console.log(`${short(u.id)}　${h}小時班　薪水 ${d.shiftPay}　已被偷 ${d.raidTook || 0}　` +
     (mins >= 0 ? `下班 ${mins} 分鐘了` : `還有 ${-mins} 分鐘下班`));
 }
+
+/* ── 一次性清掉沒走完的偷竊紙條 ──
+   v224/v225 的流程是「寫紙條 -> 讀對方錢包（被擋）」，紙條寫進去了但錢沒動。
+   留著的話排程會照它發出「有人偷了你的薪水」，但那筆根本沒發生。 */
+console.log('');
+console.log('=== 清掉沒走完的偷竊紙條 ===');
+let killed = 0, kept = 0;
+for (const u of users) {
+  const rs = await fdb.collection(`users/${u.id}/raids`).get();
+  for (const doc of rs.docs) {
+    const r = doc.data();
+    if (r.doneAt) { kept++; continue; }
+    await doc.ref.delete();
+    killed++;
+    console.log(`  刪掉 ${short(u.id)} 那邊、${short(r.by || '?')} 留下的一張（金額 ${r.amount}）`);
+  }
+}
+console.log(`  刪了 ${killed} 張，保留 ${kept} 張已處理的`);

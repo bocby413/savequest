@@ -10889,6 +10889,10 @@ window.CLOUD={
       await F.setDoc(rref,{by:this.user.uid, byName:(db.settings.name||'某人').slice(0,20),
                            shiftAt:at, ts:Date.now(), amount:n});
       step=2;
+      /* 後面兩步只要有一步掛掉，就把這張紙條收回去。
+         留著的話排程會照它發出「有人偷了你的薪水」，但錢根本沒動 */
+      const undo=async()=>{ try{ await F.deleteDoc(rref); }catch(e){} };
+      try{
       /* 不能先讀他的錢包 —— 讀取規則是「只有自己讀得到」。
          要用的數字他推的快照裡就有，舊的話規則會自己算一次擋下來 */
       await F.updateDoc(F.doc(this.api.fs,'users',f.uid,'wallet','main'),{
@@ -10903,6 +10907,7 @@ window.CLOUD={
       WALLET=normWallet(Object.assign({},next,{shiftAt:WALLET.shiftAt}));
       saveWallet(); renderHud(); renderWheel();
       return {ok:1,amount:n};
+      }catch(e){ await undo(); throw e; }
     };
     try{ return await once(amount0); }
     catch(e){
