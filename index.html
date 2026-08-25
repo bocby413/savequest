@@ -3022,7 +3022,12 @@ const AC={
       : '<circle cx="60" cy="'+cy+'" r="4.6" fill="'+d+'"/>';
     return '<path d="M'+(60-w)+' '+y+'q'+w+' 9 '+(w*2)+' 0v6q-'+w+' 9 -'+(w*2)+' 0z" fill="'+c+'"/>'+tag;},
   /* ── 腳下 ── */
-  feet:(a,fn)=>{const x=a.fx||13;return fn(60-x)+fn(60+x);},
+  /* side：0 兩隻都畫、-1 只畫左邊、1 只畫右邊。
+     鞋子要塞進 .footL／.footR 才會跟著走路的動畫抬起來，
+     所以得能分邊畫 */
+  side:0,
+  feet:(a,fn)=>{const x=a.fx||13, sd=AC.side;
+    return (sd!==1?fn(60-x):'')+(sd!==-1?fn(60+x):'');},
   sneak:(a,c,d)=>{const y=(a.fy||107)-3,w=(a.fw||9)+1;
     return AC.feet(a,cx=>'<path d="M'+(cx-w)+' '+(y+4)+'q0-8 '+(w*.8)+'-8h'+(w*.6)+'l'+(w*.7)+' 8z" fill="'+c+'"/>'+
       '<rect x="'+(cx-w)+'" y="'+(y+3)+'" width="'+(w*2)+'" height="6" rx="3" fill="'+d+'"/>');},
@@ -3105,7 +3110,7 @@ const ITEMS=[
     const one=cx=>'<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="12" rx="4" fill="#ffc233"/>'+
       '<path d="M'+(cx-w)+' '+(y+4)+'h'+(w*2)+'M'+(cx-w)+' '+(y+8)+'h'+(w*2)+
       '" stroke="#e39b12" stroke-width="2"/>';
-    return one(60-x)+one(60+x);}},
+    return AC.feet(a,one);}},
   {id:'fish', rot:-6, n:'小魚乾', p:200, slot:'hand', only:'a-cat', d:a=>{
     const x=AC.gx(a), y=AC.gy(a)-3;
     return '<ellipse cx="'+x+'" cy="'+y+'" rx="10" ry="5.5" fill="#9fd8f0"/>'+
@@ -3140,7 +3145,7 @@ const ITEMS=[
     const y=(a.fy||107)-3, x=a.fx||13, w=(a.fw||9)+1.5;
     const one=cx=>'<path d="M'+(cx-w)+' '+(y+4)+'q0-8 '+(w*.8)+'-8h'+(w*.6)+'l'+(w*.7)+' 8z" fill="#ff5c8a"/>'+
       '<rect x="'+(cx-w)+'" y="'+(y+3)+'" width="'+(w*2)+'" height="6" rx="3" fill="#f7f4ec"/>';
-    return one(60-x)+one(60+x);}},
+    return AC.feet(a,one);}},
   {id:'rain', n:'小雨衣', p:200, slot:'body', only:'a-dog', d:a=>{
     const t=a.by-a.bh, h=a.bh*2;
     return '<path d="'+garment(a,.05,.97)+'" fill="#ffc233"/>'+
@@ -3179,7 +3184,7 @@ const ITEMS=[
     const one=cx=>'<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="12" rx="4" fill="#5f3a22"/>'+
       '<rect x="'+(cx-w-.8)+'" y="'+(y+9)+'" width="'+(w*2+1.6)+'" height="4" rx="2" fill="#3b2412"/>'+
       '<path d="M'+(cx-w+2)+' '+(y+4)+'h'+(w*2-4)+'" stroke="#8a5a3c" stroke-width="2"/>';
-    return one(60-x)+one(60+x);}},
+    return AC.feet(a,one);}},
   {id:'plaidscarf', n:'格紋圍巾', p:100, slot:'neck', only:'a-bear', d:a=>{
     /* 不能跟樵夫格子衫同色，不然疊上去整條看不見 */
     const y=NKB(a)-3, w=NKW(a)*.86;
@@ -3214,7 +3219,7 @@ const ITEMS=[
     const y=(a.fy||107)-8, x=a.fx||13, w=(a.fw||9)+1;
     const one=cx=>'<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="14" rx="4" fill="#7d3a12"/>'+
       '<rect x="'+(cx-w-1)+'" y="'+y+'" width="'+(w*2+2)+'" height="5" rx="2.5" fill="#c94a1e"/>';
-    return one(60-x)+one(60+x);}},
+    return AC.feet(a,one);}},
   {id:'leaf', n:'楓葉帽', p:100, slot:'head', only:'a-fox', d:a=>{
     const y=HLINE(a)-2;
     return '<path d="M60 '+(y-14)+'l-5 6-7-3 3 7-8 2 9 4-2 4 10-3 10 3-2-4 9-4-8-2 3-7-7 3z" fill="#c94a1e"/>'+
@@ -3262,10 +3267,9 @@ const ITEMS=[
       'transform="rotate(-24,'+(x+2)+','+(y-6)+')"/>';}},
   {id:'boot', n:'雪靴', p:200, slot:'foot', only:'a-peng', d:a=>{
     const y=(a.fy||107)-3, x=a.fx||13, w=(a.fw||9)+1.5;
-    return '<rect x="'+(60-x-w)+'" y="'+y+'" width="'+(w*2)+'" height="11" rx="5" fill="#5aa9ff"/>'+
-      '<rect x="'+(60+x-w)+'" y="'+y+'" width="'+(w*2)+'" height="11" rx="5" fill="#5aa9ff"/>'+
-      '<rect x="'+(60-x-w-1)+'" y="'+(y-3.5)+'" width="'+(w*2+2)+'" height="5.5" rx="2.7" fill="#f7f4ec"/>'+
-      '<rect x="'+(60+x-13)+'" y="'+(y-4)+'" width="26" height="6" rx="3" fill="#f7f4ec"/>';}},
+    const one=cx=>'<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="11" rx="5" fill="#5aa9ff"/>'+
+      '<rect x="'+(cx-w-1)+'" y="'+(y-3.5)+'" width="'+(w*2+2)+'" height="5.5" rx="2.7" fill="#f7f4ec"/>';
+    return AC.feet(a,one);}},
   {id:'bowtie', n:'領結', p:100, slot:'neck', only:'a-peng', d:a=>{
     const y=NKB(a)+7;                     /* 企鵝沒脖子，要閃開喙 */
     return '<path d="M60 '+y+'l-13-7v14zM60 '+y+'l13-7v14z" fill="#ff5c8a"/>'+
@@ -3325,7 +3329,7 @@ const ITEMS=[
     const y=(a.fy||107)-6, x=a.fx||13, w=(a.fw||9)+.5;
     const one=cx=>'<path d="M'+(cx-w)+' '+(y+5)+'h'+(w*2)+'l'+(w*.22)+' 9h-'+(w*2+w*.44)+'z" fill="#5aa9ff"/>'+
       '<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="7" rx="3.5" fill="#3d7fd6"/>';
-    return one(60-x)+one(60+x);}},
+    return AC.feet(a,one);}},
   {id:'lotus', rot:-15, n:'荷葉傘', p:200, slot:'hand', only:'a-frog', d:a=>{
     /* 跟雨傘同一個道理：握在柄的中段偏下，葉子要撐高才像在遮雨 */
     const x=AC.gx(a), y=AC.gy(a);
@@ -3367,7 +3371,7 @@ const ITEMS=[
     const one=cx=>'<path d="M'+(cx-w)+' '+y+'h'+(w*2)+'v6a4 4 0 0 1-4 4h-'+(w*2-8)+
       'a4 4 0 0 1-4-4z" fill="#3b2412"/>'+
       '<rect x="'+(cx-w)+'" y="'+(y-2)+'" width="'+(w*2)+'" height="4" rx="2" fill="#5f3a22"/>';
-    return one(60-x)+one(60+x);}},
+    return AC.feet(a,one);}},
   {id:'book', rot:-11, n:'厚厚的書', p:200, slot:'hand', only:'a-owl', d:a=>{
     const x=AC.gx(a), y=AC.gy(a)-4;
     return '<rect x="'+(x-11)+'" y="'+(y-8)+'" width="22" height="17" rx="2" fill="#9c2f3a"/>'+
@@ -6236,9 +6240,20 @@ function wearSVG(a,mode){
     if(mode==='head') return ['body','hand','foot'].indexOf(it.slot)>=0?'':it.d(a);
     /* 衣服畫在頭的下面，不然領口會把下巴切掉 */
     if(mode==='mid')  return it.slot==='body'?it.d(a):'';
+    /* 手跟腳的東西各自塞進手臂／腳掌的群組裡，才會跟著動畫一起動 */
+    if(mode==='hand') return it.slot==='hand'?AC.hold(a,it,it.d(a)):'';
+    if(mode==='footL'||mode==='footR'){
+      /* 整片底座的角色（機器人）沒有分開的腳掌，那幾件留在最上層畫一次就好 */
+      if(it.slot!=='foot'||a.base) return '';
+      AC.side = mode==='footL' ? -1 : 1;
+      try{ return it.d(a); } finally{ AC.side=0; }   /* 畫壞了也要把旗標還原，不然下一件會少一隻腳 */
+    }
     if(it.slot==='body') return '';
-    /* 手上的東西轉一個角度拿，看起來才自然 */
-    return it.slot==='hand'?AC.hold(a,it,it.d(a)):it.d(a);
+    /* 手上的東西已經畫在手臂那層了；腳上的東西除非是整片底座（機器人），
+       不然也畫在腳掌那層 */
+    if(it.slot==='hand') return '';
+    if(it.slot==='foot') return a.base?it.d(a):'';
+    return it.d(a);
   }).join('');
 }
 /* 這隻買得到的東西：通用的加上自己的專屬品 */
@@ -6260,6 +6275,12 @@ function chSVG(a,e,small){
       '<g class="footL"></g><g class="footR"></g>'
     : '<g class="footL">'+leg(60-fx)+'<ellipse cx="'+(60-fx)+'" cy="'+fy+'" rx="'+fw+'" ry="5.5" fill="'+ft+'"/></g>'+
       '<g class="footR">'+leg(60+fx)+'<ellipse cx="'+(60+fx)+'" cy="'+fy+'" rx="'+fw+'" ry="5.5" fill="'+ft+'"/></g>';
+  /* 鞋子與手上拿的東西要跟著走路、擺手一起動，但又得畫在最上層才不會被身體蓋掉。
+     所以在這裡再開一組同名的群組，動畫會把同樣的位移套到每一個同名群組上 */
+  const moving=
+    '<g class="footL">'+wearSVG(a,'footL')+'</g>'+
+    '<g class="footR">'+wearSVG(a,'footR')+'</g>'+
+    '<g class="armL" data-p="'+(60-apx)+','+apy+'">'+wearSVG(a,'hand')+'</g>';
   /* 影子留在 walk 層，只跟著左右移動，不跟著跳 */
   return '<svg class="actor" viewBox="0 0 120 120">'+
     '<g class="walk">'+
@@ -6277,6 +6298,7 @@ function chSVG(a,e,small){
         chFaceMark(a)+
         '<g class="face">'+chFace(a,e)+'</g>'+
         wearSVG(a)+
+        moving+
       '</g></g>'+
     '</g></svg>';
 }
@@ -6513,8 +6535,9 @@ const ANIM={
     if(!st||!st.querySelector('.walk')){ this.el=null; return false; }
     if(this.el&&this.el.root===st) return true;
     this.el={root:st, walk:st.querySelector('.walk'), ch:st.querySelector('.ch'),
-      aL:st.querySelector('.armL'), aR:st.querySelector('.armR'),
-      fL:st.querySelector('.footL'), fR:st.querySelector('.footR'),
+      /* 同名的群組不只一個（配件另外掛了一組），要全部一起轉 */
+      aL:[...st.querySelectorAll('.armL')], aR:[...st.querySelectorAll('.armR')],
+      fL:[...st.querySelectorAll('.footL')], fR:[...st.querySelectorAll('.footR')],
       shd:st.querySelector('.shd'), tail:st.querySelector('.tail'), ears:st.querySelector('.ears'),
       fx:st.querySelector('.fx'), sky:[...st.querySelectorAll('.sky i')],
       sw:(st.querySelector('.scene')||{clientWidth:0}).clientWidth,
@@ -6537,11 +6560,13 @@ const ANIM={
     e.ch.setAttribute('transform',
       'translate(60,108) rotate('+c.rot.toFixed(2)+') scale('+sx.toFixed(4)+','+sy.toFixed(4)+') translate(-60,-108)'+
       ' translate(0,'+y.toFixed(2)+')');
-    e.aL.setAttribute('transform','rotate('+c.aL.toFixed(1)+','+(e.aL.dataset.p||'33,74')+')');
-    e.aR.setAttribute('transform','rotate('+c.aR.toFixed(1)+','+(e.aR.dataset.p||'87,74')+')');
+    const setAll=(list,v)=>{for(const g of list) g.setAttribute('transform',v(g));};
+    setAll(e.aL,g=>'rotate('+c.aL.toFixed(1)+','+(g.dataset.p||'33,74')+')');
+    setAll(e.aR,g=>'rotate('+c.aR.toFixed(1)+','+(g.dataset.p||'87,74')+')');
     const s=c.st;                                   /* -1 ～ 1，兩腳交替 */
-    e.fL.setAttribute('transform','translate('+(3.5*s).toFixed(2)+','+(-5*Math.abs(s)*(s>0?1:0)).toFixed(2)+')');
-    e.fR.setAttribute('transform','translate('+(-3.5*s).toFixed(2)+','+(-5*Math.abs(s)*(s<0?1:0)).toFixed(2)+')');
+    const fl='translate('+(3.5*s).toFixed(2)+','+(-5*Math.abs(s)*(s>0?1:0)).toFixed(2)+')';
+    const fr='translate('+(-3.5*s).toFixed(2)+','+(-5*Math.abs(s)*(s<0?1:0)).toFixed(2)+')';
+    setAll(e.fL,()=>fl); setAll(e.fR,()=>fr);
     if(e.shd){
       const up=Math.max(0,-y)/20, sc=(1-up*.42).toFixed(3);
       e.shd.setAttribute('transform','translate(60,113) scale('+sc+',1) translate(-60,-113)');
@@ -8534,7 +8559,7 @@ const PET={
     if(!box||!box.querySelector('.ch')){ this.el=null; return false; }
     if(this.el&&this.el.box===box&&box.contains(this.el.ch)) return true;
     this.el={box, ch:box.querySelector('.ch'), face:box.querySelector('.face'),
-      aL:box.querySelector('.armL'), aR:box.querySelector('.armR'),
+      aL:[...box.querySelectorAll('.armL')], aR:[...box.querySelectorAll('.armR')],
       shd:box.querySelector('.shd'), tail:box.querySelector('.tail'), ears:box.querySelector('.ears')};
     return true;
   },
@@ -8573,8 +8598,8 @@ const PET={
     e.ch.setAttribute('transform',
       'translate(60,108) rotate('+c.rot.toFixed(2)+') scale('+sx.toFixed(4)+','+sy.toFixed(4)+') translate(-60,-108)'+
       ' translate(0,'+y.toFixed(2)+')');
-    e.aL.setAttribute('transform','rotate('+c.aL.toFixed(1)+','+(e.aL.dataset.p||'33,74')+')');
-    e.aR.setAttribute('transform','rotate('+c.aR.toFixed(1)+','+(e.aR.dataset.p||'87,74')+')');
+    for(const g of e.aL) g.setAttribute('transform','rotate('+c.aL.toFixed(1)+','+(g.dataset.p||'33,74')+')');
+    for(const g of e.aR) g.setAttribute('transform','rotate('+c.aR.toFixed(1)+','+(g.dataset.p||'87,74')+')');
     if(e.shd){
       const up=Math.max(0,-y)/16, sc=(1-up*.38).toFixed(3);
       e.shd.setAttribute('transform','translate(60,113) scale('+sc+',1) translate(-60,-113)');
