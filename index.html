@@ -1073,12 +1073,12 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   <div class="ghome" id="gHome"></div>
 </div>
 
-<div class="sec">
+<div class="sec" id="secMain">
   <div class="sechead"><h2><svg class="i"><use href="#i-flag"/></svg>主線任務</h2></div>
   <div class="card quest" id="quest"></div>
 </div>
 
-<div class="sec">
+<div class="sec" id="secQuests">
   <div class="sechead"><h2><svg class="i"><use href="#i-cup"/></svg>任務清單</h2><span class="sub" id="qSub"></span></div>
   <div class="quests" id="quests"></div>
 </div>
@@ -1293,6 +1293,8 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
     </div></div>
   <div class="setrow" id="rowCatEdit"><div class="lb"><b>編輯分類</b><span>主分類跟細項都可以自己加、自己刪</span></div>
     <button class="btn sm ghost" id="btnCatEdit">管理分類</button></div>
+  <div class="setrow"><div class="lb"><b>任務</b><span>主線任務與任務清單。沒在排目標就關掉</span></div>
+    <button class="sw" id="swQuest" role="switch"><i></i></button></div>
   <div class="setrow"><div class="lb"><b>貸款進度</b><span>顯示貸款 road map 區塊</span></div>
     <button class="sw" id="swLoan" role="switch"><i></i></button></div>
   <div class="setrow"><div class="lb"><b>股票當沖分開算</b><span>沒在做當沖就不用開</span></div>
@@ -8306,7 +8308,7 @@ $('btnFriAdd').onclick=async()=>{
         $('friMail').value=''; SFX.play('coin'); }
 };
 
-function render(){ renderWheel(); renderStocks(); renderLoans(); renderMonthTable(); renderPie(); renderHud(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); }
+function render(){ renderWheel(); renderStocks(); renderLoans(); renderMonthTable(); renderPie(); renderHud(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); paintQuestSec(); }
 
 /* ── 互動 ── */
 const open=id=>{$(id).classList.add('on');const f=$(id).querySelector('input');setTimeout(()=>f&&f.focus(),120);};
@@ -10184,6 +10186,7 @@ $('btnTheme').onclick=()=>{
 
 function swPaint(){
   pushRefresh(); showVer();
+  $('swQuest').classList.toggle('on',questOn());
   $('swLoan').classList.toggle('on',db.settings.showLoan!==false);
   $('swStock').classList.toggle('on',db.settings.splitStock!==false);
   $('catMode').querySelectorAll('button').forEach(b=>
@@ -10261,6 +10264,17 @@ $('catReset').onclick=()=>{
   if(!confirm('把'+(catKind==='out'?'支出':'收入')+'的分類回復成預設？自己加的會不見。')) return;
   ensureTree()[catKind]=JSON.parse(JSON.stringify(DETAILCATS[catKind]));
   catOpen=null; save(); render(); renderCatEdit(); SFX.play('del'); toast('回復預設了');
+};
+/* 任務那兩區。沒在排目標的人不該被逼著看空的任務卡 */
+const questOn=()=>db.settings.showQuest!==false;
+function paintQuestSec(){
+  const on=questOn();
+  ['secMain','secQuests'].forEach(id=>{ const el=$(id); if(el) el.style.display=on?'':'none'; });
+}
+$('swQuest').onclick=()=>{
+  db.settings.showQuest=db.settings.showQuest===false; save();
+  swPaint(); paintQuestSec(); SFX.play('tick');
+  toast(questOn()?'任務區打開了':'任務區收起來了');
 };
 $('swLoan').onclick=()=>{
   db.settings.showLoan=db.settings.showLoan===false; save(); swPaint(); render(); SFX.play('tick');
