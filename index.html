@@ -8122,13 +8122,15 @@ $('btnRaid').onclick=async()=>{
   const b=$('btnRaid'); b.disabled=true; b.textContent='下手中…';
   const amount=raidRoll(d);
   if(amount<RAID_MIN){ toast('他這班已經被偷光了，放過他吧'); renderProf(); return; }
-  const r=await CLOUD.raid(f,d.shiftEnd,amount);
+  const r=await CLOUD.raid(f,d.shiftEnd,amount,d);
   if(!r.ok){
     b.disabled=false; b.textContent='偷走一點';
-    toast(r.e==='permission-denied'
-      ?'雲端擋下來了。要嘛 Firestore 規則還沒更新到「立刻入帳」那版，要嘛他的薪水剛剛被別人偷過、金額對不上，重開一次再試'
-      :r.step==='扣他'?'他那班的薪水剛剛有人動過，重開一次再試'
-      :r.half?'紀錄留下了但錢沒進來，等一下再試':'沒成功，等一下再試');
+    toast(r.step==='扣他'
+      ?'扣不到他的薪水。他那班剛剛被別人動過，或是你手上的資料舊了，重開一次再試'
+      :r.half?'他的薪水扣掉了但錢沒進你口袋，等一下再試'
+      :r.e==='permission-denied'
+      ?'雲端擋下來了。Firestore 規則還沒更新到最新版（v224 那份）'
+      :'沒成功（'+(r.e||'不明')+'），等一下再試');
     SFX.play('err'); return;
   }
   RAIDTOOK[f.uid]=d.shiftEnd;
@@ -10876,7 +10878,7 @@ window.CLOUD={
      把驗證放在客戶端或 Firestore 規則裡的話，錢包規則會被改得很危險。 */
   /* 偷。三個動作：留下紀錄、從對方那班薪水直接扣掉、進自己的錢包。
      錢是真的從他身上來的，沒有系統補錢，所以三個數字必須一致。 */
-  async raid(f,shiftAt,amount){
+  async raid(f,shiftAt,amount,snap){
     if(!this.user||!this.api) return {ok:0,e:'還沒登入'};
     const {F}=this.api;
     const at=Math.round(shiftAt);
@@ -10889,13 +10891,12 @@ window.CLOUD={
     }catch(e){ return {ok:0,e:e.code||'x'}; }
     try{
       /* 第二步：從他那班的薪水扣掉。規則只讓好友動 shiftPay 跟 raidTook 兩個欄位，
-         而且扣多少就要記多少、加總不能超過三成 */
-      const vw=F.doc(this.api.fs,'users',f.uid,'wallet','main');
-      const vs=await F.getDoc(vw);
-      if(!vs.exists()) return {ok:0,e:'讀不到他的錢包'};
-      const v=vs.data();
-      await F.updateDoc(vw,{shiftPay:Math.max(0,(+v.shiftPay||0)-amount),
-                            raidTook:(+v.raidTook||0)+amount});
+         而且扣多少就要記多少、加總不能超過三成。
+         這裡不能先讀他的錢包 —— 讀取規則是「只有自己讀得到」，好友讀不到。
+         要用的數字他推的快照裡就有；快照要是舊的，規則會自己算一次然後擋下來 */
+      await F.updateDoc(F.doc(this.api.fs,'users',f.uid,'wallet','main'),{
+        shiftPay:Math.max(0,(+snap.shiftPay||0)-amount),
+        raidTook:(+snap.raidTook||0)+amount});
     }catch(e){ return {ok:0,e:e.code||'x',step:'扣他'}; }
     try{
       /* 第三步：立刻入帳。規則會去讀第一步那筆紀錄，確認金額對得上、
