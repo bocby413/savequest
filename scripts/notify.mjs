@@ -98,7 +98,8 @@ async function pushTo(uid, payload) {
 
 const users = await db.collection('users').listDocuments();
 
-/* 先結算偷竊，再發通知 —— 這樣被偷的人收到的通知裡數字才是對的 */
+/* 偷的人在自己 app 裡就入帳了（規則會驗金額對不對），所以這裡不再付錢給他。
+   這一輪只做兩件事：把被偷的人那班的薪水扣掉、通知他是誰幹的。 */
 for (const u of users) {
   const raids = await db.collection(`users/${u.id}/raids`).get();
   if (raids.empty) continue;
@@ -106,11 +107,11 @@ for (const u of users) {
 
   for (const doc of raids.docs) {
     const r = doc.data();
-    if (r.amount) continue;                       /* 結算過了 */
+    if (r.doneAt) continue;                       /* 扣過了 */
+    const amount = Number(r.amount) || 0;
+    if (amount <= 0) { await doc.ref.delete(); raidNo++; continue; }
 
-    /* 第二道防線：同一個人、同一班只結算一次。
-       規則那邊擋掉了「對同一班再按一次」，但萬一規則版本比較舊，
-       重按會把已結算的金額蓋掉、看起來就像一筆新的。這份帳只有排程寫得到 */
+    /* 同一個人、同一班只扣一次。這份帳只有排程寫得到 */
     const doneRef = db.doc(`users/${u.id}/raidsDone/${doc.id}`);
     const done = await doneRef.get();
 
@@ -120,40 +121,35 @@ for (const u of users) {
     const at = ms(d.shiftAt), h = Number(d.shiftH) || 0, pay = Number(d.shiftPay) || 0;
     const end = at + h * 3600000;
 
-    /* 這一班還在嗎？下班夠久了嗎？偷的是同一班嗎？ */
     if (done.exists && Math.abs(Number(done.data().shiftAt) - end) < 2000) {
-      await doc.ref.delete();                     /* 這一班他偷過了 */
-      raidNo++; continue;
+      await doc.ref.delete(); raidNo++; continue;
     }
 
+    /* 這一班還在嗎？偷的是同一班嗎？下班夠久了嗎？ */
     const sameShift = h > 0 && at > 0 && Math.abs(Number(r.shiftAt) - end) < 2000;
     if (!sameShift || now - end < RAID_WAIT || pay <= 0) {
-      await doc.ref.delete();                     /* 條件不成立，直接作廢 */
-      raidNo++; continue;
+      await doc.ref.delete(); raidNo++; continue;
     }
 
-    /* 這一班已經被偷掉多少了 */
+    /* 同一班最多被偷掉三成。偷的人已經拿到錢了，這裡只是不再多扣 */
     const already = raids.docs
-      .filter(x => x.id !== doc.id && Math.abs(Number(x.data().shiftAt) - end) < 2000)
+      .filter(x => x.id !== doc.id && x.data().doneAt
+                   && Math.abs(Number(x.data().shiftAt) - end) < 2000)
       .reduce((n, x) => n + (Number(x.data().amount) || 0), 0);
-    const room = Math.max(0, Math.round(pay * RAID_TOTAL_CAP) - already);
-    const amount = Math.min(room, Math.max(RAID_MIN, Math.min(RAID_MAX, Math.round(pay * RAID_CUT))));
-    if (amount <= 0) { await doc.ref.delete(); raidNo++; continue; }
+    const room = Math.max(0, Math.round(pay0(pay, already) * RAID_TOTAL_CAP) - already);
+    const cut = Math.min(amount, room, pay);
 
-    /* 被偷的人：那班的薪水直接扣掉。動 shiftPay 而不是餘額，
-       收工的規則才不用改（它要求領到的錢剛好等於 shiftPay） */
-    await wref.update({ shiftPay: pay - amount });
-    /* 偷的人：進他的錢包 */
-    const tref = db.doc(`users/${r.by}/wallet/main`);
-    const t = await tref.get();
-    if (t.exists) await tref.update({ coins: (Number(t.data().coins) || 0) + amount });
-    await doc.ref.update({ amount, doneAt: now });
-    await doneRef.set({ shiftAt: end, amount, at: now });
+    if (cut > 0) await wref.update({ shiftPay: pay - cut });
+    await doc.ref.update({ doneAt: now, cut });
+    await doneRef.set({ shiftAt: end, amount, cut, at: now });
 
-    (raidPush[u.id] = raidPush[u.id] || []).push({ byName: r.byName || '某人', amount });
+    if (cut > 0) (raidPush[u.id] = raidPush[u.id] || []).push({ byName: r.byName || '某人', amount: cut });
     raidOk++;
   }
 }
+
+/* 現在的 shiftPay 已經被前幾筆扣過了，要加回去才是這一班原本值多少 */
+function pay0(pay, already) { return pay + already; }
 
 /* 被偷的人要馬上知道是誰幹的，不然錢少了會以為是 bug */
 for (const [uid, list] of Object.entries(raidPush)) {

@@ -7338,6 +7338,9 @@ const DEFAULT_GRANT={lv:true,streak:false,goals:false,month:false,assets:false};
 /* 誰偷過我的薪水。排程結算完會把 amount 填進去 */
 let RAIDS=[];
 const RAID_WAIT=30*60000;      /* 下班超過這麼久沒領才偷得動 */
+/* 偷多少。這個算式跟 Firestore 規則裡的 raidAmt() 必須一模一樣，
+   規則會拿對方錢包裡的 shiftPay 自己算一次來對，對不上就寫不進去 */
+const raidAmt=pay=>Math.min(12,Math.max(3,Math.round((+pay||0)*0.1)));
 /* 這個好友現在偷不偷得動。看的是他分享過來的快照，不是他的錢包 */
 function raidable(d){
   return !!(d && d.shiftEnd > 0 && d.shiftPay > 0 && Date.now() - d.shiftEnd >= RAID_WAIT);
@@ -8058,7 +8061,7 @@ function renderProf(){
       const hrs=Math.floor((Date.now()-d.shiftEnd)/3600000);
       const mins=Math.round((Date.now()-d.shiftEnd)/60000)%60;
       $('raidTitle').textContent=(d.shiftJob||'打工')+'　已經下班 '+(hrs?hrs+' 小時 ':'')+mins+' 分鐘了';
-      $('raidSay').textContent='薪水擺著沒領。偷走一點他會知道是你，也可以偷回去。';
+      $('raidSay').textContent='可以偷走 '+raidAmt(d.shiftPay)+' 枚。他會知道是你，也可以偷回去。';
       const b=$('btnRaid');
       const mine=RAIDTOOK[f.uid];
       const took=mine&&Math.abs(mine-d.shiftEnd)<2000;      /* 這一班我偷過了 */
@@ -8081,16 +8084,18 @@ $('btnRaid').onclick=async()=>{
   const d=SHARED[f.uid];
   if(!raidable(d)){ toast('他已經領走了，來不及'); renderProf(); return; }
   const b=$('btnRaid'); b.disabled=true; b.textContent='下手中…';
-  const r=await CLOUD.raid(f,d.shiftEnd);
+  const amount=raidAmt(d.shiftPay);
+  const r=await CLOUD.raid(f,d.shiftEnd,amount);
   if(!r.ok){
     b.disabled=false; b.textContent='偷走一點';
-    toast(r.e==='permission-denied'?'雲端不讓你偷（規則還沒更新？）':'沒成功，等一下再試');
+    toast(r.e==='permission-denied'?'雲端不讓你偷（規則還沒更新？）'
+      :r.half?'紀錄留下了但錢沒進來，等一下再試':'沒成功，等一下再試');
     SFX.play('err'); return;
   }
   RAIDTOOK[f.uid]=d.shiftEnd;
   try{ localStorage.setItem('life_goals_raidtook',JSON.stringify(RAIDTOOK)); }catch(e){}
   SFX.play('win');
-  toast('得手了。戰利品幾分鐘後入帳，他也會收到通知');
+  toast('得手，搶到 '+r.amount+' 枚。他等一下會收到通知');
   renderProf();
 };
 function openProf(uid){
@@ -10825,16 +10830,33 @@ window.CLOUD={
      真正結算的是那支每 5 分鐘跑的排程，它有 admin 權限，會自己去驗
      「這班真的結束超過 30 分鐘了嗎」「這個人這班偷過了嗎」「被偷的比例到上限了嗎」。
      把驗證放在客戶端或 Firestore 規則裡的話，錢包規則會被改得很危險。 */
-  async raid(f,shiftAt){
+  async raid(f,shiftAt,amount){
     if(!this.user||!this.api) return {ok:0,e:'還沒登入'};
     const {F}=this.api;
+    const at=Math.round(shiftAt);
     try{
+      /* 第一步：留下偷竊紀錄。金額寫在這裡，但規則會自己拿對方的錢包算一次來對 */
       await F.setDoc(F.doc(this.api.fs,'users',f.uid,'raids',this.user.uid),{
         by:this.user.uid, byName:db.settings.name||'某人',
-        shiftAt:Math.round(shiftAt), ts:Date.now()
+        shiftAt:at, ts:Date.now(), amount:amount
       });
-      return {ok:1};
     }catch(e){ return {ok:0,e:e.code||'x'}; }
+    try{
+      /* 第二步：立刻入帳。規則會去讀上面那筆紀錄，確認金額對得上、
+         而且 raidOf／raidShift 跟上一次不同（同一筆不能領兩次） */
+      const next={coins:WALLET.coins+amount, owned:WALLET.owned, spunOn:WALLET.spunOn,
+                  workOn:WALLET.workOn, workN:WALLET.workN, shiftH:WALLET.shiftH,
+                  shiftPay:WALLET.shiftPay, shiftJob:WALLET.shiftJob, shiftSay:WALLET.shiftSay,
+                  raidOf:f.uid, raidShift:at};
+      await F.updateDoc(this.wref(),next);
+      WALLET=normWallet(Object.assign({},next,{shiftAt:WALLET.shiftAt}));
+      saveWallet(); renderHud(); renderWheel();
+      return {ok:1,amount:amount};
+    }catch(e){
+      /* 紀錄留下了但錢沒進來。排程那支之後會照紀錄把對方的薪水扣掉，
+         這裡只是自己沒領到，回報出去讓使用者知道 */
+      return {ok:0,e:e.code||'x',half:1};
+    }
   },
   /* 誰偷過我。自己的東西，直接讀 */
   watchRaids(){
