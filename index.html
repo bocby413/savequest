@@ -6165,7 +6165,9 @@ function normWallet(w){
           shiftPay:Math.max(0,Math.round(+(w&&w.shiftPay)||0)),
           shiftJob:(w&&w.shiftJob)||'',
           /* 那句吐槽。存起來是為了打工完成的推播用得到 */
-          shiftSay:(w&&w.shiftSay)||''};
+          shiftSay:(w&&w.shiftSay)||'',
+          /* 這一班被偷走多少了。開新的一班會歸零 */
+          raidTook:Math.max(0,Math.round(+(w&&w.raidTook)||0))};
 }
 function saveWallet(){ try{ localStorage.setItem(WKEY,JSON.stringify(WALLET)); }catch(e){} }
 function loadWallet(){
@@ -7339,14 +7341,25 @@ const DEFAULT_GRANT={lv:true,streak:false,goals:false,month:false,assets:false};
 let RAIDS=[];
 const RAID_WAIT=30*60000;      /* 下班超過這麼久沒領才偷得動 */
 /* 偷多少是隨機的，事前不告訴你，得手才知道。
-   上限跟 Firestore 規則裡的 raidMax() 必須一模一樣 —— 規則會拿對方錢包裡的
-   shiftPay 自己算一次，超過就寫不進去。下限固定 3。 */
-const raidMax=pay=>Math.min(12,Math.max(3,Math.round((+pay||0)*0.15)));
-const raidRoll=pay=>{const hi=raidMax(pay);return 3+Math.floor(Math.random()*(hi-3+1));};
+   這幾個算式跟 Firestore 規則裡的 raidOrig／raidLeft／raidMax 必須一模一樣，
+   規則會拿對方錢包的現況自己算一次，超過就寫不進去。
+   錢是真的從被偷的人身上扣的，沒有系統補錢，所以一定要對得起來。 */
+const RAID_ONE=0.25;          /* 一次最多摸走那班原本薪水的四分之一 */
+const RAID_CAP=0.30;          /* 一班最多被偷掉三成 */
+const RAID_MIN=5;             /* 少於這個數就不值得動手了 */
+const raidOrig=d=>(+(d&&d.shiftPay)||0)+(+(d&&d.raidTook)||0);
+const raidLeft=d=>Math.round(raidOrig(d)*RAID_CAP)-(+(d&&d.raidTook)||0);
+const raidMax=d=>Math.min(raidLeft(d),Math.max(RAID_MIN,Math.round(raidOrig(d)*RAID_ONE)));
+const raidRoll=d=>{const hi=raidMax(d);
+  return hi<RAID_MIN?0:RAID_MIN+Math.floor(Math.random()*(hi-RAID_MIN+1));};
+/* 被偷光了就不要再去了 */
+const raidBroke=d=>raidLeft(d)<RAID_MIN;
 /* 這個好友現在偷不偷得動。看的是他分享過來的快照，不是他的錢包 */
 function raidable(d){
   return !!(d && d.shiftEnd > 0 && d.shiftPay > 0 && Date.now() - d.shiftEnd >= RAID_WAIT);
 }
+/* 還偷得動嗎。已經被偷到上限的話，人家已經很慘了 */
+const raidOpen=d=>raidable(d)&&!raidBroke(d);
 /* 我這一班被誰偷了。排程結算完才會有 amount */
 const myRaids=()=>RAIDS.filter(r=>r.shiftAt&&Math.abs(r.shiftAt-WALLET.shiftAt)<2000);
 const raidedSum=()=>myRaids().reduce((n,r)=>n+(+r.amount||0),0);
@@ -7904,7 +7917,7 @@ function renderFriends(){
   btn.style.display=on?'':'none';
   /* 揪團去那顆在這個視窗裡面，所以群組邀請也要讓外面這顆亮 */
   /* 有人的薪水擺著沒領也要亮，不然「可以偷」這件事藏在好友主頁最下面沒人會發現 */
-  const canRaid=FRIENDS.some(f=>raidable(SHARED[f.uid]));
+  const canRaid=FRIENDS.some(f=>raidOpen(SHARED[f.uid]));
   $('friDot').className='dot'+((REQS.length||GINVS.length||canRaid)?' on':'');
   const box=$('friBody'); if(!box) return;
   let html='';
@@ -7921,7 +7934,7 @@ function renderFriends(){
         '<button class="btn sm ghost" data-rej="'+r.id+'">拒絕</button></span></div>';
       }).join('')+'</div>';
   }
-  const prey=FRIENDS.filter(f=>raidable(SHARED[f.uid]));
+  const prey=FRIENDS.filter(f=>raidOpen(SHARED[f.uid]));
   if(prey.length){
     html+='<div class="frisec"><h4>薪水沒領（'+prey.length+'）</h4>'+
       prey.map(f=>{const d=SHARED[f.uid];
@@ -7940,7 +7953,8 @@ function renderFriends(){
     /* 分享了什麼一律進去他的主頁才看得到。列在外面的話，
        分享多的人那一列就會變高變寬，整排參差不齊 */
     if(d&&g.lv&&d.title) bits.push('<span class="lvtag">'+esc(d.title)+'</span>');
-    if(raidable(d)) bits.unshift('<span class="raidtag">薪水沒領，可以偷</span>');
+    if(raidOpen(d)) bits.unshift('<span class="raidtag">薪水沒領，可以偷</span>');
+    else if(raidable(d)) bits.unshift('<span class="raidtag" style="opacity:.55">已經被偷光了</span>');
     if(!bits.length) bits.push('<span style="color:var(--txt3)">'+
       (d?'點進去看他分享了什麼':'等對方開啟 app 後才會同步進度')+'</span>');
     const p=PROFILES[f.uid]||{};
@@ -8075,13 +8089,19 @@ function renderProf(){
     if(can){
       const hrs=Math.floor((Date.now()-d.shiftEnd)/3600000);
       const mins=Math.round((Date.now()-d.shiftEnd)/60000)%60;
-      $('raidTitle').textContent=(d.shiftJob||'打工')+'　已經下班 '+(hrs?hrs+' 小時 ':'')+mins+' 分鐘了';
-      $('raidSay').textContent='能摸到多少全看運氣。他會知道是你，也可以偷回去。';
+      const broke=raidBroke(d);
+      $('raidTitle').textContent=broke
+        ? (d.shiftJob||'打工')+'　這班已經被偷光了'
+        : (d.shiftJob||'打工')+'　已經下班 '+(hrs?hrs+' 小時 ':'')+mins+' 分鐘了';
+      $('raidSay').textContent=broke
+        ? '他這班的薪水被偷掉三成了，已經夠可憐，放過他吧。'
+        : '能摸到多少全看運氣。他會知道是你，也可以偷回去。';
       const b=$('btnRaid');
       const mine=RAIDTOOK[f.uid];
       const took=mine&&Math.abs(mine-d.shiftEnd)<2000;      /* 這一班我偷過了 */
-      b.disabled=!!took; b.style.opacity=took?.5:1;
-      b.textContent=took?'這一班你偷過了':'偷走一點';
+      const off=took||broke;
+      b.disabled=!!off; b.style.opacity=off?.5:1;
+      b.textContent=broke?'已經被偷光了':took?'這一班你偷過了':'偷走一點';
     }
   }
   $('profFoot').textContent= isFri
@@ -8098,13 +8118,16 @@ $('btnRaid').onclick=async()=>{
   const f=profFor; if(!f) return;
   const d=SHARED[f.uid];
   if(!raidable(d)){ toast('他已經領走了，來不及'); renderProf(); return; }
+  if(raidBroke(d)){ toast('他這班已經被偷光了，放過他吧'); renderProf(); return; }
   const b=$('btnRaid'); b.disabled=true; b.textContent='下手中…';
-  const amount=raidRoll(d.shiftPay);
+  const amount=raidRoll(d);
+  if(amount<RAID_MIN){ toast('他這班已經被偷光了，放過他吧'); renderProf(); return; }
   const r=await CLOUD.raid(f,d.shiftEnd,amount);
   if(!r.ok){
     b.disabled=false; b.textContent='偷走一點';
     toast(r.e==='permission-denied'
       ?'雲端擋下來了。要嘛 Firestore 規則還沒更新到「立刻入帳」那版，要嘛他的薪水剛剛被別人偷過、金額對不上，重開一次再試'
+      :r.step==='扣他'?'他那班的薪水剛剛有人動過，重開一次再試'
       :r.half?'紀錄留下了但錢沒進來，等一下再試':'沒成功，等一下再試');
     SFX.play('err'); return;
   }
@@ -10481,7 +10504,7 @@ window.CLOUD={
     const next={coins:WALLET.coins, owned:WALLET.owned, spunOn:WALLET.spunOn,
                 workOn:day, workN:(WALLET.workOn===day?WALLET.workN:0)+1,
                 shiftAt:F.serverTimestamp(), shiftH:h, shiftPay:pay, shiftJob:job,
-                shiftSay:say||''};
+                shiftSay:say||'', raidTook:0};
     try{
       await F.updateDoc(this.wref(),next);
       WALLET=normWallet(Object.assign({},next,{shiftAt:Date.now()}));
@@ -10494,7 +10517,7 @@ window.CLOUD={
     const {F}=this.api;
     const next={coins:WALLET.coins+WALLET.shiftPay, owned:WALLET.owned, spunOn:WALLET.spunOn,
                 workOn:WALLET.workOn, workN:WALLET.workN,
-                shiftAt:null, shiftH:0, shiftPay:0, shiftJob:'', shiftSay:''};
+                shiftAt:null, shiftH:0, shiftPay:0, shiftJob:'', shiftSay:'', raidTook:0};
     try{
       await F.updateDoc(this.wref(),next);
       WALLET=normWallet(next); saveWallet();
@@ -10837,6 +10860,7 @@ window.CLOUD={
          這裡只給「幾點下班、那班值多少」，不會外流餘額 */
       data.shiftEnd=(WALLET.shiftH>0&&WALLET.shiftAt>0)?WALLET.shiftAt+WALLET.shiftH*3600000:0;
       data.shiftPay=WALLET.shiftPay||0;
+      data.raidTook=WALLET.raidTook||0;
       data.shiftJob=WALLET.shiftJob||'';
       if(g.lv) data.title=myTitle();             /* 只給稱號，等級數字不外流 */
       if(g.streak){ const c=calStats(); data.streak=c.streak; data.hit=c.hit; data.has=c.has; }
@@ -10850,6 +10874,8 @@ window.CLOUD={
      真正結算的是那支每 5 分鐘跑的排程，它有 admin 權限，會自己去驗
      「這班真的結束超過 30 分鐘了嗎」「這個人這班偷過了嗎」「被偷的比例到上限了嗎」。
      把驗證放在客戶端或 Firestore 規則裡的話，錢包規則會被改得很危險。 */
+  /* 偷。三個動作：留下紀錄、從對方那班薪水直接扣掉、進自己的錢包。
+     錢是真的從他身上來的，沒有系統補錢，所以三個數字必須一致。 */
   async raid(f,shiftAt,amount){
     if(!this.user||!this.api) return {ok:0,e:'還沒登入'};
     const {F}=this.api;
@@ -10862,7 +10888,17 @@ window.CLOUD={
       });
     }catch(e){ return {ok:0,e:e.code||'x'}; }
     try{
-      /* 第二步：立刻入帳。規則會去讀上面那筆紀錄，確認金額對得上、
+      /* 第二步：從他那班的薪水扣掉。規則只讓好友動 shiftPay 跟 raidTook 兩個欄位，
+         而且扣多少就要記多少、加總不能超過三成 */
+      const vw=F.doc(this.api.fs,'users',f.uid,'wallet','main');
+      const vs=await F.getDoc(vw);
+      if(!vs.exists()) return {ok:0,e:'讀不到他的錢包'};
+      const v=vs.data();
+      await F.updateDoc(vw,{shiftPay:Math.max(0,(+v.shiftPay||0)-amount),
+                            raidTook:(+v.raidTook||0)+amount});
+    }catch(e){ return {ok:0,e:e.code||'x',step:'扣他'}; }
+    try{
+      /* 第三步：立刻入帳。規則會去讀第一步那筆紀錄，確認金額對得上、
          而且 raidOf／raidShift 跟上一次不同（同一筆不能領兩次） */
       const next={coins:WALLET.coins+amount, owned:WALLET.owned, spunOn:WALLET.spunOn,
                   workOn:WALLET.workOn, workN:WALLET.workN, shiftH:WALLET.shiftH,
