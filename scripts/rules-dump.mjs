@@ -107,3 +107,34 @@ for (const u of users) {
   }
 }
 if (!n) console.log('  一筆都沒有');
+
+/* ── 錢包裡到底有哪些欄位 ──
+   「扣他薪水」那條規則有一項是 keys().hasOnly(wkeys())，
+   只要錢包裡存在任何一個不在白名單上的欄位，整條就過不了。 */
+const WKEYS = ['coins','owned','spunOn','workOn','workN','shiftAt','shiftH','shiftPay',
+               'shiftJob','shiftSay','raidOf','raidShift','raidTook'];
+console.log('');
+console.log('=== 每個人錢包裡的欄位（白名單外的會標出來）===');
+for (const u of users) {
+  const w = await fdb.doc(`users/${u.id}/wallet/main`).get();
+  if (!w.exists) continue;
+  const ks = Object.keys(w.data());
+  const bad = ks.filter(k => !WKEYS.includes(k));
+  console.log(`${short(u.id)}　${ks.join(' ')}` + (bad.length ? `　← 白名單外：${bad.join(' ')}` : ''));
+}
+
+/* 分享快照跟真實錢包對不對得起來 —— app 是照快照算金額的 */
+console.log('');
+console.log('=== 分享快照 vs 真實錢包 ===');
+const shares = await fdb.collection('shares').get();
+for (const d of shares.docs) {
+  const s2 = d.data();
+  if (!s2.shiftEnd) continue;
+  const w = await fdb.doc(`users/${s2.owner}/wallet/main`).get();
+  if (!w.exists) continue;
+  const real = w.data();
+  const same = (Number(s2.shiftPay)||0) === (Number(real.shiftPay)||0)
+            && (Number(s2.raidTook)||0) === (Number(real.raidTook)||0);
+  console.log(`${d.id.slice(0,6)}…→${d.id.slice(-6)}　快照 pay=${s2.shiftPay} took=${s2.raidTook}　` +
+    `實際 pay=${real.shiftPay} took=${real.raidTook||0}　${same ? '一致' : '← 對不上'}`);
+}
