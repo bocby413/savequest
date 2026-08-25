@@ -53,3 +53,29 @@ if (at > 0) {
 
 show('function cutNow', 1, 8);
 show('function bothFriends', 1, 7);
+
+
+/* ── 錢包每個欄位的真實型別 ──
+   規則裡有 duration.value(shiftH * 60, 'm')，shiftH 要是浮點數這行會直接出錯，
+   結果跟條件不成立一樣是 permission-denied，完全分不出來。 */
+import { initializeApp, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+const app2 = initializeApp({ credential: cert(sa), projectId: proj });
+const fdb2 = getFirestore(app2, 'default');
+console.log('');
+console.log('=== 錢包欄位的型別 ===');
+for (const uid of ['ffYVSG', 'bq8xBQ']) {
+  const all = await fdb2.collection('users').listDocuments();
+  const hit = all.find(d => d.id.startsWith(uid));
+  if (!hit) { console.log(uid + ' 找不到'); continue; }
+  const w = await fdb2.doc('users/' + hit.id + '/wallet/main').get();
+  if (!w.exists) { console.log(uid + ' 沒有錢包'); continue; }
+  console.log('');
+  console.log(uid + ' (' + hit.id + ')');
+  const d = w.data();
+  for (const [k, v] of Object.entries(d)) {
+    const t = v && v.constructor ? v.constructor.name : typeof v;
+    const isInt = typeof v === 'number' ? (Number.isInteger(v) ? '整數' : '浮點!') : '';
+    console.log('  ' + k.padEnd(10) + t.padEnd(12) + String(v).slice(0, 40) + ' ' + isInt);
+  }
+}
