@@ -6192,7 +6192,15 @@ function normWallet(w){
           /* 那句吐槽。存起來是為了打工完成的推播用得到 */
           shiftSay:(w&&w.shiftSay)||'',
           /* 這一班被偷走多少了。開新的一班會歸零 */
-          raidTook:Math.max(0,Math.round(+(w&&w.raidTook)||0))};
+          raidTook:Math.max(0,Math.round(+(w&&w.raidTook)||0)),
+          /* 上一筆得手的是誰的哪一班。雲端本來就有寫，之前讀進來卻丟掉了，
+             結果「我偷過他了」這件事在另一台裝置上完全看不到。
+             寫錢包的那幾支都是列舉欄位、沒帶這兩個，所以沒帶的時候
+             要沿用手上這份，不然會被自己清成空的（跟 shiftAt 同一個坑） */
+          raidOf:(w&&typeof w.raidOf==='string')?w.raidOf
+                 :((typeof WALLET!=='undefined'&&WALLET&&WALLET.raidOf)||''),
+          raidShift:(w&&+w.raidShift)?Math.round(+w.raidShift)
+                 :((typeof WALLET!=='undefined'&&WALLET&&WALLET.raidShift)||0)};
 }
 function saveWallet(){ try{ localStorage.setItem(WKEY,JSON.stringify(WALLET)); }catch(e){} }
 function loadWallet(){
@@ -7432,8 +7440,12 @@ function raidable(d){
    舊版只寫過 localStorage，所以兩邊都查一次 */
 function raidedAt(uid){
   const k=rtKey(uid);
-  const cloud=(db.settings.raidDone||{})[k];
-  return cloud||RAIDTOOK[k]||0;
+  /* 三個來源，有一個說偷過就算偷過：
+       錢包的 raidOf／raidShift  上一筆得手的，雲端本來就有，最可靠
+       設定裡的 raidDone         跟著備份同步，記得住比較久以前的
+       localStorage 的 RAIDTOOK  舊版留下來的，只在這台裝置有 */
+  const w=(WALLET&&WALLET.raidOf===uid)?(WALLET.raidShift||0):0;
+  return Math.max(w,(db.settings.raidDone||{})[k]||0,RAIDTOOK[k]||0);
 }
 const raidMine=(uid,d)=>{const t=raidedAt(uid);return !!(t&&d&&Math.abs(t-d.shiftEnd)<2000);};
 /* 還輪得到我偷嗎。額度用完、或我這班已經下過手，都不該再列出來 */
@@ -10647,8 +10659,12 @@ window.CLOUD={
     this.unsubW=F.onSnapshot(this.wref(),s=>{
       if(!s.exists()) return;
       const before=WALLET.shiftPay+'|'+WALLET.shiftH+'|'+WALLET.shiftAt;
+      const raidBefore=WALLET.raidOf+'|'+WALLET.raidShift;
       WALLET=normWallet(s.data()); saveWallet();
       renderHud(); renderWheel(); renderShop(); renderWork();
+      /* 另一台裝置偷完了，這裡才會知道。好友那顆紅點是照「還有誰可以偷」
+         算的，不重畫的話會一直亮到下次自己去點好友 */
+      if(raidBefore!==WALLET.raidOf+'|'+WALLET.raidShift){ preySig=null; preyWatch(); renderFriends(); }
       /* 打工狀態變了就重推快照。好友那邊算「可以偷多少」是照這份快照算的，
          舊的話算出來的數字會跟規則自己算的對不上，寫入就被擋 */
       if(before!==WALLET.shiftPay+'|'+WALLET.shiftH+'|'+WALLET.shiftAt) this.pushShares();
@@ -11133,7 +11149,17 @@ window.CLOUD={
     db.records=join(db.records,r.records);
     db.goals=join(db.goals,r.goals);
     db.deleted=del;
+    /* 設定是整包比 updatedAt 取新的那份。偷過誰的哪一班要例外處理：
+       兩台各自偷過不同的人，誰的設定比較新就會把對方那幾筆蓋掉，
+       按鈕又會亮回來。這種 map 用聯集才對 */
+    const mergeDone=(a,b)=>{
+      const m=Object.assign({},a||{});
+      Object.entries(b||{}).forEach(([k,v])=>{ if(!(m[k]>v)) m[k]=v; });
+      return m;
+    };
+    const done=mergeDone(db.settings.raidDone,(r.settings||{}).raidDone);
     if(((r.settings||{}).updatedAt||0)>(db.settings.updatedAt||0)) db.settings=r.settings;
+    if(Object.keys(done).length) db.settings.raidDone=done;
     const after=JSON.stringify(db);
     this.last=Date.now(); this.err='';
     if(after===before){ this.paint(); return; }        /* 內容一樣就別重畫 */
