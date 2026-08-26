@@ -390,8 +390,9 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 }
 .mtab .mono{font-size:12.5px;color:var(--txt3)}
 @media(max-width:640px){
-  /* 要完整顯示數字就得省寬度：內距收窄、字級縮一級、筆數那欄收起來 */
-  .mtab th,.mtab td{padding:9px 4px;font-size:12px}
+  /* 要完整顯示數字就得省寬度：內距收窄、字級縮一級、筆數那欄收起來。
+     真的塞不下（八位數）就讓表格橫著捲，不要把數字折成兩行 */
+  .mtab th,.mtab td{padding:9px 4px;font-size:12px;white-space:nowrap}
   .mtab .bal{font-size:12.5px}
   .mtab .hidem{display:none}
   .mtab .mono{font-size:11px}
@@ -7331,11 +7332,8 @@ function renderMonthTable(){
     $('mtSub').textContent=''; return;
   }
   const rows=all.slice(0,mtLimit);
-  /* 手機那份不是縮寫，是「完整數字但不加千分位」—— 少掉逗號就省下好幾個字寬，
-     窄螢幕才塞得下，又不會把 50150 講成 5萬 */
-  const plain=v=>String(Math.round(Math.abs(v)));
-  const num=(v,cls)=>'<span class="'+cls+'"><span class="full">'+(v>=0?'+':'-')+money(Math.abs(v))+
-    '</span><span class="abbr">'+(v>=0?'+':'-')+plain(v)+'</span></span>';
+  /* 數字兩邊長得一樣：完整、有千分位。手機是靠縮字級與收窄內距塞下的 */
+  const num=(v,cls)=>'<span class="'+cls+'">'+(v>=0?'+':'-')+money(Math.abs(v))+'</span>';
   const cell=(v,cls)=>v?num(v,cls):'<span class="zero">—</span>';
   let html='<table class="mtab"><thead><tr><th>月份</th><th>收入</th><th>支出</th><th>股票</th>'+
     '<th>結餘</th><th class="hidem">筆數</th></tr></thead><tbody>';
@@ -7346,13 +7344,11 @@ function renderMonthTable(){
     const tgt=targetAt(r.y,r.m-1), hit=tgt>0&&r.bal>=tgt;
     html+='<tr><td><span class="full">'+r.y+' 年 '+r.m+' 月</span>'+
       '<span class="abbr">'+r.m+' 月</span>'+(hit?' <span class="st">★</span>':'')+
-      (r.adj?'<div class="mono">含對帳 <span class="full">'+(r.adj>=0?'+':'-')+money(Math.abs(r.adj))+
-        '</span><span class="abbr">'+(r.adj>=0?'+':'-')+String(Math.round(Math.abs(r.adj)))+'</span></div>':'')+'</td>'+
+      (r.adj?'<div class="mono">含對帳 '+(r.adj>=0?'+':'-')+money(Math.abs(r.adj))+'</div>':'')+'</td>'+
       '<td>'+cell(r.in,'up')+'</td>'+
       '<td>'+cell(-r.out,'down')+'</td>'+
       '<td>'+(r.stock?num(r.stock,r.stock>=0?'up':'down'):'<span class="zero">—</span>')+'</td>'+
-      '<td class="bal '+(r.bal>=0?'up':'down')+'"><span class="full">'+(r.bal>=0?'+':'-')+money(Math.abs(r.bal))+
-        '</span><span class="abbr">'+(r.bal>=0?'+':'-')+plain(r.bal)+'</span></td>'+
+      '<td class="bal '+(r.bal>=0?'up':'down')+'">'+(r.bal>=0?'+':'-')+money(Math.abs(r.bal))+'</td>'+
       '<td class="hidem mono">'+r.n+'</td></tr>';
   });
   if(curYear!==null) html+=yearRow(all,curYear);
@@ -7368,9 +7364,7 @@ function yearRow(all,y){
   const ys=all.filter(r=>r.y===y);
   const sum=k=>ys.reduce((s,r)=>s+r[k],0);
   const bal=sum('bal');
-  /* 跟每月那些一樣：手機那份是完整數字、只是不加千分位，不要縮成「17.9萬」 */
-  const n2=(v,cls)=>'<span class="'+cls+'"><span class="full">'+(v>=0?'+':'-')+money(Math.abs(v))+
-    '</span><span class="abbr">'+(v>=0?'+':'-')+String(Math.round(Math.abs(v)))+'</span></span>';
+  const n2=(v,cls)=>'<span class="'+cls+'">'+(v>=0?'+':'-')+money(Math.abs(v))+'</span>';
   return '<tr class="yr"><td>'+y+' 年合計</td>'+
     '<td>'+(sum('in')?n2(sum('in'),'up'):'—')+'</td>'+
     '<td>'+(sum('out')?n2(-sum('out'),'down'):'—')+'</td>'+
