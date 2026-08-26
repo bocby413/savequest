@@ -170,6 +170,13 @@ svg.i{width:1em;height:1em;fill:currentColor;vertical-align:-.13em}
 .sechead h2{font-size:17px;font-weight:800;letter-spacing:.5px;display:flex;align-items:center;gap:9px}
 .sechead h2 svg{color:var(--gold);font-size:19px}
 .sechead .sub{font-size:12.5px;color:var(--txt3);margin-left:auto}
+@media(max-width:640px){
+  /* 窄螢幕：標題自己一行，數字跟「＋ 新增貸款」擠在第二行的兩端，
+     不然按鈕會自己再掉下去佔第三行 */
+  .loanhead{row-gap:9px}
+  .loanhead h2{flex-basis:100%}
+  .loanhead .sub{margin-left:0}
+}
 
 /* ── 主任務 ── */
 .quest{padding:24px;display:grid;grid-template-columns:1fr 190px;gap:24px;align-items:center}
@@ -1145,7 +1152,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 </div>
 
 <div class="sec">
-  <div class="sechead"><h2><svg class="i"><use href="#i-road"/></svg>貸款進度</h2>
+  <div class="sechead loanhead"><h2><svg class="i"><use href="#i-road"/></svg>貸款進度</h2>
     <span class="sub" id="loanSub"></span>
     <button class="btn sm ghost" id="btnAddLoan" style="margin-left:auto">＋ 新增貸款</button>
   </div>
