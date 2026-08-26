@@ -7158,7 +7158,7 @@ function renderLog(){
   const inSum=hit.filter(x=>x.kind==='in').reduce((s,x)=>s+x.amount,0);
   const outSum=hit.filter(x=>x.kind==='out').reduce((s,x)=>s+x.amount,0);
   $('logSub').textContent=full.length
-    ? (logFrom||logTo?'篩選出 ':'共 ')+full.length+' 筆　存入 '+short(inSum)+'　花掉 '+short(outSum) : '';
+    ? (logFrom||logTo?'篩選出 ':'共 ')+full.length+' 筆　存入 '+money(inSum)+'　花掉 '+money(outSum) : '';
   if(!full.length){
     $('logWrap').innerHTML='<div class="empty"><b>'+((logFrom||logTo)?'這段期間沒有紀錄':'還沒有紀錄')+'</b>'+
       ((logFrom||logTo)?'換一段日期看看，或按「全部」。':'先按「記一筆」用「對帳」寫下現在戶頭的總數，之後每次存錢花錢就用加減記。')+'</div>';
@@ -7358,7 +7358,7 @@ function renderMonthTable(){
       '還有 '+(all.length-mtLimit)+' 個月，看更多</button></div>';
   $('mtWrap').innerHTML=html;
   const last=all[0];
-  $('mtSub').textContent=last.y+' 年 '+last.m+' 月結餘 '+(last.bal>=0?'+':'-')+short(Math.abs(last.bal));
+  $('mtSub').textContent=last.y+' 年 '+last.m+' 月結餘 '+(last.bal>=0?'+':'-')+money(Math.abs(last.bal));
 }
 function yearRow(all,y){
   const ys=all.filter(r=>r.y===y);
@@ -7850,7 +7850,9 @@ function renderLoans(){
     $('loanSub').textContent=''; return;
   }
   const tl=ls.reduce((s,l)=>s+l.total,0), tp=ls.reduce((s,l)=>s+loanInfo(l).paid,0);
-  $('loanSub').textContent='共 '+ls.length+' 筆　已還 '+short(tp)+' / '+short(tl)+'　還欠 '+short(tl-tp);
+  /* 三個完整數字會把標題撐成三行（這排還有「＋ 新增貸款」在搶位置）。
+     還欠是拿掉的那個，每張卡片上本來就寫著 */
+  $('loanSub').textContent='共 '+ls.length+' 筆　已還 '+money(tp)+' / '+money(tl);
   box.innerHTML=ls.map(l=>{
     const I=loanInfo(l);
     const marks=[25,50,75,100].map((m,i)=>{

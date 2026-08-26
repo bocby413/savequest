@@ -1,5 +1,5 @@
 /* 存錢Bo士 — 離線快取。改版時把 VER 加一，手機才會抓到新版 */
-const VER = 'savequest-v251';
+const VER = 'savequest-v252';
 const FILES = ['./', './index.html', './manifest.json',
   './prices.json', './icon-192.png', './icon-512.png', './icon-512-maskable.png', './icon-180.png', './icon-32.png', './og.png'];
 
