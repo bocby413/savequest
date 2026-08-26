@@ -7425,8 +7425,17 @@ const raidBroke=d=>raidLeft(d)<=0;
 function raidable(d){
   return !!(d && d.shiftEnd > 0 && d.shiftPay > 0 && Date.now() - d.shiftEnd >= RAID_WAIT);
 }
-/* 這一班我自己是不是已經偷過了。每人每班只能偷一次 */
-const raidMine=(uid,d)=>{const t=RAIDTOOK[rtKey(uid)];return !!(t&&d&&Math.abs(t-d.shiftEnd)<2000);};
+/* 這一班我自己是不是已經偷過了。每人每班只能偷一次。
+   這件事要記在雲端那份設定裡，不能只記在 localStorage ——
+   localStorage 是每台裝置各一份，手機偷完電腦不知道，
+   電腦那顆按鈕就還亮著，按下去才被規則擋掉。
+   舊版只寫過 localStorage，所以兩邊都查一次 */
+function raidedAt(uid){
+  const k=rtKey(uid);
+  const cloud=(db.settings.raidDone||{})[k];
+  return cloud||RAIDTOOK[k]||0;
+}
+const raidMine=(uid,d)=>{const t=raidedAt(uid);return !!(t&&d&&Math.abs(t-d.shiftEnd)<2000);};
 /* 還輪得到我偷嗎。額度用完、或我這班已經下過手，都不該再列出來 */
 const raidOpen=(d,uid)=>raidable(d)&&!raidBroke(d)&&!raidMine(uid,d);
 /* 我這一班被誰偷了。排程結算完才會有 amount */
@@ -8197,6 +8206,21 @@ function renderProf(){
 let RAIDTOOK={};
 try{ RAIDTOOK=JSON.parse(localStorage.getItem('life_goals_raidtook')||'{}'); }catch(e){}
 const rtKey=uid=>((CLOUD.user&&CLOUD.user.uid)||'?')+'|'+uid;
+/* 記下「這班偷過了」。雲端那份會跟著設定同步到每一台，
+   localStorage 那份留著當離線時的備援 */
+function markRaided(uid,shiftEnd){
+  const k=rtKey(uid);
+  RAIDTOOK[k]=shiftEnd;
+  try{ localStorage.setItem('life_goals_raidtook',JSON.stringify(RAIDTOOK)); }catch(e){}
+  const m=Object.assign({},db.settings.raidDone||{});
+  m[k]=shiftEnd;
+  /* 只留兩天內的。班次最長八小時，過了就再也用不到，
+     留著只會讓每次同步的那包越來越肥 */
+  const cut=Date.now()-2*86400000;
+  Object.keys(m).forEach(x=>{ if(!(m[x]>cut)) delete m[x]; });
+  db.settings.raidDone=m;
+  save();
+}
 $('btnRaid').onclick=async()=>{
   const f=profFor; if(!f) return;
   const d=SHARED[f.uid];
@@ -8213,6 +8237,15 @@ $('btnRaid').onclick=async()=>{
     b.disabled=false; b.textContent='偷走一點';
     /* 哪一步掛的直接寫出來，不然三步都回同一種錯誤，查不出是哪條規則 */
     const 步驟=['','①寫偷竊紀錄','②扣他的薪水','③戰利品入帳'][r.step||0]||'?';
+    /* 第①步被擋幾乎只有一個原因：這一班的紙條已經被排程蓋章了，
+       也就是我（在別台裝置上）偷過了。順手把這件事補記起來，
+       按鈕就會收起來，不會一直讓人白按 */
+    if(r.step===1&&r.e==='permission-denied'){
+      markRaided(f.uid,d.shiftEnd);
+      toast('這班你已經偷過了，一人一班只能一次');
+      b.disabled=false; b.textContent='偷走一點';
+      renderProf(); renderFriends(); SFX.play('err'); return;
+    }
     /* 第②步被擋，實務上幾乎都是同一個原因：他那班已經被偷得差不多，
        剩下的額度不夠一次的最低額，而我手上的快照還是舊的。
        排程每 5 分鐘會把大家的狀態同步一次 */
@@ -8222,8 +8255,7 @@ $('btnRaid').onclick=async()=>{
     console.log('[raid] 失敗於',步驟,r,CLOUD.lastRaid);
     SFX.play('err'); return;
   }
-  RAIDTOOK[rtKey(f.uid)]=d.shiftEnd;
-  try{ localStorage.setItem('life_goals_raidtook',JSON.stringify(RAIDTOOK)); }catch(e){}
+  markRaided(f.uid,d.shiftEnd);
   SFX.play('win');
   toast('得手，搶到 '+r.amount+' 枚。他等一下會收到通知');
   /* 好友那頁也要重畫。不重畫的話「可以偷」那區跟外面那顆紅點會一直亮著，
