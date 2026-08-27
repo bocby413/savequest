@@ -798,6 +798,12 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 @media(max-width:480px){.shoptop{grid-template-columns:112px 1fr;gap:12px;padding:10px}}
 .shopstage{position:relative;border-radius:13px;overflow:hidden;
   background:radial-gradient(ellipse at 50% 92%,var(--panel3) 0%,transparent 70%)}
+/* 八個面的轉盤。點子點代表現在朝哪邊，正面那顆是實心的 */
+.spin{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:6px}
+.spin .arw{width:26px;height:26px;font-size:11px}
+.spin #spinDots{display:inline-flex;gap:5px;align-items:center}
+.spin i{width:6px;height:6px;border-radius:50%;background:var(--edge2);display:block}
+.spin i.on{background:var(--gold);box-shadow:0 0 5px rgba(255,194,51,.6)}
 /* 預覽佈景時那條回商店的橫幅 */
 /* 沒在預覽的時候要完全看不到。只靠位移的話陰影還是會從畫面下緣透出來 */
 .askrow{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin:4px 0 2px}
@@ -1433,6 +1439,9 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   <h3>商店</h3>
   <div class="shoptop">
     <div class="shopstage" id="shopStage"></div>
+    <div class="spin"><button class="arw" data-spin="-1" title="往左轉">◀</button>
+      <span id="spinDots"></span>
+      <button class="arw" data-spin="1" title="往右轉">▶</button></div>
     <div class="shopinfo">
       <div class="coinbar" id="shopCoins"></div>
       <div class="tryon" id="shopPick"></div>
@@ -6474,7 +6483,19 @@ function wearSVG(a,mode){
 }
 /* 這隻買得到的東西：通用的加上自己的專屬品 */
 const shopFor=k=>ITEMS.filter(x=>!x.only||x.only===k);
-function chSVG(a,e,small){
+function chSVG(a,e,small,yaw){
+  /* yaw 是轉身的角度（弧度）。0 是正面、PI 是背面。
+     cos 決定「還看得到多少正面」，sin 決定「臉往哪邊偏」 */
+  const YW=+yaw||0, yc=Math.cos(YW), ys=Math.sin(YW);
+  const turned=Math.abs(YW)>1e-6;
+  /* 兩側的東西（耳朵、手、腳）整組往中間壓 */
+  const sqz=x0=>turned?' transform="translate('+x0+',0) scale('+yc.toFixed(4)+',1) translate('+(-x0)+',0)"':'';
+  /* 貼在正面的東西（臉、花紋）：往側邊滑，同時壓扁 */
+  const slide=(x0,r)=>turned
+    ? ' transform="translate('+(x0+r*ys).toFixed(2)+',0) scale('+Math.abs(yc).toFixed(4)+',1) translate('+(-x0)+',0)"'
+    : '';
+  const faceOn=yc>.02;                 /* 轉超過九十度就看不到臉了 */
+  const backOn=yc<.02;                 /* 背面的東西這時候要整片畫出來 */
   const aw=a.armW||7, ah=a.armH||12;
   const apx=a.bw+aw-2, apy=a.apy||(a.by-a.bh*.45);         /* 肩膀 */
   /* tilt 是手臂的休息角度。支點放在手臂下端，轉的時候上端往身體靠、
@@ -6506,24 +6527,34 @@ function chSVG(a,e,small){
   return '<svg class="actor" viewBox="0 0 120 120">'+
     '<g class="walk">'+
       (small?'':'<ellipse class="shd" cx="60" cy="113" rx="24" ry="5" fill="#000" opacity=".18"/>')+
-      '<g class="breathe"><g class="ch">'+
-        chBack(a)+
-        wearSVG(a,'back')+
-        feet+
+      /* 側面比正面窄。身體當圓柱看，寬度不會歸零，但要收一點才看得出在轉。
+         這層沒有別人在用，動畫寫的是 .walk 跟 .ch */
+      '<g class="breathe"'+(turned
+        ? ' transform="translate(60,0) scale('+(.72+.28*Math.abs(yc)).toFixed(4)+',1) translate(-60,0)"'
+        : '')+'><g class="ch">'+
+        /* 尾巴跟耳朵在 chBack 裡，兩側的東西要跟著壓 */
+        '<g'+sqz(60)+'>'+chBack(a)+'</g>'+
+        /* 披風那類貼在背面的：正面只看得到邊緣，轉過去才整片露出來，
+           所以背面的時候要移到最上層去畫 */
+        (backOn?'':wearSVG(a,'back'))+
+        '<g'+sqz(60)+'>'+feet+'</g>'+
         /* 手臂畫兩份：一份在身體後面（平常這份），一份在身體前面。
            抱、握手、遮臉那類動作手要在身體前面，畫在後面的話手會消失在肚子裡。
            動畫是套到每一個同名群組上的，所以兩份會一起動，只是同時只顯示一份 */
-        '<g class="armsBack">'+
+        '<g class="armsBack"'+sqz(60)+'>'+
           '<g class="armL" data-p="'+(60-apx)+','+apy+'">'+arm(60-apx,1)+'</g>'+
           '<g class="armR" data-p="'+(60+apx)+','+apy+'">'+arm(60+apx,-1)+'</g>'+
         '</g>'+
         chBody(a)+
-        chBodyMark(a)+
+        (faceOn?'<g'+slide(60,a.bw*.5)+'>'+chBodyMark(a)+'</g>':'')+
         wearSVG(a,'mid')+          /* 衣服：在身體上面、頭下面 */
         chHead(a)+
-        chFaceMark(a)+
-        '<g class="face">'+chFace(a,e)+'</g>'+
-        wearSVG(a)+
+        (faceOn?'<g'+slide(60,a.hr*.55)+'>'+chFaceMark(a)+
+                '<g class="face">'+chFace(a,e)+'</g></g>'
+               :'')+
+        /* 頭上戴的東西跟著頭轉，但帽子是繞著頭一圈的，只壓不藏 */
+        '<g'+sqz(60)+'>'+wearSVG(a)+'</g>'+
+        (backOn?wearSVG(a,'back'):'')+
         moving+
       '</g></g>'+
     '</g></svg>';
@@ -8476,6 +8507,10 @@ function renderProf(){
   if(full){                              /* 跟自己那隻一樣會眨眼、歪頭、跳一下 */
     PROFPET.who=()=>TCHARS.find(x=>x.k===pk)||petChar();
     PROFPET.watch(); PROFPET.start();
+    /* 他買了什麼動作就當場演一次。動作是綁角色的，
+       所以要確認那個動作真的屬於他現在用的那隻 */
+    const pwin=winById((d&&d.win)||p.win||f.win);
+    if(pwin&&pwin.only===pk) setTimeout(()=>PROFPET.celebrate(pwin),260);
   }
   $('profNm').textContent=friName(f);
   const tt=$('profTt'), has=g.lv&&d&&d.title;
@@ -8937,7 +8972,9 @@ $('saveRec').onclick=()=>{
   if(dayBack){ dayYM=date.slice(0,7); daySel=date; }
   save(); shut(); render();
   const after=levelInfo().lv, bal=now(), mAfter=thisMon();
-  if(after>before){ burst(innerWidth/2,innerHeight*.35); SFX.play('level'); toast('升級了，現在 Lv.'+after+'　餘額 '+money(bal)); }
+  if(after>before){ burst(innerWidth/2,innerHeight*.35); SFX.play('level');
+    PET.celebrate(myWin());                /* 升級比轉盤中獎更值得慶祝 */
+    toast('升級了，現在 Lv.'+after+'　餘額 '+money(bal)); }
   else if(tgt>0&&mAfter!==null&&mAfter>=tgt&&(mBefore===null||mBefore<tgt)){
     burst(innerWidth/2,innerHeight*.4); SFX.play('star'); toast('這個月達標了，蓋一顆星');
   }
@@ -9557,6 +9594,8 @@ let shopTab='all';
 const SLOTN={head:'頭',face:'臉',neck:'脖子',body:'身體',hand:'手上',foot:'腳下'};
 const SLOTORDER=['head','face','neck','body','hand','foot'];
 let shopSlot='head', shopCat='char';
+/* 商店裡轉到第幾個面（0～7，0 是正面）。轉過去才看得到披風那類背面的東西 */
+let shopYaw=0;
 let tryBg=null, tryWin=null;        /* 正在試的背景／動作 */
 /* 試穿是一個部位記一件，換分類不會清掉。值是物品 id，null 代表這格試著脫掉 */
 let shopTry={};
@@ -9607,7 +9646,9 @@ function renderShop(){
   const m=wearMap(), had=m.hasOwnProperty(a.k), keep=m[a.k];
   m[a.k]=tryOutfit(a);
   wearRaw=1;
-  $('shopStage').innerHTML=chSVG(a,'idle');   /* 跟 HUD 那隻一樣是閒置的樣子 */
+  $('shopStage').innerHTML=chSVG(a,'idle',0,shopYaw*Math.PI/4);   /* 跟 HUD 那隻一樣是閒置的樣子 */
+  $('spinDots').innerHTML=[0,1,2,3,4,5,6,7].map(i=>'<i'+(i===shopYaw?' class="on"':'')+'></i>').join('');
+  document.querySelector('.spin').style.display=shopCat==='char'?'':'none';
   wearRaw=0;
   SHOPPET.watch(); SHOPPET.start();
   /* 本來就沒有這個鍵的話要刪掉。寫回 undefined 會讓整包同步被 Firestore 退件 */
@@ -9756,7 +9797,7 @@ function endPreview(){
   $('prevBar').classList.remove('on');
   shopCat='bg'; tryBg=prevId; renderShop(); open('vShop'); SFX.play('tick');
 }
-function openShop(){ shopSlot='head'; shopCat='char'; shopTry={};
+function openShop(){ shopSlot='head'; shopCat='char'; shopTry={}; shopYaw=0;
   tryBg=null; tryWin=null; renderShop(); open('vShop'); }
 /* 一次把試穿的都定下來：沒買過的先買，再整套換上 */
 async function shopAction(){
@@ -10454,6 +10495,10 @@ document.body.addEventListener('click',e=>{
     stkCol=b.dataset.sc==='value'?'value':'cost';
     db.settings.stkCol=stkCol; save();
     SFX.play('tick'); renderStocks(); return;
+  }
+  if(b.dataset.spin){
+    shopYaw=(shopYaw+ +b.dataset.spin+8)%8;
+    SFX.play('tick'); renderShop(); return;
   }
   if(b.id==='btnDayCal') return openDayCal();
   if(b.id==='dayPrev') { SFX.play('tick'); return dayShift(-1); }
