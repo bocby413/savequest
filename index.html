@@ -9618,7 +9618,11 @@ let shopTab='all';
 const SLOTN={head:'頭',face:'臉',neck:'脖子',body:'身體',hand:'手上',foot:'腳下'};
 const SLOTORDER=['head','face','neck','body','hand','foot'];
 let shopSlot='head', shopCat='char';
-/* 商店裡轉到第幾個面（0～7，0 是正面）。轉過去才看得到披風那類背面的東西 */
+/* 商店裡轉到第幾個面。轉過去才看得到披風那類背面的東西。
+   正側面（90／270）拿掉了 —— 那個角度是這套做法的死角，
+   五官會被壓成一條、兩隻手腳疊在一起，怎麼調都很怪。
+   斜角跟背面本來就好看，六個面夠用 */
+const YAWS=[0,45,135,180,225,315];
 let shopYaw=0;
 let tryBg=null, tryWin=null;        /* 正在試的背景／動作 */
 /* 試穿是一個部位記一件，換分類不會清掉。值是物品 id，null 代表這格試著脫掉 */
@@ -9670,8 +9674,8 @@ function renderShop(){
   const m=wearMap(), had=m.hasOwnProperty(a.k), keep=m[a.k];
   m[a.k]=tryOutfit(a);
   wearRaw=1;
-  $('shopStage').innerHTML=chSVG(a,'idle',0,shopYaw*Math.PI/4);   /* 跟 HUD 那隻一樣是閒置的樣子 */
-  $('spinDots').innerHTML=[0,1,2,3,4,5,6,7].map(i=>'<i'+(i===shopYaw?' class="on"':'')+'></i>').join('');
+  $('shopStage').innerHTML=chSVG(a,'idle',0,YAWS[shopYaw]*Math.PI/180);   /* 跟 HUD 那隻一樣是閒置的樣子 */
+  $('spinDots').innerHTML=YAWS.map((_,i)=>'<i'+(i===shopYaw?' class="on"':'')+'></i>').join('');
   document.querySelector('.spin').style.display=shopCat==='char'?'':'none';
   wearRaw=0;
   SHOPPET.watch(); SHOPPET.start();
@@ -10521,7 +10525,7 @@ document.body.addEventListener('click',e=>{
     SFX.play('tick'); renderStocks(); return;
   }
   if(b.dataset.spin){
-    shopYaw=(shopYaw+ +b.dataset.spin+8)%8;
+    shopYaw=(shopYaw+ +b.dataset.spin+YAWS.length)%YAWS.length;
     SFX.play('tick'); renderShop(); return;
   }
   if(b.id==='btnDayCal') return openDayCal();
