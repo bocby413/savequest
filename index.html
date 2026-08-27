@@ -6643,16 +6643,35 @@ function chSVG(a,e,small,yaw){
   const faceOn=yc>-.12;
   /* 轉到看得見背面的時候，尾巴在靠鏡頭那一側，要畫在身體前面 */
   const tailFront=yc<.02;
-  /* 尾巴要跟著身體的輪廓走。平移整條的話身體沒有跟著動，
-     基部就會離開身體變成懸空的 —— 只能用貼著身體的縮放，
-     這樣不管轉到哪一邊，基部都還在身體上。
-     過了九十度會鏡射到另一側，那時它在近側，所以要畫到身體前面來 */
-  const tailG=x=>'<g'+sqz(60)+'>'+x+'</g>';
-  /* 耳朵分前後：靠鏡頭那隻在頭前面。兩隻畫在同一串裡拆不開，
-     所以整組畫兩份、各自切一半。編號要每張圖不一樣，不然多張圖會互相搶 */
+  /* 尾巴長在屁股正中間。屁股轉到螢幕上的哪裡，尾巴的基部就搬到哪裡：
+       屁股的位置 = 60 - 身體半寬 × sinθ
+     背面的時候 sinθ=0，基部剛好回到正中間，不會歪在旁邊。
+     基部一定落在身體的寬度內，所以也不會懸空。 */
+  /* 尾巴的支點寫在它自己的 data-p 上（動畫也是拿這個當旋轉中心），
+     直接讀就好，不用量 —— 量 bbox 會被尾巴的曲線帶偏 */
+  const tailStr=chBack(a,0,'tail');
+  const tm=/data-p="([-\d.]+),/.exec(tailStr);
+  const tailBase=tm?+tm[1]:60;
+  /* 支點從原本的位置慢慢移回身體中線：正面不動，背面剛好回到正中間。
+     係數在 0～1 之間，所以永遠不會比正面更往外，也就不會懸空 */
+  const tailG=x=>turned
+    ? '<g transform="translate('+(-(tailBase-60)*(1-yc)/2).toFixed(2)+',0)">'+x+'</g>'
+    : x;
+  /* 耳朵長在頭的兩側、往外突出。轉身的時候：
+       附著點沿著頭走  左耳 60-hr·cosθ、右耳 60+hr·cosθ
+       耳朵本身不縮小  縮小的話遠側那隻會整個躲進頭裡永遠看不到；
+                       用位移的話，它突出去的部分還是會從頭的邊緣露出來
+     兩隻畫在同一串裡拆不開，所以整組畫兩份、各自切一半再各自位移。
+     先切再位移 —— 反過來的話移出那半邊就被切掉了。
+     編號要每張圖不一樣，不然多張圖會互相搶 */
   const cid=++chSVGn, clL='ecl'+cid, clR='ecr'+cid;
   const earNearLeft=ys>.2;         /* 左邊那隻靠鏡頭 */
   const earSplit=turned&&Math.abs(ys)>.2;
+  /* 兩隻各自往中線靠多少。照純幾何算的話（hr·(1-cosθ)）遠側那隻會被拉進
+     頭的輪廓裡整個看不到，所以近側的多靠一點（它正轉向鏡頭、蓋在頭上很自然），
+     遠側的幾乎留在原位，讓它突出去的部分從頭的邊緣露出來 */
+  const earNear=(a.hr*.28*(1-yc)).toFixed(2);
+  const earFar =(a.hr*.08*(1-yc)).toFixed(2);
   const earDefs=earSplit
     ? '<defs><clipPath id="'+clL+'" clipPathUnits="userSpaceOnUse">'+
       '<rect x="-40" y="-40" width="100" height="220"/></clipPath>'+
@@ -6661,9 +6680,12 @@ function chSVG(a,e,small,yaw){
     : '';
   /* half：'near' 是靠鏡頭那半邊，'far' 是另外那半邊 */
   const earHalf=half=>{
-    if(!earSplit) return chBack(a,0,'ears');
+    if(!earSplit) return '<g'+sqz(60)+'>'+chBack(a,0,'ears')+'</g>';
     const useL=(half==='near')===earNearLeft;
-    return '<g clip-path="url(#'+(useL?clL:clR)+')">'+chBack(a,0,'ears')+'</g>';
+    const amt=half==='near'?earNear:earFar;
+    const dx=useL?amt:-amt;                  /* 左耳往右靠、右耳往左靠 */
+    return '<g transform="translate('+dx+',0)"><g clip-path="url(#'+(useL?clL:clR)+')">'+
+           chBack(a,0,'ears')+'</g></g>';
   };
   const backOn=yc<.02;                 /* 背面的東西這時候要整片畫出來 */
   const aw=a.armW||7, ah=a.armH||12;
@@ -6718,7 +6740,7 @@ function chSVG(a,e,small,yaw){
         (turned&&!tailFront?tailG(chBack(a,0,'tail')):'')+
         /* 遠側那隻耳朵留在頭後面。正對正面或正背面的時候兩隻一樣近，
            不用分，整組畫在前面一次就好 */
-        (earSplit?'<g'+sqz(60)+'>'+earHalf('far')+'</g>':'')+
+        (earSplit?earHalf('far'):'')+
         /* 披風那類貼在背面的：正面只看得到邊緣，轉過去才整片露出來，
            所以背面的時候要移到最上層去畫 */
         (backOn?'':wearSVG(a,'back'))+
@@ -6745,7 +6767,7 @@ function chSVG(a,e,small,yaw){
         '<g class="faceMark">'+markYaw('fm:'+a.k,a,chFaceMark(a),a.hr*2,a.hr*.55)+'</g>'+
         (faceOn?'<g'+slide(60,a.hr*.55)+'><g class="face">'+chFace(a,e)+'</g></g>':'')+
         /* 靠鏡頭那隻耳朵挪到頭前面；轉到背面的時候尾巴也挪到前面 */
-        (turned?'<g'+sqz(60)+'>'+(earSplit?earHalf('near'):chBack(a,0,'ears'))+'</g>':'')+
+        (turned?earHalf('near'):'')+
         (turned&&tailFront?tailG(chBack(a,0,'tail')):'')+
         /* 頭上、臉上、脖子上的東西。每一件（其實是每一個零件）
            自己照長在圓柱的哪個位置去算，這裡不再整層一起壓 */
