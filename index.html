@@ -10437,7 +10437,14 @@ document.body.addEventListener('click',e=>{
     calYear=years[Math.max(0,Math.min(years.length-1,i+(b.id==='calNext'?1:-1)))];
     renderCal(); return;
   }
-  if(b.dataset.editRec){ SFX.play('tick'); dayBack=!!b.dataset.fromDay; return openRec(b.dataset.editRec); }
+  if(b.dataset.editRec){
+    SFX.play('tick');
+    /* 月曆要先收起來再開記帳視窗。兩個 veil 的 z-index 一樣，月曆在 DOM
+       裡排比較後面，疊著的話它會蓋在上面，記帳視窗看得到卻點不到 */
+    dayBack=!!b.dataset.fromDay;
+    if(dayBack) $('vDay').classList.remove('on');
+    return openRec(b.dataset.editRec);
+  }
   if(b.dataset.delRec){ if(!confirm('刪掉這筆紀錄？後面的餘額會重算。')) return;
     markDeleted(b.dataset.delRec);
     db.records=db.records.filter(x=>x.id!==b.dataset.delRec); save(); render();
