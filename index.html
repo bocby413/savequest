@@ -2628,12 +2628,6 @@ function applyTheme(id,remember){
 /* ── 勝利動作 ──
    領薪水、轉盤中獎、升級的時候牠會做的動作 */
 const WINS=[
-  {id:'win-jump', n:'原地大跳', p:150, pose:{y:-19,sx:.96,sy:1.09,rot:0,aL:-150,aR:150}, face:'joy'},
-  {id:'win-spin', n:'轉一圈',   p:150, pose:{y:-8, sx:1.02,sy:1.02,rot:22,aL:-95, aR:95},  face:'win'},
-  {id:'win-pose', n:'擺姿勢',   p:150, pose:{y:0,  sx:1.03,sy:.97, rot:-8,aL:-30, aR:150}, face:'win'},
-  {id:'win-bow',  n:'鞠躬',     p:150, pose:{y:5,  sx:1.05,sy:.93, rot:16,aL:60,  aR:-60}, face:'up'},
-  {id:'win-cheer',n:'歡呼',     p:150, pose:{y:-12,sx:.98,sy:1.05, rot:0, aL:-165,aR:165}, face:'joy'},
-  {id:'win-shy',  n:'害羞',     p:150, pose:{y:2,  sx:1,   sy:1,   rot:10,aL:-118,aR:-40}, face:'blush'},
   /* a-cat */
   {id:'win-ctknead', n:'踩奶', p:150, only:'a-cat', seq:[{t:0,y:2,sx:1.04,sy:.97,aL:-40,aR:10,f:"blush"},{t:150,aL:10,aR:-40},{t:300,aL:-40,aR:10},{t:450,aL:10,aR:-40},{t:600,aL:-40,aR:10},{t:750,y:0,sx:1,sy:1,aL:0,aR:0,f:"smile"}]},
   {id:'win-ctpounce', n:'貓撲', p:150, only:'a-cat', seq:[{t:0,y:12,sx:1.22,sy:.76,rot:0,aL:26,aR:-26,f:"up"},{t:220,y:-44,sx:.86,sy:1.24,aL:-150,aR:150,f:"joy"},{t:420,y:8,sx:1.2,sy:.8,aL:20,aR:-20},{t:560,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
@@ -2738,18 +2732,18 @@ const defBg=()=>bgById(DEFBG)||BGS[0];
 })();
 const winById=id=>WINS.find(x=>x.id===id);
 /* 這隻角色選得到的：共用的六個 ＋ 牠自己專屬的六個 */
-const winsFor=k=>WINS.filter(w=>!w.only||w.only===k);
+const winsFor=k=>WINS.filter(w=>w.only===k);
+/* 沒選過就用這隻角色的第一個。以前有六個大家共用的，已經拿掉了 */
+const defWin=k=>winsFor(k)[0]||WINS[0];
 const myBg=()=>bgById(db.settings.bg)||null;
 /* 專屬動作是綁角色的，所以選擇要一隻一隻記。
    換角色的時候不能把上一隻的專屬動作帶過去 —— 那是別人的動作 */
 function myWin(){
   const k=(db.settings.avatar&&db.settings.avatar.id)||TCHARS[0].k;
   const w=winById((db.settings.winOf||{})[k]);
-  if(w&&(!w.only||w.only===k)) return w;
-  /* 舊版只存一個 db.settings.win，共用的那幾個還是算數 */
-  const old=winById(db.settings.win);
-  if(old&&!old.only) return old;
-  return WINS[0];
+  if(w&&w.only===k) return w;
+  /* 舊資料可能指著已經拿掉的共用動作、或別隻的專屬動作，一律退回這隻的第一個 */
+  return defWin(k);
 }
 /* 選了哪個動作。db.settings.win 留著給好友那邊看「他在用什麼」 */
 function setWin(id){
@@ -8473,7 +8467,8 @@ function renderProf(){
   const pbg=(d&&d.bg)||p.bg||f.bg, pwin=(d&&d.win)||p.win||f.win;
   const extra=[];
   const bo=BGS.find(x=>x.id===pbg)||BGS[0]; if(bo) extra.push('背景・'+bo.n);
-  const wo=WINS.find(x=>x.id===pwin)||WINS[0]; if(wo) extra.push('動作・'+wo.n);
+  /* 對方還在舊版、或用的是已經拿掉的動作，就別亂寫一個名字上去 */
+  const wo=winById(pwin); if(wo) extra.push('動作・'+wo.n);
   const tags=wr.map(it=>'<span class="wtag">'+esc(it.n)+'</span>');
   const rows='<div class="wrow">'+
     extra.map(t=>'<span class="wtag alt">'+esc(t)+'</span>').join('')+'</div>';
@@ -9024,11 +9019,7 @@ const PET={
     this.nextAct=this.t+end+900;
     this.start();
   },
-  /* 有序列就演序列，沒有就用單一姿勢 */
-  celebrate(w,back){
-    if(w&&w.seq) this.play(w.seq);
-    else if(w) this.pose(w.pose,w.face,back||900);
-  }
+  celebrate(w){ if(w&&w.seq) this.play(w.seq); }
 };
 /* HUD 上那隻跟著頭貼走；頭貼是照片就用轉盤那隻 */
 /* 造型有變就同步一次，好友那邊才會跟著換 */
@@ -9668,7 +9659,7 @@ function renderShopExtra(){
   const chosen=pick!==null&&!done(pick)?itemById(pick):null;
   if(!chosen){
     info.innerHTML='<span class="no">'+(bg?'點一個顏色就會換到牠身後看看。'
-      :'點一個動作就會在上面演一次，領薪水跟升級的時候會用。後面六個是這隻角色專屬的。')+'</span>';
+      :'點一個動作就會在上面演一次，領薪水跟升級的時候會用。每隻角色的動作都不一樣。')+'</span>';
     act.textContent=bg?'選一個顏色':'選一個動作'; act.disabled=true; act.style.opacity=.45;
   }else{
     const own=hasItem(chosen.id), poor=!own&&coins()<chosen.p;
