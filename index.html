@@ -2202,20 +2202,24 @@ const eyeY=a=>a.hy+a.eo, mouY=a=>a.hy+a.mo;
 /* 身體後面的東西：耳朵、角羽、尾巴、青蛙的眼球包 */
 /* 有些配件是把原本的部位換掉（機器人的天線、底座），不是疊在上面 */
 const hides=(a,part)=>wornList(a.k).some(id=>{ const o=itemById(id); return o&&o.hide===part; });
-/* part：不給就是全部，'tail' 只要尾巴，'ears' 只要耳朵。
-   轉身的時候這兩個要分開放到不同的層 */
+/* part：不給就是全部，'tail' 只要尾巴，'ears' 只要耳朵，'body' 只要
+   脖子羊毛那類貼著身體的東西。轉身的時候這三種要放到不同的層、套不同的變形。
+     TAIL  真的尾巴 —— 會跟著屁股移動
+     T     脖子、羊毛 —— 貼著身體，不能跟著尾巴跑
+     E     耳朵 —— 分前後 */
 function chBack(a,noTail,part){
-  const T=x=>(noTail||part==='ears')?'':x;   /* 頭貼只取頭，尾巴不畫 */
-  const E=x=>part==='tail'?'':'<g class="ears" data-p="60,'+(a.hy-a.hr*.2).toFixed(0)+'">'+x+'</g>', hy=a.hy, hr=a.hr;
+  const T   =x=>(noTail||part==='ears'||part==='tail')?'':x;   /* 頭貼只取頭 */
+  const TAIL=x=>(noTail||part==='ears'||part==='body')?'':x;
+  const E=x=>(part==='tail'||part==='body')?'':'<g class="ears" data-p="60,'+(a.hy-a.hr*.2).toFixed(0)+'">'+x+'</g>', hy=a.hy, hr=a.hr;
   if(a.k==='a-cat')
-    return T('<g class="tail" data-p="'+(60+a.bw-2)+','+(a.by+8)+'"><path d="M'+(60+a.bw-2)+' '+(a.by+8)+'q18 3 13-19" stroke="'+a.tailC+
+    return TAIL('<g class="tail" data-p="'+(60+a.bw-2)+','+(a.by+8)+'"><path d="M'+(60+a.bw-2)+' '+(a.by+8)+'q18 3 13-19" stroke="'+a.tailC+
              '" stroke-width="7" fill="none" stroke-linecap="round"/></g>')+
            E('<path d="M'+(60-hr+3)+' '+(hy-6)+' '+(60-hr+1)+' '+(hy-hr-4)+'l19 11z'+
               'M'+(60+hr-3)+' '+(hy-6)+' '+(60+hr-1)+' '+(hy-hr-4)+'l-19 11z" fill="'+a.d+'"/>'+
              '<path d="M'+(60-hr+7)+' '+(hy-9)+' '+(60-hr+5)+' '+(hy-hr+3)+'l10 6z'+
               'M'+(60+hr-7)+' '+(hy-9)+' '+(60+hr-5)+' '+(hy-hr+3)+'l-10 6z" fill="#ff9ec4" opacity=".7"/>');
   if(a.k==='a-dog')
-    return T('<g class="tail" data-p="'+(60+a.bw-1)+','+(a.by-2)+'"><path d="M'+(60+a.bw-1)+' '+(a.by-2)+'q15-3 11-17" stroke="'+a.tailC+
+    return TAIL('<g class="tail" data-p="'+(60+a.bw-1)+','+(a.by-2)+'"><path d="M'+(60+a.bw-1)+' '+(a.by-2)+'q15-3 11-17" stroke="'+a.tailC+
              '" stroke-width="8" fill="none" stroke-linecap="round"/></g>')+
            E('<ellipse cx="'+(60-hr-1)+'" cy="'+(hy+4)+'" rx="9" ry="15" fill="'+a.d+'"/>'+
              '<ellipse cx="'+(60+hr+1)+'" cy="'+(hy+4)+'" rx="9" ry="15" fill="'+a.d+'"/>');
@@ -2224,7 +2228,7 @@ function chBack(a,noTail,part){
          : E('<circle cx="'+(60-hr+5)+'" cy="'+(hy-hr+9)+'" r="10" fill="'+a.d+'"/>'+
              '<circle cx="'+(60+hr-5)+'" cy="'+(hy-hr+9)+'" r="10" fill="'+a.d+'"/>');
   if(a.k==='a-fox')
-    return T('<g class="tail" data-p="'+(60+a.bw)+','+(a.by+6)+'"><path d="M'+(60+a.bw)+' '+(a.by+6)+'q22-1 16-22" stroke="'+a.tailC+
+    return TAIL('<g class="tail" data-p="'+(60+a.bw)+','+(a.by+6)+'"><path d="M'+(60+a.bw)+' '+(a.by+6)+'q22-1 16-22" stroke="'+a.tailC+
              '" stroke-width="12" fill="none" stroke-linecap="round"/>'+
              '<circle cx="'+(60+a.bw+15)+'" cy="'+(a.by-15)+'" r="6" fill="#fff0e2"/></g>')+
            E('<path d="M'+(60-hr-2)+' '+(hy-hr-2)+' '+(60-hr+16)+' '+(hy+3)+' '+(60-hr+3)+' '+(hy+13)+'z'+
@@ -2234,14 +2238,14 @@ function chBack(a,noTail,part){
   if(a.k==='a-bot')
     /* 天線的支點在頭頂，跟其他角色的耳朵不一樣，但一樣要走 E()，
        不然拆成前後兩層的時候會冒出兩組 .ears */
-    return part==='tail' ? ''
+    return (part==='tail'||part==='body') ? ''
          : hides(a,'ant') ? '<g class="ears" data-p="60,'+(hy-a.hry)+'"></g>'
          : '<g class="ears" data-p="60,'+(hy-a.hry)+'"><path d="M60 '+(hy-a.hry-9)+'V'+(hy-a.hry+2)+'" stroke="'+a.d+'" stroke-width="4"/>'+
            '<circle cx="60" cy="'+(hy-a.hry-11)+'" r="6" fill="#3ce0d0"/></g>';
   if(a.k==='a-frog')                                   /* 兩顆凸在頭頂的眼球包 */
     /* 這兩顆算耳朵那一類（長在頭的兩側）。沒有這行的話拆成尾巴跟耳朵
        兩層的時候會被畫兩次 */
-    return part==='tail' ? '' :
+    return (part==='tail'||part==='body') ? '' :
            '<circle cx="'+(60-a.gap)+'" cy="'+eyeY(a)+'" r="13" fill="#6cc24a"/>'+
            '<circle cx="'+(60+a.gap)+'" cy="'+eyeY(a)+'" r="13" fill="#6cc24a"/>';
   if(a.k==='a-owl')
@@ -2251,7 +2255,7 @@ function chBack(a,noTail,part){
     const ear=(x,rot)=>'<g transform="rotate('+rot+','+x+','+(hy-hr+4)+')">'+
       '<ellipse cx="'+x+'" cy="'+(hy-hr-7)+'" rx="6.5" ry="15" fill="'+a.c+'"/>'+
       '<ellipse cx="'+x+'" cy="'+(hy-hr-7)+'" rx="3.2" ry="10.5" fill="#f7c3d4"/></g>';
-    return T('<g class="tail" data-p="'+(60+a.bw-2)+','+(a.by+6)+'">'+
+    return TAIL('<g class="tail" data-p="'+(60+a.bw-2)+','+(a.by+6)+'">'+
              '<circle cx="'+(60+a.bw+3)+'" cy="'+(a.by+6)+'" r="8" fill="#ffffff"/>'+
              '<circle cx="'+(60+a.bw+1)+'" cy="'+(a.by+3)+'" r="4.5" fill="#f3ece2"/></g>')+
            E(ear(60-9,-9)+ear(60+9,9));
@@ -2262,7 +2266,7 @@ function chBack(a,noTail,part){
     [[0,.2],[-3.5,.46],[3.5,.68],[-1,.9]].forEach(([dx,t])=>{
       sp+='<ellipse cx="'+(60+dx)+'" cy="'+(nt+(nb-nt)*t).toFixed(1)+'" rx="3.2" ry="2.6" fill="'+a.d+'"/>';
     });
-    return T('<g class="tail" data-p="'+(60+a.bw-1)+','+(a.by+2)+'">'+
+    return TAIL('<g class="tail" data-p="'+(60+a.bw-1)+','+(a.by+2)+'">'+
              '<path d="M'+(60+a.bw-1)+' '+(a.by+2)+'q13 4 11 16" stroke="'+a.tailC+
              '" stroke-width="4" fill="none" stroke-linecap="round"/>'+
              '<circle cx="'+(60+a.bw+11)+'" cy="'+(a.by+19)+'" r="4" fill="'+a.ink+'"/></g>')+
@@ -2289,20 +2293,20 @@ function chBack(a,noTail,part){
       '" transform="rotate('+(g*13)+','+x+','+(hy-3)+')"/>'+
       '<ellipse cx="'+(x+g*2)+'" cy="'+(hy-3)+'" rx="7" ry="3.2" fill="#6b6b74"'+
       ' transform="rotate('+(g*13)+','+(x+g*2)+','+(hy-3)+')"/>';
-    return T('<g class="tail" data-p="'+(60+a.bw)+','+(a.by+8)+'">'+
+    return TAIL('<g class="tail" data-p="'+(60+a.bw)+','+(a.by+8)+'">'+
              puff(60+a.bw+4,a.by+8,6.6)+'</g>')+body+
            E(ear(60-hr-7,-1)+ear(60+hr+7,1));
   }
   if(a.k==='a-sqr'){                                   /* 大尾巴從屁股捲到頭旁邊 */
     /* 整頂蓋下來的帽子要把耳朵遮掉，不然耳朵會從帽子裡穿出來 */
-    if(hides(a,'ear')) return T('<g class="tail" data-p="'+(60+a.bw-1)+','+(a.by+8)+'">'+
+    if(hides(a,'ear')) return TAIL('<g class="tail" data-p="'+(60+a.bw-1)+','+(a.by+8)+'">'+
              '<path d="M'+(60+a.bw-1)+' '+(a.by+8)+'C'+(60+a.bw+26)+' '+(a.by+6)+' '+
              (60+a.bw+30)+' '+(a.by-30)+' '+(60+a.bw+8)+' '+(a.by-34)+
              '" stroke="'+a.tailC+'" stroke-width="17" fill="none" stroke-linecap="round"/>'+
              '<path d="M'+(60+a.bw+3)+' '+(a.by+7)+'C'+(60+a.bw+20)+' '+(a.by+5)+' '+
              (60+a.bw+23)+' '+(a.by-26)+' '+(60+a.bw+9)+' '+(a.by-29)+
              '" stroke="#f6dcc0" stroke-width="7" fill="none" stroke-linecap="round" opacity=".75"/></g>')+E('');
-    return T('<g class="tail" data-p="'+(60+a.bw-1)+','+(a.by+8)+'">'+
+    return TAIL('<g class="tail" data-p="'+(60+a.bw-1)+','+(a.by+8)+'">'+
              '<path d="M'+(60+a.bw-1)+' '+(a.by+8)+'C'+(60+a.bw+26)+' '+(a.by+6)+' '+
              (60+a.bw+30)+' '+(a.by-30)+' '+(60+a.bw+8)+' '+(a.by-34)+
              '" stroke="'+a.tailC+'" stroke-width="17" fill="none" stroke-linecap="round"/>'+
@@ -6477,9 +6481,19 @@ const EARSPAN=(()=>{
     try{ g.innerHTML=chBack(a,0,'ears'); }catch(e){ return cache[a.k]=0; }
     svg.appendChild(g);
     let b; try{ b=g.getBBox(); }catch(e){ b=null; }
+    /* 先試著用「每一邊的重心」—— 兩隻耳朵是分開的元素時最準。
+       兔子的耳朵在 ±9，用外框推會算成 ±14.6，位移就會過頭 */
+    const sides=[];
+    [...g.querySelectorAll('*')].forEach(el=>{
+      let q; try{ q=el.getBBox(); }catch(e){ return; }
+      if(!q.width&&!q.height) return;
+      const cx=q.x+q.width/2;
+      if(Math.abs(cx-60)>2) sides.push(Math.abs(cx-60));
+    });
     g.remove();
+    if(sides.length>=2) return cache[a.k]=sides.reduce((x,y)=>x+y,0)/sides.length;
     if(!b||!b.width) return cache[a.k]=0;
-    /* 外框的一半是「耳朵外緣」到中線的距離，耳朵中心大約在四分之三處 */
+    /* 兩隻畫在同一條路徑裡拆不開，只好用外框推：耳朵中心大約在四分之三處 */
     return cache[a.k]=Math.min(a.hr, b.width/2*.75);
   };
 })();
@@ -6512,7 +6526,8 @@ const WEARPARTS=(()=>{
          髮箍是戴在頭上的，跟著臉滑就會掉到頭外面；
          眼鏡是貼在臉上的，不跟著臉滑就會留在原地 */
       let kind;
-      if(!b.width)                                        kind='skin';
+      /* 只有真的空的才算 skin。零寬度的直線（鬍鬚、縫線）也要跟著轉 */
+      if(!b.width&&!b.height)                             kind='skin';
       /* 臉上的東西整件跟著臉走。鏡框是硬的，鏡片跟鏡腳分開算會整支散掉 */
       else if(it.slot==='face')                           kind='front';
       /* 幾乎跟身體一樣寬的，是貼著輪廓的那層（帽身、衣身）。
@@ -6563,11 +6578,16 @@ const MARKPARTS=(()=>{
       let b; try{ b=el.getBBox(); }catch(e){ b={x:60,y:60,width:0,height:0}; }
       const cx=b.x+b.width/2, off=cx-60;
       let kind;
-      if(!b.width)                    kind='skin';
+      /* 只有真的空的才算 skin。兔子鼻子下面那條直線寬度是 0，
+         被當成「跟頭一樣寬」就永遠不會跟著轉 */
+      if(!b.width&&!b.height)         kind='skin';
       else if(b.width>=ref*.95)       kind='skin';    /* 跟頭一樣大的＝那就是頭本身 */
       else if(Math.abs(off)>ref*.22)  kind='side';
       else                            kind='front';
-      return {html:el.outerHTML, cx, kind, r};
+      /* mark：這是角色自己臉上／身上的花紋，不是買來的配件。
+         花紋長在臉上，轉到背面就該看不到 —— 青蛙的白眼球、
+         羊臉上那幾撮毛不標的話會從後腦勺透出來 */
+      return {html:el.outerHTML, cx, kind, r, mark:true};
     });
     g.remove();
     return cache[key]=parts;
@@ -6587,8 +6607,12 @@ function partYaw(p){
      但完全不動又會看起來像沒反應。所以只給一點點位移，
      幅度小到不會把身體的邊緣露出來 */
   if(p.kind==='skin') return {ox:60,dx:0,sx:1};
-  /* 長在兩側的：跟耳朵手腳同一組往中間壓，永遠留在頭上，不會掉出去 */
-  if(p.kind==='side') return {ox:60,dx:0,sx:YAWCTX.side};
+  /* 長在兩側的：跟耳朵手腳同一組往中間壓，永遠留在頭上，不會掉出去。
+     但角色自己臉上的花紋例外 —— 那是畫在臉上的，轉過去要跟著臉收起來 */
+  if(p.kind==='side'){
+    if(p.mark&&c<-.1) return null;
+    return {ox:60,dx:0,sx:YAWCTX.side};
+  }
   if(p.kind==='wrap') return {ox:60,dx:p.r*.22*Math.sin(t),sx:1};
   if(p.kind==='top')  return {ox:60,dx:p.r*.35*Math.sin(t),sx:1};
   if(c<-.1) return null;                       /* 轉到背面就被擋住 */
@@ -6692,13 +6716,15 @@ function chSVG(a,e,small,yaw){
      編號要每張圖不一樣，不然多張圖會互相搶 */
   const cid=++chSVGn, clL='ecl'+cid, clR='ecr'+cid;
   const earNearLeft=ys>.2;         /* 左邊那隻靠鏡頭 */
-  const earSplit=turned&&Math.abs(ys)>.2;
-  /* 兩隻的附著點必須「對稱」移動：左耳 60-d·cosθ、右耳 60+d·cosθ，
-     d 是這隻角色的耳朵離中線多遠（每隻差很多，量出來的）。
-     之前給近側跟遠側不同的位移量，過了九十度就沒有正確交換位置，
-     45 度跟 135 度看起來都是歪的。前後的差別只在畫在頭的前面還是後面 */
+  /* 耳朵長在正中間的（機器人的天線）不能切兩半，切了會變成兩根 */
+  const earSplit=turned&&Math.abs(ys)>.2&&EARSPAN(a)>8;
+  /* 耳朵：位置照幾何走（左耳 60-d·cosθ、右耳 60+d·cosθ），但形狀不縮小 ——
+     一起縮的話遠側那隻會小到躲進頭裡面，四個斜角都只看得到一隻耳朵。
+     遠側那隻再多一條規則：不准離中線太近，最少要留在 0.8d，
+     這樣它突出去的部分才會從頭的邊緣露出來。
+     近側畫在頭前面、遠側留在頭後面讓頭擋住內側。
+     過了九十度 cosθ 變負，兩隻自然交換位置。 */
   const earD=EARSPAN(a);
-  const earShift=(earD*(1-yc)).toFixed(2);
   const earDefs=earSplit
     ? '<defs><clipPath id="'+clL+'" clipPathUnits="userSpaceOnUse">'+
       '<rect x="-40" y="-40" width="100" height="220"/></clipPath>'+
@@ -6709,9 +6735,17 @@ function chSVG(a,e,small,yaw){
   const earHalf=half=>{
     if(!earSplit) return '<g'+sqz(60)+'>'+chBack(a,0,'ears')+'</g>';
     const useL=(half==='near')===earNearLeft;
-    const dx=useL?earShift:-earShift;        /* 左耳往右移、右耳往左移，量一樣 */
-    return '<g transform="translate('+dx+',0)"><g clip-path="url(#'+(useL?clL:clR)+')">'+
-           chBack(a,0,'ears')+'</g></g>';
+    const sgn=useL?-1:1;                     /* 這一半原本在左邊還是右邊 */
+    /* 以耳朵自己的根部為軸橫向壓縮，不要平移。
+       平移的話大耳朵（狐狸）會滑到臉上，看起來像插了一根角；
+       以根部為軸的話根部一直黏在頭上，只有耳朵本身跟著轉而變窄，
+       過了九十度 cos 變負就地鏡射，正好是背面該有的樣子 */
+    const bx=(60+sgn*earD).toFixed(2);
+    /* 用 |cos| 不用 cos —— 帶負號會就地鏡射，狐狸的內耳（淺色那片）
+       會被翻到外耳外面，背面看起來就是兩個白色三角形。
+       耳朵從背面看本來就跟正面差不多，不用鏡射 */
+    return '<g transform="translate('+bx+',0) scale('+Math.abs(yc).toFixed(4)+',1) translate('+(-bx)+',0)">'+
+           '<g clip-path="url(#'+(useL?clL:clR)+')">'+chBack(a,0,'ears')+'</g></g>';
   };
   const backOn=yc<.02;                 /* 背面的東西這時候要整片畫出來 */
   const aw=a.armW||7, ah=a.armH||12;
@@ -6762,6 +6796,10 @@ function chSVG(a,e,small,yaw){
              垂耳長在頭的兩側，往中間壓之後會整個躲到頭後面，所以轉身時要挪到頭前面
              尾巴長在屁股後面，轉到背面的時候它在近側，要畫到身體前面來 */
         (turned?'':chBack(a))+
+        /* 脖子、羊毛這類貼著身體的背景件：跟身體一起，不套任何轉身的變形。
+           以前跟尾巴共用同一個包裝，被尾巴的位移拖走 —— 長頸鹿的脖子會斷掉、
+           綿羊的羊毛會變成兩坨飄在旁邊 */
+        (turned?chBack(a,0,'body'):'')+
         /* 沒轉到背面的時候尾巴留在身體後面 */
         (turned&&!tailFront?tailG(chBack(a,0,'tail')):'')+
         /* 遠側那隻耳朵留在頭後面。正對正面或正背面的時候兩隻一樣近，
@@ -6788,12 +6826,13 @@ function chSVG(a,e,small,yaw){
         ((nearL||nearR)?'<g class="armsNear"'+sqz(60)+'>'+
           (nearL?armLg:'')+(nearR?armRg:'')+'</g>':'')+
         chHead(a)+
+        /* 靠鏡頭那隻耳朵挪到頭前面 —— 但要在五官「之前」畫。
+           畫在五官後面的話，青蛙那種眼球包會直接把自己的眼睛蓋掉 */
+        (turned?earHalf('near'):'')+
         /* 頭上的花紋一個零件一個零件算：跟頭一樣大的那塊（羊的深色臉）
            要當成頭本身不動也不藏，小塊的才跟著臉走 */
         '<g class="faceMark">'+markYaw('fm:'+a.k,a,chFaceMark(a),a.hr*2,a.hr*.55)+'</g>'+
         (faceOn?'<g'+slide(60,a.hr*.55)+'><g class="face">'+chFace(a,e)+'</g></g>':'')+
-        /* 靠鏡頭那隻耳朵挪到頭前面；轉到背面的時候尾巴也挪到前面 */
-        (turned?earHalf('near'):'')+
         (turned&&tailFront?tailG(chBack(a,0,'tail')):'')+
         /* 頭上、臉上、脖子上的東西。每一件（其實是每一個零件）
            自己照長在圓柱的哪個位置去算，這裡不再整層一起壓 */
