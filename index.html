@@ -6612,6 +6612,7 @@ function wearSVG(a,mode){
 }
 /* 這隻買得到的東西：通用的加上自己的專屬品 */
 const shopFor=k=>ITEMS.filter(x=>!x.only||x.only===k);
+let chSVGn=0;
 function chSVG(a,e,small,yaw){
   /* yaw 是轉身的角度（弧度）。0 是正面、PI 是背面。
      cos 決定「還看得到多少正面」，sin 決定「臉往哪邊偏」 */
@@ -6642,6 +6643,27 @@ function chSVG(a,e,small,yaw){
   const faceOn=yc>-.12;
   /* 轉到看得見背面的時候，尾巴在靠鏡頭那一側，要畫在身體前面 */
   const tailFront=yc<.02;
+  /* 尾巴長在屁股正後方。屁股轉到哪，尾巴就在哪 —— 用整組壓的話
+     一過九十度就鏡射到另一側的最外面，看起來像黏在旁邊 */
+  const tailDx=turned?(-a.bw*ys).toFixed(2):0;
+  const tailG=x=>turned?'<g transform="translate('+tailDx+',0)">'+x+'</g>':x;
+  /* 耳朵分前後：靠鏡頭那隻在頭前面。兩隻畫在同一串裡拆不開，
+     所以整組畫兩份、各自切一半。編號要每張圖不一樣，不然多張圖會互相搶 */
+  const cid=++chSVGn, clL='ecl'+cid, clR='ecr'+cid;
+  const earNearLeft=ys>.2;         /* 左邊那隻靠鏡頭 */
+  const earSplit=turned&&Math.abs(ys)>.2;
+  const earDefs=earSplit
+    ? '<defs><clipPath id="'+clL+'" clipPathUnits="userSpaceOnUse">'+
+      '<rect x="-40" y="-40" width="100" height="220"/></clipPath>'+
+      '<clipPath id="'+clR+'" clipPathUnits="userSpaceOnUse">'+
+      '<rect x="60" y="-40" width="100" height="220"/></clipPath></defs>'
+    : '';
+  /* half：'near' 是靠鏡頭那半邊，'far' 是另外那半邊 */
+  const earHalf=half=>{
+    if(!earSplit) return chBack(a,0,'ears');
+    const useL=(half==='near')===earNearLeft;
+    return '<g clip-path="url(#'+(useL?clL:clR)+')">'+chBack(a,0,'ears')+'</g>';
+  };
   const backOn=yc<.02;                 /* 背面的東西這時候要整片畫出來 */
   const aw=a.armW||7, ah=a.armH||12;
   const apx=a.bw+aw-2, apy=a.apy||(a.by-a.bh*.45);         /* 肩膀 */
@@ -6679,7 +6701,7 @@ function chSVG(a,e,small,yaw){
     (heldFar?'':heldG);
   /* 影子留在 walk 層，只跟著左右移動，不跟著跳 */
   YAWCTX.t=YW; YAWCTX.on=turned; YAWCTX.side=ycl;
-  const html='<svg class="actor" viewBox="0 0 120 120">'+
+  const html='<svg class="actor" viewBox="0 0 120 120">'+earDefs+
     '<g class="walk">'+
       (small?'':'<ellipse class="shd" cx="60" cy="113" rx="24" ry="5" fill="#000" opacity=".18"/>')+
       /* 側面比正面窄。身體當圓柱看，寬度不會歸零，但要收一點才看得出在轉。
@@ -6690,10 +6712,12 @@ function chSVG(a,e,small,yaw){
         /* 尾巴跟耳朵要分開放：
              垂耳長在頭的兩側，往中間壓之後會整個躲到頭後面，所以轉身時要挪到頭前面
              尾巴長在屁股後面，轉到背面的時候它在近側，要畫到身體前面來 */
-        '<g'+sqz(60)+'>'+
-          (turned?'':chBack(a))+
-          (turned&&!tailFront?chBack(a,0,'tail'):'')+
-        '</g>'+
+        (turned?'':chBack(a))+
+        /* 沒轉到背面的時候尾巴留在身體後面 */
+        (turned&&!tailFront?tailG(chBack(a,0,'tail')):'')+
+        /* 遠側那隻耳朵留在頭後面。正對正面或正背面的時候兩隻一樣近，
+           不用分，整組畫在前面一次就好 */
+        (earSplit?'<g'+sqz(60)+'>'+earHalf('far')+'</g>':'')+
         /* 披風那類貼在背面的：正面只看得到邊緣，轉過去才整片露出來，
            所以背面的時候要移到最上層去畫 */
         (backOn?'':wearSVG(a,'back'))+
@@ -6719,9 +6743,9 @@ function chSVG(a,e,small,yaw){
            要當成頭本身不動也不藏，小塊的才跟著臉走 */
         '<g class="faceMark">'+markYaw('fm:'+a.k,a,chFaceMark(a),a.hr*2,a.hr*.55)+'</g>'+
         (faceOn?'<g'+slide(60,a.hr*.55)+'><g class="face">'+chFace(a,e)+'</g></g>':'')+
-        /* 轉身時耳朵挪到頭前面，尾巴在背面的時候也挪到前面 */
-        (turned?'<g'+sqz(60)+'>'+chBack(a,0,'ears')+
-          (tailFront?chBack(a,0,'tail'):'')+'</g>':'')+
+        /* 靠鏡頭那隻耳朵挪到頭前面；轉到背面的時候尾巴也挪到前面 */
+        (turned?'<g'+sqz(60)+'>'+(earSplit?earHalf('near'):chBack(a,0,'ears'))+'</g>':'')+
+        (turned&&tailFront?tailG(chBack(a,0,'tail')):'')+
         /* 頭上、臉上、脖子上的東西。每一件（其實是每一個零件）
            自己照長在圓柱的哪個位置去算，這裡不再整層一起壓 */
         '<g class="wearWrap">'+wearSVG(a)+'</g>'+
@@ -6969,7 +6993,8 @@ const ANIM={
       /* 同名的群組不只一個（配件另外掛了一組），要全部一起轉 */
       aL:[...st.querySelectorAll('.armL')], aR:[...st.querySelectorAll('.armR')],
       fL:[...st.querySelectorAll('.footL')], fR:[...st.querySelectorAll('.footR')],
-      shd:st.querySelector('.shd'), tail:st.querySelector('.tail'), ears:st.querySelector('.ears'),
+      shd:st.querySelector('.shd'), tail:st.querySelector('.tail'),
+      ears:[...st.querySelectorAll('.ears')],
       fx:st.querySelector('.fx'), sky:[...st.querySelectorAll('.sky i')],
       sw:(st.querySelector('.scene')||{clientWidth:0}).clientWidth,
       u:(st.querySelector('.actor')||{clientWidth:150}).clientWidth/120};
@@ -7021,7 +7046,8 @@ const ANIM={
       p.el.style.opacity=Math.min(1,p.life/p.fade).toFixed(2);
     }
     if(e.tail) e.tail.setAttribute('transform','rotate('+(Math.sin(now/(tunePlaying?67:167))*13).toFixed(1)+','+(e.tail.dataset.p||'96,88')+')');
-    if(e.ears) e.ears.setAttribute('transform','rotate('+(Math.sin(now/446)*2.6+c.rot*.35).toFixed(2)+','+(e.ears.dataset.p||'60,48')+')');
+    /* 耳朵可能有兩組（轉身時分成前後兩半），要全部一起轉 */
+    for(const g of e.ears) g.setAttribute('transform','rotate('+(Math.sin(now/446)*2.6+c.rot*.35).toFixed(2)+','+(g.dataset.p||'60,48')+')');
     this.start();
   }
 };
@@ -9178,7 +9204,8 @@ const PET={
       aL:[...box.querySelectorAll('.armL')], aR:[...box.querySelectorAll('.armR')],
       armsB:box.querySelector('.armsBack'), armsF:box.querySelector('.armsFront'),
       armsN:box.querySelector('.armsNear'),
-      shd:box.querySelector('.shd'), tail:box.querySelector('.tail'), ears:box.querySelector('.ears')};
+      shd:box.querySelector('.shd'), tail:box.querySelector('.tail'),
+      ears:[...box.querySelectorAll('.ears')]};
     return true;
   },
   watch(){
@@ -9227,7 +9254,7 @@ const PET={
       e.shd.setAttribute('opacity',(.18-up*.08).toFixed(3));
     }
     if(e.tail) e.tail.setAttribute('transform','rotate('+(Math.sin(now/167)*12).toFixed(1)+','+(e.tail.dataset.p||'96,88')+')');
-    if(e.ears) e.ears.setAttribute('transform','rotate('+(Math.sin(now/446)*2.4+c.rot*.4).toFixed(2)+','+(e.ears.dataset.p||'60,48')+')');
+    for(const g of e.ears) g.setAttribute('transform','rotate('+(Math.sin(now/446)*2.4+c.rot*.4).toFixed(2)+','+(g.dataset.p||'60,48')+')');
     this.start();
   },
   pose(t,face,back){
