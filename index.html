@@ -2633,7 +2633,91 @@ const WINS=[
   {id:'win-pose', n:'擺姿勢',   p:150, pose:{y:0,  sx:1.03,sy:.97, rot:-8,aL:-30, aR:150}, face:'win'},
   {id:'win-bow',  n:'鞠躬',     p:150, pose:{y:5,  sx:1.05,sy:.93, rot:16,aL:60,  aR:-60}, face:'up'},
   {id:'win-cheer',n:'歡呼',     p:150, pose:{y:-12,sx:.98,sy:1.05, rot:0, aL:-165,aR:165}, face:'joy'},
-  {id:'win-shy',  n:'害羞',     p:150, pose:{y:2,  sx:1,   sy:1,   rot:10,aL:-118,aR:-40}, face:'blush'}
+  {id:'win-shy',  n:'害羞',     p:150, pose:{y:2,  sx:1,   sy:1,   rot:10,aL:-118,aR:-40}, face:'blush'},
+  /* a-cat */
+  {id:'win-ctknead', n:'踩奶', p:150, only:'a-cat', seq:[{t:0,y:2,sx:1.04,sy:.97,aL:-40,aR:10,f:"blush"},{t:150,aL:10,aR:-40},{t:300,aL:-40,aR:10},{t:450,aL:10,aR:-40},{t:600,aL:-40,aR:10},{t:750,y:0,sx:1,sy:1,aL:0,aR:0,f:"smile"}]},
+  {id:'win-ctpounce', n:'貓撲', p:150, only:'a-cat', seq:[{t:0,y:12,sx:1.22,sy:.76,rot:0,aL:26,aR:-26,f:"up"},{t:220,y:-44,sx:.86,sy:1.24,aL:-150,aR:150,f:"joy"},{t:420,y:8,sx:1.2,sy:.8,aL:20,aR:-20},{t:560,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-ctstretch', n:'伸懶腰', p:150, only:'a-cat', seq:[{t:0,y:6,sx:1.14,sy:.88,rot:-14,aL:-70,aR:60,f:"sleep"},{t:380,y:-6,sx:.9,sy:1.16,rot:-18,aL:-140,aR:120},{t:700,y:0,sx:1,sy:1,rot:0,aL:0,aR:0,f:"smile"}]},
+  {id:'win-ctroll', n:'翻滾', p:150, only:'a-cat', seq:[{t:0,y:4,sx:1.1,sy:.9,rot:0,aL:40,aR:-40,f:"up"},{t:160,y:-18,rot:180,sx:.96,sy:1.04,aL:-60,aR:60,f:"joy"},{t:340,y:-4,rot:360},{t:500,y:0,snap:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-ctnap', n:'打個盹', p:150, only:'a-cat', seq:[{t:0,y:4,sx:1.06,sy:.95,rot:8,aL:14,aR:-14,f:"sleep"},{t:450,y:9,sx:1.12,sy:.88,rot:14},{t:900,y:-14,sx:.94,sy:1.1,rot:0,aL:-90,aR:90,f:"joy"},{t:1080,y:0,sx:1,sy:1,aL:0,aR:0,f:"smile"}]},
+  {id:'win-ctlucky', n:'招財貓', p:150, only:'a-cat', seq:[{t:0,y:0,sx:1.02,sy:.99,rot:0,aL:-150,aR:-10,f:"win"},{t:200,aL:-95},{t:360,aL:-150},{t:520,aL:-95},{t:680,aL:-150},{t:860,y:0,sx:1,sy:1,aL:0,aR:0,f:"smile"}]},
+  /* a-dog */
+  {id:'win-dgshake', n:'甩水', p:150, only:'a-dog', seq:[{t:0,y:2,sx:1.06,sy:.96,rot:-16,aL:-30,aR:30,f:"up"},{t:110,rot:16},{t:210,rot:-14},{t:300,rot:12},{t:380,rot:-9},{t:450,rot:6},{t:560,y:0,sx:1,sy:1,rot:0,aL:0,aR:0,f:"joy"}]},
+  {id:'win-dgpaw', n:'握手', p:150, only:'a-dog', seq:[{t:0,y:3,sx:1.05,sy:.96,rot:-8,aL:-120,aR:20,f:"up"},{t:240,y:-2,aL:-80},{t:400,y:3,aL:-120},{t:560,y:-2,aL:-80},{t:760,y:0,sx:1,sy:1,rot:0,aL:0,aR:0,f:"joy"}]},
+  {id:'win-dgroll', n:'打滾', p:150, only:'a-dog', seq:[{t:0,y:8,sx:1.18,sy:.82,rot:0,aL:30,aR:-30,f:"blush"},{t:200,y:-6,rot:-180,sx:1,sy:1,aL:-120,aR:120},{t:420,y:6,rot:-360,sx:1.14,sy:.86},{t:600,y:0,snap:0,sx:1,sy:1,aL:0,aR:0,f:"joy"}]},
+  {id:'win-dgleap', n:'撲跳', p:150, only:'a-dog', seq:[{t:0,y:14,sx:1.24,sy:.74,rot:0,aL:34,aR:-34,f:"up"},{t:170,y:-58,sx:.84,sy:1.26,rot:-10,aL:-160,aR:160,f:"joy"},{t:400,y:10,sx:1.22,sy:.78,rot:0,aL:24,aR:-24},{t:560,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-dgbeg', n:'拜託', p:150, only:'a-dog', seq:[{t:0,y:-4,sx:.96,sy:1.06,rot:0,aL:-105,aR:-75,f:"up"},{t:260,rot:9},{t:460,rot:-9},{t:660,rot:6,f:"blush"},{t:860,y:0,sx:1,sy:1,rot:0,aL:0,aR:0,f:"joy"}]},
+  {id:'win-dgwag', n:'搖尾巴', p:150, only:'a-dog', seq:[{t:0,y:1,sx:1.03,sy:.98,rot:7,aL:-24,aR:24,f:"joy"},{t:120,rot:-7},{t:240,rot:7},{t:360,rot:-7},{t:480,rot:7},{t:600,rot:-7},{t:740,y:0,sx:1,sy:1,rot:0,aL:0,aR:0,f:"smile"}]},
+  /* a-bear */
+  {id:'win-brroar', n:'大吼', p:150, only:'a-bear', seq:[{t:0,y:6,sx:1.12,sy:.9,rot:0,aL:20,aR:-20,f:"up"},{t:200,y:-16,sx:1.16,sy:1.14,aL:-155,aR:155,f:"bad"},{t:620,y:-10,sx:1.1,sy:1.08},{t:820,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-brhug', n:'熊抱', p:150, only:'a-bear', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-140,aR:140,f:"up"},{t:300,y:2,sx:.92,sy:1.04,aL:-30,aR:30,f:"blush"},{t:620,y:-4,sx:1.06,sy:.98},{t:820,y:0,sx:1,sy:1,aL:0,aR:0,f:"joy"}]},
+  {id:'win-brstomp', n:'跺腳', p:150, only:'a-bear', seq:[{t:0,y:-16,sx:.94,sy:1.1,rot:0,aL:-60,aR:60,f:"up"},{t:170,y:12,sx:1.24,sy:.76,aL:30,aR:-30,f:"bad"},{t:330,y:-14,sx:.95,sy:1.09,aL:-60,aR:60},{t:490,y:12,sx:1.24,sy:.76,aL:30,aR:-30},{t:700,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-brdance', n:'熊熊舞', p:150, only:'a-bear', seq:[{t:0,y:0,sx:1.04,sy:.97,rot:-12,aL:-130,aR:20,f:"joy"},{t:240,rot:12,aL:-20,aR:130},{t:480,rot:-12,aL:-130,aR:20},{t:720,rot:12,aL:-20,aR:130},{t:960,y:0,sx:1,sy:1,rot:0,aL:0,aR:0,f:"win"}]},
+  {id:'win-brhoney', n:'舔蜂蜜', p:150, only:'a-bear', seq:[{t:0,y:4,sx:1.05,sy:.96,rot:-10,aL:-125,aR:14,f:"up"},{t:300,rot:-4,f:"blush"},{t:520,rot:-12},{t:740,rot:-4,f:"joy"},{t:940,y:0,sx:1,sy:1,rot:0,aL:0,aR:0,f:"smile"}]},
+  {id:'win-brflex', n:'秀肌肉', p:150, only:'a-bear', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-125,aR:125,f:"up"},{t:260,y:-4,sx:1.14,sy:1.02,aL:-155,aR:155,f:"win"},{t:620,sx:1.18,sy:1.04},{t:860,y:0,sx:1,sy:1,aL:0,aR:0,f:"joy"}]},
+  /* a-fox */
+  {id:'win-fxsly', n:'賊笑', p:150, only:'a-fox', seq:[{t:0,y:0,sx:1.02,sy:.99,rot:9,aL:-52,aR:16,f:"wink"},{t:300,rot:13,y:-3},{t:620,rot:6,f:"win"},{t:860,y:0,sx:1,sy:1,rot:0,aL:0,aR:0,f:"smile"}]},
+  {id:'win-fxdive', n:'雪地撲', p:150, only:'a-fox', seq:[{t:0,y:10,sx:1.16,sy:.84,rot:0,aL:26,aR:-26,f:"up"},{t:190,y:-52,sx:.86,sy:1.22,rot:-32,aL:-150,aR:150,f:"joy"},{t:420,y:14,sx:1.3,sy:.7,rot:0,aL:20,aR:-20},{t:620,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-fxbow', n:'一鞠躬', p:150, only:'a-fox', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-70,aR:40,f:"smile"},{t:300,y:8,sx:1.06,sy:.94,rot:20,aL:-20,aR:70,f:"up"},{t:700,y:-6,sx:.98,sy:1.04,rot:-4,aL:-90,aR:60,f:"win"},{t:900,y:0,sx:1,sy:1,rot:0,aL:0,aR:0,f:"smile"}]},
+  {id:'win-fxtwirl', n:'轉圈', p:150, only:'a-fox', seq:[{t:0,y:2,sx:1.04,sy:.97,rot:0,aL:-100,aR:100,f:"up"},{t:200,y:-14,rot:180,sx:.94,sy:1.08,f:"joy"},{t:420,y:-8,rot:360},{t:600,y:0,snap:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-fxsneak', n:'溜走', p:150, only:'a-fox', seq:[{t:0,y:8,sx:1.16,sy:.86,rot:-9,aL:-34,aR:20,f:"wink"},{t:250,rot:7,y:6},{t:500,rot:-7},{t:750,rot:5},{t:960,y:0,sx:1,sy:1,rot:0,aL:0,aR:0,f:"win"}]},
+  {id:'win-fxwink', n:'眨個眼', p:150, only:'a-fox', seq:[{t:0,y:-3,sx:.99,sy:1.02,rot:-7,aL:-150,aR:-20,f:"win"},{t:280,rot:-3,f:"wink"},{t:620,rot:-9,f:"joy"},{t:860,y:0,sx:1,sy:1,rot:0,aL:0,aR:0,f:"smile"}]},
+  /* a-peng */
+  {id:'win-pgslide', n:'肚皮滑行', p:150, only:'a-peng', seq:[{t:0,y:4,sx:1.08,sy:.94,rot:0,aL:-40,aR:40,f:"up"},{t:220,y:16,sx:1.34,sy:.66,rot:-6,aL:-150,aR:150,f:"joy"},{t:700,y:14,sx:1.3,sy:.7,rot:6},{t:940,y:0,sx:1,sy:1,rot:0,aL:0,aR:0,f:"win"}]},
+  {id:'win-pgflap', n:'拍翅膀', p:150, only:'a-peng', seq:[{t:0,y:0,sx:1.02,sy:.99,rot:0,aL:-20,aR:20,f:"joy"},{t:110,y:-10,aL:-150,aR:150},{t:210,y:0,aL:-20,aR:20},{t:310,y:-12,aL:-155,aR:155},{t:410,y:0,aL:-20,aR:20},{t:510,y:-14,aL:-160,aR:160},{t:700,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-pgwaddle', n:'搖搖走', p:150, only:'a-peng', seq:[{t:0,y:1,sx:1.04,sy:.97,rot:-13,aL:-30,aR:14,f:"smile"},{t:200,rot:13,aL:-14,aR:30},{t:400,rot:-13,aL:-30,aR:14},{t:600,rot:13,aL:-14,aR:30},{t:800,rot:-10},{t:980,y:0,sx:1,sy:1,rot:0,aL:0,aR:0,f:"joy"}]},
+  {id:'win-pgdive', n:'跳水', p:150, only:'a-peng', seq:[{t:0,y:12,sx:1.2,sy:.78,rot:0,aL:24,aR:-24,f:"up"},{t:180,y:-56,sx:.82,sy:1.28,rot:0,aL:-170,aR:170,f:"joy"},{t:400,y:-30,rot:24},{t:560,y:12,sx:1.26,sy:.74,rot:0,aL:16,aR:-16},{t:740,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-pghuddle', n:'縮成一團', p:150, only:'a-peng', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-10,aR:10,f:"blush"},{t:280,y:8,sx:.86,sy:.86,aL:6,aR:-6,f:"sleep"},{t:700,y:6,sx:.9,sy:.9},{t:900,y:0,sx:1,sy:1,aL:0,aR:0,f:"joy"}]},
+  {id:'win-pgsalute', n:'敬個禮', p:150, only:'a-peng', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:0,aR:0,f:"up"},{t:180,y:-6,sx:.94,sy:1.08,aL:-165,aR:6,f:"win"},{t:700,y:-6},{t:880,y:0,sx:1,sy:1,aL:0,aR:0,f:"smile"}]},
+  /* a-bot */
+  {id:'win-btboot', n:'開機', p:150, only:'a-bot', seq:[{t:0,y:14,sx:1.3,sy:.6,rot:0,aL:40,aR:-40,f:"sleep"},{t:260,y:-8,sx:.9,sy:1.16,aL:-60,aR:60,f:"blink"},{t:420,y:2,sx:1.06,sy:.96,f:"up"},{t:600,y:-6,sx:.98,sy:1.03,aL:-150,aR:150,f:"win"},{t:860,y:0,sx:1,sy:1,aL:0,aR:0,f:"joy"}]},
+  {id:'win-btglitch', n:'當機', p:150, only:'a-bot', seq:[{t:0,y:0,sx:1.1,sy:.94,rot:-9,aL:-40,aR:70,f:"bad"},{t:90,y:-6,sx:.92,sy:1.08,rot:11,aL:80,aR:-40},{t:180,y:3,sx:1.12,sy:.9,rot:-7,aL:-70,aR:30},{t:270,y:-4,sx:.94,sy:1.06,rot:9,aL:50,aR:-60,f:"meh"},{t:360,y:2,sx:1.08,sy:.94,rot:-5},{t:520,y:0,sx:1,sy:1,rot:0,aL:0,aR:0,f:"win"}]},
+  {id:'win-btlaser', n:'發射', p:150, only:'a-bot', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-90,aR:0,f:"up"},{t:240,y:-4,rot:-12,aL:-168,aR:20,f:"bad"},{t:420,y:2,sx:1.08,sy:.94,rot:8,aL:-150},{t:700,y:-2,rot:0,f:"win"},{t:880,y:0,sx:1,sy:1,aL:0,aR:0,f:"joy"}]},
+  {id:'win-btdance', n:'機械舞', p:150, only:'a-bot', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-90,aR:0,f:"win"},{t:170,aL:0,aR:-90},{t:340,rot:-10,aL:-90,aR:0},{t:510,rot:10,aL:0,aR:-90},{t:680,rot:0,aL:-150,aR:150},{t:900,aL:0,aR:0,f:"joy"}]},
+  {id:'win-btcharge', n:'充電', p:150, only:'a-bot', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-14,aR:14,f:"sleep"},{t:220,sx:1.1,sy:1.1,y:-4},{t:420,sx:1,sy:1,y:0},{t:620,sx:1.14,sy:1.14,y:-6,f:"blink"},{t:820,sx:1,sy:1,y:0},{t:1000,y:-8,sx:1.04,sy:1.04,aL:-150,aR:150,f:"win"},{t:1220,y:0,sx:1,sy:1,aL:0,aR:0,f:"joy"}]},
+  {id:'win-btsalute', n:'系統敬禮', p:150, only:'a-bot', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:0,aR:0,f:"up"},{t:150,aL:-90},{t:300,aL:-170,y:-4,sx:.96,sy:1.06,f:"win"},{t:760,y:-4},{t:940,y:0,sx:1,sy:1,aL:0,aR:0,f:"smile"}]},
+  /* a-frog */
+  {id:'win-fgleap', n:'大跳躍', p:150, only:'a-frog', seq:[{t:0,y:18,sx:1.34,sy:.64,rot:0,aL:36,aR:-36,f:"up"},{t:200,y:-72,sx:.78,sy:1.34,aL:-165,aR:165,f:"joy"},{t:450,y:16,sx:1.34,sy:.66,aL:26,aR:-26},{t:620,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-fgpuff', n:'鼓氣', p:150, only:'a-frog', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-16,aR:16,f:"up"},{t:300,y:2,sx:1.3,sy:1.22,aL:-40,aR:40,f:"bad"},{t:640,y:0,sx:1.34,sy:1.26},{t:780,y:4,sx:.9,sy:.9,f:"meh"},{t:960,y:0,sx:1,sy:1,aL:0,aR:0,f:"joy"}]},
+  {id:'win-fgtongue', n:'彈舌', p:150, only:'a-frog', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-20,aR:20,f:"smile"},{t:120,y:-2,sx:1.32,sy:.82,rot:-17,aL:-40,aR:40,f:"joy"},{t:230,y:0,sx:.9,sy:1.08,rot:6},{t:350,sx:1.34,sy:.8,rot:-19},{t:460,sx:.92,sy:1.06,rot:5},{t:640,y:0,sx:1,sy:1,rot:0,aL:0,aR:0,f:"win"}]},
+  {id:'win-fgsplash', n:'跳水花', p:150, only:'a-frog', seq:[{t:0,y:10,sx:1.2,sy:.8,rot:0,aL:30,aR:-30,f:"up"},{t:180,y:-50,sx:.84,sy:1.24,aL:-160,aR:160,f:"joy"},{t:420,y:20,sx:1.42,sy:.58,aL:60,aR:-60},{t:560,y:6,sx:1.1,sy:.92,aL:20,aR:-20},{t:760,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-fgcroak', n:'呱呱叫', p:150, only:'a-frog', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-24,aR:24,f:"joy"},{t:150,sx:1.14,sy:1.08,y:-4},{t:280,sx:1,sy:1,y:0},{t:410,sx:1.14,sy:1.08,y:-4},{t:540,sx:1,sy:1,y:0},{t:670,sx:1.14,sy:1.08,y:-4},{t:840,sx:1,sy:1,y:0,aL:0,aR:0,f:"win"}]},
+  {id:'win-fgzen', n:'打坐', p:150, only:'a-frog', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-70,aR:70,f:"up"},{t:340,y:10,sx:1.14,sy:.9,aL:-45,aR:45,f:"sleep"},{t:900,y:8,sx:1.1,sy:.92},{t:1080,y:-10,sx:.96,sy:1.06,aL:-140,aR:140,f:"win"},{t:1280,y:0,sx:1,sy:1,aL:0,aR:0,f:"smile"}]},
+  /* a-owl */
+  {id:'win-owhead', n:'轉頭', p:150, only:'a-owl', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-8,aR:8,f:"blink"},{t:220,rot:-46,f:"up"},{t:540,rot:46},{t:820,rot:-24,f:"win"},{t:1020,rot:0,aL:0,aR:0,f:"smile"}]},
+  {id:'win-owflap', n:'展翅', p:150, only:'a-owl', seq:[{t:0,y:2,sx:1.06,sy:.95,rot:0,aL:-10,aR:10,f:"up"},{t:200,y:-22,sx:.92,sy:1.12,aL:-170,aR:170,f:"joy"},{t:520,y:-16,aL:-140,aR:140},{t:700,y:-24,aL:-170,aR:170},{t:940,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-owhoot', n:'咕咕叫', p:150, only:'a-owl', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-6,aR:6,f:"smile"},{t:160,y:4,sx:1.22,sy:1.14,rot:15,f:"joy"},{t:300,y:0,sx:1,sy:1,rot:-5},{t:450,y:4,sx:1.24,sy:1.16,rot:15},{t:590,y:0,sx:1,sy:1,rot:-5},{t:740,y:-9,sx:1.1,sy:1.06,rot:0,aL:-60,aR:60,f:"win"},{t:920,y:0,sx:1,sy:1,aL:0,aR:0,f:"smile"}]},
+  {id:'win-owwise', n:'推眼鏡', p:150, only:'a-owl', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-130,aR:16,f:"up"},{t:280,aL:-160,rot:-6,f:"blink"},{t:560,y:-6,sx:.96,sy:1.06,rot:0,aL:-40,f:"win"},{t:860,y:0,sx:1,sy:1,aL:0,aR:0,f:"smile"}]},
+  {id:'win-owswoop', n:'俯衝', p:150, only:'a-owl', seq:[{t:0,y:-40,sx:.9,sy:1.14,rot:0,aL:-165,aR:165,f:"up"},{t:260,y:-30,rot:-18},{t:460,y:12,sx:1.24,sy:.78,rot:0,aL:-20,aR:20,f:"joy"},{t:640,y:-8,sx:.98,sy:1.04,aL:-120,aR:120},{t:860,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-owblink', n:'打瞌睡', p:150, only:'a-owl', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-12,aR:12,f:"blink"},{t:340,y:7,sx:1.06,sy:.94,rot:9,f:"sleep"},{t:720,y:9,rot:13},{t:880,y:-22,sx:.9,sy:1.14,rot:0,aL:-155,aR:155,f:"joy"},{t:1100,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  /* a-rab */
+  {id:'win-rbhop', n:'三連跳', p:150, only:'a-rab', seq:[{t:0,y:8,sx:1.16,sy:.84,rot:0,aL:20,aR:-20,f:"up"},{t:130,y:-26,sx:.94,sy:1.12,aL:-110,aR:110,f:"joy"},{t:280,y:6,sx:1.14,sy:.86,aL:16,aR:-16},{t:390,y:-40,sx:.9,sy:1.18,aL:-140,aR:140},{t:560,y:6,sx:1.14,sy:.86,aL:16,aR:-16},{t:670,y:-56,sx:.86,sy:1.24,aL:-165,aR:165},{t:880,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-rbthump', n:'跺後腳', p:150, only:'a-rab', seq:[{t:0,y:-8,sx:.96,sy:1.08,rot:0,aL:-30,aR:30,f:"up"},{t:120,y:10,sx:1.2,sy:.8,aL:24,aR:-24,f:"bad"},{t:240,y:-6,sx:.97,sy:1.06,aL:-30,aR:30},{t:360,y:10,sx:1.2,sy:.8,aL:24,aR:-24},{t:480,y:-6,sx:.97,sy:1.06,aL:-30,aR:30},{t:600,y:10,sx:1.2,sy:.8,aL:24,aR:-24},{t:780,y:0,sx:1,sy:1,aL:0,aR:0,f:"joy"}]},
+  {id:'win-rbsniff', n:'抽鼻子', p:150, only:'a-rab', seq:[{t:0,y:0,sx:1.02,sy:.99,rot:-4,aL:-20,aR:20,f:"blush"},{t:90,rot:4,sx:1.05,sy:.97},{t:170,rot:-4,sx:1.02,sy:.99},{t:250,rot:4,sx:1.05,sy:.97},{t:330,rot:-3},{t:410,rot:3},{t:560,rot:0,sx:1,sy:1,aL:0,aR:0,f:"joy"}]},
+  {id:'win-rbears', n:'豎耳朵', p:150, only:'a-rab', seq:[{t:0,y:2,sx:1.06,sy:.95,rot:0,aL:-14,aR:14,f:"up"},{t:220,y:-16,sx:.86,sy:1.2,aL:-40,aR:40,f:"win"},{t:640,y:-14,sx:.88,sy:1.18},{t:860,y:0,sx:1,sy:1,aL:0,aR:0,f:"joy"}]},
+  {id:'win-rbflop', n:'翻肚', p:150, only:'a-rab', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-20,aR:20,f:"up"},{t:200,y:10,sx:1.2,sy:.8,rot:-70,aL:-120,aR:120,f:"blush"},{t:620,y:12,rot:-78},{t:820,y:-8,sx:.98,sy:1.04,rot:0,aL:-60,aR:60,f:"joy"},{t:980,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-rbmagic', n:'變魔術', p:150, only:'a-rab', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-150,aR:20,f:"up"},{t:220,rot:-10,aL:-60,f:"wink"},{t:360,y:-20,sx:1.08,sy:1.08,rot:0,aL:-165,aR:165,f:"win"},{t:640,y:-12,sx:1.02,sy:1.02},{t:880,y:0,sx:1,sy:1,aL:0,aR:0,f:"joy"}]},
+  /* a-gir */
+  {id:'win-gfstretch', n:'伸長脖子', p:150, only:'a-gir', seq:[{t:0,y:4,sx:1.06,sy:.95,rot:0,aL:-14,aR:14,f:"up"},{t:300,y:-22,sx:.82,sy:1.26,aL:-50,aR:50,f:"win"},{t:760,y:-18,sx:.84,sy:1.24},{t:980,y:0,sx:1,sy:1,aL:0,aR:0,f:"joy"}]},
+  {id:'win-gfnod', n:'點頭', p:150, only:'a-gir', seq:[{t:0,y:0,sx:1,sy:1,rot:-14,aL:-24,aR:24,f:"smile"},{t:200,rot:14,y:3},{t:400,rot:-14,y:0},{t:600,rot:14,y:3},{t:820,rot:0,y:0,aL:0,aR:0,f:"joy"}]},
+  {id:'win-gfgallop', n:'奔跑', p:150, only:'a-gir', seq:[{t:0,y:6,sx:1.1,sy:.92,rot:-8,aL:-90,aR:60,f:"up"},{t:150,y:-18,sx:.94,sy:1.1,rot:6,aL:60,aR:-90},{t:300,y:6,sx:1.1,sy:.92,rot:-8,aL:-90,aR:60},{t:450,y:-18,sx:.94,sy:1.1,rot:6,aL:60,aR:-90},{t:600,y:-30,sx:.9,sy:1.14,rot:0,aL:-150,aR:150,f:"joy"},{t:840,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-gfreach', n:'摘葉子', p:150, only:'a-gir', seq:[{t:0,y:2,sx:1.04,sy:.97,rot:0,aL:-20,aR:20,f:"up"},{t:280,y:-26,sx:.86,sy:1.22,rot:-12,aL:-170,aR:30},{t:560,y:-20,rot:6,f:"joy"},{t:760,y:2,sx:1.04,sy:.97,rot:0,aL:-30,aR:20,f:"win"},{t:960,y:0,sx:1,sy:1,aL:0,aR:0,f:"smile"}]},
+  {id:'win-gfsway', n:'搖擺', p:150, only:'a-gir', seq:[{t:0,y:0,sx:1,sy:1,rot:-17,aL:-60,aR:20,f:"smile"},{t:330,rot:17,aL:-20,aR:60},{t:660,rot:-17,aL:-60,aR:20},{t:990,rot:14,aL:-20,aR:60,f:"joy"},{t:1220,rot:0,aL:0,aR:0,f:"win"}]},
+  {id:'win-gfpeek', n:'探頭', p:150, only:'a-gir', seq:[{t:0,y:6,sx:1.08,sy:.93,rot:22,aL:-30,aR:10,f:"blink"},{t:300,y:-10,sx:.92,sy:1.12,rot:14,f:"up"},{t:620,y:-14,rot:-8,f:"win"},{t:860,y:0,sx:1,sy:1,rot:0,aL:0,aR:0,f:"joy"}]},
+  /* a-shp */
+  {id:'win-shbounce', n:'彈跳', p:150, only:'a-shp', seq:[{t:0,y:10,sx:1.22,sy:.8,rot:0,aL:24,aR:-24,f:"up"},{t:150,y:-34,sx:.9,sy:1.16,aL:-130,aR:130,f:"joy"},{t:320,y:8,sx:1.18,sy:.84,aL:20,aR:-20},{t:450,y:-22,sx:.94,sy:1.1,aL:-110,aR:110},{t:600,y:6,sx:1.12,sy:.88},{t:720,y:-12,sx:.97,sy:1.05},{t:900,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-shfluff', n:'抖抖毛', p:150, only:'a-shp', seq:[{t:0,y:0,sx:1.04,sy:1.04,rot:-8,aL:-40,aR:40,f:"up"},{t:90,rot:8,sx:1.1,sy:1.1},{t:170,rot:-7,sx:1.04,sy:1.04},{t:250,rot:7,sx:1.12,sy:1.12},{t:330,rot:-5},{t:410,rot:5},{t:560,rot:0,sx:1.14,sy:1.14,y:-4,f:"joy"},{t:780,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-shroll', n:'滾成球', p:150, only:'a-shp', seq:[{t:0,y:2,sx:1.04,sy:.97,rot:0,aL:-20,aR:20,f:"up"},{t:240,y:8,sx:1.1,sy:1.1,rot:180,aL:30,aR:-30,f:"blush"},{t:520,y:8,rot:360},{t:720,y:-10,snap:0,sx:.98,sy:1.04,aL:-120,aR:120,f:"joy"},{t:900,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-shcount', n:'數綿羊', p:150, only:'a-shp', seq:[{t:0,y:0,sx:1,sy:1,rot:-8,aL:-30,aR:30,f:"up"},{t:280,rot:8,y:3,f:"blink"},{t:560,rot:-8,y:0},{t:840,rot:9,y:6,f:"sleep"},{t:1120,y:-16,sx:.96,sy:1.08,rot:0,aL:-140,aR:140,f:"joy"},{t:1320,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-shgraze', n:'吃草', p:150, only:'a-shp', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-20,aR:20,f:"smile"},{t:240,y:10,sx:1.14,sy:.88,rot:16,f:"down"},{t:500,y:6,rot:10},{t:700,y:10,sx:1.14,sy:.88,rot:16},{t:940,y:-6,sx:.98,sy:1.04,rot:0,aL:-60,aR:60,f:"joy"},{t:1120,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-shspring', n:'跳過柵欄', p:150, only:'a-shp', seq:[{t:0,y:14,sx:1.28,sy:.72,rot:0,aL:34,aR:-34,f:"up"},{t:200,y:-66,sx:.84,sy:1.28,rot:-14,aL:-160,aR:160,f:"joy"},{t:420,y:-40,rot:10},{t:580,y:12,sx:1.26,sy:.76,rot:0,aL:20,aR:-20},{t:760,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  /* a-sqr */
+  {id:'win-sqstash', n:'藏堅果', p:150, only:'a-sqr', seq:[{t:0,y:2,sx:1.04,sy:.97,rot:0,aL:-120,aR:-100,f:"up"},{t:260,y:10,sx:1.16,sy:.86,rot:14,aL:-40,aR:-30,f:"down"},{t:520,y:8,rot:10},{t:680,y:9,rot:16},{t:880,y:-8,sx:.98,sy:1.05,rot:0,aL:-140,aR:140,f:"win"},{t:1060,y:0,sx:1,sy:1,aL:0,aR:0,f:"joy"}]},
+  {id:'win-sqnibble', n:'啃果實', p:150, only:'a-sqr', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-115,aR:-95,f:"blush"},{t:100,y:2,rot:5},{t:180,y:0,rot:-4},{t:260,y:2,rot:5},{t:340,y:0,rot:-4},{t:420,y:2,rot:5},{t:500,y:0,rot:-3},{t:700,rot:0,aL:0,aR:0,f:"joy"}]},
+  {id:'win-sqdash', n:'竄動', p:150, only:'a-sqr', seq:[{t:0,y:4,sx:1.12,sy:.9,rot:-16,aL:-70,aR:40,f:"up"},{t:120,rot:16,aL:-40,aR:70},{t:240,rot:-16,aL:-70,aR:40},{t:360,rot:16,aL:-40,aR:70},{t:480,rot:-12},{t:620,y:-16,sx:.94,sy:1.1,rot:0,aL:-150,aR:150,f:"joy"},{t:820,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-sqpuff', n:'蓬尾巴', p:150, only:'a-sqr', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-20,aR:20,f:"up"},{t:160,y:-6,sx:1.22,sy:1.16,aL:-70,aR:70,f:"bad"},{t:420,y:-4,sx:1.18,sy:1.12,f:"win"},{t:700,y:-6,sx:1.24,sy:1.18},{t:920,y:0,sx:1,sy:1,aL:0,aR:0,f:"joy"}]},
+  {id:'win-sqclimb', n:'爬樹', p:150, only:'a-sqr', seq:[{t:0,y:2,sx:.96,sy:1.06,rot:0,aL:-160,aR:-20,f:"up"},{t:180,y:-6,aL:-20,aR:-160},{t:360,y:-14,aL:-160,aR:-20},{t:540,y:-22,aL:-20,aR:-160},{t:720,y:-30,aL:-160,aR:-20},{t:900,y:-34,sx:.94,sy:1.1,aL:-165,aR:165,f:"joy"},{t:1100,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-sqspin', n:'陀螺轉', p:150, only:'a-sqr', seq:[{t:0,y:4,sx:1.1,sy:.92,rot:0,aL:-60,aR:60,f:"up"},{t:140,y:-14,rot:180,sx:.94,sy:1.08,f:"joy"},{t:300,y:-10,rot:360},{t:440,y:-14,rot:540},{t:580,y:-6,rot:720},{t:760,y:0,snap:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]}
 ];
 /* 預設那款用 id 認，不要靠陣列位置——下面會依深淺重排 */
 const DEFBG='bg-violet';
@@ -2653,8 +2737,26 @@ const defBg=()=>bgById(DEFBG)||BGS[0];
   if(i>0) BGS.unshift(BGS.splice(i,1)[0]);
 })();
 const winById=id=>WINS.find(x=>x.id===id);
+/* 這隻角色選得到的：共用的六個 ＋ 牠自己專屬的六個 */
+const winsFor=k=>WINS.filter(w=>!w.only||w.only===k);
 const myBg=()=>bgById(db.settings.bg)||null;
-const myWin=()=>winById(db.settings.win)||WINS[0];
+/* 專屬動作是綁角色的，所以選擇要一隻一隻記。
+   換角色的時候不能把上一隻的專屬動作帶過去 —— 那是別人的動作 */
+function myWin(){
+  const k=(db.settings.avatar&&db.settings.avatar.id)||TCHARS[0].k;
+  const w=winById((db.settings.winOf||{})[k]);
+  if(w&&(!w.only||w.only===k)) return w;
+  /* 舊版只存一個 db.settings.win，共用的那幾個還是算數 */
+  const old=winById(db.settings.win);
+  if(old&&!old.only) return old;
+  return WINS[0];
+}
+/* 選了哪個動作。db.settings.win 留著給好友那邊看「他在用什麼」 */
+function setWin(id){
+  const k=(db.settings.avatar&&db.settings.avatar.id)||TCHARS[0].k;
+  db.settings.winOf=Object.assign({},db.settings.winOf||{},{[k]:id});
+  db.settings.win=id;
+}
 /* 生物身後那塊的樣式。沒買背景就用原本的暈影 */
 /* own=1 是自己的畫面，沒買背景就跟著自己的佈景走，不然只有生物那塊還是深的。
    別人的背景是他自己買的，沒有就退回預設那款，絕對不能跟著我的佈景跑 */
@@ -8900,6 +9002,32 @@ const PET={
     Object.assign(this.tgt,t); this.face(face);
     setTimeout(()=>{ Object.assign(this.tgt,{y:0,sx:1,sy:1,rot:0,aL:0,aR:0}); this.face('idle'); },back);
     this.start();
+  },
+  /* 專屬動作是好幾格的小表演。沒寫到的欄位沿用上一格，
+     跟月底那段表演同一套寫法。snap 是把角度就地歸零，
+     不然轉完一圈之後會慢慢倒轉回來 */
+  play(seq){
+    if(!seq||!seq.length) return;
+    (this.seqT||[]).forEach(clearTimeout);
+    this.seqT=[];
+    seq.forEach(p=>this.seqT.push(setTimeout(()=>{
+      ['y','sx','sy','rot','aL','aR'].forEach(kk=>{ if(p[kk]!==undefined) this.tgt[kk]=p[kk]; });
+      if(p.snap!==undefined){ this.cur.rot=p.snap; this.tgt.rot=p.snap; }
+      if(p.f) this.face(p.f);
+      this.start();
+    },p.t)));
+    const end=seq[seq.length-1].t+520;
+    this.seqT.push(setTimeout(()=>{
+      Object.assign(this.tgt,{y:0,sx:1,sy:1,rot:0,aL:0,aR:0}); this.face('idle'); this.start();
+    },end));
+    /* 演出期間別讓閒置動作插隊 */
+    this.nextAct=this.t+end+900;
+    this.start();
+  },
+  /* 有序列就演序列，沒有就用單一姿勢 */
+  celebrate(w,back){
+    if(w&&w.seq) this.play(w.seq);
+    else if(w) this.pose(w.pose,w.face,back||900);
   }
 };
 /* HUD 上那隻跟著頭貼走；頭貼是照片就用轉盤那隻 */
@@ -8910,7 +9038,8 @@ function makePet(boxId){
   return Object.assign(Object.create(PET),{
     boxId, el:null, raf:0, last:0, live:true, io:null, t:0,
     cur:{y:0,sx:1,sy:1,rot:0,aL:0,aR:0}, tgt:{y:0,sx:1,sy:1,rot:0,aL:0,aR:0},
-    nextBlink:2600, nextAct:7000
+    /* 演出中的計時器也要各自一份，不然兩隻會互相把對方的動作清掉 */
+    seqT:[], nextBlink:2600, nextAct:7000
   });
 }
 const SHOPPET=makePet('shopStage');
@@ -9510,8 +9639,8 @@ function renderShop(){
 /* 背景顏色／勝利動作那兩頁 */
 function renderShopExtra(){
   const bg=shopCat==='bg';
-  const list=bg?BGS:WINS;
-  const now=bg?db.settings.bg:db.settings.win;
+  const list=bg?BGS:winsFor(petChar().k);
+  const now=bg?db.settings.bg:myWin().id;
   const nowTh=bg?(db.settings.theme||DEFBG):null;   /* 佈景是另一個設定 */
   const pick=bg?tryBg:tryWin;
   const sel=pick!==null?pick:now;
@@ -9539,7 +9668,7 @@ function renderShopExtra(){
   const chosen=pick!==null&&!done(pick)?itemById(pick):null;
   if(!chosen){
     info.innerHTML='<span class="no">'+(bg?'點一個顏色就會換到牠身後看看。'
-      :'點一個動作就會在上面演一次，領薪水跟升級的時候會用。')+'</span>';
+      :'點一個動作就會在上面演一次，領薪水跟升級的時候會用。後面六個是這隻角色專屬的。')+'</span>';
     act.textContent=bg?'選一個顏色':'選一個動作'; act.disabled=true; act.style.opacity=.45;
   }else{
     const own=hasItem(chosen.id), poor=!own&&coins()<chosen.p;
@@ -9618,7 +9747,7 @@ async function shopAction(){
     /* 已經有的東西只是換上去，不用放升級那種大音效 */
     SFX.play(paid?'level':'tick');
     if(bg){ askBg(id,paid); return; }        /* 背景要先問換哪裡 */
-    db.settings.win=id; tryWin=null;
+    setWin(id); tryWin=null;
     save(); toast(paid?'買下「'+it.n+'」了':'換好了：'+it.n);
     renderShop(); renderHud(); renderWork(); renderTheme(); pushLook();
     return;
@@ -10051,7 +10180,7 @@ async function doWork(){
     workJust=got;
     SFX.play(got.pay>=90?'level':'coin');
     const q=$('workStage').getBoundingClientRect(); burst(q.left+q.width/2,q.top+q.height/2);
-    const w=myWin(); WORKPET.pose(w.pose,w.face,900);
+    const w=myWin(); WORKPET.celebrate(w);
     renderWork(); renderHud();
     return;
   }
@@ -10195,7 +10324,7 @@ async function spin(){
       SFX.play(got>=50?'level':'coin');
       const r=$('wheelSpin').getBoundingClientRect();
       burst(r.left+r.width/2,r.top+r.height/2);
-      const w=myWin(); PET.pose(w.pose,w.face,900);      /* 買來的勝利動作 */
+      const w=myWin(); PET.celebrate(w);                 /* 買來的勝利動作 */
     }
     render(); paintWheel();
   },4300);
@@ -10570,7 +10699,7 @@ $('shopBody').addEventListener('click',e=>{
   if(shopCat==='bg'){ tryBg=(tryBg===id?null:id); }
   else{
     tryWin=(tryWin===id?null:id);
-    if(tryWin){ const w=winById(id); SHOPPET.pose(w.pose,w.face,900); }   /* 先演一次給你看 */
+    if(tryWin){ SHOPPET.celebrate(winById(id)); }   /* 先演一次給你看 */
   }
   renderShop(); SFX.play('tick');
 });
