@@ -1224,6 +1224,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 <div class="sec">
   <div class="sechead"><h2><svg class="i"><use href="#i-stock"/></svg>資產</h2>
     <span class="sub" id="stkSub"></span>
+    <span class="segs" id="stkColSeg"><button data-sc="cost" class="on">成本</button><button data-sc="value">市值</button></span>
   </div>
   <div id="stocks"></div>
 </div>
@@ -7692,6 +7693,9 @@ async function loadPrices(){
 }
 const holdings=()=>Array.isArray(db.settings.holdings)?db.settings.holdings:[];
 const quoteOf=c=>PRICES&&PRICES.quotes?PRICES.quotes[String(c).trim().toUpperCase()]:null;
+/* 那一欄要看成本還是市值。預設看成本 —— 平常在意的是「我投了多少」，
+   賺賠另外有損益那欄在講 */
+let stkCol=(db.settings.stkCol==='value')?'value':'cost';
 function stockRows(){
   return holdings().map(h=>{
     const q=quoteOf(h.code), price=q?q.c:null;
@@ -7707,6 +7711,9 @@ const assets=()=>now()+stockValue()+othersValue();
 
 function renderStocks(){
   const box=$('stocks'), rows=stockRows(), os=others();
+  /* 放在最前面。沒有任何資產的時候下面會提早 return，
+     擺在後面的話那顆亮起來的按鈕會停在上一次的狀態 */
+  document.querySelectorAll('#stkColSeg button').forEach(b=>b.classList.toggle('on',b.dataset.sc===stkCol));
   if(!rows.length&&!os.length){
     box.innerHTML='<div class="card stkempty">還沒有資產。按上面的「新增資產」加股票或其他資產，'+
       '股票的收盤價每天盤後自動更新，市值會併進總資產。</div>';
@@ -7718,11 +7725,15 @@ function renderStocks(){
   const tc=rows.reduce((s,r)=>s+(r.cost||0),0)+oc;
   const hasPl=rows.some(r=>r.pl!==null)||os.some(o=>o.cost>0);
   const tp=hasPl?rows.reduce((s,r)=>s+(r.pl||0),0)+os.reduce((s,o)=>s+(o.cost>0?o.value-o.cost:0),0):null;
-  $('stkSub').textContent='總值 '+short(tv)+(tp!==null?'　損益 '+(tp>=0?'+':'-')+short(Math.abs(tp)):'');
+  const colName=stkCol==='cost'?'成本':'市值';
+  /* 成本填 0 或沒填的當作沒有，寫 0 會讓人以為是免費拿到的 */
+  const colOf=x=>stkCol==='cost'?(x.cost>0?x.cost:null):(x.value!==null&&x.value!==undefined?x.value:null);
+  $('stkSub').textContent=(stkCol==='cost'?'總成本 '+short(tc):'總值 '+short(tv))+
+    (tp!==null?'　損益 '+(tp>=0?'+':'-')+short(Math.abs(tp)):'');
   const cell=(v,cls)=>'<span class="'+cls+'">'+(v>=0?'+':'-')+money(Math.abs(v))+'</span>';
   box.innerHTML='<div class="card stkbox"><table class="stkt"><thead><tr>'+
     '<th>股票</th><th class="hidem">股數</th><th class="hidem">均價</th><th>現價</th>'+
-    '<th>市值</th><th>損益</th><th></th></tr></thead><tbody>'+
+    '<th>'+colName+'</th><th>損益</th><th></th></tr></thead><tbody>'+
     rows.map(r=>{
       const plpct=(r.pl!==null&&r.cost)?(r.pl/r.cost*100):null;
       return '<tr><td><span class="cd">'+esc(r.code)+'</span>'+
@@ -7730,7 +7741,7 @@ function renderStocks(){
         '<td class="hidem">'+money(r.shares)+'</td>'+
         '<td class="hidem">'+(r.avg>0?r.avg.toLocaleString('en-US',{minimumFractionDigits:2}):'—')+'</td>'+
         '<td>'+(r.price!==null?'<span class="'+(r.ch>0?'up':r.ch<0?'down':'')+'">'+r.price.toFixed(2)+'</span>':'—')+'</td>'+
-        '<td class="val">'+(r.value!==null?money(r.value):'—')+'</td>'+
+        '<td class="val">'+(colOf(r)!==null?money(colOf(r)):'—')+'</td>'+
         '<td>'+(r.pl!==null?cell(r.pl,r.pl>=0?'up':'down')+
           '<span class="nm">'+(plpct>=0?'+':'')+plpct.toFixed(1)+'%</span>':'—')+'</td>'+
         '<td class="x">'+
@@ -7742,7 +7753,7 @@ function renderStocks(){
       return '<tr><td><span class="cd">'+esc(o.name)+'</span><span class="nm">'+
           (o.qty?money(o.qty)+' '+esc(o.unit||''):'其他資產')+'</span></td>'+
         '<td class="hidem">'+(o.qty?money(o.qty):'—')+'</td><td class="hidem">'+(o.cost>0?money(o.cost):'—')+'</td><td>—</td>'+
-        '<td class="val">'+money(o.value)+'</td>'+
+        '<td class="val">'+(colOf(o)?money(colOf(o)):'—')+'</td>'+
         '<td>'+(pl!==null?'<span class="'+(pl>=0?'up':'down')+'">'+(pl>=0?'+':'-')+money(Math.abs(pl))+'</span>'+
           '<span class="nm">'+((pl/o.cost*100)>=0?'+':'')+(pl/o.cost*100).toFixed(1)+'%</span>':'—')+'</td>'+
         '<td class="x">'+
@@ -7750,7 +7761,7 @@ function renderStocks(){
           '<button class="iq del" data-delother="'+o.id+'"><svg class="i"><use href="#i-x"/></svg></button></td></tr>';
     }).join('')+
     '<tr class="sum"><td>合計 '+(rows.length+os.length)+' 項</td><td class="hidem"></td><td class="hidem"></td><td></td>'+
-      '<td class="val">'+money(tv)+'</td>'+
+      '<td class="val">'+money(stkCol==='cost'?tc:tv)+'</td>'+
       '<td>'+(tp!==null?cell(tp,tp>=0?'up':'down')+
         '<span class="nm">'+(tc?((tp/tc*100)>=0?'+':'')+(tp/tc*100).toFixed(1)+'%':'')+'</span>':'—')+'</td><td></td></tr>'+
     '</tbody></table><div class="stkfoot"><span>'+
@@ -10282,6 +10293,11 @@ document.body.addEventListener('click',e=>{
     logPage=1; SFX.play('tick'); renderLog(); return;
   }
   if(b.id==='btnMoreMt'){ mtLimit+=24; renderMonthTable(); return; }
+  if(b.dataset.sc){
+    stkCol=b.dataset.sc==='value'?'value':'cost';
+    db.settings.stkCol=stkCol; save();
+    SFX.play('tick'); renderStocks(); return;
+  }
   if(b.id==='btnDayCal') return openDayCal();
   if(b.id==='dayPrev') { SFX.play('tick'); return dayShift(-1); }
   if(b.id==='dayNext') { SFX.play('tick'); return dayShift(1); }
