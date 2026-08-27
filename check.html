@@ -10,7 +10,7 @@
   table{border-collapse:collapse;margin:0 8px 40px}
   th{font-size:12px;color:#9a94b8;font-weight:600;padding:4px}
   td{padding:0}
-  .cell{width:132px;height:132px;background:radial-gradient(ellipse at 50% 92%,#241f38 0%,transparent 70%);
+  .cell{width:var(--cs,132px);height:var(--cs,132px);background:radial-gradient(ellipse at 50% 92%,#241f38 0%,transparent 70%);
     border:1px solid #2c2643;border-radius:10px;margin:2px}
   .cell svg{width:100%;height:100%;display:block}
   .name{font-size:12.5px;color:#c9c4e0;text-align:right;padding-right:8px;white-space:nowrap}
@@ -29,6 +29,10 @@
    本體的 TCHARS／ITEMS 是 const，不會掛到 window 上，所以要用 eval 進去拿 */
 const ANGLES=[0,45,135,180,225,315];
 let W=null;
+/* ?only=a-fox,a-rab 只看這幾隻；?s=300 把格子放大，細節才看得清楚 */
+const Q=new URLSearchParams(location.search);
+const ONLY=(Q.get('only')||'').split(',').filter(Boolean);
+document.documentElement.style.setProperty('--cs',(Q.get('s')||132)+'px');
 app.onload=()=>setTimeout(init,500);
 function init(){
   W=app.contentWindow;
@@ -55,7 +59,8 @@ function draw(){
       'wearRaw=1; db.settings.wear=db.settings.wear||{};'+
       'var A=['+ANGLES.join(',')+'], id="'+id+'";'+
       'var h="<table><tr><th></th>"+A.map(function(d){return "<th>"+d+"°</th>";}).join("")+"</tr>";'+
-      'TCHARS.forEach(function(a){'+
+      'var ONLY='+JSON.stringify(ONLY)+';'+
+      'TCHARS.filter(function(a){return !ONLY.length||ONLY.indexOf(a.k)>=0;}).forEach(function(a){'+
         'var it=id?ITEMS.find(function(x){return x.id===id;}):null;'+
         'db.settings.wear[a.k]=(it&&it.only===a.k)?[it.id]:[];'+
         'h+="<tr><td class=\\"name\\">"+a.n+"</td>";'+

@@ -2365,13 +2365,24 @@ function chHead(a){
   return '<ellipse cx="60" cy="'+a.hy+'" rx="'+a.hr+'" ry="'+(a.hry||a.hr*.94)+'" fill="'+a.c+'"/>';
 }
 /* 頭上的花紋，畫在五官底下。頭貼也會用到這一份，所以只放頭上的東西 */
-function chFaceMark(a){
-  const L=60-a.gap, R=60+a.gap, ey=eyeY(a), my=mouY(a);
+/* 鬍鬚單獨一組。它本來就該伸出頭的輪廓外面，
+   跟其他五官一起被頭的遮罩剪掉的話會變成兩根短毛 */
+function chWhisk(a){
+  const my=mouY(a);
+  if(hides(a,'whisk')) return '';
   if(a.k==='a-cat')
     return '<path d="M'+(60-a.hr-4)+' '+(my-4)+'h11M'+(60-a.hr-4)+' '+(my+3)+'h11'+
              'M'+(60+a.hr+4)+' '+(my-4)+'h-11M'+(60+a.hr+4)+' '+(my+3)+'h-11" stroke="'+a.ink+
-             '" stroke-width="1.8" stroke-linecap="round" opacity=".6"/>'+
-           '<path d="M60 '+(my-7)+'l-3.5 3.5h7z" fill="#e8736f"/>';
+             '" stroke-width="1.8" stroke-linecap="round" opacity=".6"/>';
+  if(a.k==='a-sqr')
+    return '<path d="M'+(60-14)+' '+(my-2)+'h-8M'+(60+14)+' '+(my-2)+'h8" stroke="'+a.ink+
+           '" stroke-width="1.5" stroke-linecap="round" opacity=".55"/>';
+  return '';
+}
+function chFaceMark(a){
+  const L=60-a.gap, R=60+a.gap, ey=eyeY(a), my=mouY(a);
+  if(a.k==='a-cat')
+    return '<path d="M60 '+(my-7)+'l-3.5 3.5h7z" fill="#e8736f"/>';
   if(a.k==='a-dog')
     return '<ellipse cx="60" cy="'+(my+1)+'" rx="13" ry="10" fill="#f3ddd0"/>'+
            '<circle cx="60" cy="'+(my-5)+'" r="3.6" fill="'+a.ink+'"/>';
@@ -2416,9 +2427,7 @@ function chFaceMark(a){
   if(a.k==='a-sqr')
     return '<ellipse cx="60" cy="'+(my+1)+'" rx="10" ry="8" fill="#f6dcc0"/>'+
            '<path d="M60 '+(my-6)+'l-3.4 3.4h6.8z" fill="'+a.ink+'"/>'+
-           (hides(a,'whisk')?'':
-             '<path d="M'+(60-14)+' '+(my-2)+'h-8M'+(60+14)+' '+(my-2)+'h8" stroke="'+a.ink+
-             '" stroke-width="1.5" stroke-linecap="round" opacity=".55"/>');
+           '';
   return '';
 }
 /* 身上的花紋，只有全身圖才畫 */
@@ -2457,7 +2466,7 @@ function avaBody(a){
   const k=a.avaK||(a.egg?18/a.bw:20/a.hr), cy=a.avaCY||(a.egg?a.hy+4:a.hy);
   return '<g clip-path="url(#avaClip)">'+
     '<g transform="translate(32,'+(34+(a.avaDY||0))+') scale('+k.toFixed(3)+') translate(-60,'+(-cy)+')">'+
-    chBack(a,1)+(a.egg?chBody(a)+chBodyMark(a):'')+chHead(a)+chFaceMark(a)+chFace(a,'idle')+wearSVG(a,'head')+
+    chBack(a,1)+(a.egg?chBody(a)+chBodyMark(a):'')+chHead(a)+chFaceMark(a)+chWhisk(a)+chFace(a,'idle')+wearSVG(a,'head')+
     '</g></g>';
 }
 function buildAvatars(){
@@ -6738,31 +6747,43 @@ function chSVG(a,e,small,yaw){
      近側畫在頭前面、遠側留在頭後面讓頭擋住內側。
      過了九十度 cosθ 變負，兩隻自然交換位置。 */
   const earD=EARSPAN(a);
+  /* 臉是平的、頭是球的。五官整片照 r·sinθ 滑過去的話，
+     長在頭下緣的嘴筒（狐狸、兔子）會滑出頭的輪廓 —— 看起來就是下巴掉下來。
+     球在那個高度本來就比較窄，所以直接用頭的形狀當遮罩：
+     畫在頭上的東西不可能跑到頭外面去。鬍鬚除外，它本來就是往外長的。 */
+  const hcl='hcl'+cid;
+  const headClip=turned
+    ? '<clipPath id="'+hcl+'" clipPathUnits="userSpaceOnUse">'+
+      (a.sq?'<rect x="'+(60-a.hr)+'" y="'+(a.hy-a.hry)+'" width="'+(a.hr*2)+'" height="'+(a.hry*2)+'" rx="12"/>'
+           :'<ellipse cx="60" cy="'+a.hy+'" rx="'+a.hr+'" ry="'+(a.hry||a.hr*.94)+'"/>')+
+      '</clipPath>' : '';
+  const onHead=x=>turned?'<g clip-path="url(#'+hcl+')">'+x+'</g>':x;
   const earDefs=earSplit
     ? '<defs><clipPath id="'+clL+'" clipPathUnits="userSpaceOnUse">'+
       '<rect x="-40" y="-40" width="100" height="220"/></clipPath>'+
       '<clipPath id="'+clR+'" clipPathUnits="userSpaceOnUse">'+
       '<rect x="60" y="-40" width="100" height="220"/></clipPath></defs>'
     : '';
-  /* half：'near' 是靠鏡頭那半邊，'far' 是另外那半邊 */
+  /* half：'near' 是靠鏡頭那半邊，'far' 是另外那半邊。
+     位置跟形狀要分開算，這是關鍵：
+       位置照 cos 走（帶正負號）。45 度時左耳在左、135 度時左耳跑到右邊 ——
+       這個換邊就是「轉到背面」這件事本身。只用 |cos| 的話 45 跟 135
+       算出來一模一樣，兩個角度長得沒有差別，等於根本沒轉。
+       形狀用 |cos| 前縮，不帶負號。帶負號會就地鏡射，狐狸的內耳（淺色那片）
+       會被翻到外耳的外面去，背面看起來就變成兩個生硬的白三角形。
+     遠側那隻的位置多留一點在頭的邊緣（0.85），突出去的部分才露得出來；
+     兩隻都照 cos 收的話遠側會被頭整個吃掉，變成只剩一隻耳朵。 */
   const earHalf=half=>{
+    /* 青蛙那兩顆是眼睛不是耳朵。它跟眼白、眼珠是同一個東西，
+       要用跟臉一模一樣的位移，三個才會黏在一起 */
+    if(a.eyesTop) return '<g'+slide(60,a.hr*.55)+'>'+chBack(a,0,'ears')+'</g>';
     if(!earSplit) return '<g'+sqz(60)+'>'+chBack(a,0,'ears')+'</g>';
     const useL=(half==='near')===earNearLeft;
-    const sgn=useL?-1:1;                     /* 這一半原本在左邊還是右邊 */
-    /* 以耳朵自己的根部為軸橫向壓縮，不要平移。
-       平移的話大耳朵（狐狸）會滑到臉上，看起來像插了一根角；
-       以根部為軸的話根部一直黏在頭上，只有耳朵本身跟著轉而變窄，
-       過了九十度 cos 變負就地鏡射，正好是背面該有的樣子 */
-    /* 以「頭的中線」為軸收攏，不是以耳朵自己的中心。
-       以自己為軸的話，狐狸那種又寬又高的耳朵會往外甩到後腦勺去；
-       以中線為軸就是往頭頂靠攏，永遠待在頭上。
-       用 |cos| 不用 cos —— 帶負號會就地鏡射，狐狸的內耳（淺色那片）
-       會被翻到外耳外面，背面看起來就是兩個白色三角形 */
-    /* 近側那隻收攏得多一點（它正轉向鏡頭，蓋在頭上很自然），
-       遠側那隻留在頭的邊緣，突出去的部分才會從頭後面露出來 ——
-       兩隻都照同樣的比例收的話，遠側會整個被頭吃掉，變成只剩一隻耳朵 */
-    const k=half==='near'?Math.abs(yc):Math.max(.85,Math.abs(yc));
-    return '<g transform="translate(60,0) scale('+k.toFixed(4)+',1) translate(-60,0)">'+
+    const sgn=useL?-1:1, ac=Math.abs(yc), sc=yc<0?-1:1;
+    const posK=half==='near'?yc:sc*Math.max(.85,ac);
+    const x0=60+sgn*earD, tx=60+sgn*earD*posK;
+    return '<g transform="translate('+(tx-x0).toFixed(2)+',0) translate('+x0.toFixed(2)+
+           ',0) scale('+Math.max(.55,ac).toFixed(4)+',1) translate('+(-x0).toFixed(2)+',0)">'+
            '<g clip-path="url(#'+(useL?clL:clR)+')">'+chBack(a,0,'ears')+'</g></g>';
   };
   const backOn=yc<.02;                 /* 背面的東西這時候要整片畫出來 */
@@ -6809,7 +6830,7 @@ function chSVG(a,e,small,yaw){
     (heldFar?'':heldG);
   /* 影子留在 walk 層，只跟著左右移動，不跟著跳 */
   YAWCTX.t=YW; YAWCTX.on=turned; YAWCTX.side=ycl;
-  const html='<svg class="actor" viewBox="0 0 120 120">'+earDefs+
+  const html='<svg class="actor" viewBox="0 0 120 120">'+earDefs+headClip+
     '<g class="walk">'+
       (small?'':'<ellipse class="shd" cx="60" cy="113" rx="24" ry="5" fill="#000" opacity=".18"/>')+
       /* 側面比正面窄。身體當圓柱看，寬度不會歸零，但要收一點才看得出在轉。
@@ -6827,9 +6848,13 @@ function chSVG(a,e,small,yaw){
         (turned?chBack(a,0,'body'):'')+
         /* 沒轉到背面的時候尾巴留在身體後面 */
         (turned&&!tailFront?tailG(chBack(a,0,'tail')):'')+
-        /* 遠側那隻耳朵留在頭後面。正對正面或正背面的時候兩隻一樣近，
-           不用分，整組畫在前面一次就好 */
-        (earSplit?earHalf('far'):'')+
+        /* 兩隻耳朵都留在頭後面。耳朵是長在頭骨上的，三角形有一大截
+           埋在頭裡面 —— 狐狸埋得特別深（耳朵底邊到 y=56，頭心才 43）。
+           把近側那隻挪到頭前面的話，那截埋著的會整個露出來，
+           變成一根比頭還高的白色尖刺；貓的耳朵短、沒埋，才看不出來。
+           近側那隻畫在遠側後面一點（後畫的蓋住先畫的），前後關係就對了。 */
+        (earSplit?earHalf('far')+earHalf('near')
+                 :(turned&&!a.eyesTop?earHalf('near'):''))+
         /* 披風那類貼在背面的：正面只看得到邊緣，轉過去才整片露出來，
            所以背面的時候要移到最上層去畫 */
         (backOn?'':wearSVG(a,'back'))+
@@ -6853,11 +6878,19 @@ function chSVG(a,e,small,yaw){
         chHead(a)+
         /* 靠鏡頭那隻耳朵挪到頭前面 —— 但要在五官「之前」畫。
            畫在五官後面的話，青蛙那種眼球包會直接把自己的眼睛蓋掉 */
-        (turned?earHalf('near'):'')+
+        /* 青蛙的眼球包是眼睛不是耳朵，永遠在頭前面 */
+        (turned&&a.eyesTop?earHalf('near'):'')+
         /* 頭上的花紋一個零件一個零件算：跟頭一樣大的那塊（羊的深色臉）
-           要當成頭本身不動也不藏，小塊的才跟著臉走 */
-        '<g class="faceMark">'+markYaw('fm:'+a.k,a,chFaceMark(a),a.hr*2,a.hr*.55)+'</g>'+
-        (faceOn?'<g'+slide(60,a.hr*.55)+'><g class="face">'+chFace(a,e)+'</g></g>':'')+
+           要當成頭本身不動也不藏，小塊的才跟著臉走。
+           青蛙的眼白例外 —— 它畫在眼球包上，要跟眼珠綁在同一片臉上一起走，
+           分開算的話眼白留在原地、眼珠滑走，就變成眼白跟眼珠分離 */
+        (a.eyesTop?'':onHead('<g class="faceMark">'+
+           markYaw('fm:'+a.k,a,chFaceMark(a),a.hr*2,a.hr*.55)+'</g>'))+
+        (faceOn?onHead('<g'+slide(60,a.hr*.55)+'>'+
+          (a.eyesTop?'<g class="faceMark">'+chFaceMark(a)+'</g>':'')+
+          '<g class="face">'+chFace(a,e)+'</g></g>'):'')+
+        /* 鬍鬚往頭外面長，不受頭的遮罩 */
+        (faceOn?'<g'+slide(60,a.hr*.55)+' class="whisk">'+chWhisk(a)+'</g>':'')+
         (turned&&tailFront?tailG(chBack(a,0,'tail')):'')+
         /* 頭上、臉上、脖子上的東西。每一件（其實是每一個零件）
            自己照長在圓柱的哪個位置去算，這裡不再整層一起壓 */
