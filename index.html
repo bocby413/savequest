@@ -6452,7 +6452,74 @@ function toggleWear(k,id){
 /* 疊的順序照部位固定，不看穿的先後。不然像狐狸面具那種蓋住整張臉的，
    後穿上就會把帽子壓在底下 */
 const ZWEAR=['foot','body','hand','neck','face','head'];
+/* 把一件配件拆成零件，各自量位置、各自分類。一件拆一次就存起來 */
+const WEARPARTS=(()=>{
+  const cache={}; let svg=null;
+  return (a,it)=>{
+    if(cache[it.id]) return cache[it.id];
+    if(typeof document==='undefined') return null;
+    if(!svg){
+      svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('viewBox','0 0 120 120');
+      svg.style.cssText='position:absolute;left:-9999px;top:0;width:0;height:0;overflow:hidden';
+      document.body.appendChild(svg);
+    }
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    try{ g.innerHTML=it.d(a); }catch(e){ return cache[it.id]=[]; }
+    svg.appendChild(g);
+    /* 參考寬度要用「它繞在哪一段」的寬度：脖子上的東西拿頭寬去比的話，
+       項圈的帶子會被當成窄窄的吊墜，整條從背面消失 */
+    const ry=HRY(a);
+    const ref=it.slot==='body' ? a.bw*2
+            : it.slot==='neck' ? NKW(a)*2
+            : a.hr*2;
+    const R=ref/2;
+    const parts=[...g.children].map(el=>{
+      let b; try{ b=el.getBBox(); }catch(e){ b={x:60,y:60,width:0,height:0}; }
+      const cx=b.x+b.width/2, off=cx-60;
+      let kind;
+      if(!b.width)                                        kind='wrap';
+      else if(b.width>=ref*.72)                           kind='wrap';
+      else if(b.y+b.height<a.hy-ry*.55&&b.width<ref*.75)  kind='top';
+      else if(Math.abs(off)>ref*.22)                      kind='side';
+      else                                                kind='front';
+      return {html:el.outerHTML, cx, kind, R};
+    });
+    g.remove();
+    return cache[it.id]=parts;
+  };
+})();
+/* 轉身的角度。chSVG 每次畫之前先放進來 */
+const YAWCTX={t:0,on:false};
+/* 一個零件轉到這個角度之後長怎樣 */
+function partYaw(p){
+  const t=YAWCTX.t, R=Math.max(6,p.R);
+  if(p.kind==='wrap'){        /* 帶子整圈都在，只有上面的花紋跟著轉 */
+    const c=Math.cos(t);
+    return {ox:60, dx:R*.35*Math.sin(t), sx:.6+.4*Math.abs(c)};
+  }
+  if(p.kind==='top'){         /* 長在轉軸上，轉了幾乎不變 */
+    return {ox:60, dx:0, sx:.85+.15*Math.abs(Math.cos(t))};
+  }
+  const phi=Math.asin(Math.max(-1,Math.min(1,(p.cx-60)/R)));
+  const th=t+phi, c=Math.cos(th);
+  /* 轉到背面就被身體擋住。留一點餘裕，剛好側面不要瞬間消失 */
+  if(c<-.1) return null;
+  return {ox:p.cx, dx:60+R*Math.sin(th)-p.cx, sx:Math.max(.18,Math.abs(c))};
+}
 function wearSVG(a,mode){
+  /* 轉身的時候一個零件一個零件各算各的，不是整件一起壓 */
+  const yawWrap=(a2,it)=>{
+    if(!YAWCTX.on) return it.d(a2);
+    const parts=WEARPARTS(a2,it);
+    if(!parts||!parts.length) return it.d(a2);
+    return parts.map(p=>{
+      const y=partYaw(p);
+      if(!y) return '';
+      return '<g transform="translate('+(y.ox+y.dx).toFixed(2)+',0) scale('+y.sx.toFixed(4)+
+             ',1) translate('+(-y.ox)+',0)">'+p.html+'</g>';
+    }).join('');
+  };
   return wornList(a.k).slice()
     .sort((x,y)=>{
       const ix=ZWEAR.indexOf((itemById(x)||{}).slot), iy=ZWEAR.indexOf((itemById(y)||{}).slot);
@@ -6464,7 +6531,7 @@ function wearSVG(a,mode){
     if(it.back) return '';
     if(mode==='head') return ['body','hand','foot'].indexOf(it.slot)>=0?'':it.d(a);
     /* 衣服畫在頭的下面，不然領口會把下巴切掉 */
-    if(mode==='mid')  return it.slot==='body'?it.d(a):'';
+    if(mode==='mid')  return it.slot==='body'?yawWrap(a,it):'';
     /* 手跟腳的東西各自塞進手臂／腳掌的群組裡，才會跟著動畫一起動 */
     if(mode==='hand') return it.slot==='hand'?AC.hold(a,it,it.d(a)):'';
     if(mode==='footL'||mode==='footR'){
@@ -6478,11 +6545,7 @@ function wearSVG(a,mode){
        不然也畫在腳掌那層 */
     if(it.slot==='hand') return '';
     if(it.slot==='foot') return a.base?it.d(a):'';
-    /* 轉身用：眼鏡、面具那類貼在臉上的要跟著臉滑、轉過去要收起來；
-       帽子、圍巾是繞著頭跟脖子一圈的，只壓不藏 */
-    if(mode==='faceon') return it.slot==='face'?it.d(a):'';
-    if(mode==='wrap')   return it.slot==='face'?'':it.d(a);
-    return it.d(a);
+    return yawWrap(a,it);
   }).join('');
 }
 /* 這隻買得到的東西：通用的加上自己的專屬品 */
@@ -6540,14 +6603,19 @@ function chSVG(a,e,small,yaw){
       '<g class="footR">'+leg(60+fx)+'<ellipse cx="'+(60+fx)+'" cy="'+fy+'" rx="'+fw+'" ry="5.5" fill="'+ft+'"/></g>';
   /* 鞋子與手上拿的東西要跟著走路、擺手一起動，但又得畫在最上層才不會被身體蓋掉。
      所以在這裡再開一組同名的群組，動畫會把同樣的位移套到每一個同名群組上 */
+  /* 拿在手上的東西是掛在左手的。左手轉到遠側的時候，
+     東西也要跟著被身體擋住，不能還浮在最上面 */
+  const heldG='<g class="armL held" data-p="'+(60-apx)+','+apy+'">'+wearSVG(a,'hand')+'</g>';
+  const heldFar=turned&&ys<-.2;        /* 左手在遠側 */
   const moving=
     '<g class="footL">'+wearSVG(a,'footL')+'</g>'+
     '<g class="footR">'+wearSVG(a,'footR')+'</g>'+
     /* 身體前面那份手臂，平常收起來 */
     '<g class="armsFront" style="display:none">'+armLg+armRg+'</g>'+
-    '<g class="armL" data-p="'+(60-apx)+','+apy+'">'+wearSVG(a,'hand')+'</g>';
+    (heldFar?'':heldG);
   /* 影子留在 walk 層，只跟著左右移動，不跟著跳 */
-  return '<svg class="actor" viewBox="0 0 120 120">'+
+  YAWCTX.t=YW; YAWCTX.on=turned;
+  const html='<svg class="actor" viewBox="0 0 120 120">'+
     '<g class="walk">'+
       (small?'':'<ellipse class="shd" cx="60" cy="113" rx="24" ry="5" fill="#000" opacity=".18"/>')+
       /* 側面比正面窄。身體當圓柱看，寬度不會歸零，但要收一點才看得出在轉。
@@ -6568,11 +6636,12 @@ function chSVG(a,e,small,yaw){
            兩隻都留在後面的話會整個被身體擋掉，看起來像沒有手 */
         '<g class="armsBack"'+sqz(60)+'>'+
           (nearL?'':armLg)+(nearR?'':armRg)+
+          (heldFar?heldG:'')+     /* armsBack 本身已經有壓縮了，不要再包一層 */
         '</g>'+
         chBody(a)+
         (faceOn?'<g'+slide(60,a.bw*.5)+'>'+chBodyMark(a)+'</g>':'')+
-        /* 衣服：在身體上面、頭下面。轉的時候前襟要跟著移過去 */
-        '<g class="wearMid"'+wrap(60,a.bw*.4)+'>'+wearSVG(a,'mid')+'</g>'+
+        /* 衣服：在身體上面、頭下面 */
+        '<g class="wearMid">'+wearSVG(a,'mid')+'</g>'+
         /* 靠鏡頭那隻手：畫在身體跟衣服的上面 */
         ((nearL||nearR)?'<g class="armsNear"'+sqz(60)+'>'+
           (nearL?armLg:'')+(nearR?armRg:'')+'</g>':'')+
@@ -6580,15 +6649,16 @@ function chSVG(a,e,small,yaw){
         (faceOn?'<g'+slide(60,a.hr*.55)+'>'+chFaceMark(a)+
                 '<g class="face">'+chFace(a,e)+'</g></g>'
                :'')+
-        /* 帽子、圍巾是繞著頭跟脖子一圈的：跟著轉、但不會轉到不見 */
-        '<g class="wearWrap"'+wrap(60,a.hr*.45)+'>'+wearSVG(a,turned?'wrap':undefined)+'</g>'+
-        /* 眼鏡、面具那類貼在臉上的，要跟臉一起滑走、一起收起來 */
-        (turned&&faceOn?'<g class="wearFace"'+slide(60,a.hr*.55)+'>'+wearSVG(a,'faceon')+'</g>':'')+
+        /* 頭上、臉上、脖子上的東西。每一件（其實是每一個零件）
+           自己照長在圓柱的哪個位置去算，這裡不再整層一起壓 */
+        '<g class="wearWrap">'+wearSVG(a)+'</g>'+
         (backOn?wearSVG(a,'back'):'')+
         /* 手上拿的、腳上穿的要跟著手腳一起往中間壓，不然轉側面的時候會浮在旁邊 */
         '<g'+sqz(60)+'>'+moving+'</g>'+
       '</g></g>'+
     '</g></svg>';
+  YAWCTX.on=false;          /* 這裡一定要還原，不然下一個沒帶角度的也會被轉 */
+  return html;
 }
 const SVGB=(w,h,d)=>'<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'">'+d+'</svg>';
 const SCENE={
