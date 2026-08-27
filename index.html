@@ -2202,9 +2202,11 @@ const eyeY=a=>a.hy+a.eo, mouY=a=>a.hy+a.mo;
 /* 身體後面的東西：耳朵、角羽、尾巴、青蛙的眼球包 */
 /* 有些配件是把原本的部位換掉（機器人的天線、底座），不是疊在上面 */
 const hides=(a,part)=>wornList(a.k).some(id=>{ const o=itemById(id); return o&&o.hide===part; });
-function chBack(a,noTail){
-  const T=x=>noTail?'':x;   /* 頭貼只取頭，尾巴不畫 */
-  const E=x=>'<g class="ears" data-p="60,'+(a.hy-a.hr*.2).toFixed(0)+'">'+x+'</g>', hy=a.hy, hr=a.hr;
+/* part：不給就是全部，'tail' 只要尾巴，'ears' 只要耳朵。
+   轉身的時候這兩個要分開放到不同的層 */
+function chBack(a,noTail,part){
+  const T=x=>(noTail||part==='ears')?'':x;   /* 頭貼只取頭，尾巴不畫 */
+  const E=x=>part==='tail'?'':'<g class="ears" data-p="60,'+(a.hy-a.hr*.2).toFixed(0)+'">'+x+'</g>', hy=a.hy, hr=a.hr;
   if(a.k==='a-cat')
     return T('<g class="tail" data-p="'+(60+a.bw-2)+','+(a.by+8)+'"><path d="M'+(60+a.bw-2)+' '+(a.by+8)+'q18 3 13-19" stroke="'+a.tailC+
              '" stroke-width="7" fill="none" stroke-linecap="round"/></g>')+
@@ -2230,7 +2232,10 @@ function chBack(a,noTail){
              '<path d="M'+(60-hr+3)+' '+(hy-hr+5)+' '+(60-hr+14)+' '+(hy+3)+' '+(60-hr+7)+' '+(hy+7)+'z'+
               'M'+(60+hr-3)+' '+(hy-hr+5)+' '+(60+hr-14)+' '+(hy+3)+' '+(60+hr-7)+' '+(hy+7)+'z" fill="#fff0e2" opacity=".8"/>');
   if(a.k==='a-bot')
-    return hides(a,'ant') ? '<g class="ears" data-p="60,'+(hy-a.hry)+'"></g>'
+    /* 天線的支點在頭頂，跟其他角色的耳朵不一樣，但一樣要走 E()，
+       不然拆成前後兩層的時候會冒出兩組 .ears */
+    return part==='tail' ? ''
+         : hides(a,'ant') ? '<g class="ears" data-p="60,'+(hy-a.hry)+'"></g>'
          : '<g class="ears" data-p="60,'+(hy-a.hry)+'"><path d="M60 '+(hy-a.hry-9)+'V'+(hy-a.hry+2)+'" stroke="'+a.d+'" stroke-width="4"/>'+
            '<circle cx="60" cy="'+(hy-a.hry-11)+'" r="6" fill="#3ce0d0"/></g>';
   if(a.k==='a-frog')                                   /* 兩顆凸在頭頂的眼球包 */
@@ -6501,6 +6506,47 @@ const WEARPARTS=(()=>{
     return cache[it.id]=parts;
   };
 })();
+/* 角色自己身上的花紋（羊的深色臉、貓的肚子）也要一個零件一個零件分類。
+   羊那張「臉」其實是整顆頭，整片跟著臉滑走就變成戴面具，整片藏起來頭就變白的 */
+function markYaw(key,a,svg,ref,r){
+  if(!YAWCTX.on||!svg) return svg;
+  const parts=MARKPARTS(key,a,svg,ref,r);
+  if(!parts||!parts.length) return svg;
+  return parts.map(p=>{
+    const y=partYaw(p);
+    if(!y) return '';
+    return '<g data-k="'+p.kind+'" transform="translate('+(y.ox+y.dx).toFixed(2)+
+           ',0) scale('+y.sx.toFixed(4)+',1) translate('+(-y.ox)+',0)">'+p.html+'</g>';
+  }).join('');
+}
+const MARKPARTS=(()=>{
+  const cache={}; let svg=null;
+  return (key,a,str,ref,r)=>{
+    if(cache[key]) return cache[key];
+    if(typeof document==='undefined') return null;
+    if(!svg){
+      svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('viewBox','0 0 120 120');
+      svg.style.cssText='position:absolute;left:-9999px;top:0;width:0;height:0;overflow:hidden';
+      document.body.appendChild(svg);
+    }
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    try{ g.innerHTML=str; }catch(e){ return cache[key]=[]; }
+    svg.appendChild(g);
+    const parts=[...g.children].map(el=>{
+      let b; try{ b=el.getBBox(); }catch(e){ b={x:60,y:60,width:0,height:0}; }
+      const cx=b.x+b.width/2, off=cx-60;
+      let kind;
+      if(!b.width)                    kind='skin';
+      else if(b.width>=ref*.95)       kind='skin';    /* 跟頭一樣大的＝那就是頭本身 */
+      else if(Math.abs(off)>ref*.22)  kind='side';
+      else                            kind='front';
+      return {html:el.outerHTML, cx, kind, r};
+    });
+    g.remove();
+    return cache[key]=parts;
+  };
+})();
 /* 轉身的角度。chSVG 每次畫之前先放進來 */
 const YAWCTX={t:0,on:false,side:1};
 /* 一個零件轉到這個角度之後長怎樣。
@@ -6594,6 +6640,8 @@ function chSVG(a,e,small,yaw){
   /* 臉要撐到過側面一點才收，正好九十度就消失的話會變成一顆沒有五官的頭。
      這時候臉已經滑到頭的邊緣、壓成一條，看起來就是側臉 */
   const faceOn=yc>-.12;
+  /* 轉到看得見背面的時候，尾巴在靠鏡頭那一側，要畫在身體前面 */
+  const tailFront=yc<.02;
   const backOn=yc<.02;                 /* 背面的東西這時候要整片畫出來 */
   const aw=a.armW||7, ah=a.armH||12;
   const apx=a.bw+aw-2, apy=a.apy||(a.by-a.bh*.45);         /* 肩膀 */
@@ -6639,8 +6687,13 @@ function chSVG(a,e,small,yaw){
       '<g class="breathe"'+(turned
         ? ' transform="translate(60,0) scale('+(.72+.28*Math.abs(yc)).toFixed(4)+',1) translate(-60,0)"'
         : '')+'><g class="ch">'+
-        /* 尾巴跟耳朵在 chBack 裡，兩側的東西要跟著壓 */
-        '<g'+sqz(60)+'>'+chBack(a)+'</g>'+
+        /* 尾巴跟耳朵要分開放：
+             垂耳長在頭的兩側，往中間壓之後會整個躲到頭後面，所以轉身時要挪到頭前面
+             尾巴長在屁股後面，轉到背面的時候它在近側，要畫到身體前面來 */
+        '<g'+sqz(60)+'>'+
+          (turned?'':chBack(a))+
+          (turned&&!tailFront?chBack(a,0,'tail'):'')+
+        '</g>'+
         /* 披風那類貼在背面的：正面只看得到邊緣，轉過去才整片露出來，
            所以背面的時候要移到最上層去畫 */
         (backOn?'':wearSVG(a,'back'))+
@@ -6655,16 +6708,20 @@ function chSVG(a,e,small,yaw){
           (heldFar?heldG:'')+     /* armsBack 本身已經有壓縮了，不要再包一層 */
         '</g>'+
         chBody(a)+
-        (faceOn?'<g'+slide(60,a.bw*.5)+'>'+chBodyMark(a)+'</g>':'')+
+        '<g class="bodyMark">'+markYaw('bm:'+a.k,a,chBodyMark(a),a.bw*2,a.bw*.5)+'</g>'+
         /* 衣服：在身體上面、頭下面 */
         '<g class="wearMid">'+wearSVG(a,'mid')+'</g>'+
         /* 靠鏡頭那隻手：畫在身體跟衣服的上面 */
         ((nearL||nearR)?'<g class="armsNear"'+sqz(60)+'>'+
           (nearL?armLg:'')+(nearR?armRg:'')+'</g>':'')+
         chHead(a)+
-        (faceOn?'<g'+slide(60,a.hr*.55)+'>'+chFaceMark(a)+
-                '<g class="face">'+chFace(a,e)+'</g></g>'
-               :'')+
+        /* 頭上的花紋一個零件一個零件算：跟頭一樣大的那塊（羊的深色臉）
+           要當成頭本身不動也不藏，小塊的才跟著臉走 */
+        '<g class="faceMark">'+markYaw('fm:'+a.k,a,chFaceMark(a),a.hr*2,a.hr*.55)+'</g>'+
+        (faceOn?'<g'+slide(60,a.hr*.55)+'><g class="face">'+chFace(a,e)+'</g></g>':'')+
+        /* 轉身時耳朵挪到頭前面，尾巴在背面的時候也挪到前面 */
+        (turned?'<g'+sqz(60)+'>'+chBack(a,0,'ears')+
+          (tailFront?chBack(a,0,'tail'):'')+'</g>':'')+
         /* 頭上、臉上、脖子上的東西。每一件（其實是每一個零件）
            自己照長在圓柱的哪個位置去算，這裡不再整層一起壓 */
         '<g class="wearWrap">'+wearSVG(a)+'</g>'+
