@@ -2239,7 +2239,10 @@ function chBack(a,noTail,part){
          : '<g class="ears" data-p="60,'+(hy-a.hry)+'"><path d="M60 '+(hy-a.hry-9)+'V'+(hy-a.hry+2)+'" stroke="'+a.d+'" stroke-width="4"/>'+
            '<circle cx="60" cy="'+(hy-a.hry-11)+'" r="6" fill="#3ce0d0"/></g>';
   if(a.k==='a-frog')                                   /* 兩顆凸在頭頂的眼球包 */
-    return '<circle cx="'+(60-a.gap)+'" cy="'+eyeY(a)+'" r="13" fill="#6cc24a"/>'+
+    /* 這兩顆算耳朵那一類（長在頭的兩側）。沒有這行的話拆成尾巴跟耳朵
+       兩層的時候會被畫兩次 */
+    return part==='tail' ? '' :
+           '<circle cx="'+(60-a.gap)+'" cy="'+eyeY(a)+'" r="13" fill="#6cc24a"/>'+
            '<circle cx="'+(60+a.gap)+'" cy="'+eyeY(a)+'" r="13" fill="#6cc24a"/>';
   if(a.k==='a-owl')
     return E('<path d="M'+(60-hr+6)+' '+(hy-hr+9)+' '+(60-hr+15)+' '+(hy-hr-2)+'l9 10z'+
@@ -6457,6 +6460,29 @@ function toggleWear(k,id){
 /* 疊的順序照部位固定，不看穿的先後。不然像狐狸面具那種蓋住整張臉的，
    後穿上就會把帽子壓在底下 */
 const ZWEAR=['foot','body','hand','neck','face','head'];
+/* 量這隻角色的耳朵長在離中線多遠。每隻差很多 ——
+   狗的垂耳在 ±31、兔子的長耳靠很近，用頭半徑一律套會位移過頭 */
+const EARSPAN=(()=>{
+  const cache={}; let svg=null;
+  return a=>{
+    if(cache[a.k]!==undefined) return cache[a.k];
+    if(typeof document==='undefined') return 0;
+    if(!svg){
+      svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('viewBox','0 0 120 120');
+      svg.style.cssText='position:absolute;left:-9999px;top:0;width:0;height:0;overflow:hidden';
+      document.body.appendChild(svg);
+    }
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    try{ g.innerHTML=chBack(a,0,'ears'); }catch(e){ return cache[a.k]=0; }
+    svg.appendChild(g);
+    let b; try{ b=g.getBBox(); }catch(e){ b=null; }
+    g.remove();
+    if(!b||!b.width) return cache[a.k]=0;
+    /* 外框的一半是「耳朵外緣」到中線的距離，耳朵中心大約在四分之三處 */
+    return cache[a.k]=Math.min(a.hr, b.width/2*.75);
+  };
+})();
 /* 把一件配件拆成零件，各自量位置、各自分類。一件拆一次就存起來 */
 const WEARPARTS=(()=>{
   const cache={}; let svg=null;
@@ -6667,11 +6693,12 @@ function chSVG(a,e,small,yaw){
   const cid=++chSVGn, clL='ecl'+cid, clR='ecr'+cid;
   const earNearLeft=ys>.2;         /* 左邊那隻靠鏡頭 */
   const earSplit=turned&&Math.abs(ys)>.2;
-  /* 兩隻各自往中線靠多少。照純幾何算的話（hr·(1-cosθ)）遠側那隻會被拉進
-     頭的輪廓裡整個看不到，所以近側的多靠一點（它正轉向鏡頭、蓋在頭上很自然），
-     遠側的幾乎留在原位，讓它突出去的部分從頭的邊緣露出來 */
-  const earNear=(a.hr*.28*(1-yc)).toFixed(2);
-  const earFar =(a.hr*.08*(1-yc)).toFixed(2);
+  /* 兩隻的附著點必須「對稱」移動：左耳 60-d·cosθ、右耳 60+d·cosθ，
+     d 是這隻角色的耳朵離中線多遠（每隻差很多，量出來的）。
+     之前給近側跟遠側不同的位移量，過了九十度就沒有正確交換位置，
+     45 度跟 135 度看起來都是歪的。前後的差別只在畫在頭的前面還是後面 */
+  const earD=EARSPAN(a);
+  const earShift=(earD*(1-yc)).toFixed(2);
   const earDefs=earSplit
     ? '<defs><clipPath id="'+clL+'" clipPathUnits="userSpaceOnUse">'+
       '<rect x="-40" y="-40" width="100" height="220"/></clipPath>'+
@@ -6682,8 +6709,7 @@ function chSVG(a,e,small,yaw){
   const earHalf=half=>{
     if(!earSplit) return '<g'+sqz(60)+'>'+chBack(a,0,'ears')+'</g>';
     const useL=(half==='near')===earNearLeft;
-    const amt=half==='near'?earNear:earFar;
-    const dx=useL?amt:-amt;                  /* 左耳往右靠、右耳往左靠 */
+    const dx=useL?earShift:-earShift;        /* 左耳往右移、右耳往左移，量一樣 */
     return '<g transform="translate('+dx+',0)"><g clip-path="url(#'+(useL?clL:clR)+')">'+
            chBack(a,0,'ears')+'</g></g>';
   };
