@@ -2289,13 +2289,18 @@ function chBack(a,noTail){
              const ry=HRY(a), rad=t=>t*Math.PI/180;
              const P=(sg,t,k)=>[(60+sg*hr*k*Math.cos(rad(t))).toFixed(1),
                                 (hy-ry*k*Math.sin(rad(t))).toFixed(1)];
+             /* 松鼠的耳朵是圓弧的，不是三角形 —— 直線接到頂點會跟貓的耳朵長得一樣。
+                兩段二次曲線，控制點推到外側把側邊撐成弧形，頂點也壓低一點 */
              const tuft=(sg,t1,t2,k1,k2,c,op)=>{
-               const A=P(sg,t1,k1), B=P(sg,t2,k1), C=P(sg,(t1+t2)/2,k2);
-               return '<path d="M'+A[0]+' '+A[1]+'L'+C[0]+' '+C[1]+'L'+B[0]+' '+B[1]+
+               const tc=(t1+t2)/2;
+               const A=P(sg,t1,k1), B=P(sg,t2,k1), C=P(sg,tc,k2);
+               const Q1=P(sg,t1+(tc-t1)*.45,k2*.97), Q2=P(sg,t2-(t2-tc)*.45,k2*.97);
+               return '<path d="M'+A[0]+' '+A[1]+'Q'+Q1[0]+' '+Q1[1]+' '+C[0]+' '+C[1]+
+                      'Q'+Q2[0]+' '+Q2[1]+' '+B[0]+' '+B[1]+
                       'Z" fill="'+c+'" stroke="'+c+'" stroke-width="3.4" stroke-linejoin="round"'+
                       (op?' opacity="'+op+'"':'')+'/>';};
-             return tuft(-1,30,72,.94,1.55,a.d)+tuft(1,30,72,.94,1.55,a.d)+
-                    tuft(-1,38,64,.86,1.26,'#f6dcc0','.8')+tuft(1,38,64,.86,1.26,'#f6dcc0','.8');
+             return tuft(-1,26,76,.94,1.42,a.d)+tuft(1,26,76,.94,1.42,a.d)+
+                    tuft(-1,35,67,.86,1.18,'#f6dcc0','.8')+tuft(1,35,67,.86,1.18,'#f6dcc0','.8');
            })());
   }
   return '';
@@ -2733,17 +2738,15 @@ const defBg=()=>bgById(DEFBG)||BGS[0];
 const winById=id=>WINS.find(x=>x.id===id);
 /* 這隻角色選得到的：共用的六個 ＋ 牠自己專屬的六個 */
 const winsFor=k=>WINS.filter(w=>w.only===k);
-/* 沒選過就用這隻角色的第一個。以前有六個大家共用的，已經拿掉了 */
-const defWin=k=>winsFor(k)[0]||WINS[0];
 const myBg=()=>bgById(db.settings.bg)||null;
 /* 專屬動作是綁角色的，所以選擇要一隻一隻記。
    換角色的時候不能把上一隻的專屬動作帶過去 —— 那是別人的動作 */
+/* 沒有預設動作：沒買也沒選就是不做慶祝動作，回傳 null。
+   買過的才算數 —— 只改本機的設定不會憑空多一個動作出來 */
 function myWin(){
   const k=(db.settings.avatar&&db.settings.avatar.id)||TCHARS[0].k;
   const w=winById((db.settings.winOf||{})[k]);
-  if(w&&w.only===k) return w;
-  /* 舊資料可能指著已經拿掉的共用動作、或別隻的專屬動作，一律退回這隻的第一個 */
-  return defWin(k);
+  return (w&&w.only===k&&hasItem(w.id))?w:null;
 }
 /* 選了哪個動作。db.settings.win 留著給好友那邊看「他在用什麼」 */
 function setWin(id){
@@ -9656,7 +9659,8 @@ function renderShop(){
 function renderShopExtra(){
   const bg=shopCat==='bg';
   const list=bg?BGS:winsFor(petChar().k);
-  const now=bg?db.settings.bg:myWin().id;
+  const mw=myWin();
+  const now=bg?db.settings.bg:(mw?mw.id:'');
   const nowTh=bg?(db.settings.theme||DEFBG):null;   /* 佈景是另一個設定 */
   const pick=bg?tryBg:tryWin;
   const sel=pick!==null?pick:now;
