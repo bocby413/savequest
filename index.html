@@ -6483,29 +6483,31 @@ const WEARPARTS=(()=>{
       else if(b.y+b.height<a.hy-ry*.55&&b.width<ref*.75)  kind='top';
       else if(Math.abs(off)>ref*.22)                      kind='side';
       else                                                kind='front';
-      return {html:el.outerHTML, cx, kind, R};
+      /* 貼在正面的東西要跟「臉／身上的花紋」用同一個滑動半徑，
+         不然眼鏡會飛到臉外面去 —— 臉只滑 hr×0.55，眼鏡卻用整個頭半徑繞 */
+      const r=(it.slot==='body'||it.slot==='neck')?a.bw*.5:a.hr*.55;
+      return {html:el.outerHTML, cx, kind, r};
     });
     g.remove();
     return cache[it.id]=parts;
   };
 })();
 /* 轉身的角度。chSVG 每次畫之前先放進來 */
-const YAWCTX={t:0,on:false};
-/* 一個零件轉到這個角度之後長怎樣 */
+const YAWCTX={t:0,on:false,side:1};
+/* 一個零件轉到這個角度之後長怎樣。
+   關鍵：配件一定要跟它附著的那個部位用「同一個」變形，各算各的就會分家。
+     wrap／top 帽身、衣身、尖帽 ── 貼合身體的輪廓，而身體的輪廓只有整隻
+                                   那層在收窄，所以這裡完全不要動。
+                                   自己再壓一次的話衣服會比身體窄，
+                                   背面就會露出一塊空的
+     side      髮夾、鏡腳、耳朵上的東西 ── 跟耳朵手腳同一組往中間壓
+     front     眼鏡、吊墜、胸前的圖案 ── 跟臉、身上的花紋同一個滑動與壓縮 */
 function partYaw(p){
-  const t=YAWCTX.t, R=Math.max(6,p.R);
-  if(p.kind==='wrap'){        /* 帶子整圈都在，只有上面的花紋跟著轉 */
-    const c=Math.cos(t);
-    return {ox:60, dx:R*.35*Math.sin(t), sx:.6+.4*Math.abs(c)};
-  }
-  if(p.kind==='top'){         /* 長在轉軸上，轉了幾乎不變 */
-    return {ox:60, dx:0, sx:.85+.15*Math.abs(Math.cos(t))};
-  }
-  const phi=Math.asin(Math.max(-1,Math.min(1,(p.cx-60)/R)));
-  const th=t+phi, c=Math.cos(th);
-  /* 轉到背面就被身體擋住。留一點餘裕，剛好側面不要瞬間消失 */
-  if(c<-.1) return null;
-  return {ox:p.cx, dx:60+R*Math.sin(th)-p.cx, sx:Math.max(.18,Math.abs(c))};
+  const t=YAWCTX.t, c=Math.cos(t);
+  if(p.kind==='wrap'||p.kind==='top') return {ox:60,dx:0,sx:1};
+  if(p.kind==='side') return {ox:60,dx:0,sx:YAWCTX.side};
+  if(c<-.1) return null;                       /* 轉到背面就被擋住 */
+  return {ox:60, dx:p.r*Math.sin(t), sx:Math.max(.22,Math.abs(c))};
 }
 function wearSVG(a,mode){
   /* 轉身的時候一個零件一個零件各算各的，不是整件一起壓 */
@@ -6614,7 +6616,7 @@ function chSVG(a,e,small,yaw){
     '<g class="armsFront" style="display:none">'+armLg+armRg+'</g>'+
     (heldFar?'':heldG);
   /* 影子留在 walk 層，只跟著左右移動，不跟著跳 */
-  YAWCTX.t=YW; YAWCTX.on=turned;
+  YAWCTX.t=YW; YAWCTX.on=turned; YAWCTX.side=ycl;
   const html='<svg class="actor" viewBox="0 0 120 120">'+
     '<g class="walk">'+
       (small?'':'<ellipse class="shd" cx="60" cy="113" rx="24" ry="5" fill="#000" opacity=".18"/>')+
