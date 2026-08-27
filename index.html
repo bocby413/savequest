@@ -6478,6 +6478,10 @@ function wearSVG(a,mode){
        不然也畫在腳掌那層 */
     if(it.slot==='hand') return '';
     if(it.slot==='foot') return a.base?it.d(a):'';
+    /* 轉身用：眼鏡、面具那類貼在臉上的要跟著臉滑、轉過去要收起來；
+       帽子、圍巾是繞著頭跟脖子一圈的，只壓不藏 */
+    if(mode==='faceon') return it.slot==='face'?it.d(a):'';
+    if(mode==='wrap')   return it.slot==='face'?'':it.d(a);
     return it.d(a);
   }).join('');
 }
@@ -6488,13 +6492,29 @@ function chSVG(a,e,small,yaw){
      cos 決定「還看得到多少正面」，sin 決定「臉往哪邊偏」 */
   const YW=+yaw||0, yc=Math.cos(YW), ys=Math.sin(YW);
   const turned=Math.abs(YW)>1e-6;
+  /* 正側面（cos=0）如果照實壓，手腳耳朵會被壓成零寬整個消失，
+     只剩一塊身體。所以留一個下限，側面時兩隻手腳疊在一起、
+     看起來就是「從側面看過去」 */
+  /* 0.32 乘上身體那層的 0.72 只剩兩成三，腳掌會細到剩四個點寬。0.45 比較看得出是隻腳 */
+  const MINW=.45;
+  const ycl=(yc<0?-1:1)*Math.max(MINW,Math.abs(yc));
   /* 兩側的東西（耳朵、手、腳）整組往中間壓 */
-  const sqz=x0=>turned?' transform="translate('+x0+',0) scale('+yc.toFixed(4)+',1) translate('+(-x0)+',0)"':'';
-  /* 貼在正面的東西（臉、花紋）：往側邊滑，同時壓扁 */
+  const sqz=x0=>turned?' transform="translate('+x0+',0) scale('+ycl.toFixed(4)+',1) translate('+(-x0)+',0)"':'';
+  /* 貼在正面的東西（臉、眼鏡）：往側邊滑，同時壓扁，轉過去就收起來 */
   const slide=(x0,r)=>turned
-    ? ' transform="translate('+(x0+r*ys).toFixed(2)+',0) scale('+Math.abs(yc).toFixed(4)+',1) translate('+(-x0)+',0)"'
+    ? ' transform="translate('+(x0+r*ys).toFixed(2)+',0) scale('+
+      Math.max(.22,Math.abs(yc)).toFixed(4)+',1) translate('+(-x0)+',0)"'
     : '';
-  const faceOn=yc>.02;                 /* 轉超過九十度就看不到臉了 */
+  /* 繞一圈的東西（帽子、圍巾、衣服）：也要跟著轉才看得出來在轉，
+     但不能壓到不見 —— 圍巾繞著脖子一圈，從背面看本來就還在。
+     所以位移照走，壓縮留一個底 */
+  const wrap=(x0,r)=>turned
+    ? ' transform="translate('+(x0+r*ys*.7).toFixed(2)+',0) scale('+
+      (.55+.45*Math.abs(yc)).toFixed(4)+',1) translate('+(-x0)+',0)"'
+    : '';
+  /* 臉要撐到過側面一點才收，正好九十度就消失的話會變成一顆沒有五官的頭。
+     這時候臉已經滑到頭的邊緣、壓成一條，看起來就是側臉 */
+  const faceOn=yc>-.12;
   const backOn=yc<.02;                 /* 背面的東西這時候要整片畫出來 */
   const aw=a.armW||7, ah=a.armH||12;
   const apx=a.bw+aw-2, apy=a.apy||(a.by-a.bh*.45);         /* 肩膀 */
@@ -6547,15 +6567,19 @@ function chSVG(a,e,small,yaw){
         '</g>'+
         chBody(a)+
         (faceOn?'<g'+slide(60,a.bw*.5)+'>'+chBodyMark(a)+'</g>':'')+
-        wearSVG(a,'mid')+          /* 衣服：在身體上面、頭下面 */
+        /* 衣服：在身體上面、頭下面。轉的時候前襟要跟著移過去 */
+        '<g class="wearMid"'+wrap(60,a.bw*.4)+'>'+wearSVG(a,'mid')+'</g>'+
         chHead(a)+
         (faceOn?'<g'+slide(60,a.hr*.55)+'>'+chFaceMark(a)+
                 '<g class="face">'+chFace(a,e)+'</g></g>'
                :'')+
-        /* 頭上戴的東西跟著頭轉，但帽子是繞著頭一圈的，只壓不藏 */
-        '<g'+sqz(60)+'>'+wearSVG(a)+'</g>'+
+        /* 帽子、圍巾是繞著頭跟脖子一圈的：跟著轉、但不會轉到不見 */
+        '<g class="wearWrap"'+wrap(60,a.hr*.45)+'>'+wearSVG(a,turned?'wrap':undefined)+'</g>'+
+        /* 眼鏡、面具那類貼在臉上的，要跟臉一起滑走、一起收起來 */
+        (turned&&faceOn?'<g class="wearFace"'+slide(60,a.hr*.55)+'>'+wearSVG(a,'faceon')+'</g>':'')+
         (backOn?wearSVG(a,'back'):'')+
-        moving+
+        /* 手上拿的、腳上穿的要跟著手腳一起往中間壓，不然轉側面的時候會浮在旁邊 */
+        '<g'+sqz(60)+'>'+moving+'</g>'+
       '</g></g>'+
     '</g></svg>';
 }
