@@ -264,6 +264,8 @@ svg.i{width:1em;height:1em;fill:currentColor;vertical-align:-.13em}
 .drow .dmain{flex:1;min-width:0}
 .drow .d2{font-size:12px;color:var(--txt3);margin-top:2px;overflow-wrap:anywhere}
 .drow .damt{font-size:13.5px;font-weight:800;white-space:nowrap}
+.drow .dact{display:flex;gap:3px;flex:none}
+.drow .dact .iq{width:27px;height:27px;font-size:13px}
 @media(max-width:640px){
   /* 七格要並排，一格只剩三十幾 px。對話框左右的內距收窄、格子間距縮小，
      省下來的全部給格子，不然連縮寫的金額都會被裁掉 */
@@ -7506,7 +7508,8 @@ function renderDayList(){
   const box=$('dayList');
   if(!daySel){ box.innerHTML='<div class="dnone">點一天看那天的每一筆</div>'; return; }
   const rows=(dayMap(dayYM)[daySel]||{rows:[]}).rows;
-  if(!rows.length){ box.innerHTML=''; return; }
+  /* 那天的最後一筆被刪掉了，就退回沒選任何一天的樣子 */
+  if(!rows.length){ daySel=''; box.innerHTML='<div class="dnone">點一天看那天的每一筆</div>'; return; }
   const net=rows.reduce((n,x)=>n+(x.kind==='set'?0:x.kind==='in'?x.amount:-x.amount),0);
   box.innerHTML='<div class="dlist"><h5>'+mdY(daySel)+
     '<span>'+rows.length+' 筆　'+(net>=0?'+':'-')+money(Math.abs(net))+'</span></h5>'+
@@ -7518,10 +7521,17 @@ function renderDayList(){
         ? '<span class="cattag" style="--c:'+(p.sub?SUBCOLOR[p.sub]:catColor(p.cat,CATS[p.kind]||[]))+'">'+
             esc(p.cat)+(p.sub?'·'+esc(p.sub):'')+'</span>'
         : (p.kind==='set'?'<span class="tag">對帳</span>':'<span class="cattag plain">未分類</span>');
+      /* 股票那幾筆是資產那邊算出來的，不能在這裡改 */
+      const acts='<div class="dact">'+
+        (p.code?'':'<button class="iq" data-edit-rec="'+p.id+'" data-from-day="1" title="改這筆">'+
+                   '<svg class="i"><use href="#i-pen"/></svg></button>')+
+        '<button class="iq del" data-del-rec="'+p.id+'" title="刪掉">'+
+        '<svg class="i"><use href="#i-x"/></svg></button></div>';
       return '<div class="drow"><div class="dmain">'+tag+
         '<div class="d2">'+kindTxt+(p.note?'　'+esc(p.note):'')+'</div></div>'+
         '<div class="damt '+(p.kind==='in'?'up':p.kind==='out'?'down':'')+'">'+
-          (p.kind==='set'?money(p.amount):(p.kind==='in'?'+':'-')+money(p.amount))+'</div></div>';
+          (p.kind==='set'?money(p.amount):(p.kind==='in'?'+':'-')+money(p.amount))+'</div>'+
+        acts+'</div>';
     }).join('')+'</div>';
 }
 /* 每月收支：日常收入、日常支出、股票淨額分開看，結餘＝當月餘額變化 */
@@ -8599,7 +8609,13 @@ function render(){ renderWheel(); renderStocks(); renderLoans(); renderMonthTabl
 
 /* ── 互動 ── */
 const open=id=>{$(id).classList.add('on');const f=$(id).querySelector('input');setTimeout(()=>f&&f.focus(),120);};
-const shut=()=>document.querySelectorAll('.veil').forEach(v=>v.classList.remove('on'));
+/* 從「每天的帳」點改這筆會疊一層記帳視窗上去。那層關掉（存了、取消、
+   按 Esc 都算）要自己回到月曆，不然使用者會被丟回首頁 */
+let dayBack=false;
+const shut=()=>{
+  document.querySelectorAll('.veil').forEach(v=>v.classList.remove('on'));
+  if(dayBack){ dayBack=false; open('vDay'); renderDayCal(); }
+};
 document.addEventListener('click',e=>{if(e.target.classList.contains('veil')||e.target.hasAttribute('data-close'))shut();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')shut();});
 
@@ -8777,6 +8793,9 @@ $('saveRec').onclick=()=>{
     logFrom=''; logTo=''; $('logFrom').value=''; $('logTo').value='';
     document.querySelectorAll('#logQuick button').forEach(x=>x.classList.toggle('on',x.dataset.lq==='a'));
   }
+  /* 從月曆進來改的：改完日期可能換月了，回去的時候直接停在那一天，
+     不然會回到舊的月份、找不到剛剛改的那筆 */
+  if(dayBack){ dayYM=date.slice(0,7); daySel=date; }
   save(); shut(); render();
   const after=levelInfo().lv, bal=now(), mAfter=thisMon();
   if(after>before){ burst(innerWidth/2,innerHeight*.35); SFX.play('level'); toast('升級了，現在 Lv.'+after+'　餘額 '+money(bal)); }
@@ -10418,10 +10437,13 @@ document.body.addEventListener('click',e=>{
     calYear=years[Math.max(0,Math.min(years.length-1,i+(b.id==='calNext'?1:-1)))];
     renderCal(); return;
   }
-  if(b.dataset.editRec){ SFX.play('tick'); return openRec(b.dataset.editRec); }
+  if(b.dataset.editRec){ SFX.play('tick'); dayBack=!!b.dataset.fromDay; return openRec(b.dataset.editRec); }
   if(b.dataset.delRec){ if(!confirm('刪掉這筆紀錄？後面的餘額會重算。')) return;
     markDeleted(b.dataset.delRec);
-    db.records=db.records.filter(x=>x.id!==b.dataset.delRec); save(); render(); SFX.play('del'); toast('已刪除'); }
+    db.records=db.records.filter(x=>x.id!==b.dataset.delRec); save(); render();
+    /* render() 不管月曆那層，開著的話要自己重畫 */
+    if($('vDay').classList.contains('on')) renderDayCal();
+    SFX.play('del'); toast('已刪除'); }
   if(b.dataset.delGoal){ const g=db.goals.find(x=>x.id===b.dataset.delGoal);
     if(!confirm('刪掉任務「'+g.name+'」？')) return;
     markDeleted(b.dataset.delGoal);
