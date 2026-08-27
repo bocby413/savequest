@@ -2175,7 +2175,8 @@ const TCHARS=[
    armW:7.5, armH:14, apy:74, fx:13, fy:109, fw:11, egg:1, avaK:1.1, avaCY:57},
   {k:'a-bot', n:'機器人', c:'#8fa3c8', d:'#6c7fa8', ink:'#3ce0d0',
    hr:27, hy:43, hry:23, bw:19, bh:17, by:82, gap:11, eo:1, mo:12, sq:1, base:1},
-  {k:'a-frog',n:'青蛙',   c:'#7ed957', d:'#5aa83c', ink:'#1d2b17',
+  /* eyesTop：那兩顆凸出來的是眼睛不是耳朵，永遠朝前，轉身不分前後 */
+  {k:'a-frog',n:'青蛙',   c:'#7ed957', d:'#5aa83c', ink:'#1d2b17', eyesTop:1,
    hr:24, hy:44, bw:19, bh:19, by:78, gap:15, eo:-14, mo:11, pup:4, hatY:18, hatW:21,
    fx:14, fy:108, fw:12, legs:1, tilt:14, nkUp:5},
   {k:'a-owl', n:'貓頭鷹', c:'#a879ff', d:'#8a5ce0', ink:'#2a1a4a', beak:'#ffc233',
@@ -6577,11 +6578,17 @@ const MARKPARTS=(()=>{
     const parts=[...g.children].map(el=>{
       let b; try{ b=el.getBBox(); }catch(e){ b={x:60,y:60,width:0,height:0}; }
       const cx=b.x+b.width/2, off=cx-60;
+      const cy=b.y+b.height/2, ry2=HRY(a);
+      /* 明顯長在眼睛上方一截的，是「蓋在頭上的東西」（綿羊頭頂那撮毛），
+         不是臉部特徵 —— 從背面看還是要在。
+         青蛙的白眼球剛好也很高，但它就在眼睛的高度，所以用眼睛當基準才分得開 */
+      const onCrown=cy<eyeY(a)-ry2*.3;
       let kind;
       /* 只有真的空的才算 skin。兔子鼻子下面那條直線寬度是 0，
          被當成「跟頭一樣寬」就永遠不會跟著轉 */
       if(!b.width&&!b.height)         kind='skin';
       else if(b.width>=ref*.95)       kind='skin';    /* 跟頭一樣大的＝那就是頭本身 */
+      else if(onCrown)                kind='crown';
       else if(Math.abs(off)>ref*.22)  kind='side';
       else                            kind='front';
       /* mark：這是角色自己臉上／身上的花紋，不是買來的配件。
@@ -6607,11 +6614,16 @@ function partYaw(p){
      但完全不動又會看起來像沒反應。所以只給一點點位移，
      幅度小到不會把身體的邊緣露出來 */
   if(p.kind==='skin') return {ox:60,dx:0,sx:1};
-  /* 長在兩側的：跟耳朵手腳同一組往中間壓，永遠留在頭上，不會掉出去。
-     但角色自己臉上的花紋例外 —— 那是畫在臉上的，轉過去要跟著臉收起來 */
+  /* 蓋在頭上的（羊的頭毛）：整撮當成一頂帽子一起縮，以頭的中線為軸。
+     各自以自己為軸縮的話彼此就不重疊了，會散成三顆分開的球 */
+  if(p.kind==='crown') return {ox:60,dx:0,sx:Math.max(.72,Math.abs(c))};
+  /* 長在兩側的：以「頭的中線」為軸收攏，跟耳朵、手腳同一個軸 ——
+     軸不一樣的話就會錯開（青蛙的白眼球畫在眼球包上，
+     眼球包以中線收攏、眼白卻以自己為軸，兩個就分家了）。
+     角色自己臉上的花紋轉過去要跟著臉收起來 */
   if(p.kind==='side'){
     if(p.mark&&c<-.1) return null;
-    return {ox:60,dx:0,sx:YAWCTX.side};
+    return {ox:60,dx:0,sx:Math.max(.25,Math.abs(c))};
   }
   if(p.kind==='wrap') return {ox:60,dx:p.r*.22*Math.sin(t),sx:1};
   if(p.kind==='top')  return {ox:60,dx:p.r*.35*Math.sin(t),sx:1};
@@ -6716,8 +6728,9 @@ function chSVG(a,e,small,yaw){
      編號要每張圖不一樣，不然多張圖會互相搶 */
   const cid=++chSVGn, clL='ecl'+cid, clR='ecr'+cid;
   const earNearLeft=ys>.2;         /* 左邊那隻靠鏡頭 */
-  /* 耳朵長在正中間的（機器人的天線）不能切兩半，切了會變成兩根 */
-  const earSplit=turned&&Math.abs(ys)>.2&&EARSPAN(a)>8;
+  /* 耳朵長在正中間的（機器人的天線）不能切兩半，切了會變成兩根。
+     青蛙那兩顆是眼睛不是耳朵，永遠朝前，也不分前後 */
+  const earSplit=turned&&Math.abs(ys)>.2&&EARSPAN(a)>8&&!a.eyesTop;
   /* 耳朵：位置照幾何走（左耳 60-d·cosθ、右耳 60+d·cosθ），但形狀不縮小 ——
      一起縮的話遠側那隻會小到躲進頭裡面，四個斜角都只看得到一隻耳朵。
      遠側那隻再多一條規則：不准離中線太近，最少要留在 0.8d，
@@ -6740,11 +6753,16 @@ function chSVG(a,e,small,yaw){
        平移的話大耳朵（狐狸）會滑到臉上，看起來像插了一根角；
        以根部為軸的話根部一直黏在頭上，只有耳朵本身跟著轉而變窄，
        過了九十度 cos 變負就地鏡射，正好是背面該有的樣子 */
-    const bx=(60+sgn*earD).toFixed(2);
-    /* 用 |cos| 不用 cos —— 帶負號會就地鏡射，狐狸的內耳（淺色那片）
-       會被翻到外耳外面，背面看起來就是兩個白色三角形。
-       耳朵從背面看本來就跟正面差不多，不用鏡射 */
-    return '<g transform="translate('+bx+',0) scale('+Math.abs(yc).toFixed(4)+',1) translate('+(-bx)+',0)">'+
+    /* 以「頭的中線」為軸收攏，不是以耳朵自己的中心。
+       以自己為軸的話，狐狸那種又寬又高的耳朵會往外甩到後腦勺去；
+       以中線為軸就是往頭頂靠攏，永遠待在頭上。
+       用 |cos| 不用 cos —— 帶負號會就地鏡射，狐狸的內耳（淺色那片）
+       會被翻到外耳外面，背面看起來就是兩個白色三角形 */
+    /* 近側那隻收攏得多一點（它正轉向鏡頭，蓋在頭上很自然），
+       遠側那隻留在頭的邊緣，突出去的部分才會從頭後面露出來 ——
+       兩隻都照同樣的比例收的話，遠側會整個被頭吃掉，變成只剩一隻耳朵 */
+    const k=half==='near'?Math.abs(yc):Math.max(.85,Math.abs(yc));
+    return '<g transform="translate(60,0) scale('+k.toFixed(4)+',1) translate(-60,0)">'+
            '<g clip-path="url(#'+(useL?clL:clR)+')">'+chBack(a,0,'ears')+'</g></g>';
   };
   const backOn=yc<.02;                 /* 背面的東西這時候要整片畫出來 */
@@ -6761,6 +6779,13 @@ function chSVG(a,e,small,yaw){
      轉了 θ 之後左手的深度是 sin θ、右手是 -sin θ。正面跟背面不用分，
      那兩個角度手是往兩側張開的，不會被身體擋住 */
   const nearL=turned&&ys>.2, nearR=turned&&ys<-.2;
+  /* 手臂掛在身體兩側，轉的時候要留在側邊，不能滑到肚子上 ——
+     照 cos 壓的話 135 度會跑到身體正中間，看起來像兩塊黑斑貼在肚子上。
+     下限拉到 0.8，手臂就一直貼著身體的邊 */
+  const armC=(yc<0?-1:1)*Math.max(.8,Math.abs(yc));
+  const armSqz=turned
+    ? ' transform="translate(60,0) scale('+armC.toFixed(4)+',1) translate(-60,0)"'
+    : '';
   const ft=a.foot||a.d, fw=a.fw||9, fx=a.fx||13, fy=a.fy||107;
   /* 青蛙的後腿露出來，身體才有離地的高度 */
   const leg=x=>a.legs?'<path d="M'+x+' '+(a.by+a.bh-4)+'V'+(fy-2)+'" stroke="'+a.d+
@@ -6814,7 +6839,7 @@ function chSVG(a,e,small,yaw){
            動畫是套到每一個同名群組上的，所以兩份會一起動，只是同時只顯示一份。
            轉成斜角的時候還要再分一次前後：靠近鏡頭的那隻手要畫在身體前面，
            兩隻都留在後面的話會整個被身體擋掉，看起來像沒有手 */
-        '<g class="armsBack"'+sqz(60)+'>'+
+        '<g class="armsBack"'+armSqz+'>'+
           (nearL?'':armLg)+(nearR?'':armRg)+
           (heldFar?heldG:'')+     /* armsBack 本身已經有壓縮了，不要再包一層 */
         '</g>'+
@@ -6823,7 +6848,7 @@ function chSVG(a,e,small,yaw){
         /* 衣服：在身體上面、頭下面 */
         '<g class="wearMid">'+wearSVG(a,'mid')+'</g>'+
         /* 靠鏡頭那隻手：畫在身體跟衣服的上面 */
-        ((nearL||nearR)?'<g class="armsNear"'+sqz(60)+'>'+
+        ((nearL||nearR)?'<g class="armsNear"'+armSqz+'>'+
           (nearL?armLg:'')+(nearR?armRg:'')+'</g>':'')+
         chHead(a)+
         /* 靠鏡頭那隻耳朵挪到頭前面 —— 但要在五官「之前」畫。
