@@ -6477,12 +6477,21 @@ const WEARPARTS=(()=>{
     const parts=[...g.children].map(el=>{
       let b; try{ b=el.getBBox(); }catch(e){ b={x:60,y:60,width:0,height:0}; }
       const cx=b.x+b.width/2, off=cx-60;
+      /* 先看它附著在哪個部位，再看幾何。只看幾何會錯：
+         髮箍是戴在頭上的，跟著臉滑就會掉到頭外面；
+         眼鏡是貼在臉上的，不跟著臉滑就會留在原地 */
       let kind;
-      if(!b.width)                                        kind='wrap';
-      else if(b.width>=ref*.72)                           kind='wrap';
+      if(!b.width)                                        kind='skin';
+      /* 臉上的東西整件跟著臉走。鏡框是硬的，鏡片跟鏡腳分開算會整支散掉 */
+      else if(it.slot==='face')                           kind='front';
+      /* 幾乎跟身體一樣寬的，是貼著輪廓的那層（帽身、衣身）。
+         這種連一點點都不能移，移了就會從旁邊露出底下的頭或身體 */
+      else if(b.width>=ref*.95)                           kind='skin';
       else if(b.y+b.height<a.hy-ry*.55&&b.width<ref*.75)  kind='top';
+      /* 只長在一邊的（髮箍的耳朵、口袋）：跟著頭一起往中間壓，不會掉出去 */
       else if(Math.abs(off)>ref*.22)                      kind='side';
-      else                                                kind='front';
+      else if(b.width>=ref*.72)                           kind='wrap';   /* 比較窄的環帶 */
+      else                                                kind='front';  /* 正中間的小裝飾 */
       /* 貼在正面的東西要跟「臉／身上的花紋」用同一個滑動半徑，
          不然眼鏡會飛到臉外面去 —— 臉只滑 hr×0.55，眼鏡卻用整個頭半徑繞 */
       const r=(it.slot==='body'||it.slot==='neck')?a.bw*.5:a.hr*.55;
@@ -6496,16 +6505,20 @@ const WEARPARTS=(()=>{
 const YAWCTX={t:0,on:false,side:1};
 /* 一個零件轉到這個角度之後長怎樣。
    關鍵：配件一定要跟它附著的那個部位用「同一個」變形，各算各的就會分家。
-     wrap／top 帽身、衣身、尖帽 ── 貼合身體的輪廓，而身體的輪廓只有整隻
-                                   那層在收窄，所以這裡完全不要動。
-                                   自己再壓一次的話衣服會比身體窄，
-                                   背面就會露出一塊空的
-     side      髮夾、鏡腳、耳朵上的東西 ── 跟耳朵手腳同一組往中間壓
-     front     眼鏡、吊墜、胸前的圖案 ── 跟臉、身上的花紋同一個滑動與壓縮 */
+     skin      帽身、衣身 ── 幾乎跟身體一樣寬，貼著輪廓走。連位移都不行，
+                              移一點點就會從旁邊露出底下的頭或身體
+     wrap／top 項圈的帶子、尖帽 ── 比身體窄，可以小幅跟著轉
+     front     眼鏡、吊墜、髮夾、胸前的圖案 ── 跟臉、身上的花紋同一個滑動與壓縮 */
 function partYaw(p){
   const t=YAWCTX.t, c=Math.cos(t);
-  if(p.kind==='wrap'||p.kind==='top') return {ox:60,dx:0,sx:1};
+  /* 貼合輪廓的：寬度一定不能改（改了就會比身體窄、露出一塊空的），
+     但完全不動又會看起來像沒反應。所以只給一點點位移，
+     幅度小到不會把身體的邊緣露出來 */
+  if(p.kind==='skin') return {ox:60,dx:0,sx:1};
+  /* 長在兩側的：跟耳朵手腳同一組往中間壓，永遠留在頭上，不會掉出去 */
   if(p.kind==='side') return {ox:60,dx:0,sx:YAWCTX.side};
+  if(p.kind==='wrap') return {ox:60,dx:p.r*.22*Math.sin(t),sx:1};
+  if(p.kind==='top')  return {ox:60,dx:p.r*.35*Math.sin(t),sx:1};
   if(c<-.1) return null;                       /* 轉到背面就被擋住 */
   return {ox:60, dx:p.r*Math.sin(t), sx:Math.max(.22,Math.abs(c))};
 }
@@ -6518,8 +6531,9 @@ function wearSVG(a,mode){
     return parts.map(p=>{
       const y=partYaw(p);
       if(!y) return '';
-      return '<g transform="translate('+(y.ox+y.dx).toFixed(2)+',0) scale('+y.sx.toFixed(4)+
-             ',1) translate('+(-y.ox)+',0)">'+p.html+'</g>';
+      /* 把分類標上去，出問題的時候看得出是哪一類算錯 */
+      return '<g data-k="'+p.kind+'" transform="translate('+(y.ox+y.dx).toFixed(2)+
+             ',0) scale('+y.sx.toFixed(4)+',1) translate('+(-y.ox)+',0)">'+p.html+'</g>';
     }).join('');
   };
   return wornList(a.k).slice()
