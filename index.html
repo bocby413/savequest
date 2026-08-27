@@ -6643,10 +6643,11 @@ function chSVG(a,e,small,yaw){
   const faceOn=yc>-.12;
   /* 轉到看得見背面的時候，尾巴在靠鏡頭那一側，要畫在身體前面 */
   const tailFront=yc<.02;
-  /* 尾巴長在屁股正後方。屁股轉到哪，尾巴就在哪 —— 用整組壓的話
-     一過九十度就鏡射到另一側的最外面，看起來像黏在旁邊 */
-  const tailDx=turned?(-a.bw*ys).toFixed(2):0;
-  const tailG=x=>turned?'<g transform="translate('+tailDx+',0)">'+x+'</g>':x;
+  /* 尾巴要跟著身體的輪廓走。平移整條的話身體沒有跟著動，
+     基部就會離開身體變成懸空的 —— 只能用貼著身體的縮放，
+     這樣不管轉到哪一邊，基部都還在身體上。
+     過了九十度會鏡射到另一側，那時它在近側，所以要畫到身體前面來 */
+  const tailG=x=>'<g'+sqz(60)+'>'+x+'</g>';
   /* 耳朵分前後：靠鏡頭那隻在頭前面。兩隻畫在同一串裡拆不開，
      所以整組畫兩份、各自切一半。編號要每張圖不一樣，不然多張圖會互相搶 */
   const cid=++chSVGn, clL='ecl'+cid, clR='ecr'+cid;
