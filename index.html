@@ -6523,6 +6523,12 @@ function chSVG(a,e,small,yaw){
   const tl=a.tilt||0, abot=apy+ah*2-2;
   const arm=(x,sgn)=>'<ellipse cx="'+x+'" cy="'+(apy+ah-2)+'" rx="'+aw+'" ry="'+ah+'" fill="'+a.d+'"'+
     (tl?' transform="rotate('+(sgn*tl)+','+x+','+abot+')"':'')+'/>';
+  const armLg='<g class="armL" data-p="'+(60-apx)+','+apy+'">'+arm(60-apx,1)+'</g>';
+  const armRg='<g class="armR" data-p="'+(60+apx)+','+apy+'">'+arm(60+apx,-1)+'</g>';
+  /* 哪隻手比較靠近鏡頭。手臂長在身體兩側（圓柱上的 ±90 度），
+     轉了 θ 之後左手的深度是 sin θ、右手是 -sin θ。正面跟背面不用分，
+     那兩個角度手是往兩側張開的，不會被身體擋住 */
+  const nearL=turned&&ys>.2, nearR=turned&&ys<-.2;
   const ft=a.foot||a.d, fw=a.fw||9, fx=a.fx||13, fy=a.fy||107;
   /* 青蛙的後腿露出來，身體才有離地的高度 */
   const leg=x=>a.legs?'<path d="M'+x+' '+(a.by+a.bh-4)+'V'+(fy-2)+'" stroke="'+a.d+
@@ -6538,10 +6544,7 @@ function chSVG(a,e,small,yaw){
     '<g class="footL">'+wearSVG(a,'footL')+'</g>'+
     '<g class="footR">'+wearSVG(a,'footR')+'</g>'+
     /* 身體前面那份手臂，平常收起來 */
-    '<g class="armsFront" style="display:none">'+
-      '<g class="armL" data-p="'+(60-apx)+','+apy+'">'+arm(60-apx,1)+'</g>'+
-      '<g class="armR" data-p="'+(60+apx)+','+apy+'">'+arm(60+apx,-1)+'</g>'+
-    '</g>'+
+    '<g class="armsFront" style="display:none">'+armLg+armRg+'</g>'+
     '<g class="armL" data-p="'+(60-apx)+','+apy+'">'+wearSVG(a,'hand')+'</g>';
   /* 影子留在 walk 層，只跟著左右移動，不跟著跳 */
   return '<svg class="actor" viewBox="0 0 120 120">'+
@@ -6560,15 +6563,19 @@ function chSVG(a,e,small,yaw){
         '<g'+sqz(60)+'>'+feet+'</g>'+
         /* 手臂畫兩份：一份在身體後面（平常這份），一份在身體前面。
            抱、握手、遮臉那類動作手要在身體前面，畫在後面的話手會消失在肚子裡。
-           動畫是套到每一個同名群組上的，所以兩份會一起動，只是同時只顯示一份 */
+           動畫是套到每一個同名群組上的，所以兩份會一起動，只是同時只顯示一份。
+           轉成斜角的時候還要再分一次前後：靠近鏡頭的那隻手要畫在身體前面，
+           兩隻都留在後面的話會整個被身體擋掉，看起來像沒有手 */
         '<g class="armsBack"'+sqz(60)+'>'+
-          '<g class="armL" data-p="'+(60-apx)+','+apy+'">'+arm(60-apx,1)+'</g>'+
-          '<g class="armR" data-p="'+(60+apx)+','+apy+'">'+arm(60+apx,-1)+'</g>'+
+          (nearL?'':armLg)+(nearR?'':armRg)+
         '</g>'+
         chBody(a)+
         (faceOn?'<g'+slide(60,a.bw*.5)+'>'+chBodyMark(a)+'</g>':'')+
         /* 衣服：在身體上面、頭下面。轉的時候前襟要跟著移過去 */
         '<g class="wearMid"'+wrap(60,a.bw*.4)+'>'+wearSVG(a,'mid')+'</g>'+
+        /* 靠鏡頭那隻手：畫在身體跟衣服的上面 */
+        ((nearL||nearR)?'<g class="armsNear"'+sqz(60)+'>'+
+          (nearL?armLg:'')+(nearR?armRg:'')+'</g>':'')+
         chHead(a)+
         (faceOn?'<g'+slide(60,a.hr*.55)+'>'+chFaceMark(a)+
                 '<g class="face">'+chFace(a,e)+'</g></g>'
@@ -9027,6 +9034,7 @@ const PET={
     this.el={box, ch:box.querySelector('.ch'), face:box.querySelector('.face'),
       aL:[...box.querySelectorAll('.armL')], aR:[...box.querySelectorAll('.armR')],
       armsB:box.querySelector('.armsBack'), armsF:box.querySelector('.armsFront'),
+      armsN:box.querySelector('.armsNear'),
       shd:box.querySelector('.shd'), tail:box.querySelector('.tail'), ears:box.querySelector('.ears')};
     return true;
   },
@@ -9091,6 +9099,8 @@ const PET={
   arms(front){
     const e=this.el; if(!e||!e.armsB||!e.armsF) return;
     e.armsB.style.display=front?'none':'';
+    /* 轉成斜角時多出來的那組（靠鏡頭的手）也要一起收，不然會變成三隻手 */
+    if(e.armsN) e.armsN.style.display=front?'none':'';
     e.armsF.style.display=front?'':'none';
   },
   play(seq){
