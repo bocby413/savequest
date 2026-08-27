@@ -235,15 +235,18 @@ svg.i{width:1em;height:1em;fill:currentColor;vertical-align:-.13em}
 .dweek span:first-child,.dweek span:last-child{color:var(--txt2)}
 .dgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
 .dcell{position:relative;overflow:hidden;border-radius:9px;border:1.5px solid var(--edge);
-  background:var(--panel2);aspect-ratio:1/1.12;padding:4px 1px 3px;
+  background:var(--panel2);aspect-ratio:1/1.12;padding:4px 1px 3px;container-type:inline-size;
   display:flex;flex-direction:column;align-items:center;gap:2px;
   font:inherit;color:inherit;cursor:default}
 .dcell.pad{border:none;background:none}
 .dcell .dn{position:relative;font-size:11px;color:var(--txt3);font-weight:700;line-height:1}
 /* 金額那行字很小，窄螢幕塞得下七格全靠它。太長就縮成萬 */
-.dcell .dv{position:relative;font-size:10.5px;font-weight:800;letter-spacing:-.3px;line-height:1.1}
-.dcell .dv.sm{font-size:8.8px;letter-spacing:-.4px}
-.dcell .dv.xs{font-size:7.6px;letter-spacing:-.4px}
+/* 字級跟著格子寬度縮。一格在 375 的手機上是 39px、在 320 的只有 33px，
+   寫死 px 的話小螢幕就會被裁掉。min() 是為了不要在桌機上被放大 */
+.dcell .dv{position:relative;font-weight:800;letter-spacing:-.3px;line-height:1.1;
+  font-size:10.5px;font-size:min(10.5px,27cqw)}
+.dcell .dv.sm{letter-spacing:-.4px;font-size:8.8px;font-size:min(8.8px,22cqw)}
+.dcell .dv.xs{letter-spacing:-.4px;font-size:7.6px;font-size:min(7.6px,19cqw)}
 .dcell .fill{position:absolute;left:0;right:0;bottom:0;transform-origin:bottom;
   background:linear-gradient(180deg,rgba(60,224,208,.34),rgba(60,224,208,.1))}
 .dcell.neg .fill{background:linear-gradient(180deg,rgba(255,107,107,.32),rgba(255,107,107,.09))}
@@ -269,9 +272,6 @@ svg.i{width:1em;height:1em;fill:currentColor;vertical-align:-.13em}
      不然會超出去 14px，整個對話框多出一條橫向捲軸 */
   #vDay .dfoot{margin-left:-10px;margin-right:-10px;padding-left:10px;padding-right:10px}
   .dgrid,.dweek{gap:3px}
-  .dcell .dv{font-size:10px}
-  .dcell .dv.sm{font-size:8.8px}
-  .dcell .dv.xs{font-size:7.6px}
 }
 .calfoot{display:flex;gap:20px;flex-wrap:wrap;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--edge)}
 .calfoot .kv{font-size:12.5px;color:var(--txt3)}
@@ -470,7 +470,12 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .pager button:disabled{opacity:.3;cursor:default}
 .pager .now{font-size:13.5px;color:var(--txt2);font-variant-numeric:tabular-nums;min-width:96px;text-align:center}
 .pager .now b{color:var(--txt);font-weight:700}
-@media(max-width:640px){.logbar{gap:6px}.logbar .segs{margin-left:0;width:100%;justify-content:center}}
+@media(max-width:640px){
+  .logbar{gap:6px}
+  /* 日期兩格佔滿第一行，第二行左邊放「每天的帳」、右邊放時間範圍。
+     以前 segs 是整行置中的，多了那顆按鈕之後會被擠到自己一行去，白白多一行 */
+  .logbar .segs{margin-left:auto}
+}
 
 /* ── 歷程 ── */
 .logt{width:100%;border-collapse:collapse;contain:content;table-layout:auto}
@@ -1026,6 +1031,9 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 @keyframes fly{to{transform:translate(var(--dx),var(--dy)) rotate(var(--rt));opacity:0}}
 /* ── 手機 ── */
 .mobonly{display:none}
+/* 上面那兩個是給表格的格子用的（display:table-cell），
+   格子「裡面」要換內容得用這一組 */
+.mobtxt{display:none}
 .fab{display:none;position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:30;
   width:62px;height:62px;border-radius:50%;align-items:center;justify-content:center;
   background:linear-gradient(180deg,var(--gold),var(--gold2));border:3px solid var(--panel);color:#3a2600;
@@ -1040,10 +1048,17 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   .hudright .v{font-size:31px}
   .deskonly{display:none}
   .mobonly{display:table-cell}
+  .desktxt{display:none}
+  .mobtxt{display:inline}
   .logt th{padding:0 8px 9px;font-size:10.5px}
   .logt td{padding:11px 8px;font-size:13.5px}
   .logt .m{font-size:15.5px}
   .logt .x .iq{opacity:1}          /* 手機沒有滑鼠移過去這回事 */
+  /* 五個欄位要塞進 334px。操作鈕那欄光內距就吃掉 16px，
+     按鈕本身也可以小一點，還是點得到 */
+  .logt td,.logt th{padding-left:6px;padding-right:6px}
+  .logt .x{padding-left:0;padding-right:4px}
+  .logt .x .iq{width:26px;height:26px;font-size:13px}
   .q .ops .iq{opacity:1}
   .fab{display:flex}
   .dlg{border-radius:18px}
@@ -1070,6 +1085,9 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   <symbol id="i-coin" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15.4V19h-2v-1.5a4 4 0 0 1-3-2.6l1.9-.8c.3 1 1.1 1.7 2.2 1.7.9 0 1.6-.4 1.6-1.1 0-.8-.7-1-2.1-1.5-1.5-.5-3.2-1.1-3.2-3.1 0-1.5 1.1-2.6 2.6-2.9V5.5h2V7c1.3.3 2.2 1.1 2.6 2.3l-1.8.8c-.3-.8-.9-1.3-1.8-1.3-.8 0-1.4.4-1.4 1 0 .7.7 1 2 1.4 1.6.5 3.3 1.2 3.3 3.3 0 1.6-1.2 2.7-2.9 3z"/></symbol>
   <symbol id="i-map" viewBox="0 0 24 24"><path d="M15 4l6-2v16l-6 2-6-2-6 2V4l6-2 6 2zm-1 2.2L10 4.8v13l4 1.4v-13z"/></symbol>
   <symbol id="i-cal" viewBox="0 0 24 24"><path d="M7 2v2h10V2h2v2h2v18H3V4h2V2h2zm12 8H5v10h14V10z"/></symbol>
+  <symbol id="i-caldot" viewBox="0 0 24 24"><path d="M7 2v2h10V2h2v2h2v18H3V4h2V2h2zm12 8H5v10h14V10z"/>
+    <circle cx="8.5" cy="13.5" r="1.4"/><circle cx="12" cy="13.5" r="1.4"/><circle cx="15.5" cy="13.5" r="1.4"/>
+    <circle cx="8.5" cy="17.5" r="1.4"/><circle cx="12" cy="17.5" r="1.4"/></symbol>
   <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3h2v16h16v2H3V3zm4 10h3v5H7v-5zm5-5h3v10h-3V8zm5-4h3v14h-3V4z"/></symbol>
   <symbol id="i-stock" viewBox="0 0 24 24"><path d="M3 3h2v16h16v2H3V3z"/><path d="M7.5 14.5l4-4 3 3 5-6 1.5 1.3-6.5 7.7-3-3-3.4 3.4z"/></symbol>
   <symbol id="i-road" viewBox="0 0 24 24"><path d="M9 2h2v4H9V2zm0 7h2v6H9V9zm0 9h2v4H9v-4z" opacity=".55"/><path d="M14 2h6v20h-6l2-10-2-10zM4 2h3l-2 10 2 10H4V2z"/></symbol>
@@ -1211,7 +1229,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   <div class="card" style="padding:14px 6px 6px">
     <div class="logbar">
       <input type="date" id="logFrom"><span class="tilde">～</span><input type="date" id="logTo">
-      <button class="btn sm ghost" id="btnDayCal"><svg class="i"><use href="#i-cal"/></svg>月曆</button>
+      <button class="btn sm ghost" id="btnDayCal"><svg class="i"><use href="#i-caldot"/></svg>每天的帳</button>
       <span class="segs" id="logQuick">
         <button data-lq="m">這個月</button><button data-lq="y">今年</button><button data-lq="a" class="on">全部</button>
       </span>
@@ -1709,6 +1727,7 @@ function recs(){
 }
 const now=()=>{const r=recs();return r.length?r[r.length-1].bal:0};
 const md=s=>{const p=s.split('-');return (+p[1])+'/'+(+p[2])};
+const ymd=s=>(+s.slice(0,4))+'/'+(+s.slice(5,7))+'/'+(+s.slice(8,10));
 const mdY=s=>(s.slice(0,4)===todayStr().slice(0,4)?'':s.slice(0,4)+' 年 ')+(+s.slice(5,7))+' 月 '+(+s.slice(8,10))+' 日';
 const ymD=d=>d.getFullYear()+' 年 '+(d.getMonth()+1)+' 月';
 function ago(d){
@@ -7261,7 +7280,11 @@ function renderLog(){
         ? '<span class="cattag" style="--c:'+(p.sub?SUBCOLOR[p.sub]:catColor(p.cat,CATS[p.kind]||[]))+'">'+
             esc(p.cat)+(p.sub?'·'+esc(p.sub):'')+'</span>'
         : (p.kind==='set' ? '' : '<span class="cattag plain">未分類</span>');   /* 對帳那列的標籤就是 badge，別重複 */
-      return '<tr><td class="d">'+(sameDay?'<span style="opacity:.3">〃</span>':mdY(p.date))+'</td>'+
+      /* 手機上寫成 2026/8/27。「2025 年 12 月 31 日」那種寫法一格要 133px，
+         整張表被撐到 406px，在 375 的螢幕上得橫著捲才看得完 */
+      const dateCell=sameDay ? '<span style="opacity:.3">〃</span>'
+        : '<span class="desktxt">'+mdY(p.date)+'</span><span class="mobtxt">'+ymd(p.date)+'</span>';
+      return '<tr><td class="d">'+dateCell+'</td>'+
         '<td class="item"><div class="i1">'+topLine+badge+'</div>'+
           '<div class="i2">'+kindTxt+(p.note?'　'+esc(p.note):'')+'</div></td>'+
         '<td class="c n up deskonly">'+(p.kind==='in'?'+'+money(p.amount):'')+'</td>'+
