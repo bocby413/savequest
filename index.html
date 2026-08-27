@@ -375,7 +375,9 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .pieempty{grid-column:1/-1;text-align:center;color:var(--txt3);font-size:14px;padding:26px 0}
 
 /* ── 股票資產 ── */
-.stkbox{padding:0}
+/* 窄螢幕（320）放不下五個欄位，讓它橫著捲，
+   不然最右邊那兩顆按鈕會被切掉、點不到 */
+.stkbox{padding:0;overflow-x:auto}
 .stkt{width:100%;border-collapse:collapse}
 .stkt th{font-size:11px;letter-spacing:1px;color:var(--txt3);font-weight:700;padding:14px 12px 10px;text-align:right;white-space:nowrap}
 .stkt th:first-child{text-align:left;padding-left:20px}
@@ -388,6 +390,11 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .stkt .val{font-weight:800;font-size:15px}
 .stkt .miss{color:var(--gold);font-size:12px}
 .stkt tr.sum td{border-top:2px solid var(--edge2);background:var(--panel2);font-weight:800}
+/* .iq 預設是 display:grid，也就是區塊層級，兩顆會各佔一行把整列撐高。
+   闖關紀錄那張表有改成 inline-grid，這張漏了 */
+.stkt .x{white-space:nowrap;text-align:right;padding-right:14px}
+.stkt .x .iq{display:inline-grid;vertical-align:middle}
+.stkt .x .iq+.iq{margin-left:3px}
 .stkfoot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 20px 14px;
   font-size:12px;color:var(--txt3)}
 .stkempty{padding:26px 20px;text-align:center;color:var(--txt3);font-size:14px}
@@ -395,6 +402,9 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   .stkt th,.stkt td{padding:10px 7px;font-size:13px}
   .stkt th:first-child,.stkt td:first-child{padding-left:12px}
   .stkt .hidem{display:none}
+  /* 兩顆按鈕要並排在 375 的螢幕上放得下，內距跟按鈕都收小一點 */
+  .stkt .x{padding-left:0!important;padding-right:6px!important}
+  .stkt .x .iq{width:26px;height:26px;font-size:13px}
 }
 
 /* ── 貸款 road map ── */
@@ -7712,7 +7722,7 @@ function renderStocks(){
   const cell=(v,cls)=>'<span class="'+cls+'">'+(v>=0?'+':'-')+money(Math.abs(v))+'</span>';
   box.innerHTML='<div class="card stkbox"><table class="stkt"><thead><tr>'+
     '<th>股票</th><th class="hidem">股數</th><th class="hidem">均價</th><th>現價</th>'+
-    '<th>市值</th><th>損益</th></tr></thead><tbody>'+
+    '<th>市值</th><th>損益</th><th></th></tr></thead><tbody>'+
     rows.map(r=>{
       const plpct=(r.pl!==null&&r.cost)?(r.pl/r.cost*100):null;
       return '<tr><td><span class="cd">'+esc(r.code)+'</span>'+
@@ -7723,8 +7733,8 @@ function renderStocks(){
         '<td class="val">'+(r.value!==null?money(r.value):'—')+'</td>'+
         '<td>'+(r.pl!==null?cell(r.pl,r.pl>=0?'up':'down')+
           '<span class="nm">'+(plpct>=0?'+':'')+plpct.toFixed(1)+'%</span>':'—')+'</td>'+
-        '<td class="x" style="padding-right:14px">'+
-          '<button class="iq" data-edithold="'+r.id+'"><svg class="i"><use href="#i-gear"/></svg></button> '+
+        '<td class="x">'+
+          '<button class="iq" data-edithold="'+r.id+'"><svg class="i"><use href="#i-gear"/></svg></button>'+
           '<button class="iq del" data-delhold="'+r.id+'"><svg class="i"><use href="#i-x"/></svg></button></td></tr>';
     }).join('')+
     os.map(o=>{
@@ -7735,8 +7745,8 @@ function renderStocks(){
         '<td class="val">'+money(o.value)+'</td>'+
         '<td>'+(pl!==null?'<span class="'+(pl>=0?'up':'down')+'">'+(pl>=0?'+':'-')+money(Math.abs(pl))+'</span>'+
           '<span class="nm">'+((pl/o.cost*100)>=0?'+':'')+(pl/o.cost*100).toFixed(1)+'%</span>':'—')+'</td>'+
-        '<td class="x" style="padding-right:14px">'+
-          '<button class="iq" data-edithold="'+o.id+'"><svg class="i"><use href="#i-gear"/></svg></button> '+
+        '<td class="x">'+
+          '<button class="iq" data-edithold="'+o.id+'"><svg class="i"><use href="#i-gear"/></svg></button>'+
           '<button class="iq del" data-delother="'+o.id+'"><svg class="i"><use href="#i-x"/></svg></button></td></tr>';
     }).join('')+
     '<tr class="sum"><td>合計 '+(rows.length+os.length)+' 項</td><td class="hidem"></td><td class="hidem"></td><td></td>'+
