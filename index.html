@@ -2247,8 +2247,10 @@ function chBack(a,noTail,part){
     /* 這兩顆算耳朵那一類（長在頭的兩側）。沒有這行的話拆成尾巴跟耳朵
        兩層的時候會被畫兩次 */
     return (part==='tail'||part==='body') ? '' :
-           '<circle cx="'+(60-a.gap)+'" cy="'+eyeY(a)+'" r="13" fill="#6cc24a"/>'+
-           '<circle cx="'+(60+a.gap)+'" cy="'+eyeY(a)+'" r="13" fill="#6cc24a"/>';
+           /* 眼球包跟頭同色。原本比頭深一階，正面被眼白蓋住看不出來，
+              轉到背面就變成兩坨突兀的深綠色 */
+           '<circle cx="'+(60-a.gap)+'" cy="'+eyeY(a)+'" r="13" fill="'+a.c+'"/>'+
+           '<circle cx="'+(60+a.gap)+'" cy="'+eyeY(a)+'" r="13" fill="'+a.c+'"/>';
   if(a.k==='a-owl')
     return E('<path d="M'+(60-hr+6)+' '+(hy-hr+9)+' '+(60-hr+15)+' '+(hy-hr-2)+'l9 10z'+
               'M'+(60+hr-6)+' '+(hy-hr+9)+' '+(60+hr-15)+' '+(hy-hr-2)+'l-9 10z" fill="'+a.d+'"/>');
@@ -2475,8 +2477,10 @@ function buildAvatars(){
     TCHARS.map(a=>
     '<symbol id="'+a.k+'" viewBox="0 0 64 64">'+avaBody(a)+'</symbol>').join('');
 }
-/* 五官：一個表情換一組，位置全部掛在頭上 */
-function chFace(a,e){
+/* 五官：一個表情換一組，位置全部掛在頭上。
+   part：'eyes' 只要眼睛，'rest' 只要腮紅跟嘴巴，不給就是全部。
+   青蛙的眼睛是架在頭頂的兩顆球，不是畫在臉的平面上，要單獨拆出來跟眼球包綁在一起 */
+function chFace(a,e,part){
   const L=60-a.gap, R=60+a.gap, y=eyeY(a), m=mouY(a), ink=a.ink;
   const sw=' stroke="'+ink+'" fill="none" stroke-linecap="round"';
   let eyes;
@@ -2523,6 +2527,8 @@ function chFace(a,e){
     ? '<ellipse cx="'+(L-6)+'" cy="'+(y+8)+'" rx="5" ry="3.2" fill="#ff9ec4" opacity=".6"/>'+
       '<ellipse cx="'+(R+6)+'" cy="'+(y+8)+'" rx="5" ry="3.2" fill="#ff9ec4" opacity=".6"/>'
     : '';
+  if(part==='eyes') return eyes;
+  if(part==='rest') return cheek+mouth;
   return eyes+cheek+mouth;
 }
 /* ── 配件 ──
@@ -6818,7 +6824,12 @@ function chSVG(a,e,small,yaw){
     : '';
   /* half：'near' 是靠鏡頭那半邊，'far' 是另外那半邊；不拆就整組一次畫完 */
   const earHalf=half=>{
-    if(a.eyesTop) return '<g'+slide(60,a.hr*.55)+'>'+chBack(a,0,'ears')+'</g>';
+    /* 青蛙那兩顆是眼睛不是耳朵，而且是架在頭頂上的球，不是畫在臉的平面上。
+       套臉的平面位移的話兩顆會擠在一起、還會被頭的遮罩切掉半顆眼白。
+       眼球包、眼白、眼珠是同一顆眼睛，整組用跟耳朵一樣的收攏，完整顯示 */
+    if(a.eyesTop) return '<g class="eyeUnit"'+earXf+'>'+chBack(a,0,'ears')+
+      (faceOn?'<g class="faceMark">'+chFaceMark(a)+'</g>'+
+              '<g class="faceEye">'+chFace(a,e,'eyes')+'</g>':'')+'</g>';
     if(!earSplit) return '<g'+earXf+'>'+earStr+'</g>';
     const useL=(half==='near')===earNearLeft;
     return '<g'+earXf+'><g clip-path="url(#'+(useL?clL:clR)+')">'+earStr+'</g></g>';
@@ -6926,8 +6937,7 @@ function chSVG(a,e,small,yaw){
         (a.eyesTop?'':onHead('<g class="faceMark">'+
            markYaw('fm:'+a.k,a,chFaceMark(a),a.hr*2,a.hr*.55)+'</g>'))+
         (faceOn?onHead('<g'+slide(60,a.hr*.55)+'>'+
-          (a.eyesTop?'<g class="faceMark">'+chFaceMark(a)+'</g>':'')+
-          '<g class="face">'+chFace(a,e)+'</g></g>'):'')+
+          '<g class="face">'+chFace(a,e,(turned&&a.eyesTop)?'rest':undefined)+'</g></g>'):'')+
         /* 鬍鬚往頭外面長，不受頭的遮罩 */
         (faceOn?'<g'+slide(60,a.hr*.55)+' class="whisk">'+chWhisk(a)+'</g>':'')+
         (turned&&tailFront?tailG(chBack(a,0,'tail')):'')+
@@ -9386,6 +9396,7 @@ const PET={
     if(!box||!box.querySelector('.ch')){ this.el=null; return false; }
     if(this.el&&this.el.box===box&&box.contains(this.el.ch)) return true;
     this.el={box, ch:box.querySelector('.ch'), face:box.querySelector('.face'),
+      faceEye:box.querySelector('.faceEye'),
       aL:[...box.querySelectorAll('.armL')], aR:[...box.querySelectorAll('.armR')],
       armsB:box.querySelector('.armsBack'), armsF:box.querySelector('.armsFront'),
       armsN:box.querySelector('.armsNear'),
@@ -9401,7 +9412,12 @@ const PET={
     this.io.observe(box);
   },
   start(){ if(!this.raf) this.raf=requestAnimationFrame(t=>this.frame(t)); },
-  face(n){ if(this.el&&this.el.face) this.el.face.innerHTML=chFace(this.who?this.who():petChar(),n); },
+  /* 青蛙轉身的時候眼睛被拆到頭頂那組去了，眨眼要兩邊一起換 */
+  face(n){ const e=this.el; if(!e) return;
+    const c=this.who?this.who():petChar();
+    if(e.faceEye){ e.faceEye.innerHTML=chFace(c,n,'eyes');
+                   if(e.face) e.face.innerHTML=chFace(c,n,'rest'); }
+    else if(e.face) e.face.innerHTML=chFace(c,n); },
   frame(now){
     this.raf=0;
     if(!this.live||document.hidden) return;
