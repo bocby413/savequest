@@ -27,7 +27,8 @@
 <script>
 /* 用 iframe 載入本體，在它自己的作用域裡把圖畫出來再拿回來。
    本體的 TCHARS／ITEMS 是 const，不會掛到 window 上，所以要用 eval 進去拿 */
-const ANGLES=[0,45,135,180,225,315];
+const ANGLES=(new URLSearchParams(location.search).get('ang')||'0,45,135,180,225,315')
+  .split(',').map(Number);
 let W=null;
 /* ?only=a-fox,a-rab 只看這幾隻；?s=300 把格子放大，細節才看得清楚 */
 const Q=new URLSearchParams(location.search);

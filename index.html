@@ -6476,6 +6476,36 @@ function toggleWear(k,id){
 const ZWEAR=['foot','body','hand','neck','face','head'];
 /* 量這隻角色的耳朵長在離中線多遠。每隻差很多 ——
    狗的垂耳在 ±31、兔子的長耳靠很近，用頭半徑一律套會位移過頭 */
+/* 耳朵有兩種長法，轉身時前後順序剛好相反：
+     長在頭頂的（貓狐兔松熊鴞）根部埋在頭裡面，兩隻都要畫在頭後面，
+       挪到前面的話那截埋著的會整個露出來，變成一根比頭還高的尖刺
+     掛在頭側面的（狗的垂耳、羊、長頸鹿）本來就整片露在頭的輪廓外，
+       近側那隻要畫在頭前面，畫在後面會被頭整個吃掉 —— 狗就是這樣少一隻耳朵
+   判準：耳朵的底端有沒有低過頭心，而且在那個高度有沒有露出頭的輪廓外。 */
+const EARHANG=(()=>{
+  const cache={}; let svg=null;
+  return a=>{
+    if(cache[a.k]!==undefined) return cache[a.k];
+    if(typeof document==='undefined') return false;
+    if(!svg){
+      svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('viewBox','0 0 120 120');
+      svg.style.cssText='position:absolute;left:-9999px;top:0;width:0;height:0;overflow:hidden';
+      document.body.appendChild(svg);
+    }
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    try{ g.innerHTML=chBack(a,0,'ears'); }catch(e){ return cache[a.k]=false; }
+    svg.appendChild(g);
+    let b; try{ b=g.getBBox(); }catch(e){ b=null; }
+    g.remove();
+    if(!b||!b.width) return cache[a.k]=false;
+    const hry=a.hry||a.hr*.94, yb=b.y+b.height;
+    const t=Math.min(1,Math.abs(yb-a.hy)/hry);
+    const hw=a.hr*Math.sqrt(Math.max(0,1-t*t));       /* 頭在耳朵底端那個高度的半寬 */
+    const outer=Math.max(60-b.x, b.x+b.width-60);
+    return cache[a.k]=(yb>a.hy && outer-hw>=10);
+  };
+})();
 const EARSPAN=(()=>{
   const cache={}; let svg=null;
   return a=>{
@@ -6625,7 +6655,10 @@ function partYaw(p){
   if(p.kind==='skin') return {ox:60,dx:0,sx:1};
   /* 蓋在頭上的（羊的頭毛）：整撮當成一頂帽子一起縮，以頭的中線為軸。
      各自以自己為軸縮的話彼此就不重疊了，會散成三顆分開的球 */
-  if(p.kind==='crown') return {ox:60,dx:0,sx:Math.max(.72,Math.abs(c))};
+  /* 頭頂那撮羊毛是包住整顆頭的一頂帽子，不是貼在額頭上的一片。
+     照 cos 收的話，135 度會縮成頭頂一條白邊 —— 但羊的後腦勺也是羊毛，
+     從背面看只會更厚不會更薄。包住頭的東西轉到哪一面都一樣寬。 */
+  if(p.kind==='crown') return {ox:60,dx:0,sx:1};
   /* 長在兩側的：以「頭的中線」為軸收攏，跟耳朵、手腳同一個軸 ——
      軸不一樣的話就會錯開（青蛙的白眼球畫在眼球包上，
      眼球包以中線收攏、眼白卻以自己為軸，兩個就分家了）。
@@ -6736,17 +6769,12 @@ function chSVG(a,e,small,yaw){
      先切再位移 —— 反過來的話移出那半邊就被切掉了。
      編號要每張圖不一樣，不然多張圖會互相搶 */
   const cid=++chSVGn, clL='ecl'+cid, clR='ecr'+cid;
-  const earNearLeft=ys>.2;         /* 左邊那隻靠鏡頭 */
-  /* 耳朵長在正中間的（機器人的天線）不能切兩半，切了會變成兩根。
-     青蛙那兩顆是眼睛不是耳朵，永遠朝前，也不分前後 */
-  const earSplit=turned&&Math.abs(ys)>.2&&EARSPAN(a)>8&&!a.eyesTop;
   /* 耳朵：位置照幾何走（左耳 60-d·cosθ、右耳 60+d·cosθ），但形狀不縮小 ——
      一起縮的話遠側那隻會小到躲進頭裡面，四個斜角都只看得到一隻耳朵。
      遠側那隻再多一條規則：不准離中線太近，最少要留在 0.8d，
      這樣它突出去的部分才會從頭的邊緣露出來。
      近側畫在頭前面、遠側留在頭後面讓頭擋住內側。
      過了九十度 cosθ 變負，兩隻自然交換位置。 */
-  const earD=EARSPAN(a);
   /* 臉是平的、頭是球的。五官整片照 r·sinθ 滑過去的話，
      長在頭下緣的嘴筒（狐狸、兔子）會滑出頭的輪廓 —— 看起來就是下巴掉下來。
      球在那個高度本來就比較窄，所以直接用頭的形狀當遮罩：
@@ -6758,33 +6786,42 @@ function chSVG(a,e,small,yaw){
            :'<ellipse cx="60" cy="'+a.hy+'" rx="'+a.hr+'" ry="'+(a.hry||a.hr*.94)+'"/>')+
       '</clipPath>' : '';
   const onHead=x=>turned?'<g clip-path="url(#'+hcl+')">'+x+'</g>':x;
+  const earD=EARSPAN(a);
+  const earHang=EARHANG(a);        /* 掛在頭側面的垂耳 */
+  /* 一對耳朵是左右鏡像的。轉身的時候我一度讓它們互換位置 —— 左耳跑到右邊、
+     右耳跑到左邊 —— 兩隻交叉之後就變成往內凹的角。
+     其實對稱的一對耳朵，45 度跟 135 度投影出來的位置本來就一樣；
+     真正的差別是兩件事，那才是該處理的：
+       ① 內耳的顏色。轉到背面看到的是耳背，不該再看到粉紅色的內耳
+       ② 前後順序。哪一隻在頭前面、哪一隻在頭後面
+     位置就照圓柱收攏（cos 帶負號＝過了九十度就地鏡射，正好是耳背的樣子），
+     但不能收成一根針 —— 耳朵是立體的殼，從側面看還是有厚度。 */
+  const earK=(yc<0?-1:1)*Math.max(earHang?.9:.72,Math.abs(yc));
+  const earXf=turned
+    ? ' transform="translate(60,0) scale('+earK.toFixed(4)+',1) translate(-60,0)"' : '';
+  const earStr=(()=>{
+    const raw=chBack(a,0,'ears');
+    if(yc>=0||a.eyesTop) return raw;
+    const m=/fill="([^"]+)"/.exec(raw);          /* 第一個顏色就是外耳的顏色 */
+    return m?raw.replace(/fill="[^"]+"/g,'fill="'+m[1]+'"'):raw;
+  })();
+  /* 垂耳才需要拆前後：狗的耳朵整片掛在頭的輪廓外面，
+     近側那隻要畫在頭前面，畫在後面會被頭整個吃掉 —— 就會少一隻耳朵。
+     長在頭頂的耳朵根部埋在頭裡，兩隻都留在頭後面就對了 */
+  const earSplit=turned&&Math.abs(ys)>.2&&earHang;
+  const earNearLeft=ys>.2;
   const earDefs=earSplit
     ? '<defs><clipPath id="'+clL+'" clipPathUnits="userSpaceOnUse">'+
       '<rect x="-40" y="-40" width="100" height="220"/></clipPath>'+
       '<clipPath id="'+clR+'" clipPathUnits="userSpaceOnUse">'+
       '<rect x="60" y="-40" width="100" height="220"/></clipPath></defs>'
     : '';
-  /* half：'near' 是靠鏡頭那半邊，'far' 是另外那半邊。
-     位置跟形狀要分開算，這是關鍵：
-       位置照 cos 走（帶正負號）。45 度時左耳在左、135 度時左耳跑到右邊 ——
-       這個換邊就是「轉到背面」這件事本身。只用 |cos| 的話 45 跟 135
-       算出來一模一樣，兩個角度長得沒有差別，等於根本沒轉。
-       形狀用 |cos| 前縮，不帶負號。帶負號會就地鏡射，狐狸的內耳（淺色那片）
-       會被翻到外耳的外面去，背面看起來就變成兩個生硬的白三角形。
-     遠側那隻的位置多留一點在頭的邊緣（0.85），突出去的部分才露得出來；
-     兩隻都照 cos 收的話遠側會被頭整個吃掉，變成只剩一隻耳朵。 */
+  /* half：'near' 是靠鏡頭那半邊，'far' 是另外那半邊；不拆就整組一次畫完 */
   const earHalf=half=>{
-    /* 青蛙那兩顆是眼睛不是耳朵。它跟眼白、眼珠是同一個東西，
-       要用跟臉一模一樣的位移，三個才會黏在一起 */
     if(a.eyesTop) return '<g'+slide(60,a.hr*.55)+'>'+chBack(a,0,'ears')+'</g>';
-    if(!earSplit) return '<g'+sqz(60)+'>'+chBack(a,0,'ears')+'</g>';
+    if(!earSplit) return '<g'+earXf+'>'+earStr+'</g>';
     const useL=(half==='near')===earNearLeft;
-    const sgn=useL?-1:1, ac=Math.abs(yc), sc=yc<0?-1:1;
-    const posK=half==='near'?yc:sc*Math.max(.85,ac);
-    const x0=60+sgn*earD, tx=60+sgn*earD*posK;
-    return '<g transform="translate('+(tx-x0).toFixed(2)+',0) translate('+x0.toFixed(2)+
-           ',0) scale('+Math.max(.55,ac).toFixed(4)+',1) translate('+(-x0).toFixed(2)+',0)">'+
-           '<g clip-path="url(#'+(useL?clL:clR)+')">'+chBack(a,0,'ears')+'</g></g>';
+    return '<g'+earXf+'><g clip-path="url(#'+(useL?clL:clR)+')">'+earStr+'</g></g>';
   };
   const backOn=yc<.02;                 /* 背面的東西這時候要整片畫出來 */
   const aw=a.armW||7, ah=a.armH||12;
@@ -6853,7 +6890,7 @@ function chSVG(a,e,small,yaw){
            把近側那隻挪到頭前面的話，那截埋著的會整個露出來，
            變成一根比頭還高的白色尖刺；貓的耳朵短、沒埋，才看不出來。
            近側那隻畫在遠側後面一點（後畫的蓋住先畫的），前後關係就對了。 */
-        (earSplit?earHalf('far')+earHalf('near')
+        (earSplit?earHalf('far')+(earHang?'':earHalf('near'))
                  :(turned&&!a.eyesTop?earHalf('near'):''))+
         /* 披風那類貼在背面的：正面只看得到邊緣，轉過去才整片露出來，
            所以背面的時候要移到最上層去畫 */
@@ -6878,8 +6915,10 @@ function chSVG(a,e,small,yaw){
         chHead(a)+
         /* 靠鏡頭那隻耳朵挪到頭前面 —— 但要在五官「之前」畫。
            畫在五官後面的話，青蛙那種眼球包會直接把自己的眼睛蓋掉 */
-        /* 青蛙的眼球包是眼睛不是耳朵，永遠在頭前面 */
+        /* 青蛙的眼球包是眼睛不是耳朵，永遠在頭前面。
+           垂耳（狗、羊、長頸鹿）近側那隻也在前面 —— 它本來就掛在頭的外面 */
         (turned&&a.eyesTop?earHalf('near'):'')+
+        (earSplit&&earHang?earHalf('near'):'')+
         /* 頭上的花紋一個零件一個零件算：跟頭一樣大的那塊（羊的深色臉）
            要當成頭本身不動也不藏，小塊的才跟著臉走。
            青蛙的眼白例外 —— 它畫在眼球包上，要跟眼珠綁在同一片臉上一起走，
