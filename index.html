@@ -799,11 +799,6 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .shopstage{position:relative;border-radius:13px;overflow:hidden;
   background:radial-gradient(ellipse at 50% 92%,var(--panel3) 0%,transparent 70%)}
 /* 八個面的轉盤。點子點代表現在朝哪邊，正面那顆是實心的 */
-.spin{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:6px}
-.spin .arw{width:26px;height:26px;font-size:11px}
-.spin #spinDots{display:inline-flex;gap:5px;align-items:center}
-.spin i{width:6px;height:6px;border-radius:50%;background:var(--edge2);display:block}
-.spin i.on{background:var(--gold);box-shadow:0 0 5px rgba(255,194,51,.6)}
 /* 預覽佈景時那條回商店的橫幅 */
 /* 沒在預覽的時候要完全看不到。只靠位移的話陰影還是會從畫面下緣透出來 */
 .askrow{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin:4px 0 2px}
@@ -1439,9 +1434,6 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   <h3>商店</h3>
   <div class="shoptop">
     <div class="shopstage" id="shopStage"></div>
-    <div class="spin"><button class="arw" data-spin="-1" title="往左轉">◀</button>
-      <span id="spinDots"></span>
-      <button class="arw" data-spin="1" title="往右轉">▶</button></div>
     <div class="shopinfo">
       <div class="coinbar" id="shopCoins"></div>
       <div class="tryon" id="shopPick"></div>
@@ -2211,7 +2203,11 @@ const hides=(a,part)=>wornList(a.k).some(id=>{ const o=itemById(id); return o&&o
 function chBack(a,noTail,part){
   const T   =x=>(noTail||part==='ears'||part==='tail')?'':x;   /* 頭貼只取頭 */
   const TAIL=x=>(noTail||part==='ears'||part==='body')?'':x;
-  const E=x=>(part==='tail'||part==='body')?'':'<g class="ears" data-p="60,'+(a.hy-a.hr*.2).toFixed(0)+'">'+x+'</g>', hy=a.hy, hr=a.hr;
+  /* 戴了會蓋住耳朵的帽子就不畫耳朵。這個判斷本來散在各角色自己的分支裡，
+     只有熊跟松鼠接了，貓、狐狸、兔子都漏掉 —— 放在共用的 E() 一次處理。
+     群組本身要留著（裡面空的），動畫跟檢查都靠 .ears 找得到它 */
+  const noEar=hides(a,'ear');
+  const E=x=>(part==='tail'||part==='body')?'':'<g class="ears" data-p="60,'+(a.hy-a.hr*.2).toFixed(0)+'">'+(noEar?'':x)+'</g>', hy=a.hy, hr=a.hr;
   if(a.k==='a-cat')
     return TAIL('<g class="tail" data-p="'+(60+a.bw-2)+','+(a.by+8)+'"><path d="M'+(60+a.bw-2)+' '+(a.by+8)+'q18 3 13-19" stroke="'+a.tailC+
              '" stroke-width="7" fill="none" stroke-linecap="round"/></g>')+
@@ -2888,7 +2884,8 @@ const AC={
       ' 0 0 1 '+(w*2+4).toFixed(1)+' 0" stroke="'+d+'" stroke-width="4.5" fill="none"/>';},
   halo:(a,c)=>{const y=AC.top(a,15);
     return '<ellipse cx="60" cy="'+y+'" rx="14" ry="4.6" fill="none" stroke="'+c+'" stroke-width="3.6"/>';},
-  tophat:(a,c,b)=>{const y=HLINE(a),w=AC.hugW(a)*.7,h=Math.min(19,Math.max(9,y-AC.top(a,19)));
+  /* up：往上帶幾格。不給就是原本的高度，才不會動到沒點名的那幾頂 */
+  tophat:(a,c,b,up)=>{const y=HLINE(a)-(up||0),w=AC.hugW(a)*.7,h=Math.min(19,Math.max(9,y-AC.top(a,19)));
     return '<rect x="'+(60-w-6)+'" y="'+(y-2)+'" width="'+(w*2+12)+'" height="5" rx="2.5" fill="'+c+'"/>'+
       '<rect x="'+(60-w)+'" y="'+(y-h)+'" width="'+(w*2)+'" height="'+h+'" rx="2" fill="'+c+'"/>'+
       '<rect x="'+(60-w)+'" y="'+(y-h*.42)+'" width="'+(w*2)+'" height="5" fill="'+b+'"/>';},
@@ -3642,7 +3639,7 @@ const ITEMS=[
     return '<circle cx="'+(60+g)+'" cy="'+y+'" r="11" fill="none" stroke="#ffc233" stroke-width="2.6"/>'+
       '<path d="M'+(60+g+9)+' '+(y+7)+'l7 13" stroke="#ffc233" stroke-width="2"/>';}},
   /* ── 貓 加開 ── */
-  {id:'cth1', n:'毛線帽', p:100, slot:'head', only:'a-cat', d:a=>{
+  {id:'cth1', n:'毛線帽', p:100, slot:'head', only:'a-cat', hide:'ear', d:a=>{
   const y=HLINE(a),w=HATW(a)+1,dm=Math.max(8,y-AC.top(a,HRY(a)*.8)-6);
   let rib='';
   for(let i=1;i<5;i++){const t=i/5,x=60-w+w*2*t;
@@ -3668,12 +3665,15 @@ const ITEMS=[
   return '<path d="M'+(60-w)+' '+y+'h'+(w*2)+'" stroke="#9fd8f0" stroke-width="4" stroke-linecap="round"/>'+
     bone(60-w*.6,-1)+bone(60,0)+bone(60+w*.6,1)+
     '<circle cx="60" cy="'+(y-h-3)+'" r="3.2" fill="#5aa9ff"/>';}},
-  {id:'cth4', n:'午睡睡帽', p:100, slot:'head', only:'a-cat', d:a=>{
-  const y=HLINE(a)+2,w=HATW(a),t=AC.top(a,24);
-  return '<path d="M'+(60-w)+' '+y+'Q'+(60-w*.2)+' '+(t+4)+' '+(60+w*.9)+' '+(t+2)+
+  {id:'cth4', n:'午睡睡帽', p:100, slot:'head', only:'a-cat', hide:'ear', d:a=>{
+  const y=HLINE(a)-4,w=HATW(a),t=AC.top(a,24);
+  /* 整頂包成一個群組。拆開的話帽身跟白邊會被當成兩個零件各自位移，
+     轉身時帽身滑開一點，左上角就露出頭 —— 帽子是一個剛體，不會自己內部錯開 */
+  return '<g>'+
+    '<path d="M'+(60-w)+' '+y+'Q'+(60-w*.2)+' '+(t+4)+' '+(60+w*.9)+' '+(t+2)+
     'Q'+(60+w*.5)+' '+(y-6)+' '+(60+w)+' '+y+'z" fill="#8f5ce0"/>'+
     '<rect x="'+(60-w-2)+'" y="'+(y-4)+'" width="'+(w*2+4)+'" height="8" rx="4" fill="#f7f4ec"/>'+
-    '<circle cx="'+(60+w*.95)+'" cy="'+(t+2)+'" r="6" fill="#f7f4ec"/>';}},
+    '<circle cx="'+(60+w*.95)+'" cy="'+(t+2)+'" r="6" fill="#f7f4ec"/></g>';}},
   {id:'cth5', n:'貓草花冠', p:100, slot:'head', only:'a-cat', d:a=>{
   const y=AC.crest(a)-1,w=AC.crestW(a)*1.08;
   let o='<path d="M'+(60-w)+' '+y+'q'+w+' -9 '+(w*2)+' 0" stroke="#4a9b3f" stroke-width="3" fill="none"/>';
@@ -4200,7 +4200,7 @@ const ITEMS=[
     o+='<circle cx="'+x.toFixed(1)+'" cy="'+yy.toFixed(1)+'" r="2" fill="#e0921a"/>';});
   return o;}},
   {id:'brh6', n:'黑森紳士帽', p:100, slot:'head', only:'a-bear', hide:'ear', d:a=>{
-  const y=HLINE(a),w=AC.hugW(a)*.68,h=Math.min(19,Math.max(9,y-AC.top(a,19)));
+  const y=HLINE(a)-10,w=AC.hugW(a)*.68,h=Math.min(19,Math.max(9,y-AC.top(a,19)));
   return '<ellipse cx="60" cy="'+(y+1)+'" rx="'+(w+8)+'" ry="4.4" fill="#22232a"/>'+
     '<path d="M'+(60-w)+' '+y+'v-'+h+'q'+w+' -4 '+(w*2)+' 0v'+h+'z" fill="#22232a"/>'+
     '<rect x="'+(60-w)+'" y="'+(y-h*.42)+'" width="'+(w*2)+'" height="5" fill="#3f7d55"/>'+
@@ -4423,7 +4423,7 @@ const ITEMS=[
     '" stroke="#f7f0e2" stroke-width="2.4"/>'+
     '<ellipse cx="60" cy="'+y.toFixed(1)+'" rx="'+w.toFixed(1)+'" ry="2.6" fill="#6b1616"/>'+
     '<path d="M60 '+(t-4).toFixed(1)+'l2 4h-4z" fill="#e3c98a"/>';}},
-  {id:'fxh6', n:'夜行禮帽', p:100, slot:'head', only:'a-fox', d:a=>AC.tophat(a,'#22232a','#101119')},
+  {id:'fxh6', n:'夜行禮帽', p:100, slot:'head', only:'a-fox', d:a=>AC.tophat(a,'#22232a','#101119',5)},
   {id:'fxe1', n:'上挑貓眼鏡', p:100, slot:'face', only:'a-fox', d:a=>{
   const y=eyeY(a),g=a.gap,r=AC.ew(a),f=n=>n.toFixed(1);const h=r*.8;
   const lens=sg=>{const cx=60+sg*g;
@@ -5497,12 +5497,34 @@ const ITEMS=[
   return leaf(-r*.95,-r*.55)+leaf(r*.95,-r*.55)+leaf(0,r*.95)+
     '<path d="M'+x.toFixed(1)+' '+(y+r*1.5).toFixed(1)+'q3 4 0 7" stroke="#266b45" stroke-width="1.6" fill="none"/>';}},
   {id:'rbh5', n:'生日尖帽', p:100, slot:'head', only:'a-rab', d:a=>AC.cone(a,'#c9a6ff','#8536ff')},
+  /* 兔子的耳朵從帽頂穿出來。耳朵畫在頭後面、帽子畫在頭前面，
+     所以帽冠擋住耳朵下半截，上半截露在帽子上方 —— 就是穿過去的樣子。
+     兩個挖平的深色橢圓很生硬（像貼上去的貼紙）。改成兩件事：
+       帽頂在耳朵的位置很輕地隆起（布被頂起來，幅度只有 2 左右，過大會變兩坨）
+       耳根進去的地方壓一道柔和的陰影，順著耳朵的寬度彎，不畫外框 */
   {id:'rbh6', n:'午茶禮帽', p:100, slot:'head', only:'a-rab', d:a=>{
-  const y=HLINE(a),w=AC.hugW(a)*.66,h=Math.min(19,Math.max(9,y-AC.top(a,19)));
-  return '<ellipse cx="60" cy="'+(y+1)+'" rx="'+(w+8)+'" ry="4.4" fill="#c9a6ff"/>'+
-    '<path d="M'+(60-w)+' '+y+'v-'+h+'q'+w+' -3 '+(w*2)+' 0v'+h+'z" fill="#8f5ce0"/>'+
-    '<rect x="'+(60-w)+'" y="'+(y-h*.38)+'" width="'+(w*2)+'" height="5" fill="#ffd84d"/>'+
-    '<path d="M'+(60-w*.4)+' '+(y-h*.38)+'l-4-6 8 2z" fill="#ff9ec4"/>';}},
+  /* 帽冠加寬之後高度也要跟上，不然是一片扁扁的板子；但直接加高會把耳朵吃掉，
+     所以帽子同時往下移一樣的量 —— 帽頂的位置不變，露出來的耳朵長度就不變 */
+  const h=13, y=HLINE(a)-6;
+  /* 寬度：帽緣大約跟頭一樣寬。原本 .66 太窄（帽冠比耳朵還小），
+     但照耳朵整組的外緣去撐又會變成一頂遮陽帽，很醜。
+     耳朵越往上越細，帽頂那個高度的耳朵沒有底下那麼寬，不用撐到最寬 */
+  const w=AC.hugW(a)*.82;
+  const ex=EARSPAN(a)||9, ct=y-h, f=n=>n.toFixed(1);
+  const crown='<path d="M'+f(60-w)+' '+f(y)+'V'+f(ct+1)+
+    'Q'+f(60-ex-3)+' '+f(ct-1)+' '+f(60-ex)+' '+f(ct-2)+
+    'Q'+f(60-ex+4)+' '+f(ct-.6)+' '+f(60)+' '+f(ct+.4)+
+    'Q'+f(60+ex-4)+' '+f(ct-.6)+' '+f(60+ex)+' '+f(ct-2)+
+    'Q'+f(60+ex+3)+' '+f(ct-1)+' '+f(60+w)+' '+f(ct+1)+
+    'V'+f(y)+'z" fill="#8f5ce0"/>';
+  /* 耳根落在布上的陰影：越靠耳朵越深，兩側收掉 */
+  const shade=sg=>{const x=60+sg*ex;
+    return '<path d="M'+f(x-6)+' '+f(ct+.6)+'q6 3.4 12 0q-6 4.2 -12 0z" fill="#5b3399" opacity=".55"/>';};
+  return '<g>'+
+    '<ellipse cx="60" cy="'+f(y+1)+'" rx="'+f(w+5)+'" ry="4.6" fill="#c9a6ff"/>'+
+    crown+ shade(-1)+shade(1)+
+    '<rect x="'+f(60-w)+'" y="'+f(y-h*.38)+'" width="'+f(w*2)+'" height="5" fill="#ffd84d"/>'+
+    '<path d="M'+f(60-w*.4)+' '+f(y-h*.38)+'l-4-6 8 2z" fill="#ff9ec4"/></g>';}},
   {id:'rbe1', n:'吊鍊圓鏡', p:100, slot:'face', only:'a-rab', d:a=>{
   const y=eyeY(a),g=a.gap,r=AC.ew(a),f=n=>n.toFixed(1);
   const lens=sg=>'<circle cx="'+f(60+sg*g)+'" cy="'+f(y)+'" r="'+f(r)+
@@ -5732,7 +5754,7 @@ const ITEMS=[
        '" rx="'+r.toFixed(1)+'" ry="'+(r*.66).toFixed(1)+'" fill="#ffd84d" transform="rotate('+(i*90)+
        ','+(x+Math.cos(an)*r*1.1).toFixed(1)+','+(y+Math.sin(an)*r*1.1).toFixed(1)+')"/>';}
   return o+'<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(r*.66).toFixed(1)+'" fill="#c4471d"/>';}},
-  {id:'gfh6', n:'晚宴禮帽', p:100, slot:'head', only:'a-gir', d:a=>AC.tophat(a,'#22232a','#101119')},
+  {id:'gfh6', n:'晚宴禮帽', p:100, slot:'head', only:'a-gir', d:a=>AC.tophat(a,'#22232a','#101119',5)},
   {id:'gfe1', n:'草原墨鏡', p:100, slot:'face', only:'a-gir', d:a=>{
   /* 探險用的側邊擋光墨鏡：鏡片是圓的，外側再補一片皮革遮陽 */
   const y=eyeY(a),g=a.gap,r=AC.ew(a),f=n=>n.toFixed(1);
@@ -6512,6 +6534,27 @@ const EARHANG=(()=>{
     return cache[a.k]=(yb>a.hy && outer-hw>=10);
   };
 })();
+/* 耳朵整組離中線最遠到哪。帽子要穿過耳朵的話，帽冠一定要比這個寬，
+   不然耳朵會從帽冠兩側跑出去 —— 看起來就是帽子比耳朵還小 */
+const EAROUT=(()=>{
+  const cache={}; let svg=null;
+  return a=>{
+    if(cache[a.k]!==undefined) return cache[a.k];
+    if(typeof document==='undefined') return a.hr;
+    if(!svg){
+      svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('viewBox','0 0 120 120');
+      svg.style.cssText='position:absolute;left:-9999px;top:0;width:0;height:0;overflow:hidden';
+      document.body.appendChild(svg);
+    }
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    try{ g.innerHTML=chBack(a,0,'ears'); }catch(e){ return cache[a.k]=a.hr; }
+    svg.appendChild(g);
+    let b; try{ b=g.getBBox(); }catch(e){ b=null; }
+    g.remove();
+    return cache[a.k]=(b&&b.width)?Math.max(60-b.x,b.x+b.width-60):a.hr;
+  };
+})();
 const EARSPAN=(()=>{
   const cache={}; let svg=null;
   return a=>{
@@ -6589,16 +6632,36 @@ const WEARPARTS=(()=>{
       const r=(it.slot==='body'||it.slot==='neck')?a.bw*.5:a.hr*.55;
       return {html:el.outerHTML, cx, kind, r};
     });
+    /* 帽子是一個剛體。帽身、帽緣、毛球被分成不同類的話，轉身時各自位移，
+       整頂會自己內部錯開 —— 帽身滑開一點，旁邊就露出底下的頭。
+       頭上的東西一律用「整件的外框」判一次，全部零件共用同一種處理。 */
+    if(it.slot==='head'&&parts.length>1){
+      let b; try{ b=g.getBBox(); }catch(e){ b=null; }
+      if(b&&b.width){
+        const cx=b.x+b.width/2, off=cx-60;
+        let k;
+        if(b.width>=ref*.95)                             k='skin';
+        else if(b.y+b.height<a.hy-ry*.55&&b.width<ref*.75) k='top';
+        else if(Math.abs(off)>ref*.22)                   k='side';
+        else if(b.width>=ref*.72)                        k='wrap';
+        else                                             k='front';
+        parts.forEach(p=>{ p.kind=k; });
+      }
+    }
     g.remove();
     return cache[it.id]=parts;
   };
 })();
 /* 角色自己身上的花紋（羊的深色臉、貓的肚子）也要一個零件一個零件分類。
    羊那張「臉」其實是整顆頭，整片跟著臉滑走就變成戴面具，整片藏起來頭就變白的 */
-function markYaw(key,a,svg,ref,r){
-  if(!YAWCTX.on||!svg) return svg;
-  const parts=MARKPARTS(key,a,svg,ref,r);
-  if(!parts||!parts.length) return svg;
+/* pick：'crown' 只要蓋在頭上的（羊毛），'rest' 要其餘的。不給就是全部。
+   兩者要分開畫，因為只有 rest 可以套頭的遮罩 —— 羊毛是長在頭外面的，
+   被頭的遮罩剪掉就會齊頭切平，正面凸凸的一轉身就變成一條白邊 */
+function markYaw(key,a,svg,ref,r,pick){
+  if(!YAWCTX.on||!svg) return pick==='crown'?'':svg;
+  let parts=MARKPARTS(key,a,svg,ref,r);
+  if(!parts||!parts.length) return pick==='crown'?'':svg;
+  if(pick) parts=parts.filter(p=>(p.kind==='crown')===(pick==='crown'));
   return parts.map(p=>{
     const y=partYaw(p);
     if(!y) return '';
@@ -6954,7 +7017,11 @@ function chSVG(a,e,small,yaw){
            正面還是要在這裡畫，不然正面會沒有眼白 */
         (a.eyesTop?(turned?'':'<g class="faceMark">'+chFaceMark(a)+'</g>')
                   :onHead('<g class="faceMark">'+
-                     markYaw('fm:'+a.k,a,chFaceMark(a),a.hr*2,a.hr*.55)+'</g>'))+
+                     markYaw('fm:'+a.k,a,chFaceMark(a),a.hr*2,a.hr*.55,'rest')+'</g>'))+
+        /* 蓋在頭上的（羊頭頂那撮毛）長在頭的外面，不能套頭的遮罩 ——
+           剪下去就齊頭切平，正面凸凸的一轉身就變成頭頂一條白邊 */
+        (a.eyesTop?'':'<g class="crownMark">'+
+           markYaw('fm:'+a.k,a,chFaceMark(a),a.hr*2,a.hr*.55,'crown')+'</g>')+
         (faceOn?onHead('<g'+slide(60,fsl)+'>'+
           '<g class="face">'+chFace(a,e,(turned&&a.eyesTop)?'rest':undefined)+'</g></g>'):'')+
         /* 鬍鬚往頭外面長，不受頭的遮罩 */
@@ -8290,8 +8357,9 @@ function renderStocks(){
   const colName=stkCol==='cost'?'成本':'市值';
   /* 成本填 0 或沒填的當作沒有，寫 0 會讓人以為是免費拿到的 */
   const colOf=x=>stkCol==='cost'?(x.cost>0?x.cost:null):(x.value!==null&&x.value!==undefined?x.value:null);
-  $('stkSub').textContent=(stkCol==='cost'?'總成本 '+short(tc):'總值 '+short(tv))+
-    (tp!==null?'　損益 '+(tp>=0?'+':'-')+short(Math.abs(tp)):'');
+  /* 這裡要完整的數字，不縮成「1萬 / +239萬」—— 錢的位數看不清楚沒意義 */
+  $('stkSub').textContent=(stkCol==='cost'?'總成本 '+money(tc):'總市值 '+money(tv))+
+    (tp!==null?'　損益 '+(tp>=0?'+':'-')+money(Math.abs(tp)):'');
   const cell=(v,cls)=>'<span class="'+cls+'">'+(v>=0?'+':'-')+money(Math.abs(v))+'</span>';
   box.innerHTML='<div class="card stkbox"><table class="stkt"><thead><tr>'+
     '<th>股票</th><th class="hidem">股數</th><th class="hidem">均價</th><th>現價</th>'+
@@ -10018,12 +10086,6 @@ let shopTab='all';
 const SLOTN={head:'頭',face:'臉',neck:'脖子',body:'身體',hand:'手上',foot:'腳下'};
 const SLOTORDER=['head','face','neck','body','hand','foot'];
 let shopSlot='head', shopCat='char';
-/* 商店裡轉到第幾個面。轉過去才看得到披風那類背面的東西。
-   正側面（90／270）拿掉了 —— 那個角度是這套做法的死角，
-   五官會被壓成一條、兩隻手腳疊在一起，怎麼調都很怪。
-   斜角跟背面本來就好看，六個面夠用 */
-const YAWS=[0,45,135,180,225,315];
-let shopYaw=0;
 let tryBg=null, tryWin=null;        /* 正在試的背景／動作 */
 /* 試穿是一個部位記一件，換分類不會清掉。值是物品 id，null 代表這格試著脫掉 */
 let shopTry={};
@@ -10074,9 +10136,7 @@ function renderShop(){
   const m=wearMap(), had=m.hasOwnProperty(a.k), keep=m[a.k];
   m[a.k]=tryOutfit(a);
   wearRaw=1;
-  $('shopStage').innerHTML=chSVG(a,'idle',0,YAWS[shopYaw]*Math.PI/180);   /* 跟 HUD 那隻一樣是閒置的樣子 */
-  $('spinDots').innerHTML=YAWS.map((_,i)=>'<i'+(i===shopYaw?' class="on"':'')+'></i>').join('');
-  document.querySelector('.spin').style.display=shopCat==='char'?'':'none';
+  $('shopStage').innerHTML=chSVG(a,'idle');       /* 跟 HUD 那隻一樣是閒置的樣子 */
   wearRaw=0;
   SHOPPET.watch(); SHOPPET.start();
   /* 本來就沒有這個鍵的話要刪掉。寫回 undefined 會讓整包同步被 Firestore 退件 */
@@ -10225,7 +10285,7 @@ function endPreview(){
   $('prevBar').classList.remove('on');
   shopCat='bg'; tryBg=prevId; renderShop(); open('vShop'); SFX.play('tick');
 }
-function openShop(){ shopSlot='head'; shopCat='char'; shopTry={}; shopYaw=0;
+function openShop(){ shopSlot='head'; shopCat='char'; shopTry={};
   tryBg=null; tryWin=null; renderShop(); open('vShop'); }
 /* 一次把試穿的都定下來：沒買過的先買，再整套換上 */
 async function shopAction(){
@@ -10923,10 +10983,6 @@ document.body.addEventListener('click',e=>{
     stkCol=b.dataset.sc==='value'?'value':'cost';
     db.settings.stkCol=stkCol; save();
     SFX.play('tick'); renderStocks(); return;
-  }
-  if(b.dataset.spin){
-    shopYaw=(shopYaw+ +b.dataset.spin+YAWS.length)%YAWS.length;
-    SFX.play('tick'); renderShop(); return;
   }
   if(b.id==='btnDayCal') return openDayCal();
   if(b.id==='dayPrev') { SFX.play('tick'); return dayShift(-1); }
