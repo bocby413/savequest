@@ -6802,7 +6802,10 @@ function chSVG(a,e,small,yaw){
        ② 前後順序。哪一隻在頭前面、哪一隻在頭後面
      位置就照圓柱收攏（cos 帶負號＝過了九十度就地鏡射，正好是耳背的樣子），
      但不能收成一根針 —— 耳朵是立體的殼，從側面看還是有厚度。 */
-  const earK=(yc<0?-1:1)*Math.max(earHang?.9:.72,Math.abs(yc));
+  /* 青蛙的眼球包又大又圓（半徑比頭的一半還多），兩顆再往外撐就會整顆跑出頭外。
+     它那一組收得多一點、臉整片也偏得少一點，外側那顆才不會飛出去 */
+  const fsl=a.hr*(a.eyesTop?.32:.55);          /* 臉整片橫向偏移的半徑 */
+  const earK=(yc<0?-1:1)*Math.max(earHang?.9:(a.eyesTop?.5:.72),Math.abs(yc));
   const earXf=turned
     ? ' transform="translate(60,0) scale('+earK.toFixed(4)+',1) translate(-60,0)"' : '';
   const earStr=(()=>{
@@ -6827,9 +6830,22 @@ function chSVG(a,e,small,yaw){
     /* 青蛙那兩顆是眼睛不是耳朵，而且是架在頭頂上的球，不是畫在臉的平面上。
        套臉的平面位移的話兩顆會擠在一起、還會被頭的遮罩切掉半顆眼白。
        眼球包、眼白、眼珠是同一顆眼睛，整組用跟耳朵一樣的收攏，完整顯示 */
-    if(a.eyesTop) return '<g class="eyeUnit"'+earXf+'>'+chBack(a,0,'ears')+
-      (faceOn?'<g class="faceMark">'+chFaceMark(a)+'</g>'+
-              '<g class="faceEye">'+chFace(a,e,'eyes')+'</g>':'')+'</g>';
+    if(a.eyesTop){
+      /* 光是把兩顆收窄看不出有轉身。真正讓人看得出來的是兩件事：
+           整組跟著頭往轉的那一邊偏（眼睛在頭上就不再置中了）
+           瞳孔在眼白裡看向轉的方向 —— 這個線索最強
+         瞳孔偏移量取（眼白半徑 － 瞳孔半徑）×sinθ，
+         九十度時剛好貼到眼白的邊，不會跑出去 */
+      /* 位移量要跟嘴巴那片一模一樣。眼睛跟嘴巴都長在臉的正面，
+         偏的量不一樣的話整張臉會錯開 —— 看起來就是嘴巴歪掉 */
+      const eyeDx=(fsl*ys).toFixed(2);
+      const pupDx=((6.5-(a.pup||4.5))*ys*2.4).toFixed(2);
+      return '<g class="eyeUnit" transform="translate('+eyeDx+',0) translate(60,0) scale('+
+        earK.toFixed(4)+',1) translate(-60,0)">'+chBack(a,0,'ears')+
+        (faceOn?'<g class="faceMark">'+chFaceMark(a)+'</g>'+
+                '<g class="faceEye" transform="translate('+pupDx+',0)">'+
+                chFace(a,e,'eyes')+'</g>':'')+'</g>';
+    }
     if(!earSplit) return '<g'+earXf+'>'+earStr+'</g>';
     const useL=(half==='near')===earNearLeft;
     return '<g'+earXf+'><g clip-path="url(#'+(useL?clL:clR)+')">'+earStr+'</g></g>';
@@ -6934,12 +6950,15 @@ function chSVG(a,e,small,yaw){
            要當成頭本身不動也不藏，小塊的才跟著臉走。
            青蛙的眼白例外 —— 它畫在眼球包上，要跟眼珠綁在同一片臉上一起走，
            分開算的話眼白留在原地、眼珠滑走，就變成眼白跟眼珠分離 */
-        (a.eyesTop?'':onHead('<g class="faceMark">'+
-           markYaw('fm:'+a.k,a,chFaceMark(a),a.hr*2,a.hr*.55)+'</g>'))+
-        (faceOn?onHead('<g'+slide(60,a.hr*.55)+'>'+
+        /* 青蛙的眼白跟著眼球包走（在上面那組裡）—— 但那組只有轉身時才畫，
+           正面還是要在這裡畫，不然正面會沒有眼白 */
+        (a.eyesTop?(turned?'':'<g class="faceMark">'+chFaceMark(a)+'</g>')
+                  :onHead('<g class="faceMark">'+
+                     markYaw('fm:'+a.k,a,chFaceMark(a),a.hr*2,a.hr*.55)+'</g>'))+
+        (faceOn?onHead('<g'+slide(60,fsl)+'>'+
           '<g class="face">'+chFace(a,e,(turned&&a.eyesTop)?'rest':undefined)+'</g></g>'):'')+
         /* 鬍鬚往頭外面長，不受頭的遮罩 */
-        (faceOn?'<g'+slide(60,a.hr*.55)+' class="whisk">'+chWhisk(a)+'</g>':'')+
+        (faceOn?'<g'+slide(60,fsl)+' class="whisk">'+chWhisk(a)+'</g>':'')+
         (turned&&tailFront?tailG(chBack(a,0,'tail')):'')+
         /* 頭上、臉上、脖子上的東西。每一件（其實是每一個零件）
            自己照長在圓柱的哪個位置去算，這裡不再整層一起壓 */
