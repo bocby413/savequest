@@ -2420,16 +2420,9 @@ function chFaceMark(a){
   if(a.k==='a-shp')                                    /* 深色的臉壓在頭上，頭頂一撮毛蓋下來 */
     /* 深色的臉要比頭再大一點點，不然頭的白邊會露出來一圈 */
     return '<ellipse cx="60" cy="'+a.hy+'" rx="'+(a.hr+.8)+'" ry="'+(a.hry+.8)+'" fill="'+a.d+'"/>'+
-           /* 羊毛沿著頭頂的弧線長，每一坨的圓心就落在頭的輪廓上 ——
-              一半在頭裡、一半凸出去，才像一頂蓬鬆的羊毛帽。
-              原本三坨是平擺在額頭上的，兩側那兩坨整顆縮在頭的輪廓裡面，
-              只有中間那顆探得出來，轉身就變成頭頂貼了一條白帶子 */
-           [[0,9],[-32,8],[32,8],[-62,7],[62,7]].map(w=>{
-             const t=w[0]*Math.PI/180;
-             return '<circle data-crown="1" cx="'+(60+a.hr*Math.sin(t)).toFixed(1)+
-                    '" cy="'+(a.hy-a.hry*Math.cos(t)).toFixed(1)+
-                    '" r="'+w[1]+'" fill="'+a.wool+'"/>';
-           }).join('')+
+           '<circle cx="'+(60-11)+'" cy="'+(a.hy-a.hry+5)+'" r="7.6" fill="'+a.wool+'"/>'+
+           '<circle cx="60" cy="'+(a.hy-a.hry+1)+'" r="9" fill="'+a.wool+'"/>'+
+           '<circle cx="'+(60+11)+'" cy="'+(a.hy-a.hry+5)+'" r="7.6" fill="'+a.wool+'"/>'+
            '<circle cx="'+L+'" cy="'+ey+'" r="9.6" fill="#ffffff"/>'+
            '<circle cx="'+R+'" cy="'+ey+'" r="9.6" fill="#ffffff"/>'+
            '<ellipse cx="60" cy="'+(my+3)+'" rx="6.5" ry="4.6" fill="#6b6b74"/>';
@@ -6634,10 +6627,7 @@ const MARKPARTS=(()=>{
       /* 明顯長在眼睛上方一截的，是「蓋在頭上的東西」（綿羊頭頂那撮毛），
          不是臉部特徵 —— 從背面看還是要在。
          青蛙的白眼球剛好也很高，但它就在眼睛的高度，所以用眼睛當基準才分得開 */
-      /* 靠高度猜會出事：羊毛最外側那兩坨沿著頭頂的弧線往下垂，
-         低過這條線就被當成臉上的花紋，一轉到背面就消失，
-         剩下的三坨變成頭頂一條白帶子。會蓋住頭的東西直接標出來，不用猜 */
-      const onCrown=el.dataset.crown==='1'||cy<eyeY(a)-ry2*.3;
+      const onCrown=cy<eyeY(a)-ry2*.3;
       let kind;
       /* 只有真的空的才算 skin。兔子鼻子下面那條直線寬度是 0，
          被當成「跟頭一樣寬」就永遠不會跟著轉 */
