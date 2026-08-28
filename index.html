@@ -2,7 +2,7 @@
 <html lang="zh-Hant" data-skin="dark">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>存錢Bo士</title>
 <link rel="manifest" href="manifest.json">
 <meta name="description" content="把存款變成闖關：記錄收支、設定每月目標，達標打卡、逐關升級，隨時掌握資產成長。支援多裝置同步。">
@@ -40,9 +40,23 @@
   --r:16px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
+/* 完全關掉縮放。要三件事一起做，少一件在某個瀏覽器上就會漏：
+     viewport 的 user-scalable=no   Android 吃這個，iOS Safari 從 iOS 10 起無視
+     touch-action: pan-x pan-y      只准捲動、不准雙指縮放
+                                    （manipulation 只擋連點兩下，雙指還是能縮）
+     gesturestart 等事件 preventDefault   iOS Safari 唯一擋得住雙指的方法
+   text-size-adjust 是另一件事：iOS 會自己把文字放大，版面會跑掉 */
+/* 遮金額的眼睛，貼在「總資產」那行標籤旁邊 */
+.amtk{display:flex;align-items:center;gap:6px}
+.eyeb{border:0;background:none;padding:2px;line-height:0;cursor:pointer;
+  color:var(--txt3);opacity:.8}
+.eyeb:hover{color:var(--gold);opacity:1}
+.eyeb.on{color:var(--gold);opacity:1}
+.eyeb .i{width:16px;height:16px}
+html{touch-action:pan-x pan-y;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{background:var(--bg);color:var(--txt);line-height:1.6;
   font-family:"Segoe UI","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;font-size:15px;
-  -webkit-font-smoothing:antialiased}
+  -webkit-font-smoothing:antialiased;touch-action:pan-x pan-y}
 body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   transform:translateZ(0);            /* 獨立成合成層，捲動時不必重畫漸層 */
   background:radial-gradient(900px 500px at 15% -10%,rgba(168,121,255,.18),transparent 60%),
@@ -1121,6 +1135,8 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   <symbol id="i-undo" viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/></symbol>
   <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 6l7 7-1.4 1.4L12 8.8l-5.6 5.6L5 13z"/></symbol>
   <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 18l-7-7 1.4-1.4L12 15.2l5.6-5.6L19 11z"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M12 5C6.5 5 2.7 9.2 1.5 12c1.2 2.8 5 7 10.5 7s9.3-4.2 10.5-7c-1.2-2.8-5-7-10.5-7zm0 2c4 0 7.1 2.8 8.3 5-1.2 2.2-4.3 5-8.3 5s-7.1-2.8-8.3-5C4.9 9.8 8 7 12 7z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M12 5c-1.3 0-2.5.2-3.6.6l1.7 1.7c.6-.2 1.2-.3 1.9-.3 4 0 7.1 2.8 8.3 5-.5.9-1.3 2-2.4 2.9l1.4 1.4c1.6-1.4 2.7-3.1 3.2-4.3-1.2-2.8-5-7-10.5-7zM4.4 4.4 3 5.8l2.4 2.4C4 9.4 2.3 10.9 1.5 12c1.2 2.8 5 7 10.5 7 1.9 0 3.6-.5 5-1.3l2.7 2.7 1.4-1.4L4.4 4.4zm3.5 5 1.7 1.7a3 3 0 0 0 4.1 4.1l1.5 1.5c-.9.4-2 .7-3.2.7-4 0-7.1-2.8-8.3-5 .6-1 1.7-2.2 3.2-3.1z"/></symbol>
   <symbol id="i-gear" viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4z"/><path d="M19.4 13a7.7 7.7 0 0 0 0-2l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-1.7-1L15 3.5H9.9L9.6 6a7.6 7.6 0 0 0-1.7 1l-2.3-1-2 3.4L5.6 11a7.7 7.7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1c.5.4 1.1.8 1.7 1l.3 2.6h5.1l.3-2.6c.6-.2 1.2-.6 1.7-1l2.3 1 2-3.4-2-1.5z" opacity=".55"/></symbol>
   <symbol id="i-vol" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4V9zm12.5-1.6a6 6 0 0 1 0 9.2l-1.3-1.5a4 4 0 0 0 0-6.2l1.3-1.5zm2.6-2.9a10 10 0 0 1 0 15l-1.3-1.5a8 8 0 0 0 0-12l1.3-1.5z"/></symbol>
   <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4V9zm12.6.4l1.4-1.4 2.1 2.1 2.1-2.1 1.4 1.4-2.1 2.1 2.1 2.1-1.4 1.4-2.1-2.1-2.1 2.1-1.4-1.4 2.1-2.1-2.1-2.1z"/></symbol>
@@ -1164,7 +1180,8 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
     </div>
   </div>
   <div class="hudright">
-    <div class="k" id="amtK">目前存款</div>
+    <div class="k amtk"><span id="amtK">目前存款</span>
+      <button class="eyeb" id="btnPriv" title="把金額遮起來"><svg class="i"><use href="#i-eye"/></svg></button></div>
     <div class="v n" id="amt">0</div>
     <div class="d" id="amtSub"></div>
     <div class="coinbar" id="coinBar"></div>
@@ -1735,11 +1752,46 @@ function save(){
 function markDeleted(id){ db.deleted=db.deleted||{}; db.deleted[id]=Date.now(); }
 const $=id=>document.getElementById(id);
 const uid=()=>Math.random().toString(36).slice(2,9);
-const money=n=>(n===null||n===undefined||n==='')?'—':Math.round(n).toLocaleString('en-US');
-const short=n=>{const a=Math.abs(n);
+/* iOS Safari 從 iOS 10 起就無視 viewport 的 user-scalable=no，
+   雙指縮放只能靠攔 gesture 事件擋。三個都要攔：
+   只攔 gesturestart 的話，已經開始的縮放還是會繼續。
+   passive:false 一定要寫，不然 preventDefault 會被忽略。
+   雙指的 touchmove 也一起擋，涵蓋不送 gesture 事件的瀏覽器。 */
+['gesturestart','gesturechange','gestureend'].forEach(n=>
+  document.addEventListener(n,e=>e.preventDefault(),{passive:false}));
+document.addEventListener('touchmove',e=>{
+  if(e.touches&&e.touches.length>1) e.preventDefault();
+},{passive:false});
+/* 遮金額。要把畫面拿給別人看又不想露出資產的時候按一下眼睛。
+   遮在 money／short 這兩個格式化函式上，全站的金額就一起遮到 ——
+   一個畫面一個畫面去改的話，漏掉一個就等於沒遮。
+   星號長度固定，不能跟著位數變，不然一看就知道是幾位數。
+   沒有值的「—」保持原樣，那不是隱私，是「還沒有資料」。
+   只存在這台裝置（localStorage），不跟著帳號同步 ——
+   你在手機上遮起來，不該讓電腦那邊也跟著變。 */
+let PRIV=(()=>{ try{ return localStorage.getItem('life_goals_priv')==='1'; }catch(e){ return false; } })();
+const MASK='＊＊＊＊';
+const nomoney=n=>(n===null||n===undefined||n==='');
+const money=n=>nomoney(n)?'—':(PRIV?MASK:Math.round(n).toLocaleString('en-US'));
+const short=n=>{
+  if(nomoney(n)) return '—';
+  if(PRIV) return MASK;
+  const a=Math.abs(n);
   if(a>=1e8) return (n/1e8).toFixed(1).replace('.0','')+'億';
   if(a>=1e4) return (n/1e4).toFixed(a>=1e6?0:1).replace('.0','')+'萬';
   return money(n);};
+function paintPriv(){
+  const b=$('btnPriv'); if(!b) return;
+  b.classList.toggle('on',PRIV);
+  b.title=PRIV?'把金額顯示出來':'把金額遮起來';
+  b.innerHTML='<svg class="i"><use href="#'+(PRIV?'i-eyeoff':'i-eye')+'"/></svg>';
+}
+function togglePriv(){
+  PRIV=!PRIV;
+  try{ localStorage.setItem('life_goals_priv',PRIV?'1':'0'); }catch(e){}
+  paintPriv(); render();
+  toast(PRIV?'金額已遮起來':'金額顯示出來了');
+}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const pad=n=>String(n).padStart(2,'0');
 const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
@@ -1984,7 +2036,7 @@ function moveGoal(id,dir){
 }
 function roll(el,to){
   const from=shown; shown=to;
-  if(from===to||!booted||document.hidden){el.textContent=money(to);return;}
+  if(PRIV||from===to||!booted||document.hidden){el.textContent=money(to);return;}
   const t0=performance.now(), dur=480;
   cancelAnimationFrame(el._raf);
   const step=t=>{
@@ -9283,7 +9335,7 @@ $('btnFriAdd').onclick=async()=>{
         $('friMail').value=''; SFX.play('coin'); }
 };
 
-function render(){ renderWheel(); renderStocks(); renderLoans(); renderMonthTable(); renderPie(); renderHud(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); paintQuestSec(); }
+function render(){ paintPriv(); renderWheel(); renderStocks(); renderLoans(); renderMonthTable(); renderPie(); renderHud(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); paintQuestSec(); }
 
 /* ── 互動 ── */
 const open=id=>{$(id).classList.add('on');const f=$(id).querySelector('input');setTimeout(()=>f&&f.focus(),120);};
@@ -11012,6 +11064,7 @@ document.body.addEventListener('click',e=>{
     db.settings.stkCol=stkCol; save();
     SFX.play('tick'); renderStocks(); return;
   }
+  if(b.id==='btnPriv') return togglePriv();
   if(b.dataset.spin){
     shopYaw=(shopYaw+ +b.dataset.spin+YAWS.length)%YAWS.length;
     SFX.play('tick'); renderShop(); return;
