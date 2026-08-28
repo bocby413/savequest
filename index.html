@@ -798,7 +798,16 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 @media(max-width:480px){.shoptop{grid-template-columns:112px 1fr;gap:12px;padding:10px}}
 .shopstage{position:relative;border-radius:13px;overflow:hidden;
   background:radial-gradient(ellipse at 50% 92%,var(--panel3) 0%,transparent 70%)}
-/* 八個面的轉盤。點子點代表現在朝哪邊，正面那顆是實心的 */
+/* 轉身鈕壓在預覽框的左下、右下角，半透明壓在角色上面，
+   沒有外框也沒有底色 —— 加了框就變成兩顆按鈕在跟角色搶注意力 */
+.stagefig{width:100%}
+.spinb{position:absolute;bottom:2px;width:38px;height:38px;padding:6px;
+  border:0;background:none;cursor:pointer;line-height:0}
+.spinb svg{width:100%;height:100%;opacity:.5;transition:opacity .12s}
+.spinb .arc{fill:none;stroke:#fff;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+.spinb:hover svg,.spinb:active svg{opacity:.95}
+.spinb.l{left:2px}
+.spinb.r{right:2px}
 /* 預覽佈景時那條回商店的橫幅 */
 /* 沒在預覽的時候要完全看不到。只靠位移的話陰影還是會從畫面下緣透出來 */
 .askrow{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin:4px 0 2px}
@@ -1433,7 +1442,14 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 <div class="veil" id="vShop"><div class="dlg wide">
   <h3>商店</h3>
   <div class="shoptop">
-    <div class="shopstage" id="shopStage"></div>
+    <div class="shopstage" id="shopStage">
+      <div class="stagefig" id="shopFig"></div>
+      <button class="spinb l" data-spin="-1" title="往左轉"><svg viewBox="0 0 24 24">
+        <path class="arc" d="M19 18Q8 18.5 5 7M5 7l-3.2 4.8M5 7l4.9 2.4"/></svg></button>
+      <button class="spinb r" data-spin="1" title="往右轉"><svg viewBox="0 0 24 24">
+        <g transform="translate(24,0) scale(-1,1)">
+        <path class="arc" d="M19 18Q8 18.5 5 7M5 7l-3.2 4.8M5 7l4.9 2.4"/></g></svg></button>
+    </div>
     <div class="shopinfo">
       <div class="coinbar" id="shopCoins"></div>
       <div class="tryon" id="shopPick"></div>
@@ -2885,7 +2901,9 @@ const AC={
   halo:(a,c)=>{const y=AC.top(a,15);
     return '<ellipse cx="60" cy="'+y+'" rx="14" ry="4.6" fill="none" stroke="'+c+'" stroke-width="3.6"/>';},
   /* up：往上帶幾格。不給就是原本的高度，才不會動到沒點名的那幾頂 */
-  tophat:(a,c,b,up)=>{const y=HLINE(a)-(up||0),w=AC.hugW(a)*.7,h=Math.min(19,Math.max(9,y-AC.top(a,19)));
+  /* 帽冠高度要用原本的帽緣位置算。拿抬高後的 y 去算的話，抬多少帽冠就矮多少 */
+  tophat:(a,c,b,up)=>{const y0=HLINE(a),y=y0-(up||0),w=AC.hugW(a)*.7,
+    h=Math.min(19,Math.max(9,y0-AC.top(a,19)));
     return '<rect x="'+(60-w-6)+'" y="'+(y-2)+'" width="'+(w*2+12)+'" height="5" rx="2.5" fill="'+c+'"/>'+
       '<rect x="'+(60-w)+'" y="'+(y-h)+'" width="'+(w*2)+'" height="'+h+'" rx="2" fill="'+c+'"/>'+
       '<rect x="'+(60-w)+'" y="'+(y-h*.42)+'" width="'+(w*2)+'" height="5" fill="'+b+'"/>';},
@@ -3666,7 +3684,8 @@ const ITEMS=[
     bone(60-w*.6,-1)+bone(60,0)+bone(60+w*.6,1)+
     '<circle cx="60" cy="'+(y-h-3)+'" r="3.2" fill="#5aa9ff"/>';}},
   {id:'cth4', n:'午睡睡帽', p:100, slot:'head', only:'a-cat', hide:'ear', d:a=>{
-  const y=HLINE(a)-4,w=HATW(a),t=AC.top(a,24);
+  /* 帽尖跟著抬，錐體才不會變矮；但抬 6 會被畫布上緣切掉，所以只抬 4 */
+  const y=HLINE(a)-4,w=HATW(a),t=AC.top(a,24)-4;
   /* 整頂包成一個群組。拆開的話帽身跟白邊會被當成兩個零件各自位移，
      轉身時帽身滑開一點，左上角就露出頭 —— 帽子是一個剛體，不會自己內部錯開 */
   return '<g>'+
@@ -4200,7 +4219,8 @@ const ITEMS=[
     o+='<circle cx="'+x.toFixed(1)+'" cy="'+yy.toFixed(1)+'" r="2" fill="#e0921a"/>';});
   return o;}},
   {id:'brh6', n:'黑森紳士帽', p:100, slot:'head', only:'a-bear', hide:'ear', d:a=>{
-  const y=HLINE(a)-10,w=AC.hugW(a)*.68,h=Math.min(19,Math.max(9,y-AC.top(a,19)));
+  /* 抬 10 加上完整的帽冠會超出畫布上緣，收成 9 */
+  const y0=HLINE(a),y=y0-9,w=AC.hugW(a)*.68,h=Math.min(19,Math.max(9,y0-AC.top(a,19)));
   return '<ellipse cx="60" cy="'+(y+1)+'" rx="'+(w+8)+'" ry="4.4" fill="#22232a"/>'+
     '<path d="M'+(60-w)+' '+y+'v-'+h+'q'+w+' -4 '+(w*2)+' 0v'+h+'z" fill="#22232a"/>'+
     '<rect x="'+(60-w)+'" y="'+(y-h*.42)+'" width="'+(w*2)+'" height="5" fill="#3f7d55"/>'+
@@ -5474,7 +5494,9 @@ const ITEMS=[
     '<path d="M'+(60-w)+' '+(y-2)+'q'+w+' 6 '+(w*2)+' 0" stroke="#092013" stroke-width="4.5" fill="none"/>'+
     '<path d="M'+(60-4)+' '+(y-3)+'l4-5 4 5z" fill="#ffd84d"/>';}},
   {id:'rbh2', n:'花園草帽', p:100, slot:'head', only:'a-rab', d:a=>{
-  const y=HLINE(a),w=AC.hugW(a),dm=y-AC.top(a,HRY(a)*.5);
+  /* 圓頂的高度要用原本的帽緣位置算。直接拿抬高後的 y 去算的話，
+     抬多少圓頂就矮多少 —— 抬 6 格圓頂只剩一半，看起來像沒有帽頂 */
+  const y0=HLINE(a), y=y0-6, w=AC.hugW(a), dm=y0-AC.top(a,HRY(a)*.5);
   return '<path d="M'+(60-w)+' '+y+'a'+w+' '+dm+' 0 0 1 '+(w*2)+' 0z" fill="#f2e3c0"/>'+
     '<path d="M'+(60-w-8)+' '+(y-1)+'a'+(w+8)+' 6.5 0 0 0 '+(w*2+16)+' 0z" fill="#ddc08a"/>'+
     '<rect x="'+(60-w)+'" y="'+(y-5)+'" width="'+(w*2)+'" height="4" fill="#ff9ec4"/>'+
@@ -10086,6 +10108,11 @@ let shopTab='all';
 const SLOTN={head:'頭',face:'臉',neck:'脖子',body:'身體',hand:'手上',foot:'腳下'};
 const SLOTORDER=['head','face','neck','body','hand','foot'];
 let shopSlot='head', shopCat='char';
+/* 商店裡轉到第幾個面。轉過去才看得到披風那類背面的東西。
+   正側面（90／270）拿掉了 —— 那個角度是這套做法的死角，
+   五官會被壓成一條、兩隻手腳疊在一起。斜角跟背面本來就好看，六個面夠用 */
+const YAWS=[0,45,135,180,225,315];
+let shopYaw=0;
 let tryBg=null, tryWin=null;        /* 正在試的背景／動作 */
 /* 試穿是一個部位記一件，換分類不會清掉。值是物品 id，null 代表這格試著脫掉 */
 let shopTry={};
@@ -10136,7 +10163,8 @@ function renderShop(){
   const m=wearMap(), had=m.hasOwnProperty(a.k), keep=m[a.k];
   m[a.k]=tryOutfit(a);
   wearRaw=1;
-  $('shopStage').innerHTML=chSVG(a,'idle');       /* 跟 HUD 那隻一樣是閒置的樣子 */
+  $('shopFig').innerHTML=chSVG(a,'idle',0,YAWS[shopYaw]*Math.PI/180);   /* 跟 HUD 那隻一樣是閒置的樣子 */
+  document.querySelectorAll('.spinb').forEach(b=>b.style.display=shopCat==='char'?'':'none');
   wearRaw=0;
   SHOPPET.watch(); SHOPPET.start();
   /* 本來就沒有這個鍵的話要刪掉。寫回 undefined 會讓整包同步被 Firestore 退件 */
@@ -10285,7 +10313,7 @@ function endPreview(){
   $('prevBar').classList.remove('on');
   shopCat='bg'; tryBg=prevId; renderShop(); open('vShop'); SFX.play('tick');
 }
-function openShop(){ shopSlot='head'; shopCat='char'; shopTry={};
+function openShop(){ shopSlot='head'; shopCat='char'; shopTry={}; shopYaw=0;
   tryBg=null; tryWin=null; renderShop(); open('vShop'); }
 /* 一次把試穿的都定下來：沒買過的先買，再整套換上 */
 async function shopAction(){
@@ -10983,6 +11011,10 @@ document.body.addEventListener('click',e=>{
     stkCol=b.dataset.sc==='value'?'value':'cost';
     db.settings.stkCol=stkCol; save();
     SFX.play('tick'); renderStocks(); return;
+  }
+  if(b.dataset.spin){
+    shopYaw=(shopYaw+ +b.dataset.spin+YAWS.length)%YAWS.length;
+    SFX.play('tick'); renderShop(); return;
   }
   if(b.id==='btnDayCal') return openDayCal();
   if(b.id==='dayPrev') { SFX.play('tick'); return dayShift(-1); }
