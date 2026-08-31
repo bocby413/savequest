@@ -10839,7 +10839,7 @@ async function doWork(){
   toast('出門了，'+sh.h+' 小時的「'+job[0]+'」');
   renderWork();
 }
-/* ── 每日轉盤：當天記過一筆就能轉一次 ── */
+/* ── 每日轉盤：一天一次，過午夜就重置 ── */
 /* 轉盤。w 是格子的大小（相對值），越小越難中。
    v='again' 那格不算今天的次數，可以再轉一次 */
 const WHEEL=[
@@ -10860,13 +10860,10 @@ function wheelSlices(){
   return WHEEL.map(x=>{ const deg=x.w/tot*360, o={...x, a0:a, deg, mid:a+deg/2}; a+=deg; return o; });
 }
 const coins=()=>WALLET.coins;
-/* 今天有沒有記過帳：看的是哪天記下去的，補登以前的日期也算 */
-function recordedToday(){
-  const t=todayStr();
-  return db.records.some(r=>r.ts&&iso(new Date(r.ts))===t);
-}
+/* 一天一次，跟有沒有記帳無關。spunOn 存的是日期字串，
+   過了午夜 todayStr() 就變了，資格自然回來 */
 const spunToday=()=>WALLET.spunOn===todayStr();
-const canSpin=()=>recordedToday()&&!spunToday();
+const canSpin=()=>!spunToday();
 function wheelSVG(){
   const R=100, sl=wheelSlices();
   let out='<svg viewBox="0 0 200 200">';
@@ -10921,9 +10918,8 @@ function paintWheel(){
   $('btnSpin').disabled=!ok||spinning;
   $('btnSpin').style.opacity=(ok&&!spinning)?1:.45;
   $('wheelSay').innerHTML = spunToday()
-    ? '今天轉過了，明天記一筆再來。目前有 <b style="color:var(--gold)">'+money(coins())+'</b> 枚 Bo士幣。'
-    : ok ? '今天記過帳了，可以轉一次。目前有 <b style="color:var(--gold)">'+money(coins())+'</b> 枚 Bo士幣。'
-         : '今天還沒記帳。記一筆之後就能轉一次。目前有 <b style="color:var(--gold)">'+money(coins())+'</b> 枚 Bo士幣。';
+    ? '今天轉過了，過午夜再來。目前有 <b style="color:var(--gold)">'+money(coins())+'</b> 枚 Bo士幣。'
+    : '今天還沒轉，可以轉一次。目前有 <b style="color:var(--gold)">'+money(coins())+'</b> 枚 Bo士幣。';
 }
 async function spin(){
   if(spinning||!canSpin()) return;
