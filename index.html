@@ -10798,7 +10798,10 @@ function tickWork(){
   const bar=document.querySelector('#workCard .wbar i');
   if(bar) bar.style.width=Math.max(2,Math.min(100,100*(1-shiftLeftMs()/(WALLET.shiftH*3600000)))).toFixed(1)+'%';
 }
-function openWork(){ workJust=null; renderWork(); open('vWork'); }
+/* 順序不能反：renderWork 要看到視窗已經開著才會起每秒的計時器
+   （它用 vWork 有沒有 on 這個 class 判斷）。先 render 再 open 的話，
+   檢查的當下還沒開，計時器就永遠不會啟動 —— 畫面只有重開視窗才會更新 */
+function openWork(){ workJust=null; open('vWork'); renderWork(); }
 async function doWork(){
   if(workBusy) return;
   const a=petChar();
