@@ -12170,13 +12170,19 @@ window.CLOUD={
     const before=JSON.stringify(db);
     const del=Object.assign({},db.deleted||{});
     Object.entries(r.deleted||{}).forEach(([id,ts])=>{ if(!del[id]||ts>del[id]) del[id]=ts; });
+    /* 哪一份比較新：ts 是「建立時間」，改一筆不會動到它，
+       所以只比 ts 的話，同一筆的新舊兩版永遠平手 —— 平手時前面的贏，
+       也就是本機那份贏。結果就是另一台改過的內容進不來，
+       接著 pushSoon 又把本機的舊版推回雲端，對方的修改直接消失。
+       編輯的時候本來就有寫 editedAt，這裡要一起看。 */
+    const ver=x=>Math.max(x.editedAt||0,x.ts||0);
     const join=(a,b)=>{
       const m={};
       [].concat(a||[],b||[]).forEach(x=>{
         if(!x||!x.id) return;
-        if(del[x.id]&&del[x.id]>(x.ts||0)) return;
+        if(del[x.id]&&del[x.id]>ver(x)) return;      /* 刪掉之後又改的，改的贏 */
         const c=m[x.id];
-        if(!c||(x.ts||0)>(c.ts||0)) m[x.id]=x;
+        if(!c||ver(x)>ver(c)) m[x.id]=x;
       });
       return Object.values(m);
     };
