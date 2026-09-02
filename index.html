@@ -12202,10 +12202,22 @@ window.CLOUD={
     if(Object.keys(done).length) db.settings.raidDone=done;
     const after=JSON.stringify(db);
     this.last=Date.now(); this.err='';
-    if(after===before){ this.paint(); return; }        /* 內容一樣就別重畫 */
-    localStorage.setItem(KEY,after);
-    render(); this.paint();
-    this.pushSoon();                                   /* 本地有、雲端沒有的補推回去 */
+    /* 「本地沒變」跟「不用做事」是兩回事。
+       雲端那份比較舊的時候，合併完本地當然沒變 —— 但這時候正是最需要
+       把正確的版本推回去的時候，不推的話另一台永遠收不到。
+       所以要分開判斷：本地變了才重畫，跟雲端不一樣才推。
+       比的是每一筆的 id 與版本（editedAt 或 ts），不是整包字串 ——
+       欄位順序不同不算差異，不然每次都會推。 */
+    const sig=o=>JSON.stringify({
+      r:(o.records||[]).map(x=>x.id+'@'+ver(x)).sort(),
+      g:(o.goals||[]).map(x=>x.id+'@'+ver(x)).sort(),
+      d:Object.keys(o.deleted||{}).sort(),
+      s:(o.settings||{}).updatedAt||0
+    });
+    const 跟雲端不同=sig(db)!==sig(r);
+    if(after!==before){ localStorage.setItem(KEY,after); render(); }
+    this.paint();
+    if(跟雲端不同) this.pushSoon();
   },
   paint(){
     const b=$('btnSync'); if(!b) return;
