@@ -1294,6 +1294,9 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
     <div class="f"><label id="rAmtLabel">存入多少</label><input type="number" id="rAmt" placeholder="" step="1" inputmode="decimal"></div>
   </div>
   <div class="f" id="rCatWrap"><label>類別</label><div class="cats" id="rCats"></div></div>
+  <div class="f" id="rIntWrap" style="display:none"><label>本期利息（可留白）</label>
+    <input type="number" id="rInt" placeholder="這次繳的錢裡面，利息是多少" step="1" inputmode="decimal">
+    <div class="say" style="margin-top:6px">利息不會讓貸款變少，只有「繳的錢 − 利息」算進已還本金。</div></div>
   <div class="f"><label>備註（可留白）</label><input type="text" id="rNote" placeholder="跟誰、買什麼…"></div>
   <div class="preview" id="rPrev"></div>
   <div class="dfoot"><button class="btn ghost" data-close>取消</button><button class="btn go" id="saveRec">記下來</button></div>
@@ -1386,13 +1389,11 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
     <div class="f"><label>每月應繳</label><input type="number" id="lMonthly" placeholder="" step="1" inputmode="decimal"></div>
   </div>
   <div class="two">
-    <div class="f"><label>本期利息（選填）</label><input type="number" id="lInt" placeholder="" step="1" inputmode="decimal"></div>
     <div class="f"><label>開始還款</label><input type="month" id="lFrom"></div>
+    <div class="f"><label>已還本金（選填）</label><input type="number" id="lPaid" placeholder="" step="1" inputmode="decimal"></div>
   </div>
-  <div class="f"><label>已還本金（選填）</label><input type="number" id="lPaid" placeholder="" step="1" inputmode="decimal"></div>
-  <div class="say">「本期利息」是每月應繳裡面付給銀行的那部分，不會讓貸款變少，所以不算進本金。
-    填了之後，每繳一期實際還掉的本金就是「每月應繳 − 本期利息」。<br>
-    「已還本金」是你在用這個 app 之前就還掉的本金，之後記帳的會自動加上去。</div>
+  <div class="say">「已還本金」是你在用這個 app 之前就還掉的本金，之後記帳的會自動加上去。<br>
+    利息每期都不一樣，所以記在每一筆上面：記帳選「貸款」的時候會多一格填本期利息。</div>
   <div class="dfoot"><button class="btn ghost" data-close>取消</button><button class="btn go" id="saveLoan">儲存</button></div>
 </div></div>
 
@@ -8789,41 +8790,34 @@ $('saveHold').onclick=()=>{
 /* ── 貸款 ── */
 const LOAN='貸款';
 const loans=()=>Array.isArray(db.settings.loans)?db.settings.loans:[];
-/* 一期實際還掉的本金。利息是付給銀行的，不會讓貸款變少 */
-const loanPrin=l=>{
-  const m=+l.monthly||0, i=+l.interest||0;
-  return (i>0&&i<m) ? m-i : m;
-};
-/* 繳出去的錢裡有多少比例是本金。
-   用比例而不是「每期扣一次利息」，是因為會有多繳、少繳、一次繳兩期的情況，
-   比例對這些都成立；剛好繳滿一期的時候，算出來就是「每月應繳 − 本期利息」 */
-const loanRate=l=>{
-  const m=+l.monthly||0;
-  return m>0 ? loanPrin(l)/m : 1;
-};
-/* 記帳指定到這筆貸款的支出，是實際繳出去的錢（含利息） */
-function loanCash(l){
-  return recs().filter(x=>x.kind==='out'&&x.cat===LOAN&&(x.sub===l.name||(!x.sub&&loans().length===1)))
-    .reduce((s,x)=>s+x.amount,0);
+/* 指定到這筆貸款的每一次繳款。amount 是實際繳出去的錢，int 是那一期的利息。
+   利息每期都不一樣（本金越還越少、利息就越少），所以記在每一筆上面，
+   不是掛在貸款本身 */
+function loanPays(l){
+  return recs().filter(x=>x.kind==='out'&&x.cat===LOAN&&(x.sub===l.name||(!x.sub&&loans().length===1)));
 }
-/* 已還本金＝之前就還掉的 + 記帳那些扣掉利息之後的部分。
-   l.paid 是使用者自己填的「已還本金」，不再扣一次利息 */
+/* 已還本金＝之前就還掉的 + 每一筆扣掉當期利息之後的部分。
+   l.paid 是使用者自己填的「已還本金」，本來就不含利息 */
 function loanPaid(l){
-  return (l.paid||0)+loanCash(l)*loanRate(l);
+  return (l.paid||0)+loanPays(l).reduce((s,x)=>s+Math.max(0,x.amount-(+x.int||0)),0);
 }
 function loanInfo(l){
+  const pays=loanPays(l);
+  const cash=pays.reduce((s,x)=>s+x.amount,0);
+  const interestPaid=pays.reduce((s,x)=>s+(+x.int||0),0);
   const paid=Math.min(l.total,loanPaid(l)), left=Math.max(0,l.total-paid);
   const pct=l.total?paid/l.total*100:0;
-  /* 期數要用「一期還多少本金」去算，用每月應繳會少算期數 */
-  const prin=loanPrin(l);
+  /* 估剩幾期要用「一期實際還掉多少本金」。利息每期不同，
+     用最近一次繳的那筆最接近現在的狀況；還沒繳過就只能用每月應繳 */
+  const last=pays.length?pays[pays.length-1]:null;
+  const lastPrin=last?Math.max(0,last.amount-(+last.int||0)):0;
+  const prin=lastPrin>0?lastPrin:(+l.monthly||0);
   const mo=prin>0?Math.ceil(left/prin):null;
   let when=null;
   if(mo!==null&&left>0){ when=new Date(); when.setMonth(when.getMonth()+mo); }
   const doneN=prin>0?Math.floor(paid/prin):null;
   const totalN=prin>0?Math.ceil(l.total/prin):null;
-  const cash=loanCash(l);
-  return {paid,left,pct,mo,when,doneN,totalN,prin,cash,
-          interestPaid:cash-cash*loanRate(l), done:left<=0};
+  return {paid,left,pct,mo,when,doneN,totalN,prin,cash,interestPaid,done:left<=0};
 }
 function renderLoans(){
   const box=$('loans'), ls=loans();
@@ -8856,8 +8850,7 @@ function renderLoans(){
     }).join('');
     return '<div class="card loan'+(I.done?' paid':'')+'">'+
       '<div class="lh"><div class="lname">'+esc(l.name)+
-        (l.monthly>0&&I.totalN?'<span>共 '+I.totalN+' 期　每月 '+money(l.monthly)+
-          (l.interest>0?'（含利息 '+money(l.interest)+'）':'')+'</span>':'')+'</div>'+
+        (l.monthly>0&&I.totalN?'<span>共 '+I.totalN+' 期　每月 '+money(l.monthly)+'</span>':'')+'</div>'+
         '<div class="lsum">已還 <b>'+money(I.paid)+'</b> / '+money(l.total)+'　<b>'+I.pct.toFixed(1)+'%</b></div></div>'+
       '<div class="cells" style="margin-top:12px">'+cellBar(I.pct,20,I.done?'c2':'',5,'loan:'+l.id)+'</div>'+
       '<div class="road">'+marks+'</div>'+
@@ -8879,7 +8872,6 @@ function openLoan(id){
   $('loanTitle').textContent=l?'修改貸款':'新增貸款';
   $('lName').value=l?l.name:''; $('lTotal').value=l?l.total:'';
   $('lMonthly').value=l?l.monthly||'':''; $('lPaid').value=l?(l.paid||''):'';
-  $('lInt').value=l?(l.interest||''):'';
   const d=new Date();
   $('lFrom').value=l&&l.from?l.from:d.getFullYear()+'-'+pad(d.getMonth()+1);
   open('vLoan');
@@ -8889,12 +8881,7 @@ $('saveLoan').onclick=()=>{
   if(!name){ toast('先填名稱'); return; }
   if(isNaN(total)||total<=0){ toast('貸款總額要大於 0'); return; }
   const m=parseFloat($('lMonthly').value), pd=parseFloat($('lPaid').value);
-  const it=parseFloat($('lInt').value);
-  const mm=isNaN(m)?0:m, ii=isNaN(it)?0:it;
-  if(ii<0){ toast('本期利息不能是負的'); return; }
-  /* 利息比每月應繳還多的話，本金就永遠還不完，一定是填錯了 */
-  if(ii>0&&mm>0&&ii>=mm){ toast('本期利息要小於每月應繳'); return; }
-  const data={name,total,monthly:mm,interest:ii,from:$('lFrom').value,
+  const data={name,total,monthly:isNaN(m)?0:m,from:$('lFrom').value,
               paid:isNaN(pd)?0:pd,ts:Date.now()};
   const ls=loans().slice();
   if(editLoan){ const i=ls.findIndex(x=>x.id===editLoan); if(i>=0) ls[i]=Object.assign({},ls[i],data); }
@@ -9383,8 +9370,15 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')shut();});
 
 let rKind='in', rCat='', rCustom=false, rSub='';
 let catAdd=false, subAdd=false;   /* 正在打新的分類／細項 */
+/* 本期利息那一格只在「支出 → 貸款」時出現。renderCats 中途可能會改掉 rCat，
+   所以先一律關掉，等分類定案了再決定要不要開 */
+function paintIntRow(){
+  const w=$('rIntWrap'); if(!w) return;
+  w.style.display=(!rCustom&&rKind==='out'&&rCat===LOAN&&loans().length)?'':'none';
+}
 function renderCats(){
   const detail=detailOn();
+  const w=$('rIntWrap'); if(w) w.style.display='none';
   const base=detail?treeNames(rKind):CATS[rKind];
   if(!base||(detail&&!CATS[rKind])){ $('rCatWrap').style.display='none'; return; }
   const split=db.settings.splitStock!==false;
@@ -9437,6 +9431,7 @@ function renderCats(){
     i.oninput=()=>{ rCat=i.value.trim(); }; } }
   if(catAdd) hookNew('rCatNew',v=>{ addCat(rKind,v); rCat=v; rSub=''; catAdd=false; },()=>{catAdd=false;});
   if(subAdd) hookNew('rSubNew',v=>{ addSub(rKind,rCat,v); rSub=v; subAdd=false; },()=>{subAdd=false;});
+  paintIntRow();
 }
 /* 新增分類／細項那格輸入框：Enter 送出，Esc 或空白離開就取消 */
 function hookNew(id,done,cancel,redraw){
@@ -9515,6 +9510,7 @@ function openRec(id){
   setKind(r?(r.kind||'in'):'in');          /* 這行會把類別清空，所以要先叫 */
   $('rDate').value=r?(r.date||todayStr()):todayStr();
   $('rAmt').value=r?(r.amount||''):'';
+  $('rInt').value=r?(r.int||''):'';
   $('rNote').value=r?(r.note||''):'';
   if(r){                                   /* 把當時選的類別、子分類還原回去 */
     const chips=(CATS[r.kind]||[]);
@@ -9540,6 +9536,14 @@ $('saveRec').onclick=()=>{
   const old=rEdit?db.records.find(x=>x.id===rEdit):null;
   const rec={id:old?old.id:uid(), ts:old?old.ts:Date.now(),
              date,kind:rKind,amount:v,cat,note:$('rNote').value.trim()};
+  /* 貸款才有本期利息。利息不能比繳的錢還多，不然本金會變負的 */
+  if(rKind==='out'&&cat===LOAN){
+    const iv=parseFloat($('rInt').value);
+    if(!isNaN(iv)&&iv>0){
+      if(iv>v){ SFX.play('err'); toast('本期利息不能大於這次繳的金額'); return; }
+      rec.int=iv;
+    }
+  }
   if(((cat===STOCK||cat===LOAN)||detailOn())&&rSub) rec.sub=rSub;
 
   if(old){
