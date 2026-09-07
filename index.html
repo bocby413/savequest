@@ -377,6 +377,9 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .lg{display:grid;grid-template-columns:12px 1fr auto auto;gap:9px;align-items:center;padding:5px 6px;border-radius:8px;
   transition:background-color .14s}
 .lg:hover{background:var(--panel2)}
+/* 可以點的那幾列給個手指游標，不然看不出來能點 */
+.lg.tap{cursor:pointer}
+.lg.tap:active{background:var(--panel3)}
 .lg i{width:10px;height:10px;border-radius:3px;display:block}
 .lg .nm{font-size:13px;font-weight:600}
 .lg .amt{font-size:13px;font-variant-numeric:tabular-nums}
@@ -1529,6 +1532,13 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   <div class="wheelres" id="wheelRes"></div>
   <div class="dfoot"><button class="btn ghost" data-close>關閉</button>
     <button class="btn go" id="btnSpin">轉一次</button></div>
+</div></div>
+
+<div class="veil" id="vCat"><div class="dlg wide">
+  <h3 id="catTitle">明細</h3>
+  <div class="say" id="catSum"></div>
+  <div id="catList"></div>
+  <div class="dfoot"><button class="btn ghost" data-close>關閉</button></div>
 </div></div>
 
 <div class="veil" id="vDay"><div class="dlg wide">
@@ -8043,7 +8053,10 @@ function donut(rows,total,midTop,midSub,size){
     const len=total?r.v/total*(2*Math.PI*R):0;
     const el='<circle cx="'+cx+'" cy="'+cx+'" r="'+R.toFixed(1)+'" stroke="'+r.c+'" stroke-width="'+W.toFixed(1)+'" '+
       'stroke-dasharray="'+Math.max(0,len-1.5).toFixed(2)+' '+(2*Math.PI*R-len+1.5).toFixed(2)+'" '+
-      'stroke-dashoffset="'+(-off).toFixed(2)+'"><title>'+esc(r.k)+' '+money(r.v)+'</title></circle>';
+      'stroke-dashoffset="'+(-off).toFixed(2)+'"'+
+      /* 有編號的才能點（股票那張沒有分類，不給點） */
+      (r.i!==undefined?' data-pcat="'+r.i+'" style="cursor:pointer"':'')+
+      '><title>'+esc(r.k)+' '+money(r.v)+'</title></circle>';
     off+=len; return el;
   }).join('');
   return '<div class="pie"><svg viewBox="0 0 '+size+' '+size+'">'+
@@ -8052,7 +8065,9 @@ function donut(rows,total,midTop,midSub,size){
 }
 function legend(rows,total){
   return '<div class="legend">'+rows.map(r=>
-    '<div class="lg"><i style="background:'+r.c+'"></i><span class="nm">'+esc(r.k)+'</span>'+
+    '<div class="lg'+(r.i!==undefined?' tap':'')+'"'+
+      (r.i!==undefined?' data-pcat="'+r.i+'" title="看這一類的每一筆"':'')+
+      '><i style="background:'+r.c+'"></i><span class="nm">'+esc(r.k)+'</span>'+
     '<span class="amt n">'+money(r.v)+'</span><span class="pct">'+(total?(r.v/total*100).toFixed(0):0)+'%</span>'+
     '<span class="bar"><u data-w="'+(total?r.v/total:0)+'" style="background:'+r.c+'"></u></span></div>').join('')+'</div>';
 }
@@ -8100,6 +8115,14 @@ function renderStock(){
     '</div>';
   setTimeout(()=>box.querySelectorAll('.lg u').forEach(u=>u.style.transform='scaleX('+u.dataset.w+')'),30);
 }
+/* 圓餅圖現在畫的是哪幾類。點圖例或扇形的時候要回頭找出那一類有哪些紀錄，
+   所以連「被併成『其餘 N 類』的那些原始類別」也要一起記下來 */
+let PIEROWS=[];
+/* 圓餅圖用的紀錄。明細一定要跟圖用同一份，不然數字會對不起來 */
+function pieRecs(){
+  const split=db.settings.splitStock!==false;
+  return recs().filter(x=>x.kind===pieKind&&inRange(x)&&!x.asset&&!(x.cat===STOCK&&split));
+}
 function renderPie(){
   const split=db.settings.splitStock!==false;
   const stockSec=$('stockCard').closest('div').parentNode;   /* 股票那一欄 */
@@ -8109,17 +8132,21 @@ function renderPie(){
   if(split) renderStock();
   const box=$('pieCard');
   /* 賣股換現金是資產轉換，不管有沒有分開算都不列入日常收支 */
-  const rs=recs().filter(x=>x.kind===pieKind&&inRange(x)&&!x.asset&&!(x.cat===STOCK&&split));
+  const rs=pieRecs();
   const list=CATS[pieKind], sum={};
   rs.forEach(x=>{ const c=x.cat||'其他'; sum[c]=(sum[c]||0)+x.amount; });
-  let rows=Object.entries(sum).map(([k,v])=>({k,v,c:catColor(k,list)})).sort((a,b)=>b.v-a.v);
+  let rows=Object.entries(sum).map(([k,v])=>({k,v,c:catColor(k,list),cats:[k]})).sort((a,b)=>b.v-a.v);
   if(rows.length>9){                       /* 類別太多就把尾巴併起來，圖才看得懂 */
     const tail=rows.slice(8), rest=tail.reduce((s,r)=>s+r.v,0);
-    rows=rows.slice(0,8).concat([{k:'其餘 '+tail.length+' 類',v:rest,c:'#8a93a8'}]);
+    rows=rows.slice(0,8).concat([{k:'其餘 '+tail.length+' 類',v:rest,c:'#8a93a8',
+      cats:tail.reduce((a,r)=>a.concat(r.cats),[])}]);
   }
+  rows.forEach((r,i)=>{ r.i=i; });
+  PIEROWS=rows;
   const total=rows.reduce((s,r)=>s+r.v,0);
   const period=rangeName();
   if(!total){
+    PIEROWS=[];
     box.innerHTML=donut([],1,'<b style="color:var(--txt3)">—</b>',period+'沒有紀錄',180)+
       '<div class="legend"><div class="lg" style="grid-template-columns:1fr">'+
       '<span class="nm" style="color:var(--txt3);font-weight:400;font-size:13.5px;line-height:1.6">'+
@@ -8129,6 +8156,28 @@ function renderPie(){
   box.innerHTML=donut(rows,total,'<b>'+short(total)+'</b>',period+(pieKind==='out'?'花掉':'存進來'),180)+
     legend(rows,total);
   setTimeout(()=>box.querySelectorAll('.lg u').forEach(u=>u.style.transform='scaleX('+u.dataset.w+')'),30);
+}
+/* 點圓餅圖的某一類，列出那一類的每一筆。純看，不在這裡改 —— 要改就回闖關紀錄，
+   免得又出現「上面壓著一層看不到編輯視窗」那種事 */
+function openCat(i){
+  const r=PIEROWS[+i]; if(!r) return;
+  const want=r.cats||[r.k];
+  const rows=pieRecs().filter(x=>want.indexOf(x.cat||'其他')>=0)
+    .sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(b.ts||0)-(a.ts||0));   /* 新的在前 */
+  const sum=rows.reduce((n,x)=>n+x.amount,0);
+  $('catTitle').textContent=r.k;
+  $('catSum').textContent=rangeName()+(pieKind==='out'?'花掉':'存進來')+' '+money(sum)+
+    '　共 '+rows.length+' 筆';
+  $('catList').innerHTML='<div class="dlist">'+rows.map(p=>{
+    const tag='<span class="cattag" style="--c:'+
+      (p.sub?(SUBCOLOR[p.sub]||catColor(p.cat,CATS[p.kind]||[])):catColor(p.cat||'其他',CATS[p.kind]||[]))+'">'+
+      esc(p.cat||'其他')+(p.sub?'·'+esc(p.sub):'')+'</span>';
+    return '<div class="drow"><div class="dmain">'+tag+
+      '<div class="d2">'+mdY(p.date)+(p.note?'　'+esc(p.note):'')+'</div></div>'+
+      '<div class="damt '+(p.kind==='in'?'up':'down')+'">'+
+        (p.kind==='in'?'+':'-')+money(p.amount)+'</div></div>';
+  }).join('')+'</div>';
+  SFX.play('tick'); open('vCat');
 }
 /* ── 日曆：一格一天，點下去看那天的每一筆 ──
    月曆看的是「那天餘額變了多少」，跟每月收支同一套算法，
@@ -11373,6 +11422,12 @@ $('btnShop').onclick=()=>{ SFX.play('tick'); openShop(); };
 $('shopCats').addEventListener('click',e=>{
   const b=e.target.closest('button[data-sc]'); if(!b) return;
   shopCat=b.dataset.sc; renderShop(); SFX.play('tick');
+});
+/* 圓餅圖：點圖例或扇形看那一類的每一筆。
+   這兩個都不是 <button>，接不到只抓 button 的那個委派，所以自己一個 */
+$('pieCard').addEventListener('click',e=>{
+  const b=e.target.closest('[data-pcat]'); if(!b) return;
+  openCat(b.dataset.pcat);
 });
 $('shopBody').addEventListener('click',e=>{
   const b=e.target.closest('[data-extra]'); if(!b) return;
