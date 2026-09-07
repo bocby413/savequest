@@ -8807,11 +8807,15 @@ function loanInfo(l){
   const interestPaid=pays.reduce((s,x)=>s+(+x.int||0),0);
   const paid=Math.min(l.total,loanPaid(l)), left=Math.max(0,l.total-paid);
   const pct=l.total?paid/l.total*100:0;
-  /* 估剩幾期要用「一期實際還掉多少本金」。利息每期不同，
-     用最近一次繳的那筆最接近現在的狀況；還沒繳過就只能用每月應繳 */
-  const last=pays.length?pays[pays.length-1]:null;
-  const lastPrin=last?Math.max(0,last.amount-(+last.int||0)):0;
-  const prin=lastPrin>0?lastPrin:(+l.monthly||0);
+  /* 估剩幾期要用「一期實際還掉多少本金」＝ 每月應繳 − 最近一次的利息。
+     不能拿「最近一筆繳款的金額」去推：那筆只要不是完整一期
+     （補繳、多繳、只繳一半），推估就會整個歪掉 —— 一筆 7,914 的繳款
+     會讓 1,910,000 的貸款算成 505 期、2053 年才還完。
+     利息取最近「有填」的那一次，越後面的越接近現在的狀況 */
+  const mth=+l.monthly||0;
+  let lastInt=0;
+  for(let i=pays.length-1;i>=0;i--){ if(+pays[i].int>0){ lastInt=+pays[i].int; break; } }
+  const prin=(mth>lastInt)?mth-lastInt:mth;
   const mo=prin>0?Math.ceil(left/prin):null;
   let when=null;
   if(mo!==null&&left>0){ when=new Date(); when.setMonth(when.getMonth()+mo); }
