@@ -406,6 +406,9 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .stkt .nm{font-size:12px;color:var(--txt3);display:block;margin-top:2px}
 .stkt .val{font-weight:800;font-size:15px}
 .stkt .miss{color:var(--gold);font-size:12px}
+/* 美股的小標。同一張表裡混著台股美股，要一眼看得出哪一檔是哪邊的 */
+.stkt .mk{font-size:10px;font-weight:700;color:var(--bg);background:var(--cyan);
+  border-radius:5px;padding:1px 4px;vertical-align:2px;margin-left:4px}
 .stkt tr.sum td{border-top:2px solid var(--edge2);background:var(--panel2);font-weight:800}
 /* .iq 預設是 display:grid，也就是區塊層級，兩顆會各佔一行把整列撐高。
    闖關紀錄那張表有改成 inline-grid，這張漏了 */
@@ -1255,6 +1258,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   <div class="sechead"><h2><svg class="i"><use href="#i-stock"/></svg>資產</h2>
     <span class="sub" id="stkSub"></span>
     <span class="segs" id="stkColSeg"><button data-sc="cost" class="on">成本</button><button data-sc="value">市值</button></span>
+    <span class="segs" id="stkCurSeg" style="display:none"><button data-cu="TWD" class="on">台幣</button><button data-cu="USD">美金</button></span>
   </div>
   <div id="stocks"></div>
 </div>
@@ -1338,7 +1342,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   </div>
 
   <div id="aStock">
-    <div class="f"><label>股票代碼</label><input type="text" id="hCode" placeholder="" maxlength="6"></div>
+    <div class="f"><label>股票代碼</label><input type="text" id="hCode" placeholder="台股打 2330，美股打 AAPL" maxlength="8"></div>
     <div class="quickpick" id="hQuick"></div>
     <div class="say" id="hName" style="margin:-6px 0 12px;min-height:20px"></div>
     <div class="kinds" id="aDir" style="grid-template-columns:1fr 1fr;display:none;margin:2px 0 12px">
@@ -10544,20 +10548,47 @@ async function loadPrices(){
   }catch(e){ /* 沒網路就用上次存的 */ }
 }
 const holdings=()=>Array.isArray(db.settings.holdings)?db.settings.holdings:[];
-const quoteOf=c=>PRICES&&PRICES.quotes?PRICES.quotes[String(c).trim().toUpperCase()]:null;
+/* 台股跟美股分兩份放，代號才不會互撞（台股是數字、美股是字母，但不保證永遠）。
+   先找台股再找美股，回傳的時候補上這檔是用哪個幣別報價的 */
+const quoteOf=c=>{
+  const k=String(c||'').trim().toUpperCase();
+  if(!k||!PRICES) return null;
+  const tw=PRICES.quotes&&PRICES.quotes[k];
+  if(tw) return Object.assign({cur:'TWD'},tw);
+  const us=PRICES.us&&PRICES.us[k];
+  if(us) return Object.assign({cur:'USD'},us);
+  return null;
+};
+/* 1 美金換多少台幣。抓價那支每天一起寫進來 */
+const usdTwd=()=>{ const v=PRICES&&PRICES.fx&&+PRICES.fx.USDTWD; return v>0?v:null; };
+/* 換算。沒有匯率就回 null —— 硬用 1:1 會算出一個假的數字 */
+const fxTo=(v,from,to)=>{
+  if(v===null||v===undefined) return v;
+  if(from===to) return v;
+  const r=usdTwd(); if(!r) return null;
+  return from==='USD'?v*r:v/r;
+};
+const hasUS=()=>stockRows().some(r=>r.cur==='USD');
+/* 資產表現在用哪個幣別顯示。持股裡沒有美股的話這個設定沒有意義 */
+let stkCur=(db.settings.stkCur==='USD')?'USD':'TWD';
+const curSign=c=>c==='USD'?'US$':'NT$';
 /* 那一欄要看成本還是市值。預設看成本 —— 平常在意的是「我投了多少」，
    賺賠另外有損益那欄在講 */
 let stkCol=(db.settings.stkCol==='value')?'value':'cost';
 function stockRows(){
   return holdings().map(h=>{
     const q=quoteOf(h.code), price=q?q.c:null;
+    /* 查不到的檔沒有幣別可言，當台幣處理（成本是使用者自己填的） */
+    const cur=q?q.cur:'TWD';
     const value=price!==null?price*h.shares:null;
     const cost=h.avg>0?h.avg*h.shares:null;
-    return Object.assign({},h,{name:q?q.n:'',price,value,cost,ch:q?q.ch:0,
+    return Object.assign({},h,{name:q?q.n:'',price,value,cost,cur,ch:q?q.ch:0,
       pl:(value!==null&&cost!==null)?value-cost:null});
   });
 }
-const stockValue=()=>stockRows().reduce((s,r)=>s+(r.value||0),0);
+/* 併進總資產的市值：現金、貸款都是台幣，所以這裡一律換成台幣。
+   沒有匯率的話那一檔就先不算，不要拿美金的數字直接當台幣加進去 */
+const stockValue=()=>stockRows().reduce((s,r)=>s+(fxTo(r.value,r.cur,'TWD')||0),0);
 /* 總資產＝現金＋股票市值＋其他資產，等級與關卡都看這個 */
 const assets=()=>now()+stockValue()+othersValue();
 
@@ -10566,22 +10597,34 @@ function renderStocks(){
   /* 放在最前面。沒有任何資產的時候下面會提早 return，
      擺在後面的話那顆亮起來的按鈕會停在上一次的狀態 */
   document.querySelectorAll('#stkColSeg button').forEach(b=>b.classList.toggle('on',b.dataset.sc===stkCol));
+  /* 幣別切換只有在真的有美股的時候才出現，不然多一顆沒用的按鈕 */
+  const us=rows.some(r=>r.cur==='USD');
+  $('stkCurSeg').style.display=us?'':'none';
+  if(!us) stkCur='TWD';
+  document.querySelectorAll('#stkCurSeg button').forEach(b=>b.classList.toggle('on',b.dataset.cu===stkCur));
   if(!rows.length&&!os.length){
     box.innerHTML='<div class="card stkempty">還沒有資產。按上面的「新增資產」加股票或其他資產，'+
       '股票的收盤價每天盤後自動更新，市值會併進總資產。</div>';
     $('stkSub').textContent=''; return;
   }
-  const ov=os.reduce((s,o)=>s+(o.value||0),0);
-  const oc=os.reduce((s,o)=>s+(o.cost||0),0);
-  const tv=rows.reduce((s,r)=>s+(r.value||0),0)+ov;
-  const tc=rows.reduce((s,r)=>s+(r.cost||0),0)+oc;
+  /* 每個數字都先換成現在要顯示的幣別。其他資產是手填的，一律當台幣 */
+  const cv=(v,from)=>fxTo(v,from||'TWD',stkCur);
+  const ov=os.reduce((s,o)=>s+(cv(o.value)||0),0);
+  const oc=os.reduce((s,o)=>s+(cv(o.cost)||0),0);
+  const tv=rows.reduce((s,r)=>s+(cv(r.value,r.cur)||0),0)+ov;
+  const tc=rows.reduce((s,r)=>s+(cv(r.cost,r.cur)||0),0)+oc;
   const hasPl=rows.some(r=>r.pl!==null)||os.some(o=>o.cost>0);
-  const tp=hasPl?rows.reduce((s,r)=>s+(r.pl||0),0)+os.reduce((s,o)=>s+(o.cost>0?o.value-o.cost:0),0):null;
+  const tp=hasPl?rows.reduce((s,r)=>s+(cv(r.pl,r.cur)||0),0)
+    +os.reduce((s,o)=>s+(o.cost>0?cv(o.value-o.cost)||0:0),0):null;
+  const sign=us?curSign(stkCur)+' ':'';
   const colName=stkCol==='cost'?'成本':'市值';
   /* 成本填 0 或沒填的當作沒有，寫 0 會讓人以為是免費拿到的 */
-  const colOf=x=>stkCol==='cost'?(x.cost>0?x.cost:null):(x.value!==null&&x.value!==undefined?x.value:null);
+  const colOf=x=>{
+    const v=stkCol==='cost'?(x.cost>0?x.cost:null):(x.value!==null&&x.value!==undefined?x.value:null);
+    return cv(v,x.cur);
+  };
   /* 這裡要完整的數字，不縮成「1萬 / +239萬」—— 錢的位數看不清楚沒意義 */
-  $('stkSub').textContent=(stkCol==='cost'?'總成本 '+money(tc):'總市值 '+money(tv))+
+  $('stkSub').textContent=(stkCol==='cost'?'總成本 '+sign+money(tc):'總市值 '+sign+money(tv))+
     (tp!==null?'　損益 '+(tp>=0?'+':'-')+money(Math.abs(tp)):'');
   const cell=(v,cls)=>'<span class="'+cls+'">'+(v>=0?'+':'-')+money(Math.abs(v))+'</span>';
   box.innerHTML='<div class="card stkbox"><table class="stkt"><thead><tr>'+
@@ -10589,13 +10632,14 @@ function renderStocks(){
     '<th>'+colName+'</th><th>損益</th><th></th></tr></thead><tbody>'+
     rows.map(r=>{
       const plpct=(r.pl!==null&&r.cost)?(r.pl/r.cost*100):null;
-      return '<tr><td><span class="cd">'+esc(r.code)+'</span>'+
+      const px=cv(r.price,r.cur), av=cv(r.avg>0?r.avg:null,r.cur);
+      return '<tr><td><span class="cd">'+esc(r.code)+(r.cur==='USD'?' <span class="mk">美股</span>':'')+'</span>'+
           '<span class="nm">'+(r.name||'<span class="miss">查不到這檔</span>')+'</span></td>'+
         '<td class="hidem">'+money(r.shares)+'</td>'+
-        '<td class="hidem">'+(r.avg>0?r.avg.toLocaleString('en-US',{minimumFractionDigits:2}):'—')+'</td>'+
-        '<td>'+(r.price!==null?'<span class="'+(r.ch>0?'up':r.ch<0?'down':'')+'">'+r.price.toFixed(2)+'</span>':'—')+'</td>'+
+        '<td class="hidem">'+(av!==null&&av!==undefined?av.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—')+'</td>'+
+        '<td>'+(px!==null&&px!==undefined?'<span class="'+(r.ch>0?'up':r.ch<0?'down':'')+'">'+px.toFixed(2)+'</span>':'—')+'</td>'+
         '<td class="val">'+(colOf(r)!==null?money(colOf(r)):'—')+'</td>'+
-        '<td>'+(r.pl!==null?cell(r.pl,r.pl>=0?'up':'down')+
+        '<td>'+(r.pl!==null&&cv(r.pl,r.cur)!==null?cell(cv(r.pl,r.cur),r.pl>=0?'up':'down')+
           '<span class="nm">'+(plpct>=0?'+':'')+plpct.toFixed(1)+'%</span>':'—')+'</td>'+
         '<td class="x">'+
           '<button class="iq" data-edithold="'+r.id+'"><svg class="i"><use href="#i-gear"/></svg></button>'+
@@ -10614,11 +10658,13 @@ function renderStocks(){
           '<button class="iq del" data-delother="'+o.id+'"><svg class="i"><use href="#i-x"/></svg></button></td></tr>';
     }).join('')+
     '<tr class="sum"><td>合計 '+(rows.length+os.length)+' 項</td><td class="hidem"></td><td class="hidem"></td><td></td>'+
-      '<td class="val">'+money(stkCol==='cost'?tc:tv)+'</td>'+
+      '<td class="val">'+sign+money(stkCol==='cost'?tc:tv)+'</td>'+
       '<td>'+(tp!==null?cell(tp,tp>=0?'up':'down')+
         '<span class="nm">'+(tc?((tp/tc*100)>=0?'+':'')+(tp/tc*100).toFixed(1)+'%':'')+'</span>':'—')+'</td><td></td></tr>'+
     '</tbody></table><div class="stkfoot"><span>'+
       (PRICES?'收盤價 '+PRICES.date+'（'+PRICES.count+' 檔）':'還沒抓到收盤價')+
+    (us?'　美股 '+((PRICES&&PRICES.usCount)||0)+' 檔'+
+        (usdTwd()?'　1 美金 = '+usdTwd().toFixed(2)+' 台幣':'　還沒抓到匯率'):'')+
     '</span><span>'+(PRICES?'更新於 '+PRICES.updated:'')+'</span></div></div>';
 }
 /* 其他資產：手動維護的價值，跟股票一起算進總資產 */
@@ -10751,7 +10797,8 @@ function holdPrev(){
   $('aTotalWrap').style.display= cutting?'none':'';
   $('aCashWrap').style.display = cutting?'':'none';
   $('hName').innerHTML = $('hCode').value.trim()
-    ? (q?'<b style="color:var(--cyan)">'+esc(q.n)+'</b>　收盤 '+q.c.toFixed(2)
+    ? (q?'<b style="color:var(--cyan)">'+esc(q.n)+'</b>　收盤 '+curSign(q.cur)+q.c.toFixed(2)+
+        (q.cur==='USD'?'（美股，成本也請填美金）':'')
         :'<span style="color:var(--gold)">查不到這個代碼，還是可以存，之後抓得到就會顯示</span>')
       +(own?'<br><span style="color:var(--lime)">持股已有 '+money(own.shares)+' 股'+
         (own.avg?'（均價 '+own.avg.toLocaleString('en-US',{maximumFractionDigits:2})+'）':'')+
@@ -13310,6 +13357,11 @@ document.body.addEventListener('click',e=>{
   if(b.dataset.sc){
     stkCol=b.dataset.sc==='value'?'value':'cost';
     db.settings.stkCol=stkCol; save();
+    SFX.play('tick'); renderStocks(); return;
+  }
+  if(b.dataset.cu){
+    stkCur=b.dataset.cu==='USD'?'USD':'TWD';
+    db.settings.stkCur=stkCur; save();
     SFX.play('tick'); renderStocks(); return;
   }
   if(b.id==='btnPriv') return togglePriv();

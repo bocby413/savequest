@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
-"""每天盤後抓上市＋上櫃收盤價，寫成 prices.json 給網頁讀。
-證交所與櫃買的 API 都沒開放跨網域，網頁不能直接抓，所以在這裡先抓好放進 repo。"""
+"""每天盤後抓上市＋上櫃＋美股收盤價與美金匯率，寫成 prices.json 給網頁讀。
+證交所與櫃買的 API 都沒開放跨網域，網頁不能直接抓，所以在這裡先抓好放進 repo。
+
+美股跟台股一樣是「整個市場一次抓下來」——  使用者隨便打一個代號都要查得到，
+不能只抓他現在持有的那幾檔（prices.json 是所有人共用的靜態檔）。"""
 import json, re, sys, time, urllib.request
 from datetime import datetime, timedelta, timezone
 
@@ -42,6 +45,15 @@ def num(x):
         return None
 
 quotes = {}
+
+# 先把舊檔讀進來。美股或匯率某天抓不到的話沿用上一份，
+# 總比清成空的好（清空的話使用者的美股市值會整個不見）
+old = {}
+try:
+    with open('prices.json', encoding='utf-8') as f:
+        old = json.load(f)
+except Exception:
+    pass
 
 # 上市有好幾個來源，GitHub 的機器不一定每個都連得到，逐一試到有為止
 TWSE_URLS = [
@@ -107,6 +119,55 @@ if n_tpex < 400:
     print('上櫃只有 %d 檔，不覆蓋舊檔' % n_tpex)
     sys.exit(1)
 
+# ── 美股 ──
+# Nasdaq 的清單端點一次回全美上市（NYSE/Nasdaq/AMEX）約七千檔，一支請求就夠。
+print('抓美股…', flush=True)
+us = {}
+raw = get('https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=25000&download=true', tries=2)
+rows = ((raw or {}).get('data') or {}).get('rows') or []
+for r in rows:
+    sym = str(r.get('symbol') or '').strip().upper()
+    # Nasdaq 用斜線分股別（BRK/B），但大家打的是 BRK.B，轉成點
+    sym = sym.replace('/', '.')
+    # 帶 ^ 的是權證那類，網頁上也打不出來
+    if not sym or '^' in sym:
+        continue
+    close = num(str(r.get('lastsale') or '').replace('$', ''))
+    if not close:
+        continue
+    us[sym] = {'n': (r.get('name') or '').strip(), 'c': close,
+               'ch': num(r.get('netchange')) or 0}
+print('  美股 %d 檔' % len(us), flush=True)
+if len(us) < 1000:
+    # 抓失敗或只抓到零星幾檔，沿用舊的那份
+    us = old.get('us') or us
+    print('  美股沿用舊檔 %d 檔' % len(us), flush=True)
+
+# ── 美金對台幣 ──
+# 美股的價格是美金，網頁要把它換成台幣併進總資產，沒有匯率就換不了
+print('抓匯率…', flush=True)
+fx = None
+d0 = get('https://open.er-api.com/v6/latest/USD', tries=2)
+if d0 and isinstance(d0.get('rates'), dict):
+    fx = num(d0['rates'].get('TWD'))
+if not fx:
+    # 備援：台灣銀行的牌告匯率 CSV，第一欄是幣別、第 13 欄是即期賣出
+    try:
+        req = urllib.request.Request('https://rate.bot.com.tw/xrt/flcsv/0/day', headers=UA)
+        with urllib.request.urlopen(req, timeout=60) as r:
+            for line in r.read().decode('utf-8', 'replace').splitlines():
+                col = line.split(',')
+                if col and col[0].strip().upper().startswith('USD'):
+                    fx = num(col[12]) or num(col[3])
+                    break
+    except Exception as e:
+        print('  台銀也失敗：%s' % e, flush=True)
+if fx:
+    print('  1 美金 = %.3f 台幣' % fx, flush=True)
+else:
+    fx = ((old.get('fx') or {}).get('USDTWD'))
+    print('  匯率沿用舊檔：%s' % fx, flush=True)
+
 # 交易日期以資料裡的民國日期為準
 d = ''
 for src, key in ((twse, 'Date'), (tpex, 'Date')):
@@ -118,8 +179,10 @@ for src, key in ((twse, 'Date'), (tpex, 'Date')):
 
 out = {'date': d or datetime.now(TPE).strftime('%Y-%m-%d'),
        'updated': datetime.now(TPE).strftime('%Y-%m-%d %H:%M'),
-       'count': len(quotes), 'quotes': quotes}
+       'count': len(quotes), 'quotes': quotes,
+       'usCount': len(us), 'us': us,
+       'fx': {'USDTWD': fx} if fx else (old.get('fx') or {})}
 with open('prices.json', 'w', encoding='utf-8') as f:
     json.dump(out, f, ensure_ascii=False, separators=(',', ':'))
-print('寫入 prices.json：上市 %d ＋上櫃 %d ＝ %d 檔，交易日 %s'
-      % (n_twse, n_tpex, len(quotes), out['date']))
+print('寫入 prices.json：上市 %d ＋上櫃 %d ＝ %d 檔，美股 %d 檔，1 美金 %s 台幣，交易日 %s'
+      % (n_twse, n_tpex, len(quotes), len(us), fx, out['date']))
