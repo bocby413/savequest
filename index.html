@@ -6091,19 +6091,31 @@ const ITEMS=[
        ','+(x+Math.cos(an)*r*1.1).toFixed(1)+','+(y+Math.sin(an)*r*1.1).toFixed(1)+')"/>';}
   return o+'<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(r*.66).toFixed(1)+'" fill="#c4471d"/>';}},
   {id:'gfh6', n:'晚宴禮帽', p:100, slot:'head', only:'a-gir', d:a=>AC.tophat(a,'#22232a','#101119',5)},
-  {id:'gfe1', n:'草原墨鏡', p:100, slot:'face', only:'a-gir', d:a=>{
-  /* 探險用的側邊擋光墨鏡：鏡片是圓的，外側再補一片皮革遮陽 */
-  const y=eyeY(a),g=a.gap,r=AC.ew(a),f=n=>n.toFixed(1);
-  const lens=sg=>{const cx=60+sg*g;
-    return '<circle cx="'+f(cx)+'" cy="'+f(y)+'" r="'+f(r)+'" fill="#22232a"/>'+
-      '<path d="M'+f(cx+sg*r)+' '+f(y-r*.7)+'L'+f(cx+sg*(r+4))+' '+f(y-r*.5)+
-      'L'+f(cx+sg*(r+4))+' '+f(y+r*.6)+'L'+f(cx+sg*r)+' '+f(y+r*.8)+'Z" fill="#8a6a3c"/>'+
-      '<path d="M'+f(cx-sg*r*.4)+' '+f(y-r*.35)+'l'+f(sg*r*.45)+' '+f(r*.45)+
-      '" stroke="#e0921a" stroke-width="1.8" opacity=".8"/>';};
-  return lens(-1)+lens(1)+
-    '<path d="M'+f(60-g+r)+' '+f(y-r*.55)+'Q60 '+f(y-r*1.1)+' '+f(60+g-r)+' '+f(y-r*.55)+
-    '" stroke="#e0921a" stroke-width="3" fill="none"/>';}},
-  {id:'gfe2', n:'額頭寶石', p:100, slot:'face', only:'a-gir', d:a=>AC.gem(a,'#ffc233','#c28800')},
+  {id:'gfe1', n:'紫色長舌', p:100, slot:'face', only:'a-gir', d:a=>{
+    /* 長頸鹿的舌頭是紫黑色的，而且很長 —— 從嘴角垂下來一截才對味 */
+    const m=mouY(a), f=n=>n.toFixed(1);
+    return '<path d="M '+f(60-4.4)+' '+f(m)+
+      ' Q '+f(60-5.4)+' '+f(m+7)+' '+f(60-2)+' '+f(m+10.4)+
+      ' Q '+f(60+2.6)+' '+f(m+13.6)+' '+f(60+4.4)+' '+f(m+9)+
+      ' Q '+f(60+5)+' '+f(m+3)+' '+f(60+4)+' '+f(m)+' Z" fill="#8a5a9c"/>'+
+      '<path d="M 60 '+f(m+2)+' Q '+f(60-1.4)+' '+f(m+7)+' 60 '+f(m+10.6)+
+      '" stroke="#6b4278" stroke-width="1.3" fill="none"/>'+
+      '<path d="M '+f(60-3)+' '+f(m+1.4)+' Q 60 '+f(m+3.4)+' '+f(60+3)+' '+f(m+1.4)+
+      '" stroke="#a878b8" stroke-width="1.2" fill="none"/>';}},
+  {id:'gfe2', n:'金合歡花瓣', p:100, slot:'face', only:'a-gir', d:a=>{
+    /* 吃樹葉沾到的花瓣。往下離開眼珠、往外不超出臉 */
+    const pr=(a.pup||4.5), y=eyeY(a)+pr+5.4, r=4.2, f=n=>n.toFixed(1);
+    const g=Math.min(a.gap+pr+r+2.6, AC.wAtY(a,y)-r-1);
+    const bloom=(cx,cy,sz)=>{
+      let o='';
+      for(let i=0;i<6;i++){const A=i*60*Math.PI/180;
+        o+='<circle cx="'+f(cx+Math.cos(A)*sz*.6)+'" cy="'+f(cy+Math.sin(A)*sz*.6)+
+           '" r="'+f(sz*.46)+'" fill="#ffd75e"/>';}
+      return o+'<circle cx="'+f(cx)+'" cy="'+f(cy)+'" r="'+f(sz*.4)+'" fill="#ffb03c"/>';
+    };
+    return bloom(60-g,y,r)+bloom(60+g,y,r*.8)+
+      '<circle cx="'+f(60-g+r*1.7)+'" cy="'+f(y-r*.9)+'" r="1.1" fill="#ffe27a"/>'+
+      '<circle cx="'+f(60+g-r*1.5)+'" cy="'+f(y+r*.9)+'" r="1" fill="#ffe27a"/>';}},
   {id:'gfe3', n:'叼著嫩葉', p:100, slot:'face', only:'a-gir', d:a=>{
   return AC.bite(a,'<path d="M0 0q9-4 14-13" stroke="#4a9b3f" stroke-width="2" fill="none"/>'+
     '<ellipse cx="8" cy="-6" rx="5" ry="2.8" fill="#4a9b3f" transform="rotate(-28,8,-6)"/>'+
