@@ -7839,11 +7839,25 @@ const ITEMS=[
       o+='<circle cx="'+f(x)+'" cy="'+f(cy)+'" r="1.6" fill="#ffd75e"/>';});
     return o;}},
   {id:'bre7', n:'閃亮睫毛', p:100, slot:'face', only:'a-bear', d:a=>{
-    const y=eyeY(a), g=a.gap, r=AC.ew(a), f=n=>n.toFixed(1);
-    const one=(x,sg)=>'<path d="M'+f(x+sg*r*.15)+' '+f(y-r*1.05)+'l'+f(sg*2)+'-4M'+f(x+sg*r*.55)+' '+f(y-r*.92)+
-      'l'+f(sg*4.4)+'-3.4M'+f(x+sg*r)+' '+f(y-r*.4)+'l'+f(sg*5.4)+'-1.4'+
-      '" stroke="#3a2a2a" stroke-width="1.8" stroke-linecap="round"/>'+
-      '<path d="M'+f(x+sg*(r+5))+' '+f(y-r-2)+'l.9 2 2 .9-2 .9-.9 2-.9-2-2-.9 2-.9z" fill="#ffd75e"/>';
+    /* 眼珠是半徑 a.pup 的實心圓 —— 睫毛的起點要落在那個圓周上，
+       用 AC.ew 當半徑的話會照著一個兩倍大的假眼睛擺，整排飄在外面 */
+    const y=eyeY(a), g=a.gap, r=(a.pup||4.5), f=n=>n.toFixed(1);
+    const one=(x,sg)=>{
+      let o='';
+      [[-46,5],[-16,5.8],[14,5]].forEach(([deg,len])=>{
+        const A=(-90+sg*deg)*Math.PI/180, cs=Math.cos(A), sn=Math.sin(A);
+        o+='<path d="M'+f(x+cs*(r-.6))+' '+f(y+sn*(r-.6))+
+           'l'+f(cs*len)+' '+f(sn*len)+'" stroke="#3a2a2a" stroke-width="1.9" stroke-linecap="round"/>';
+      });
+      /* 高光跟星星都點在眼珠上，這樣才是「亮」的那隻眼睛 */
+      o+='<circle cx="'+f(x-sg*r*.3)+'" cy="'+f(y-r*.34)+'" r="'+f(r*.32)+'" fill="#ffffff" opacity=".95"/>';
+      const sx=x+sg*r*.44, sy=y+r*.36, sz=r*.4;
+      o+='<path d="M'+f(sx)+' '+f(sy-sz)+'l'+f(sz*.3)+' '+f(sz*.66)+' '+f(sz*.7)+' '+f(sz*.08)+
+         'l-'+f(sz*.5)+' '+f(sz*.5)+' '+f(sz*.14)+' '+f(sz*.7)+'L'+f(sx)+' '+f(sy+sz*.58)+
+         'l-'+f(sz*.64)+' '+f(sz*.32)+' '+f(sz*.14)+'-'+f(sz*.7)+
+         'l-'+f(sz*.5)+'-'+f(sz*.5)+' '+f(sz*.7)+'-'+f(sz*.08)+'z" fill="#ffd75e"/>';
+      return o;
+    };
     return one(60-g,-1)+one(60+g,1);}},
   {id:'brn7', n:'絲絨緞帶', p:100, slot:'neck', only:'a-bear', d:a=>{
     const y=NKB(a)-2, w=bwAt(a,0)+1, f=n=>n.toFixed(1);
