@@ -7722,6 +7722,769 @@ const ITEMS=[
       '<path d="M'+(cx-w)+' '+(y+5)+'h'+(w*2)+'" stroke="#6b7c52" stroke-width="1.6"/>'+
       '<rect x="'+(cx-2)+'" y="'+(y-1)+'" width="4" height="4" rx="1" fill="#c9a86a"/>'+
       '<path d="M'+(cx-4)+' '+(y+1)+'h8" stroke="#c9a86a" stroke-width="1.4"/>');}},
+  /* ── 漂亮可愛系（每隻一組）：貓、狗、熊、狐狸、企鵝、機器人、青蛙、貓頭鷹 ── */
+  {id:'cth7', n:'櫻花髮圈', p:100, slot:'head', only:'a-cat', d:a=>{
+    const y=AC.crest(a)+1, w=AC.crestW(a), cx=60+a.hr*.44, cy=y-4, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y+2)+'q'+f(w)+' -9 '+f(w*2)+' 0" stroke="#ff9ec4" stroke-width="3.4" fill="none"/>';
+    for(let i=0;i<5;i++){const A=i*72*Math.PI/180;
+      o+='<path d="M'+f(cx)+' '+f(cy)+'q'+f(Math.cos(A)*5-Math.sin(A)*2)+' '+f(Math.sin(A)*5+Math.cos(A)*2)+
+         ' '+f(Math.cos(A)*7)+' '+f(Math.sin(A)*7)+'q'+f(Math.sin(A)*2)+' '+f(-Math.cos(A)*2)+' '+
+         f(-Math.cos(A)*7)+' '+f(-Math.sin(A)*7)+'z" fill="#ffd1e0" stroke="#ffb0cc" stroke-width=".8"/>';}
+    return o+'<circle cx="'+f(cx)+'" cy="'+f(cy)+'" r="2.2" fill="#ffe27a"/>';}},
+  {id:'cte7', n:'星星眼影', p:100, slot:'face', only:'a-cat', d:a=>{
+    const y=eyeY(a), g=a.gap, r=AC.ew(a), f=n=>n.toFixed(1);
+    const st=(x,yy,s)=>'<path d="M'+f(x)+' '+f(yy-s)+'l'+f(s*.32)+' '+f(s*.66)+' '+f(s*.68)+' '+f(s*.08)+
+      'l-'+f(s*.52)+' '+f(s*.52)+' '+f(s*.14)+' '+f(s*.72)+'L'+f(x)+' '+f(yy+s*.6)+
+      'l-'+f(s*.66)+' '+f(s*.34)+' '+f(s*.14)+'-'+f(s*.72)+'l-'+f(s*.52)+'-'+f(s*.52)+' '+f(s*.68)+'-'+f(s*.08)+'z" fill="#ffd75e"/>';
+    return '<path d="M'+f(60-g-r)+' '+f(y-r*.7)+'a'+f(r)+' '+f(r*.8)+' 0 0 1 '+f(r*2)+' 0z" fill="#e2a8ff" opacity=".75"/>'+
+      '<path d="M'+f(60+g-r)+' '+f(y-r*.7)+'a'+f(r)+' '+f(r*.8)+' 0 0 1 '+f(r*2)+' 0z" fill="#e2a8ff" opacity=".75"/>'+
+      st(60-g-r-1.6,y-r*.9,3.2)+st(60+g+r+1.6,y-r*.9,3.2);}},
+  {id:'ctn7', n:'蕾絲頸鍊', p:100, slot:'neck', only:'a-cat', d:a=>{
+    const y=NKB(a)-2, w=bwAt(a,0)+1, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 9 '+f(w*2)+' 0" stroke="#f2f4f8" stroke-width="4.4" fill="none"/>';
+    for(let i=0;i<6;i++){const k=-.84+i*.336, x=60+k*w, dy=y+3+(1-Math.abs(k))*6;
+      o+='<circle cx="'+f(x)+'" cy="'+f(dy)+'" r="2" fill="#ffffff"/>';}
+    return o+'<path d="M60 '+f(y+8)+'v4" stroke="#dfe2ea" stroke-width="1.2"/>'+
+      '<circle cx="60" cy="'+f(y+13)+'" r="2.6" fill="#f8f6ff" stroke="#dfe2ea" stroke-width=".9"/>';}},
+  {id:'ctb7', n:'荷葉邊洋裝', p:200, slot:'body', only:'a-cat', d:a=>{
+    const t=a.by-a.bh, h=a.bh*2, f=n=>n.toFixed(1);
+    let o='<path d="'+garment(a,.06,.9)+'" fill="#ffd1e0"/>';
+    [.5,.72].forEach(k=>{const wq=bwAt(a,k)+2;
+      o+='<path d="M'+f(60-wq)+' '+f(t+h*k)+'q'+f(wq*.5)+' 5 '+f(wq)+' 0t'+f(wq)+' 0" stroke="#ffffff" stroke-width="2.6" fill="none"/>';});
+    return o+'<path d="M'+f(60-a.bw*.62)+' '+f(t+h*.08)+'q'+f(a.bw*.62)+' 7 '+f(a.bw*1.24)+' 0" stroke="#ffffff" stroke-width="2.6" fill="none"/>'+
+      '<path d="M60 '+f(t+h*.3)+'l-4-3 1 4-4 1 4 1-1 4 4-3 4 3-1-4 4-1-4-1 1-4z" fill="#ff9ec4"/>';}},
+  {id:'ctd7', n:'草莓杯子蛋糕', p:200, slot:'hand', only:'a-cat', d:a=>{
+    const x=AC.gx(a), g=AC.gy(a)-3, f=n=>n.toFixed(1);
+    return '<path d="M'+f(x-7)+' '+f(g+1)+'h14l-2.4 11h-9.2z" fill="#e8d4c0"/>'+
+      '<path d="M'+f(x-7)+' '+f(g+1)+'v11M'+f(x-2.4)+' '+f(g+1)+'v11M'+f(x+2.4)+' '+f(g+1)+'v11M'+f(x+7)+' '+f(g+1)+'v11" stroke="#c9b39a" stroke-width="1"/>'+
+      '<path d="M'+f(x-8)+' '+f(g+1)+'q1-8 8-8t8 8z" fill="#ffd1e0"/>'+
+      '<path d="M'+f(x-6)+' '+f(g-2)+'q2-4 6-4t6 4" stroke="#ffffff" stroke-width="1.6" fill="none"/>'+
+      '<path d="M'+f(x)+' '+f(g-9)+'q-3.4-3-3.4 1t3.4 4 3.4-4-3.4-1z" fill="#e2452f"/>'+
+      '<path d="M'+f(x)+' '+f(g-10.6)+'q2.4-1.6 2.6 .4q-2 1.2-2.6-.4z" fill="#4a9b3f"/>';}},
+  {id:'ctf7', n:'緞帶芭蕾鞋', p:200, slot:'foot', only:'a-cat', d:a=>{
+    const y=(a.fy||107)-1, w=(a.fw||9)+1, f=n=>n.toFixed(1);
+    return AC.feet(a,cx=>'<path d="M'+f(cx-w)+' '+f(y+7)+'q0-7 '+f(w)+'-7t'+f(w)+' 7z" fill="#ffd1e0"/>'+
+      '<path d="M'+f(cx-w)+' '+f(y+7)+'h'+f(w*2)+'" stroke="#e2a8c0" stroke-width="1.6"/>'+
+      '<path d="M'+f(cx-w+2)+' '+f(y+2)+'q'+f(w-2)+' 4 '+f((w-2)*2)+' 0" stroke="#ff9ec4" stroke-width="1.8" fill="none"/>'+
+      '<path d="M'+f(cx)+' '+f(y+1)+'l-3.4-2.6 .6 3.4zM'+f(cx)+' '+f(y+1)+'l3.4-2.6-.6 3.4z" fill="#ff9ec4"/>');}},
+  {id:'dgh7', n:'大蝴蝶結', p:100, slot:'head', only:'a-dog', d:a=>{
+    const y=AC.crest(a)+2, w=Math.min(AC.crestW(a)*.8,12), h=w*.62, f=n=>n.toFixed(1);
+    return '<path d="M60 '+f(y)+'L'+f(60-w)+' '+f(y-h)+'q-3 '+f(h)+' 0 '+f(h*2)+'zM60 '+f(y)+'L'+f(60+w)+' '+f(y-h)+
+      'q3 '+f(h)+' 0 '+f(h*2)+'z" fill="#ff7fae"/>'+
+      '<path d="M60 '+f(y)+'L'+f(60-w*.5)+' '+f(y-h*.4)+'M60 '+f(y)+'L'+f(60+w*.5)+' '+f(y-h*.4)+
+      '" stroke="#e2588f" stroke-width="1.2"/>'+
+      '<circle cx="60" cy="'+f(y)+'" r="3.6" fill="#ffb0cc"/>';}},
+  {id:'dge7', n:'心形腮紅', p:100, slot:'face', only:'a-dog', d:a=>{
+    const y=eyeY(a)+8, g=Math.min(a.gap+8,a.hr-8), f=n=>n.toFixed(1);
+    const hh=x=>'<path d="M'+f(x)+' '+f(y+3.4)+'q-6-4.6-6-8q0-4 6-1q6-3 6 1q0 3.4-6 8z" fill="#ff7fae" opacity=".7"/>';
+    return hh(60-g)+hh(60+g)+
+      '<circle cx="'+f(60-g-5)+'" cy="'+f(y-5)+'" r="1.4" fill="#ffb0cc"/>'+
+      '<circle cx="'+f(60+g+5)+'" cy="'+f(y-5)+'" r="1.4" fill="#ffb0cc"/>';}},
+  {id:'dgn7', n:'珍珠圍領', p:100, slot:'neck', only:'a-dog', d:a=>{
+    const y=NKB(a)-3, w=bwAt(a,0)+1, f=n=>n.toFixed(1);
+    let o='';
+    for(let r=0;r<2;r++)for(let i=0;i<8;i++){
+      const k=-1+i*.286, x=60+k*(w-r*2), dy=y+2+r*4+(1-Math.abs(k))*(6-r);
+      o+='<circle cx="'+f(x)+'" cy="'+f(dy)+'" r="'+(2.4-r*.4)+'" fill="#f8f6ff"/>'+
+         '<circle cx="'+f(x-.7)+'" cy="'+f(dy-.7)+'" r=".7" fill="#ffffff"/>';}
+    return o;}},
+  {id:'dgb7', n:'格紋背心裙', p:200, slot:'body', only:'a-dog', d:a=>{
+    const t=a.by-a.bh, h=a.bh*2, f=n=>n.toFixed(1);
+    let o='<path d="'+garment(a,.1,.95)+'" fill="#e2a8c0"/>';
+    for(let i=0;i<4;i++){const k=.2+i*.2;
+      o+='<path d="M'+f(60-bwAt(a,k)-1)+' '+f(t+h*k)+'h'+f((bwAt(a,k)+1)*2)+'" stroke="#f2d0dd" stroke-width="1.6"/>';}
+    for(let i=0;i<3;i++){const x=60-a.bw*.5+i*(a.bw*.5);
+      o+='<path d="M'+f(x)+' '+f(t+h*.14)+'v'+f(h*.76)+'" stroke="#f2d0dd" stroke-width="1.6"/>';}
+    return o+'<path d="M'+f(60-a.bw*.5)+' '+f(t+h*.1)+'L'+f(60-a.bw*.62)+' '+f(t+h*.02)+
+      'M'+f(60+a.bw*.5)+' '+f(t+h*.1)+'L'+f(60+a.bw*.62)+' '+f(t+h*.02)+'" stroke="#e2a8c0" stroke-width="3.4"/>';}},
+  {id:'dgd7', n:'玫瑰花束', p:200, slot:'hand', only:'a-dog', d:a=>{
+    const x=AC.gx(a), g=AC.gy(a), f=n=>n.toFixed(1);
+    let o='<path d="M'+f(x-3)+' '+f(g+9)+'L'+f(x+2)+' '+f(g-8)+'" stroke="#4a9b3f" stroke-width="2.4" stroke-linecap="round"/>'+
+      '<path d="M'+f(x-1)+' '+f(g-2)+'q-6 1-7 5q5 1 7-5z" fill="#4a9b3f"/>';
+    [[0,-11,4.4,'#e2452f'],[-5,-8,3.6,'#ff7fae'],[5,-8,3.6,'#ffb0cc']].forEach(([dx,dy,r,c])=>{
+      o+='<circle cx="'+f(x+dx)+'" cy="'+f(g+dy)+'" r="'+r+'" fill="'+c+'"/>'+
+         '<path d="M'+f(x+dx)+' '+f(g+dy)+'m-'+f(r*.5)+' 0a'+f(r*.5)+' '+f(r*.5)+' 0 1 1 '+f(r)+
+         ' 0" fill="none" stroke="#ffffff" stroke-width=".9" opacity=".7"/>';});
+    return o+'<path d="M'+f(x-4)+' '+f(g+3)+'q4 3 8 0" stroke="#ffffff" stroke-width="2" fill="none"/>';}},
+  {id:'dgf7', n:'蕾絲短襪', p:200, slot:'foot', only:'a-dog', d:a=>{
+    const y=(a.fy||107)-5, w=(a.fw||9), f=n=>n.toFixed(1);
+    return AC.feet(a,cx=>{
+      let o='<rect x="'+f(cx-w)+'" y="'+f(y)+'" width="'+f(w*2)+'" height="12" rx="4" fill="#ffffff"/>';
+      for(let i=0;i<4;i++){const px=cx-w+1.6+i*((w*2-3.2)/3);
+        o+='<circle cx="'+f(px)+'" cy="'+f(y+1)+'" r="1.8" fill="#ffffff"/>';}
+      return o+'<path d="M'+f(cx-w)+' '+f(y+4)+'h'+f(w*2)+'" stroke="#ffd1e0" stroke-width="2"/>';});}},
+  {id:'brh7', n:'小花花冠', p:100, slot:'head', only:'a-bear', d:a=>{
+    const y=AC.crest(a)+3, w=AC.crestW(a)*.94, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' -10 '+f(w*2)+' 0" stroke="#8ac97a" stroke-width="2.4" fill="none"/>';
+    [-.8,-.3,.25,.75].forEach((k,i)=>{
+      const x=60+k*w, cy=y-4-(1-Math.abs(k))*4.4, c=['#ffffff','#ffd1e0','#fff0b8','#ffb0cc'][i];
+      for(let j=0;j<5;j++){const A=j*72*Math.PI/180;
+        o+='<ellipse cx="'+f(x+Math.cos(A)*2.8)+'" cy="'+f(cy+Math.sin(A)*2.8)+'" rx="2.4" ry="1.7" fill="'+c+
+           '" transform="rotate('+(j*72)+','+f(x+Math.cos(A)*2.8)+','+f(cy+Math.sin(A)*2.8)+')"/>';}
+      o+='<circle cx="'+f(x)+'" cy="'+f(cy)+'" r="1.6" fill="#ffd75e"/>';});
+    return o;}},
+  {id:'bre7', n:'閃亮睫毛', p:100, slot:'face', only:'a-bear', d:a=>{
+    const y=eyeY(a), g=a.gap, r=AC.ew(a), f=n=>n.toFixed(1);
+    const one=(x,sg)=>'<path d="M'+f(x+sg*r*.15)+' '+f(y-r*1.05)+'l'+f(sg*2)+'-4M'+f(x+sg*r*.55)+' '+f(y-r*.92)+
+      'l'+f(sg*4.4)+'-3.4M'+f(x+sg*r)+' '+f(y-r*.4)+'l'+f(sg*5.4)+'-1.4'+
+      '" stroke="#3a2a2a" stroke-width="1.8" stroke-linecap="round"/>'+
+      '<path d="M'+f(x+sg*(r+5))+' '+f(y-r-2)+'l.9 2 2 .9-2 .9-.9 2-.9-2-2-.9 2-.9z" fill="#ffd75e"/>';
+    return one(60-g,-1)+one(60+g,1);}},
+  {id:'brn7', n:'絲絨緞帶', p:100, slot:'neck', only:'a-bear', d:a=>{
+    const y=NKB(a)-2, w=bwAt(a,0)+1, f=n=>n.toFixed(1);
+    return '<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 10 '+f(w*2)+' 0" stroke="#9c3055" stroke-width="4.6" fill="none" stroke-linecap="round"/>'+
+      '<path d="M60 '+f(y+8)+'L'+f(60-8)+' '+f(y+4)+'q-2.6 4 0 8zM60 '+f(y+8)+'L'+f(60+8)+' '+f(y+4)+
+      'q2.6 4 0 8z" fill="#c2456f"/>'+
+      '<circle cx="60" cy="'+f(y+8)+'" r="2.8" fill="#9c3055"/>';}},
+  {id:'brb7', n:'針織小洋裝', p:200, slot:'body', only:'a-bear', d:a=>{
+    const t=a.by-a.bh, h=a.bh*2, f=n=>n.toFixed(1);
+    let o='<path d="'+garment(a,.06,.94)+'" fill="#f2d0dd"/>';
+    for(let i=0;i<7;i++){const x=60-a.bw*.78+i*(a.bw*1.56/6);
+      o+='<path d="M'+f(x)+' '+f(t+h*.12)+'v'+f(h*.76)+'" stroke="#e2b8ca" stroke-width="1.4"/>';}
+    for(let i=0;i<4;i++){const k=.2+i*.18;
+      o+='<path d="M'+f(60-bwAt(a,k)-1)+' '+f(t+h*k)+'q'+f((bwAt(a,k)+1)*.5)+' 2.6 '+f(bwAt(a,k)+1)+
+         ' 0t'+f(bwAt(a,k)+1)+' 0" stroke="#e2b8ca" stroke-width="1.2" fill="none"/>';}
+    return o+'<path d="M'+f(60-a.bw*.6)+' '+f(t+h*.08)+'q'+f(a.bw*.6)+' 7 '+f(a.bw*1.2)+' 0" stroke="#ffffff" stroke-width="3" fill="none"/>';}},
+  {id:'brd7', n:'蜂蜜馬卡龍', p:200, slot:'hand', only:'a-bear', d:a=>{
+    const x=AC.gx(a), g=AC.gy(a)-2, f=n=>n.toFixed(1);
+    return '<path d="M'+f(x-9)+' '+f(g+1)+'a9 6 0 0 1 18 0z" fill="#ffd1e0"/>'+
+      '<path d="M'+f(x-9)+' '+f(g+2)+'h18v3.4h-18z" fill="#ffc233"/>'+
+      '<path d="M'+f(x-9)+' '+f(g+5.4)+'a9 6 0 0 0 18 0z" fill="#ffd1e0"/>'+
+      '<path d="M'+f(x-7)+' '+f(g)+'q3-2.6 6-2" stroke="#ffffff" stroke-width="1.4" fill="none" opacity=".8"/>'+
+      '<circle cx="'+f(x-4)+'" cy="'+f(g+3.6)+'" r=".9" fill="#e0a400"/>'+
+      '<circle cx="'+f(x+3)+'" cy="'+f(g+3.6)+'" r=".9" fill="#e0a400"/>';}},
+  {id:'brf7', n:'毛絨粉靴', p:200, slot:'foot', only:'a-bear', d:a=>{
+    const y=(a.fy||107)-7, w=(a.fw||9)+1, f=n=>n.toFixed(1);
+    return AC.feet(a,cx=>{
+      let o='<rect x="'+f(cx-w)+'" y="'+f(y+2)+'" width="'+f(w*2)+'" height="11" rx="4" fill="#ffb0cc"/>';
+      for(let i=0;i<4;i++){const px=cx-w+1.6+i*((w*2-3.2)/3);
+        o+='<circle cx="'+f(px)+'" cy="'+f(y+2)+'" r="2.4" fill="#ffffff"/>';}
+      return o+'<rect x="'+f(cx-w-.8)+'" y="'+f(y+10)+'" width="'+f(w*2+1.6)+'" height="3.4" rx="1.6" fill="#e2809f"/>';});}},
+  {id:'fxh7', n:'楓葉花冠', p:100, slot:'head', only:'a-fox', d:a=>{
+    const y=AC.crest(a)+3, w=AC.crestW(a)*.92, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' -9 '+f(w*2)+' 0" stroke="#a8763f" stroke-width="2.2" fill="none"/>';
+    [-.78,-.26,.3,.8].forEach((k,i)=>{
+      const x=60+k*w, cy=y-4-(1-Math.abs(k))*4, c=['#e2452f','#ffb03c','#e08a2f','#d0392b'][i];
+      o+='<path d="M'+f(x)+' '+f(cy-4.4)+'l2 2.6 2.6-1-1 2.6 2.6 .6-2.6 1.6 1.4 2.4-2.8-.6-1.4 2.6-1.4-2.6-2.8 .6 1.4-2.4-2.6-1.6 2.6-.6-1-2.6 2.6 1z" fill="'+c+'"/>';});
+    return o;}},
+  {id:'fxe7', n:'秋色眼影', p:100, slot:'face', only:'a-fox', d:a=>{
+    const y=eyeY(a), g=a.gap, r=AC.ew(a), f=n=>n.toFixed(1);
+    return '<path d="M'+f(60-g-r)+' '+f(y-r*.6)+'a'+f(r)+' '+f(r*.9)+' 0 0 1 '+f(r*2)+' 0z" fill="#e08a2f" opacity=".7"/>'+
+      '<path d="M'+f(60+g-r)+' '+f(y-r*.6)+'a'+f(r)+' '+f(r*.9)+' 0 0 1 '+f(r*2)+' 0z" fill="#e08a2f" opacity=".7"/>'+
+      '<path d="M'+f(60-g-r-1)+' '+f(y-r*.5)+'l-3.4-2.4M'+f(60+g+r+1)+' '+f(y-r*.5)+
+      'l3.4-2.4" stroke="#a8562f" stroke-width="1.6" stroke-linecap="round"/>'+
+      '<circle cx="'+f(60-g)+'" cy="'+f(y-r-1.6)+'" r="1.1" fill="#ffd75e"/>'+
+      '<circle cx="'+f(60+g)+'" cy="'+f(y-r-1.6)+'" r="1.1" fill="#ffd75e"/>';}},
+  {id:'fxn7', n:'絲質領巾', p:100, slot:'neck', only:'a-fox', d:a=>{
+    const y=NKB(a)-2, w=bwAt(a,0)+1.5, f=n=>n.toFixed(1);
+    return '<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 9 '+f(w*2)+' 0l-'+f(w*.5)+' 5q-'+f(w*.5)+' 4 -'+f(w)+' 0z" fill="#e2809f"/>'+
+      '<path d="M'+f(60+w*.42)+' '+f(y+5)+'q6 4 4 11q-5-2-6-9z" fill="#c2607f"/>'+
+      '<path d="M'+f(60-w*.6)+' '+f(y+3)+'q'+f(w*.6)+' 6 '+f(w*1.2)+' 0" stroke="#f2b0c4" stroke-width="1.4" fill="none"/>';}},
+  {id:'fxb7', n:'燈籠袖洋裝', p:200, slot:'body', only:'a-fox', d:a=>{
+    const t=a.by-a.bh, h=a.bh*2, f=n=>n.toFixed(1);
+    return '<path d="'+garment(a,.06,.92)+'" fill="#f7e0c4"/>'+
+      '<ellipse cx="'+f(60-a.bw*.86)+'" cy="'+f(t+h*.2)+'" rx="5.4" ry="6.4" fill="#f7e0c4"/>'+
+      '<ellipse cx="'+f(60+a.bw*.86)+'" cy="'+f(t+h*.2)+'" rx="5.4" ry="6.4" fill="#f7e0c4"/>'+
+      '<path d="M'+f(60-a.bw*.7)+' '+f(t+h*.42)+'h'+f(a.bw*1.4)+'" stroke="#c2607f" stroke-width="3.4"/>'+
+      '<path d="M'+f(60-a.bw*.62)+' '+f(t+h*.08)+'q'+f(a.bw*.62)+' 7 '+f(a.bw*1.24)+' 0" stroke="#e8cfa8" stroke-width="2.4" fill="none"/>'+
+      '<path d="M60 '+f(t+h*.42)+'l-4-3 1 3.4-4 .6 4 1.4-1 3.4 4-3 4 3-1-3.4 4-1.4-4-.6 1-3.4z" fill="#c2607f"/>';}},
+  {id:'fxd7', n:'焦糖蘋果', p:200, slot:'hand', only:'a-fox', d:a=>{
+    const x=AC.gx(a), g=AC.gy(a)-2, f=n=>n.toFixed(1);
+    return '<path d="M'+f(x)+' '+f(g+13)+'v-8" stroke="#c9a95e" stroke-width="2.4" stroke-linecap="round"/>'+
+      '<path d="M'+f(x)+' '+f(g+2)+'q-8-7-8 2t8 9 8-9-8-2z" fill="#d0392b"/>'+
+      '<path d="M'+f(x-8)+' '+f(g+3)+'q0 5 2 8q6 2 12-2q1-4 0-7q-6 4-14 1z" fill="#c9762f"/>'+
+      '<path d="M'+f(x-4)+' '+f(g+1)+'q-2 5 1 8" stroke="#e8624f" stroke-width="1.6" fill="none" opacity=".6"/>'+
+      '<path d="M'+f(x)+' '+f(g-1)+'q6-4 7 1q-5 3-7-1z" fill="#4a9b3f"/>';}},
+  {id:'fxf7', n:'麂皮短靴', p:200, slot:'foot', only:'a-fox', d:a=>{
+    const y=(a.fy||107)-6, w=(a.fw||9)+1, f=n=>n.toFixed(1);
+    return AC.feet(a,cx=>'<rect x="'+f(cx-w)+'" y="'+f(y)+'" width="'+f(w*2)+'" height="11" rx="3.4" fill="#c98a6a"/>'+
+      '<rect x="'+f(cx-w-1)+'" y="'+f(y+9)+'" width="'+f(w*2+2)+'" height="4" rx="1.8" fill="#8a5a3a"/>'+
+      '<path d="M'+f(cx-w)+' '+f(y+2)+'h'+f(w*2)+'" stroke="#e0b09a" stroke-width="1.6"/>'+
+      '<path d="M'+f(cx-2.6)+' '+f(y-1)+'l2.6 2 2.6-2" stroke="#e2809f" stroke-width="1.6" fill="none"/>');}},
+  {id:'pgh7', n:'冰晶髮飾', p:100, slot:'head', only:'a-peng', d:a=>{
+    const y=AC.crest(a)+2, cx=60+a.hr*.42, cy=y-4, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-AC.crestW(a)*.9)+' '+f(y+1)+'q'+f(AC.crestW(a)*.9)+' -8 '+f(AC.crestW(a)*1.8)+' 0" stroke="#bfe9f7" stroke-width="2.6" fill="none"/>';
+    for(let i=0;i<6;i++){const A=i*60*Math.PI/180;
+      o+='<path d="M'+f(cx)+' '+f(cy)+'l'+f(Math.cos(A)*6)+' '+f(Math.sin(A)*6)+
+         'M'+f(cx+Math.cos(A)*3.4)+' '+f(cy+Math.sin(A)*3.4)+'l'+f(Math.cos(A+.9)*2.4)+' '+f(Math.sin(A+.9)*2.4)+
+         'M'+f(cx+Math.cos(A)*3.4)+' '+f(cy+Math.sin(A)*3.4)+'l'+f(Math.cos(A-.9)*2.4)+' '+f(Math.sin(A-.9)*2.4)+
+         '" stroke="#e6f7ff" stroke-width="1.4" stroke-linecap="round"/>';}
+    return o+'<circle cx="'+f(cx)+'" cy="'+f(cy)+'" r="1.8" fill="#ffffff"/>';}},
+  {id:'pge7', n:'雪花腮紅', p:100, slot:'face', only:'a-peng', d:a=>{
+    const y=eyeY(a)+8, g=Math.min(a.gap+8,a.hr-7), f=n=>n.toFixed(1);
+    const one=x=>{
+      let o='<ellipse cx="'+f(x)+'" cy="'+f(y)+'" rx="6" ry="4" fill="#8ad3f2" opacity=".55"/>';
+      for(let i=0;i<3;i++){const A=i*60*Math.PI/180;
+        o+='<path d="M'+f(x)+' '+f(y)+'m'+f(-Math.cos(A)*3)+' '+f(-Math.sin(A)*3)+'l'+f(Math.cos(A)*6)+' '+f(Math.sin(A)*6)+
+           '" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round"/>';}
+      return o;};
+    return one(60-g)+one(60+g);}},
+  {id:'pgn7', n:'絨毛圍脖', p:100, slot:'neck', only:'a-peng', d:a=>{
+    const y=NKB(a)-2, r=4.2, w=bwAt(a,0)+1.5-r, f=n=>n.toFixed(1);
+    let o='';
+    for(let i=0;i<8;i++){const k=-1+i*.286, x=60+k*w, dy=y+2+(1-Math.abs(k))*4.6;
+      o+='<circle cx="'+f(x)+'" cy="'+f(dy)+'" r="'+r+'" fill="#f8f6ff"/>';}
+    for(let i=0;i<7;i++){const k=-.88+i*.294, x=60+k*w, dy=y+4+(1-Math.abs(k))*3.6;
+      o+='<circle cx="'+f(x)+'" cy="'+f(dy)+'" r="2.2" fill="#e6f0ff"/>';}
+    return o;}},
+  {id:'pgb7', n:'冰藍紗裙', p:200, slot:'body', only:'a-peng', d:a=>{
+    const t=a.by-a.bh, h=a.bh*2, f=n=>n.toFixed(1);
+    let o='<path d="'+garment(a,.42,.96)+'" fill="#8ad3f2" opacity=".82"/>';
+    for(let i=0;i<3;i++){const k=.56+i*.14, wq=bwAt(a,k)+2;
+      o+='<path d="M'+f(60-wq)+' '+f(t+h*k)+'q'+f(wq*.5)+' 4.4 '+f(wq)+' 0t'+f(wq)+' 0" stroke="#e6f7ff" stroke-width="2" fill="none"/>';}
+    return o+'<path d="M'+f(60-a.bw*.9)+' '+f(t+h*.42)+'h'+f(a.bw*1.8)+'" stroke="#bfe9f7" stroke-width="4"/>'+
+      '<circle cx="60" cy="'+f(t+h*.42)+'" r="3" fill="#ffffff"/>';}},
+  {id:'pgd7', n:'棉花糖', p:200, slot:'hand', only:'a-peng', d:a=>{
+    const x=AC.gx(a), g=AC.gy(a), f=n=>n.toFixed(1);
+    let o='<path d="M'+f(x)+' '+f(g+11)+'v-9" stroke="#c9a95e" stroke-width="2.2" stroke-linecap="round"/>';
+    [[0,-6,7],[-5,-9,5],[5,-9,5],[0,-13,5.4]].forEach(([dx,dy,r])=>{
+      o+='<circle cx="'+f(x+dx)+'" cy="'+f(g+dy)+'" r="'+r+'" fill="#ffd1e0"/>';});
+    return o+'<circle cx="'+f(x-3)+'" cy="'+f(g-11)+'" r="2" fill="#ffffff" opacity=".7"/>';}},
+  {id:'pgf7', n:'雪絨靴', p:200, slot:'foot', only:'a-peng', d:a=>{
+    const y=(a.fy||107)-6, w=(a.fw||9)+1, f=n=>n.toFixed(1);
+    return AC.feet(a,cx=>{
+      let o='<rect x="'+f(cx-w)+'" y="'+f(y+2)+'" width="'+f(w*2)+'" height="11" rx="4" fill="#bfe9f7"/>';
+      for(let i=0;i<4;i++){const px=cx-w+1.6+i*((w*2-3.2)/3);
+        o+='<circle cx="'+f(px)+'" cy="'+f(y+2)+'" r="2.4" fill="#f8f6ff"/>';}
+      return o+'<path d="M'+f(cx)+' '+f(y+6)+'l-2-2 .4 2.6zM'+f(cx)+' '+f(y+6)+'l2-2-.4 2.6z" fill="#ffffff"/>'+
+        '<rect x="'+f(cx-w-.8)+'" y="'+f(y+10)+'" width="'+f(w*2+1.6)+'" height="3.4" rx="1.6" fill="#7fc4f0"/>';});}},
+  {id:'bth7', n:'天線蝴蝶結', p:100, slot:'head', only:'a-bot', d:a=>{
+    const y=AC.crest(a)-3, w=8, h=5, f=n=>n.toFixed(1);
+    return '<path d="M60 '+f(y+8)+'v-6" stroke="#8a8f9c" stroke-width="2"/>'+
+      '<path d="M60 '+f(y)+'L'+f(60-w)+' '+f(y-h)+'q-2.4 '+f(h)+' 0 '+f(h*2)+'zM60 '+f(y)+'L'+f(60+w)+' '+f(y-h)+
+      'q2.4 '+f(h)+' 0 '+f(h*2)+'z" fill="#ff7fae"/>'+
+      '<circle cx="60" cy="'+f(y)+'" r="3" fill="#ffb0cc"/>'+
+      '<circle cx="60" cy="'+f(y)+'" r="1.2" fill="#ffffff"/>';}},
+  {id:'bte7', n:'愛心光眼', p:100, slot:'face', only:'a-bot', d:a=>{
+    const y=eyeY(a), g=a.gap, r=AC.ew(a)+1, f=n=>n.toFixed(1);
+    const hh=x=>'<path d="M'+f(x)+' '+f(y+r*.7)+'q-'+f(r*1.1)+'-'+f(r*.8)+'-'+f(r*1.1)+'-'+f(r*1.5)+
+      'q0-'+f(r*.75)+' '+f(r*1.1)+'-'+f(r*.2)+'q'+f(r*1.1)+'-'+f(r*.55)+' '+f(r*1.1)+' '+f(r*.2)+
+      'q0 '+f(r*.7)+'-'+f(r*1.1)+' '+f(r*1.5)+'z" fill="#ff7fae"/>';
+    return hh(60-g)+hh(60+g)+
+      '<circle cx="'+f(60-g-r*.4)+'" cy="'+f(y-r*.5)+'" r="1.2" fill="#ffffff" opacity=".9"/>'+
+      '<circle cx="'+f(60+g-r*.4)+'" cy="'+f(y-r*.5)+'" r="1.2" fill="#ffffff" opacity=".9"/>';}},
+  {id:'btn7', n:'光點項鍊', p:100, slot:'neck', only:'a-bot', d:a=>{
+    const y=NKB(a)-1, w=bwAt(a,0)+1, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 9 '+f(w*2)+' 0" stroke="#8a8f9c" stroke-width="1.6" fill="none"/>';
+    ['#ff7fae','#8ad3f2','#ffd75e','#a879ff','#7fe0a8'].forEach((c,i)=>{
+      const k=-.8+i*.4, x=60+k*w, dy=y+2.6+(1-Math.abs(k))*6;
+      o+='<circle cx="'+f(x)+'" cy="'+f(dy)+'" r="2.4" fill="'+c+'"/>'+
+         '<circle cx="'+f(x)+'" cy="'+f(dy)+'" r="4" fill="'+c+'" opacity=".28"/>';});
+    return o;}},
+  {id:'btb7', n:'亮片金屬裙', p:200, slot:'body', only:'a-bot', d:a=>{
+    const t=a.by-a.bh, h=a.bh*2, f=n=>n.toFixed(1);
+    let o='<path d="'+garment(a,.4,.96)+'" fill="#c9b0ff"/>';
+    for(let r=0;r<4;r++)for(let c=0;c<5;c++){
+      const k=.5+r*.11, x=60-bwAt(a,k)*.8+c*(bwAt(a,k)*1.6/4);
+      o+='<circle cx="'+f(x)+'" cy="'+f(t+h*k)+'" r="1.5" fill="#f2e8ff"/>';}
+    return o+'<path d="M'+f(60-a.bw*.9)+' '+f(t+h*.4)+'h'+f(a.bw*1.8)+'" stroke="#a879ff" stroke-width="4"/>'+
+      '<circle cx="60" cy="'+f(t+h*.4)+'" r="2.6" fill="#ffd75e"/>';}},
+  {id:'btd7', n:'全息愛心', p:200, slot:'hand', only:'a-bot', d:a=>{
+    /* 投影是浮的，但手上一定要有個投影器 —— 不然變成手心空空捧著空氣 */
+    const x=AC.gx(a), g=AC.gy(a), f=n=>n.toFixed(1);
+    return '<ellipse cx="'+f(x)+'" cy="'+f(g+1)+'" rx="7" ry="3" fill="#8a8f9c"/>'+
+      '<ellipse cx="'+f(x)+'" cy="'+f(g-1)+'" rx="7" ry="3" fill="#c9ccd6"/>'+
+      '<circle cx="'+f(x)+'" cy="'+f(g-1)+'" r="2.4" fill="#8ad3f2"/>'+
+      '<path d="M'+f(x-5)+' '+f(g-2)+'L'+f(x-2)+' '+f(g-13)+'M'+f(x+5)+' '+f(g-2)+'L'+f(x+2)+' '+f(g-13)+
+      '" stroke="#8ad3f2" stroke-width="1.2" opacity=".5"/>'+
+      '<path d="M'+f(x)+' '+f(g-8)+'q-6.4-4.6-6.4-8.4q0-3.6 6.4-1.2q6.4-2.4 6.4 1.2q0 3.8-6.4 8.4z" fill="#ff7fae" opacity=".8"/>'+
+      '<path d="M'+f(x-3.6)+' '+f(g-14)+'q1.8-2.4 4-1.4" stroke="#ffffff" stroke-width="1.5" fill="none" opacity=".85"/>';}},
+  {id:'btf7', n:'發光短靴', p:200, slot:'foot', only:'a-bot', d:a=>{
+    const y=(a.fy||107)-6, w=(a.fw||9)+1, f=n=>n.toFixed(1);
+    return AC.feet(a,cx=>'<rect x="'+f(cx-w)+'" y="'+f(y)+'" width="'+f(w*2)+'" height="11" rx="3.4" fill="#e6e0ff"/>'+
+      '<rect x="'+f(cx-w-1)+'" y="'+f(y+9)+'" width="'+f(w*2+2)+'" height="4" rx="1.8" fill="#a879ff"/>'+
+      '<rect x="'+f(cx-w+1)+'" y="'+f(y+4)+'" width="'+f(w*2-2)+'" height="2.4" rx="1.2" fill="#ff7fae"/>'+
+      '<rect x="'+f(cx-w-1.6)+'" y="'+f(y+12.4)+'" width="'+f(w*2+3.2)+'" height="1.6" rx=".8" fill="#ff7fae" opacity=".45"/>');}},
+  {id:'fgh7', n:'蓮花冠', p:100, slot:'head', only:'a-frog', d:a=>{
+    const y=AC.crest(a)+2, cx=60, cy=y-5, f=n=>n.toFixed(1);
+    let o='';
+    [-2,-1,0,1,2].forEach(k=>{
+      o+='<path d="M'+f(cx)+' '+f(cy+4)+'q-3.6-10 0-12q3.6 2 0 12z" fill="'+(k?'#ffb8d0':'#ffffff')+
+         '" transform="rotate('+(k*30)+','+f(cx)+','+f(cy+4)+')"/>';});
+    return o+'<circle cx="'+f(cx)+'" cy="'+f(cy+3)+'" r="2.6" fill="#ffd75e"/>'+
+      '<path d="M'+f(cx-9)+' '+f(cy+5)+'q9 4 18 0" stroke="#3fa06a" stroke-width="2" fill="none"/>';}},
+  {id:'fge7', n:'露珠腮紅', p:100, slot:'face', only:'a-frog', d:a=>{
+    const y=mouY(a)-6, g=Math.min(a.gap+2,a.hr-8), f=n=>n.toFixed(1);
+    const one=x=>'<ellipse cx="'+f(x)+'" cy="'+f(y)+'" rx="6" ry="4" fill="#7fe0a8" opacity=".6"/>'+
+      '<path d="M'+f(x+3)+' '+f(y-5)+'q2.6 3.4 2.6 4.6a2.6 2.6 0 0 1-5.2 0q0-1.2 2.6-4.6z" fill="#bfe9f7"/>'+
+      '<circle cx="'+f(x-3)+'" cy="'+f(y+1)+'" r="1.2" fill="#ffffff" opacity=".8"/>';
+    return one(60-g)+one(60+g);}},
+  {id:'fgn7', n:'睡蓮領', p:100, slot:'neck', only:'a-frog', d:a=>{
+    const y=NKB(a)-1, r=4.2, w=bwAt(a,0)+1.5-r, f=n=>n.toFixed(1);
+    let o='';
+    for(let i=0;i<6;i++){const k=-1+i*.4, x=60+k*w, dy=y+2+(1-Math.abs(k))*4.4;
+      o+='<circle cx="'+f(x)+'" cy="'+f(dy)+'" r="'+r+'" fill="#3fa06a"/>'+
+         '<path d="M'+f(x)+' '+f(dy)+'l2.4-3.2" stroke="#2f7d4f" stroke-width="1"/>';}
+    return o+'<path d="M60 '+f(y+8)+'q-3.6-2.4-3.6 .6t3.6 3.2 3.6-3.2-3.6-.6z" fill="#ffb8d0"/>';}},
+  {id:'fgb7', n:'荷葉裙', p:200, slot:'body', only:'a-frog', d:a=>{
+    const t=a.by-a.bh, h=a.bh*2, f=n=>n.toFixed(1);
+    let o='<path d="'+garment(a,.44,.96)+'" fill="#4fb87c"/>';
+    for(let i=0;i<3;i++){const k=.58+i*.13, wq=bwAt(a,k)+2;
+      o+='<path d="M'+f(60-wq)+' '+f(t+h*k)+'q'+f(wq*.5)+' 4.6 '+f(wq)+' 0t'+f(wq)+' 0" stroke="#7fe0a8" stroke-width="2.2" fill="none"/>';}
+    for(let i=0;i<5;i++){const x=60-a.bw*.7+i*(a.bw*1.4/4);
+      o+='<path d="M'+f(x)+' '+f(t+h*.46)+'v'+f(h*.44)+'" stroke="#2f7d4f" stroke-width="1" opacity=".6"/>';}
+    return o+'<path d="M'+f(60-a.bw*.9)+' '+f(t+h*.44)+'h'+f(a.bw*1.8)+'" stroke="#ffb8d0" stroke-width="3.4"/>';}},
+  {id:'fgd7', n:'露珠瓶', p:200, slot:'hand', only:'a-frog', d:a=>{
+    const x=AC.gx(a), g=AC.gy(a)-3, f=n=>n.toFixed(1);
+    return '<path d="M'+f(x-3)+' '+f(g-3)+'h6v3q4 2 4 7v5q0 2-2 2h-10q-2 0-2-2v-5q0-5 4-7z" fill="#bfe9f7" opacity=".85"/>'+
+      '<path d="M'+f(x-7)+' '+f(g+8)+'h14v2q0 2-2 2h-10q-2 0-2-2z" fill="#7fe0a8"/>'+
+      '<rect x="'+f(x-3.4)+'" y="'+f(g-6.4)+'" width="6.8" height="3.6" rx="1.4" fill="#ffb8d0"/>'+
+      '<path d="M'+f(x-4)+' '+f(g+2)+'v4" stroke="#ffffff" stroke-width="1.4" opacity=".8"/>'+
+      '<circle cx="'+f(x+2)+'" cy="'+f(g+6)+'" r="1.2" fill="#ffffff" opacity=".7"/>';}},
+  {id:'fgf7', n:'蓮葉涼鞋', p:200, slot:'foot', only:'a-frog', d:a=>{
+    const y=(a.fy||107)+1, w=(a.fw||9)+1, f=n=>n.toFixed(1);
+    return AC.feet(a,cx=>'<ellipse cx="'+f(cx)+'" cy="'+f(y+3)+'" rx="'+f(w+1)+'" ry="4.4" fill="#4fb87c"/>'+
+      '<path d="M'+f(cx)+' '+f(y+3)+'l'+f(w*.8)+'-2.6" stroke="#2f7d4f" stroke-width="1.1"/>'+
+      '<path d="M'+f(cx-w+1)+' '+f(y+1)+'l'+f(w-1)+'-4 '+f(w-1)+' 4" stroke="#7fe0a8" stroke-width="2.4" fill="none"/>'+
+      '<path d="M'+f(cx)+' '+f(y-3.4)+'q-2.6-1.8-2.6 .4t2.6 2.4 2.6-2.4-2.6-.4z" fill="#ffb8d0"/>');}},
+  {id:'owh7', n:'星月髮飾', p:100, slot:'head', only:'a-owl', d:a=>{
+    const y=AC.crest(a)+2, w=AC.crestW(a)*.9, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' -9 '+f(w*2)+' 0" stroke="#4a3f7a" stroke-width="2.6" fill="none"/>'+
+      '<path d="M'+f(60-w*.36)+' '+f(y-8)+'a6 6 0 1 0 5 8a7 7 0 0 1-5-8z" fill="#ffd75e"/>';
+    [[.28,-4,3],[.62,-1.6,2.2],[-.72,-1.4,2.4]].forEach(([k,dy,s])=>{
+      const x=60+k*w, yy=y+dy;
+      o+='<path d="M'+f(x)+' '+f(yy-s)+'l'+f(s*.3)+' '+f(s*.66)+' '+f(s*.7)+' '+f(s*.08)+'l-'+f(s*.5)+' '+f(s*.5)+
+         ' '+f(s*.14)+' '+f(s*.7)+'L'+f(x)+' '+f(yy+s*.58)+'l-'+f(s*.64)+' '+f(s*.32)+' '+f(s*.14)+'-'+f(s*.7)+
+         'l-'+f(s*.5)+'-'+f(s*.5)+' '+f(s*.7)+'-'+f(s*.08)+'z" fill="#fff0b8"/>';});
+    return o;}},
+  {id:'owe7', n:'星光眼影', p:100, slot:'face', only:'a-owl', d:a=>{
+    const y=eyeY(a), g=a.gap, r=AC.ew(a), f=n=>n.toFixed(1);
+    return '<path d="M'+f(60-g-r)+' '+f(y-r*.55)+'a'+f(r)+' '+f(r*.85)+' 0 0 1 '+f(r*2)+' 0z" fill="#a879ff" opacity=".65"/>'+
+      '<path d="M'+f(60+g-r)+' '+f(y-r*.55)+'a'+f(r)+' '+f(r*.85)+' 0 0 1 '+f(r*2)+' 0z" fill="#a879ff" opacity=".65"/>'+
+      '<circle cx="'+f(60-g-r*.5)+'" cy="'+f(y-r*.8)+'" r="1.1" fill="#fff0b8"/>'+
+      '<circle cx="'+f(60+g+r*.5)+'" cy="'+f(y-r*.8)+'" r="1.1" fill="#fff0b8"/>'+
+      '<circle cx="'+f(60-g+r*.5)+'" cy="'+f(y-r*1.1)+'" r=".8" fill="#ffffff"/>'+
+      '<circle cx="'+f(60+g-r*.5)+'" cy="'+f(y-r*1.1)+'" r=".8" fill="#ffffff"/>';}},
+  {id:'own7', n:'星星項鍊', p:100, slot:'neck', only:'a-owl', d:a=>{
+    const y=NKB(a)-2, w=bwAt(a,0)+1, cy=y+12, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 10 '+f(w*2)+' 0" stroke="#c9b0ff" stroke-width="1.6" fill="none"/>';
+    [-.72,-.36,.36,.72].forEach(k=>{const x=60+k*w, dy=y+2.6+(1-Math.abs(k))*6.4;
+      o+='<circle cx="'+f(x)+'" cy="'+f(dy)+'" r="1.6" fill="#e6ddff"/>';});
+    const s=5;
+    return o+'<path d="M60 '+f(cy-s)+'l'+f(s*.3)+' '+f(s*.66)+' '+f(s*.7)+' '+f(s*.08)+'l-'+f(s*.5)+' '+f(s*.5)+
+      ' '+f(s*.14)+' '+f(s*.7)+'L60 '+f(cy+s*.58)+'l-'+f(s*.64)+' '+f(s*.32)+' '+f(s*.14)+'-'+f(s*.7)+
+      'l-'+f(s*.5)+'-'+f(s*.5)+' '+f(s*.7)+'-'+f(s*.08)+'z" fill="#ffd75e"/>';}},
+  {id:'owb7', n:'夜空紗裙', p:200, slot:'body', only:'a-owl', d:a=>{
+    const t=a.by-a.bh, h=a.bh*2, f=n=>n.toFixed(1);
+    let o='<path d="'+garment(a,.4,.96)+'" fill="#4a3f7a" opacity=".9"/>';
+    [[-.5,.55],[.4,.6],[0,.7],[-.3,.8],[.5,.82],[.15,.9]].forEach(([kx,ky])=>{
+      const x=60+kx*a.bw, yy=t+h*ky, s=2.4;
+      o+='<path d="M'+f(x)+' '+f(yy-s)+'l'+f(s*.3)+' '+f(s*.66)+' '+f(s*.7)+' '+f(s*.08)+'l-'+f(s*.5)+' '+f(s*.5)+
+         ' '+f(s*.14)+' '+f(s*.7)+'L'+f(x)+' '+f(yy+s*.58)+'l-'+f(s*.64)+' '+f(s*.32)+' '+f(s*.14)+'-'+f(s*.7)+
+         'l-'+f(s*.5)+'-'+f(s*.5)+' '+f(s*.7)+'-'+f(s*.08)+'z" fill="#fff0b8"/>';});
+    return o+'<path d="M'+f(60-a.bw*.9)+' '+f(t+h*.4)+'h'+f(a.bw*1.8)+'" stroke="#c9b0ff" stroke-width="3.6"/>';}},
+  {id:'owd7', n:'月亮提燈', p:200, slot:'hand', only:'a-owl', d:a=>{
+    const x=AC.gx(a), g=AC.gy(a), f=n=>n.toFixed(1);
+    return '<path d="M'+f(x)+' '+f(g+6)+'v-8" stroke="#c9b0ff" stroke-width="2" fill="none"/>'+
+      '<path d="M'+f(x-6)+' '+f(g-2)+'a6 6 0 0 1 12 0" stroke="#c9b0ff" stroke-width="1.8" fill="none"/>'+
+      '<circle cx="'+f(x)+'" cy="'+f(g+5)+'" r="8" fill="#fff0b8" opacity=".9"/>'+
+      '<circle cx="'+f(x)+'" cy="'+f(g+5)+'" r="11" fill="#ffd75e" opacity=".22"/>'+
+      '<path d="M'+f(x+2)+' '+f(g)+'a7 7 0 1 0 4 9a8 8 0 0 1-4-9z" fill="#ffd75e"/>'+
+      '<path d="M'+f(x-3)+' '+f(g+12)+'h6" stroke="#c9b0ff" stroke-width="2"/>';}},
+  {id:'owf7', n:'星星襪', p:200, slot:'foot', only:'a-owl', d:a=>{
+    const y=(a.fy||107)-5, w=(a.fw||9), f=n=>n.toFixed(1);
+    return AC.feet(a,cx=>{
+      let o='<rect x="'+f(cx-w)+'" y="'+f(y)+'" width="'+f(w*2)+'" height="12" rx="4" fill="#4a3f7a"/>'+
+        '<path d="M'+f(cx-w)+' '+f(y+3)+'h'+f(w*2)+'" stroke="#c9b0ff" stroke-width="2"/>';
+      const s=2.2, yy=y+8;
+      o+='<path d="M'+f(cx)+' '+f(yy-s)+'l'+f(s*.3)+' '+f(s*.66)+' '+f(s*.7)+' '+f(s*.08)+'l-'+f(s*.5)+' '+f(s*.5)+
+         ' '+f(s*.14)+' '+f(s*.7)+'L'+f(cx)+' '+f(yy+s*.58)+'l-'+f(s*.64)+' '+f(s*.32)+' '+f(s*.14)+'-'+f(s*.7)+
+         'l-'+f(s*.5)+'-'+f(s*.5)+' '+f(s*.7)+'-'+f(s*.08)+'z" fill="#ffd75e"/>';
+      return o;});}},
+  /* ── 漂亮可愛系（每隻一組）：兔子、長頸鹿、綿羊、松鼠、豬、老鼠、猴子、鴨子 ── */
+  {id:'rbh7', n:'蕾絲髮帶', p:100, slot:'head', only:'a-rab', d:a=>{
+    const y=HLINE(a)-2, w=AC.wAtY(a,HLINE(a)-2)+1.5, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' -7 '+f(w*2)+' 0q-'+f(w)+' 4 -'+f(w*2)+' 0z" fill="#ffffff"/>';
+    for(let i=0;i<6;i++){const x=60-w*.86+i*(w*1.72/5);
+      o+='<circle cx="'+f(x)+'" cy="'+f(y-4-Math.cos((i-2.5)/2.5*1.1)*2.4)+'" r="2" fill="#ffffff"/>';}
+    const bx=60+w*.62, by=y-4;
+    return o+'<path d="M'+f(bx)+' '+f(by)+'l-5-3.4q-1.6 3.4 0 6.8zM'+f(bx)+' '+f(by)+'l5-3.4q1.6 3.4 0 6.8z" fill="#ffb0cc"/>'+
+      '<circle cx="'+f(bx)+'" cy="'+f(by)+'" r="1.8" fill="#ff7fae"/>';}},
+  {id:'rbe7', n:'粉紅眼影', p:100, slot:'face', only:'a-rab', d:a=>{
+    const y=eyeY(a), g=a.gap, r=AC.ew(a), f=n=>n.toFixed(1);
+    return '<path d="M'+f(60-g-r)+' '+f(y-r*.6)+'a'+f(r)+' '+f(r*.85)+' 0 0 1 '+f(r*2)+' 0z" fill="#ff9ec4" opacity=".7"/>'+
+      '<path d="M'+f(60+g-r)+' '+f(y-r*.6)+'a'+f(r)+' '+f(r*.85)+' 0 0 1 '+f(r*2)+' 0z" fill="#ff9ec4" opacity=".7"/>'+
+      '<path d="M'+f(60-g-r*.2)+' '+f(y-r*1.1)+'l'+f(-r*.7)+'-3M'+f(60+g+r*.2)+' '+f(y-r*1.1)+
+      'l'+f(r*.7)+'-3" stroke="#e2588f" stroke-width="1.6" stroke-linecap="round"/>'+
+      '<circle cx="'+f(60-g-r-1.6)+'" cy="'+f(y+1)+'" r="1" fill="#ffd1e0"/>'+
+      '<circle cx="'+f(60+g+r+1.6)+'" cy="'+f(y+1)+'" r="1" fill="#ffd1e0"/>';}},
+  {id:'rbn7', n:'蝴蝶結項圈', p:100, slot:'neck', only:'a-rab', d:a=>{
+    const y=NKB(a)-2, w=bwAt(a,0)+1, f=n=>n.toFixed(1);
+    return '<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 9 '+f(w*2)+' 0" stroke="#ffb0cc" stroke-width="4" fill="none" stroke-linecap="round"/>'+
+      '<path d="M60 '+f(y+7)+'l-7-4q-2.4 4 0 8zM60 '+f(y+7)+'l7-4q2.4 4 0 8z" fill="#ff7fae"/>'+
+      '<circle cx="60" cy="'+f(y+7)+'" r="2.6" fill="#ffd1e0"/>'+
+      '<path d="M60 '+f(y+9.4)+'l-2.4 5M60 '+f(y+9.4)+'l2.4 5" stroke="#ff7fae" stroke-width="1.6" stroke-linecap="round"/>';}},
+  {id:'rbb7', n:'澎澎裙', p:200, slot:'body', only:'a-rab', d:a=>{
+    const t=a.by-a.bh, h=a.bh*2, f=n=>n.toFixed(1);
+    let o='<path d="'+garment(a,.44,.98)+'" fill="#ffd1e0"/>';
+    for(let i=0;i<3;i++){const k=.56+i*.14, wq=bwAt(a,k)+3;
+      o+='<path d="M'+f(60-wq)+' '+f(t+h*k)+'q'+f(wq*.5)+' 5 '+f(wq)+' 0t'+f(wq)+' 0" stroke="#ffffff" stroke-width="2.4" fill="none"/>';}
+    return o+'<path d="M'+f(60-a.bw*.92)+' '+f(t+h*.44)+'h'+f(a.bw*1.84)+'" stroke="#ff9ec4" stroke-width="3.6"/>'+
+      '<path d="M60 '+f(t+h*.44)+'l-5-3q-1.6 3 0 6zM60 '+f(t+h*.44)+'l5-3q1.6 3 0 6z" fill="#ff7fae"/>';}},
+  {id:'rbd7', n:'草莓提籃', p:200, slot:'hand', only:'a-rab', d:a=>{
+    const x=AC.gx(a), g=AC.gy(a), f=n=>n.toFixed(1);
+    let o='<path d="M'+f(x-6)+' '+f(g)+'a6 7 0 0 1 12 0" stroke="#c9a95e" stroke-width="2.2" fill="none"/>'+
+      '<path d="M'+f(x-9)+' '+f(g+1)+'h18l-2.6 12h-12.8z" fill="#e0c77e"/>'+
+      '<path d="M'+f(x-8)+' '+f(g+5)+'h16M'+f(x-4)+' '+f(g+1)+'v12M'+f(x+4)+' '+f(g+1)+'v12" stroke="#c9a95e" stroke-width="1"/>';
+    [[-4,0],[1,-1],[5,1]].forEach(([dx,dy])=>{
+      o+='<path d="M'+f(x+dx)+' '+f(g+dy+1)+'q-2.6-2-2.6 .6t2.6 3 2.6-3-2.6-.6z" fill="#e2452f"/>'+
+         '<path d="M'+f(x+dx)+' '+f(g+dy-1)+'q1.8-1.2 2-.2q-1.4 1-2 .2z" fill="#4a9b3f"/>';});
+    return o;}},
+  {id:'rbf7', n:'緞帶涼鞋', p:200, slot:'foot', only:'a-rab', d:a=>{
+    const y=(a.fy||107)+1, w=(a.fw||9)+1, f=n=>n.toFixed(1);
+    return AC.feet(a,cx=>'<rect x="'+f(cx-w)+'" y="'+f(y)+'" width="'+f(w*2)+'" height="5.4" rx="2.6" fill="#ffd1e0"/>'+
+      '<path d="M'+f(cx-w+1)+' '+f(y)+'l'+f(w-1)+'-5 '+f(w-1)+' 5" stroke="#ffb0cc" stroke-width="2.4" fill="none"/>'+
+      '<path d="M'+f(cx)+' '+f(y-5)+'l-3.4-2.4q-1.2 2.4 0 4.8zM'+f(cx)+' '+f(y-5)+'l3.4-2.4q1.2 2.4 0 4.8z" fill="#ff7fae"/>'+
+      '<circle cx="'+f(cx)+'" cy="'+f(y-5)+'" r="1.4" fill="#ffd1e0"/>');}},
+  {id:'gfh7', n:'太陽花冠', p:100, slot:'head', only:'a-gir', d:a=>{
+    const y=AC.crest(a)+3, w=AC.crestW(a)*.96, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' -9 '+f(w*2)+' 0" stroke="#6aa84f" stroke-width="2.4" fill="none"/>';
+    [-.7,0,.7].forEach(k=>{
+      const x=60+k*w, cy=y-4-(1-Math.abs(k))*4.4;
+      for(let j=0;j<8;j++){const A=j*45*Math.PI/180;
+        o+='<ellipse cx="'+f(x+Math.cos(A)*3.4)+'" cy="'+f(cy+Math.sin(A)*3.4)+'" rx="2.8" ry="1.5" fill="#ffd75e" transform="rotate('+(j*45)+','+f(x+Math.cos(A)*3.4)+','+f(cy+Math.sin(A)*3.4)+')"/>';}
+      o+='<circle cx="'+f(x)+'" cy="'+f(cy)+'" r="2.4" fill="#8a5a2a"/>';});
+    return o;}},
+  {id:'gfe7', n:'金色眼影', p:100, slot:'face', only:'a-gir', d:a=>{
+    const y=eyeY(a), g=a.gap, r=AC.ew(a), f=n=>n.toFixed(1);
+    return '<path d="M'+f(60-g-r)+' '+f(y-r*.6)+'a'+f(r)+' '+f(r*.9)+' 0 0 1 '+f(r*2)+' 0z" fill="#ffc233" opacity=".62"/>'+
+      '<path d="M'+f(60+g-r)+' '+f(y-r*.6)+'a'+f(r)+' '+f(r*.9)+' 0 0 1 '+f(r*2)+' 0z" fill="#ffc233" opacity=".62"/>'+
+      '<path d="M'+f(60-g-r)+' '+f(y-r*.35)+'a'+f(r)+' '+f(r*.9)+' 0 0 1 '+f(r*2)+
+      ' 0" stroke="#c28800" stroke-width="1.3" fill="none"/>'+
+      '<path d="M'+f(60+g-r)+' '+f(y-r*.35)+'a'+f(r)+' '+f(r*.9)+' 0 0 1 '+f(r*2)+
+      ' 0" stroke="#c28800" stroke-width="1.3" fill="none"/>'+
+      '<circle cx="'+f(60-g)+'" cy="'+f(y-r*1.2)+'" r="1" fill="#fff0b8"/>'+
+      '<circle cx="'+f(60+g)+'" cy="'+f(y-r*1.2)+'" r="1" fill="#fff0b8"/>';}},
+  {id:'gfn7', n:'長絲巾', p:100, slot:'neck', only:'a-gir', d:a=>{
+    const y=NKB(a)-2, w=bwAt(a,0)+1, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 8 '+f(w*2)+' 0v5q-'+f(w)+' 7 -'+f(w*2)+' 0z" fill="#ffb0cc"/>'+
+      '<path d="M'+f(60+w*.42)+' '+f(y+5)+'q5 6 3 14q-5-3-5-12z" fill="#e2809f"/>';
+    for(let i=0;i<3;i++){
+      o+='<path d="M'+f(60-w*.7+i*2.6)+' '+f(y+2.6+i*.6)+'q'+f(w*.7)+' 6 '+f(w*1.4-i*5.2)+' 0" stroke="#ffd1e0" stroke-width="1.2" fill="none"/>';}
+    return o;}},
+  {id:'gfb7', n:'碎花洋裝', p:200, slot:'body', only:'a-gir', d:a=>{
+    const t=a.by-a.bh, h=a.bh*2, f=n=>n.toFixed(1);
+    let o='<path d="'+garment(a,.06,.95)+'" fill="#fff4e0"/>';
+    [[-.5,.2],[.4,.26],[0,.38],[-.34,.5],[.46,.54],[-.14,.66],[.3,.74],[-.44,.82]].forEach(([kx,ky],i)=>{
+      const x=60+kx*a.bw, yy=t+h*ky, c=['#ff9ec4','#ffd75e','#a879ff','#7fe0a8'][i%4];
+      for(let j=0;j<5;j++){const A=j*72*Math.PI/180;
+        o+='<ellipse cx="'+f(x+Math.cos(A)*1.7)+'" cy="'+f(yy+Math.sin(A)*1.7)+'" rx="1.5" ry="1" fill="'+c+
+           '" transform="rotate('+(j*72)+','+f(x+Math.cos(A)*1.7)+','+f(yy+Math.sin(A)*1.7)+')"/>';}});
+    return o+'<path d="M'+f(60-a.bw*.62)+' '+f(t+h*.08)+'q'+f(a.bw*.62)+' 7 '+f(a.bw*1.24)+' 0" stroke="#ffb0cc" stroke-width="2.6" fill="none"/>'+
+      '<path d="M'+f(60-a.bw*.9)+' '+f(t+h*.46)+'h'+f(a.bw*1.8)+'" stroke="#ffb0cc" stroke-width="3"/>';}},
+  {id:'gfd7', n:'太陽花提籃', p:200, slot:'hand', only:'a-gir', d:a=>{
+    const x=AC.gx(a), g=AC.gy(a), f=n=>n.toFixed(1);
+    let o='<path d="M'+f(x-6)+' '+f(g+1)+'a6 7 0 0 1 12 0" stroke="#c9a95e" stroke-width="2.2" fill="none"/>'+
+      '<path d="M'+f(x-9)+' '+f(g+2)+'h18l-2.6 11h-12.8z" fill="#e0c77e"/>'+
+      '<path d="M'+f(x-8)+' '+f(g+6)+'h16" stroke="#c9a95e" stroke-width="1"/>';
+    [[-5,-1,'#ff9ec4'],[0,-3,'#ffd75e'],[5,-1,'#a879ff']].forEach(([dx,dy,c])=>{
+      for(let j=0;j<5;j++){const A=j*72*Math.PI/180;
+        o+='<ellipse cx="'+f(x+dx+Math.cos(A)*2.2)+'" cy="'+f(g+dy+Math.sin(A)*2.2)+'" rx="2" ry="1.3" fill="'+c+
+           '" transform="rotate('+(j*72)+','+f(x+dx+Math.cos(A)*2.2)+','+f(g+dy+Math.sin(A)*2.2)+')"/>';}
+      o+='<circle cx="'+f(x+dx)+'" cy="'+f(g+dy)+'" r="1.3" fill="#fff0b8"/>';});
+    return o;}},
+  {id:'gff7', n:'綁帶涼鞋', p:200, slot:'foot', only:'a-gir', d:a=>{
+    const y=(a.fy||107)+1, w=(a.fw||9)+1, f=n=>n.toFixed(1);
+    return AC.feet(a,cx=>'<rect x="'+f(cx-w)+'" y="'+f(y)+'" width="'+f(w*2)+'" height="5" rx="2.4" fill="#e8cfa8"/>'+
+      '<path d="M'+f(cx-w+1)+' '+f(y-1)+'l'+f(w*2-2)+' 3M'+f(cx+w-1)+' '+f(y-1)+'l-'+f(w*2-2)+
+      ' 3" stroke="#ffb0cc" stroke-width="1.8"/>'+
+      '<path d="M'+f(cx-w+1)+' '+f(y-5)+'l'+f(w*2-2)+' 2M'+f(cx+w-1)+' '+f(y-5)+'l-'+f(w*2-2)+
+      ' 2" stroke="#ffb0cc" stroke-width="1.6"/>'+
+      '<circle cx="'+f(cx)+'" cy="'+f(y-2)+'" r="1.6" fill="#ffd75e"/>');}},
+  {id:'shh7', n:'毛球花冠', p:100, slot:'head', only:'a-shp', d:a=>{
+    const y=AC.crest(a)+4, w=AC.crestW(a)*1.02, f=n=>n.toFixed(1);
+    let o='';
+    for(let i=0;i<7;i++){const k=-1+i*.334, x=60+k*w, cy=y-2-(1-Math.abs(k))*4;
+      o+='<circle cx="'+f(x)+'" cy="'+f(cy)+'" r="3.4" fill="#fffdf8"/>';}
+    [-.6,.1,.72].forEach((k,i)=>{
+      const x=60+k*w, cy=y-3-(1-Math.abs(k))*4, c=['#ffb0cc','#ffd75e','#c9b0ff'][i];
+      for(let j=0;j<5;j++){const A=j*72*Math.PI/180;
+        o+='<ellipse cx="'+f(x+Math.cos(A)*2.4)+'" cy="'+f(cy+Math.sin(A)*2.4)+'" rx="2.1" ry="1.4" fill="'+c+
+           '" transform="rotate('+(j*72)+','+f(x+Math.cos(A)*2.4)+','+f(cy+Math.sin(A)*2.4)+')"/>';}
+      o+='<circle cx="'+f(x)+'" cy="'+f(cy)+'" r="1.4" fill="#fff0b8"/>';});
+    return o;}},
+  {id:'she7', n:'玫瑰腮紅', p:100, slot:'face', only:'a-shp', d:a=>{
+    const y=eyeY(a)+8, g=Math.min(a.gap+7,a.hr-7), f=n=>n.toFixed(1);
+    const one=x=>'<ellipse cx="'+f(x)+'" cy="'+f(y)+'" rx="5.6" ry="3.8" fill="#ff9ec4" opacity=".6"/>'+
+      '<circle cx="'+f(x)+'" cy="'+f(y)+'" r="2.6" fill="#e2588f"/>'+
+      '<path d="M'+f(x)+' '+f(y)+'m-1.6 0a1.6 1.6 0 1 1 3.2 0" stroke="#ffd1e0" stroke-width=".9" fill="none"/>';
+    return one(60-g)+one(60+g);}},
+  {id:'shn7', n:'蕾絲領巾', p:100, slot:'neck', only:'a-shp', d:a=>{
+    const y=NKB(a)-2, r=3.2, w=bwAt(a,0)+1.5-r, f=n=>n.toFixed(1);
+    let o='';
+    for(let i=0;i<7;i++){const x=60-w+i*(w*2/6), dy=y+2+Math.sin(i/6*Math.PI)*5.4;
+      o+='<circle cx="'+f(x)+'" cy="'+f(dy)+'" r="'+r+'" fill="#ffffff"/>';}
+    for(let i=0;i<6;i++){const x=60-w*.86+i*(w*1.72/5), dy=y+4.4+Math.sin(i/5*Math.PI)*4;
+      o+='<circle cx="'+f(x)+'" cy="'+f(dy)+'" r="1.5" fill="#ffd1e0"/>';}
+    return o;}},
+  {id:'shb7', n:'針織洋裝', p:200, slot:'body', only:'a-shp', d:a=>{
+    const t=a.by-a.bh, h=a.bh*2, f=n=>n.toFixed(1);
+    let o='<path d="'+garment(a,.08,.95)+'" fill="#c9b0ff"/>';
+    for(let i=0;i<8;i++){const x=60-a.bw*.8+i*(a.bw*1.6/7);
+      o+='<path d="M'+f(x)+' '+f(t+h*.14)+'v'+f(h*.76)+'" stroke="#b39aef" stroke-width="1.3"/>';}
+    for(let i=0;i<4;i++){const k=.24+i*.18;
+      o+='<path d="M'+f(60-bwAt(a,k)-1)+' '+f(t+h*k)+'q'+f((bwAt(a,k)+1)*.5)+' 2.4 '+f(bwAt(a,k)+1)+
+         ' 0t'+f(bwAt(a,k)+1)+' 0" stroke="#b39aef" stroke-width="1.1" fill="none"/>';}
+    return o+'<path d="M'+f(60-a.bw*.6)+' '+f(t+h*.1)+'q'+f(a.bw*.6)+' 7 '+f(a.bw*1.2)+' 0" stroke="#ffffff" stroke-width="3" fill="none"/>'+
+      '<circle cx="60" cy="'+f(t+h*.34)+'" r="1.8" fill="#ffffff"/>'+
+      '<circle cx="60" cy="'+f(t+h*.5)+'" r="1.8" fill="#ffffff"/>';}},
+  {id:'shd7', n:'毛線愛心', p:200, slot:'hand', only:'a-shp', d:a=>{
+    const x=AC.gx(a), g=AC.gy(a)-1, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(x)+' '+f(g+9)+'q-9-6-9-11q0-5 9-2q9-3 9 2q0 5-9 11z" fill="#ff9ec4"/>';
+    for(let i=0;i<4;i++){
+      o+='<path d="M'+f(x-7+i*3.4)+' '+f(g-6)+'q1.4 8 3 11" stroke="#e2809f" stroke-width="1" fill="none" opacity=".7"/>';}
+    return o+'<path d="M'+f(x+7)+' '+f(g-4)+'q6 2 5 8" stroke="#ff9ec4" stroke-width="1.6" fill="none"/>'+
+      '<circle cx="'+f(x+12)+'" cy="'+f(g+5)+'" r="2.4" fill="#ffd1e0"/>';}},
+  {id:'shf7', n:'毛球短襪', p:200, slot:'foot', only:'a-shp', d:a=>{
+    const y=(a.fy||107)-5, w=(a.fw||9), f=n=>n.toFixed(1);
+    return AC.feet(a,cx=>'<rect x="'+f(cx-w)+'" y="'+f(y)+'" width="'+f(w*2)+'" height="12" rx="4" fill="#fffdf8"/>'+
+      '<path d="M'+f(cx-w)+' '+f(y+3.4)+'h'+f(w*2)+'" stroke="#c9b0ff" stroke-width="2"/>'+
+      '<circle cx="'+f(cx-w+1)+'" cy="'+f(y+1)+'" r="2.4" fill="#ffb0cc"/>'+
+      '<circle cx="'+f(cx+w-1)+'" cy="'+f(y+1)+'" r="2.4" fill="#ffb0cc"/>');}},
+  {id:'sqh7', n:'楓葉髮夾', p:100, slot:'head', only:'a-sqr', d:a=>{
+    const cx=60+a.hr*.4, cy=AC.crest(a)-1, f=n=>n.toFixed(1);
+    return '<path d="M'+f(cx-8)+' '+f(cy+5)+'h16v3.4h-16z" fill="#c9a86a" transform="rotate(-12,'+f(cx)+','+f(cy+6)+')"/>'+
+      '<path d="M'+f(cx)+' '+f(cy-5)+'l2.4 3.2 3-1.2-1.2 3.2 3.2 .8-3.2 2 1.7 3-3.4-.8-1.7 3.2-1.7-3.2-3.4 .8 1.7-3-3.2-2 3.2-.8-1.2-3.2 3 1.2z" fill="#e2452f"/>'+
+      '<path d="M'+f(cx)+' '+f(cy)+'v5" stroke="#a8562f" stroke-width="1.2"/>'+
+      '<circle cx="'+f(cx-6)+'" cy="'+f(cy+3)+'" r="1.6" fill="#ffb03c"/>';}},
+  {id:'sqe7', n:'莓果眼影', p:100, slot:'face', only:'a-sqr', d:a=>{
+    const y=eyeY(a), g=a.gap, r=AC.ew(a), f=n=>n.toFixed(1);
+    return '<path d="M'+f(60-g-r)+' '+f(y-r*.6)+'a'+f(r)+' '+f(r*.85)+' 0 0 1 '+f(r*2)+' 0z" fill="#c2456f" opacity=".6"/>'+
+      '<path d="M'+f(60+g-r)+' '+f(y-r*.6)+'a'+f(r)+' '+f(r*.85)+' 0 0 1 '+f(r*2)+' 0z" fill="#c2456f" opacity=".6"/>'+
+      '<circle cx="'+f(60-g-r-1.4)+'" cy="'+f(y-r*.7)+'" r="1.6" fill="#9c3055"/>'+
+      '<circle cx="'+f(60+g+r+1.4)+'" cy="'+f(y-r*.7)+'" r="1.6" fill="#9c3055"/>'+
+      '<circle cx="'+f(60-g-r-1.4)+'" cy="'+f(y-r*.7)+'" r=".6" fill="#e2809f"/>'+
+      '<circle cx="'+f(60+g+r+1.4)+'" cy="'+f(y-r*.7)+'" r=".6" fill="#e2809f"/>';}},
+  {id:'sqn7', n:'橡實珠鍊', p:100, slot:'neck', only:'a-sqr', d:a=>{
+    const y=NKB(a)-2, w=bwAt(a,0)+1, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 10 '+f(w*2)+' 0" stroke="#c9a86a" stroke-width="1.6" fill="none"/>';
+    [-.74,-.38,.38,.74].forEach(k=>{const x=60+k*w, dy=y+2.6+(1-Math.abs(k))*6;
+      o+='<circle cx="'+f(x)+'" cy="'+f(dy)+'" r="1.8" fill="#f2e3c0"/>';});
+    const cy=y+11;
+    return o+'<path d="M'+f(60-4)+' '+f(cy)+'q0 7 4 7t4-7z" fill="#e0d0a8"/>'+
+      '<path d="M'+f(60-5)+' '+f(cy-2.6)+'q5 5 10 0z" fill="#a8763f"/>'+
+      '<path d="M60 '+f(cy-3)+'v-2.4" stroke="#8a5a2a" stroke-width="1.6"/>';}},
+  {id:'sqb7', n:'燈芯絨裙', p:200, slot:'body', only:'a-sqr', d:a=>{
+    const t=a.by-a.bh, h=a.bh*2, f=n=>n.toFixed(1);
+    let o='<path d="'+garment(a,.42,.96)+'" fill="#c98a5e"/>';
+    for(let i=0;i<7;i++){const x=60-a.bw*.82+i*(a.bw*1.64/6);
+      o+='<path d="M'+f(x)+' '+f(t+h*.46)+'v'+f(h*.46)+'" stroke="#a8703f" stroke-width="1.4"/>';}
+    return o+'<path d="M'+f(60-a.bw*.92)+' '+f(t+h*.42)+'h'+f(a.bw*1.84)+'" stroke="#e0c77e" stroke-width="3.6"/>'+
+      '<circle cx="60" cy="'+f(t+h*.42)+'" r="2.4" fill="#ffb03c"/>';}},
+  {id:'sqd7', n:'莓果小蛋糕', p:200, slot:'hand', only:'a-sqr', d:a=>{
+    const x=AC.gx(a), g=AC.gy(a)-2, f=n=>n.toFixed(1);
+    return '<path d="M'+f(x-8)+' '+f(g+3)+'h16v8q0 2-2 2h-12q-2 0-2-2z" fill="#f7e6c4"/>'+
+      '<path d="M'+f(x-8)+' '+f(g+6.4)+'h16" stroke="#e0c9a0" stroke-width="1.2"/>'+
+      '<path d="M'+f(x-8)+' '+f(g+3)+'q8-6 16 0z" fill="#ffffff"/>'+
+      '<path d="M'+f(x-8)+' '+f(g+3)+'q4 3 8 0t8 0" stroke="#ffd1e0" stroke-width="1.6" fill="none"/>'+
+      '<circle cx="'+f(x-3)+'" cy="'+f(g-1)+'" r="2" fill="#9c3055"/>'+
+      '<circle cx="'+f(x+2)+'" cy="'+f(g-2.6)+'" r="1.7" fill="#c2456f"/>'+
+      '<circle cx="'+f(x+5)+'" cy="'+f(g)+'" r="1.5" fill="#9c3055"/>';}},
+  {id:'sqf7', n:'毛絨短靴', p:200, slot:'foot', only:'a-sqr', d:a=>{
+    const y=(a.fy||107)-6, w=(a.fw||9)+1, f=n=>n.toFixed(1);
+    return AC.feet(a,cx=>{
+      let o='<rect x="'+f(cx-w)+'" y="'+f(y+2)+'" width="'+f(w*2)+'" height="10" rx="3.4" fill="#c98a5e"/>';
+      for(let i=0;i<4;i++){const px=cx-w+1.4+i*((w*2-2.8)/3);
+        o+='<circle cx="'+f(px)+'" cy="'+f(y+2)+'" r="2.2" fill="#f2e3c0"/>';}
+      return o+'<rect x="'+f(cx-w-.8)+'" y="'+f(y+9.4)+'" width="'+f(w*2+1.6)+'" height="3.4" rx="1.6" fill="#8a5a2a"/>';});}},
+  {id:'pih7', n:'珍珠髮箍', p:100, slot:'head', only:'a-pig', d:a=>{
+    const y=HLINE(a)-1, w=AC.wAtY(a,HLINE(a)-1)+1, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' -9 '+f(w*2)+' 0" stroke="#ffd1e0" stroke-width="3.4" fill="none"/>';
+    for(let i=0;i<7;i++){const k=-.9+i*.3, x=60+k*w;
+      o+='<circle cx="'+f(x)+'" cy="'+f(y-2-Math.cos(k*1.2)*4.4)+'" r="2.2" fill="#f8f6ff"/>';}
+    return o;}},
+  {id:'pie7', n:'蘋果眼影', p:100, slot:'face', only:'a-pig', d:a=>{
+    const y=eyeY(a), g=a.gap, r=AC.ew(a), f=n=>n.toFixed(1);
+    return '<path d="M'+f(60-g-r)+' '+f(y-r*.6)+'a'+f(r)+' '+f(r*.85)+' 0 0 1 '+f(r*2)+' 0z" fill="#e2452f" opacity=".5"/>'+
+      '<path d="M'+f(60+g-r)+' '+f(y-r*.6)+'a'+f(r)+' '+f(r*.85)+' 0 0 1 '+f(r*2)+' 0z" fill="#e2452f" opacity=".5"/>'+
+      '<path d="M'+f(60-g-r-2)+' '+f(y-r*.4)+'q-1.8-2.6-1.8 .4t1.8 2 1.8-2-1.8-.4z" fill="#d0392b"/>'+
+      '<path d="M'+f(60+g+r+2)+' '+f(y-r*.4)+'q-1.8-2.6-1.8 .4t1.8 2 1.8-2-1.8-.4z" fill="#d0392b"/>'+
+      '<circle cx="'+f(60-g)+'" cy="'+f(y-r*1.15)+'" r=".9" fill="#ffd1e0"/>'+
+      '<circle cx="'+f(60+g)+'" cy="'+f(y-r*1.15)+'" r=".9" fill="#ffd1e0"/>';}},
+  {id:'pin7', n:'玫瑰項鍊', p:100, slot:'neck', only:'a-pig', d:a=>{
+    const y=NKB(a)-2, w=bwAt(a,0)+1, cy=y+11, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 10 '+f(w*2)+' 0" stroke="#c9a86a" stroke-width="1.6" fill="none"/>';
+    [-.7,-.34,.34,.7].forEach(k=>{const x=60+k*w, dy=y+2.6+(1-Math.abs(k))*6;
+      o+='<circle cx="'+f(x)+'" cy="'+f(dy)+'" r="1.6" fill="#f2e3c0"/>';});
+    o+='<circle cx="60" cy="'+f(cy)+'" r="4.6" fill="#c2456f"/>';
+    for(let i=0;i<3;i++){const rr=3.4-i*1.1;
+      o+='<path d="M60 '+f(cy)+'m-'+f(rr)+' 0a'+f(rr)+' '+f(rr)+' 0 1 1 '+f(rr*2)+
+         ' 0" fill="none" stroke="#e2809f" stroke-width=".9"/>';}
+    return o+'<path d="M'+f(60-5)+' '+f(cy+3)+'q5 3 10 0" stroke="#4a9b3f" stroke-width="1.6" fill="none"/>';}},
+  {id:'pib7', n:'蝴蝶結洋裝', p:200, slot:'body', only:'a-pig', d:a=>{
+    const t=a.by-a.bh, h=a.bh*2, f=n=>n.toFixed(1);
+    let o='<path d="'+garment(a,.06,.94)+'" fill="#f2f4f8"/>';
+    [[-.5,.24],[.4,.32],[0,.44],[-.36,.58],[.46,.62],[-.1,.74],[.3,.82]].forEach(([kx,ky])=>{
+      const x=60+kx*a.bw, yy=t+h*ky;
+      o+='<path d="M'+f(x)+' '+f(yy)+'l-2.6-1.6q-.9 1.6 0 3.2zM'+f(x)+' '+f(yy)+'l2.6-1.6q.9 1.6 0 3.2z" fill="#ff9ec4"/>';});
+    return o+'<path d="M'+f(60-a.bw*.62)+' '+f(t+h*.08)+'q'+f(a.bw*.62)+' 7 '+f(a.bw*1.24)+' 0" stroke="#ffb0cc" stroke-width="2.6" fill="none"/>'+
+      '<path d="M'+f(60-a.bw*.9)+' '+f(t+h*.5)+'h'+f(a.bw*1.8)+'" stroke="#ff9ec4" stroke-width="3.4"/>';}},
+  {id:'pid7', n:'草莓塔', p:200, slot:'hand', only:'a-pig', d:a=>{
+    const x=AC.gx(a), g=AC.gy(a)-2, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(x-9)+' '+f(g+4)+'h18l-2 8h-14z" fill="#e8c48a"/>'+
+      '<path d="M'+f(x-9)+' '+f(g+4)+'h18v2h-18z" fill="#d9a45e"/>'+
+      '<path d="M'+f(x-8)+' '+f(g+4)+'q8-4 16 0z" fill="#fff4e0"/>';
+    [[-5,1],[0,-.6],[5,1]].forEach(([dx,dy])=>{
+      o+='<path d="M'+f(x+dx)+' '+f(g+dy+1)+'q-2.8-2.2-2.8 .6t2.8 3.2 2.8-3.2-2.8-.6z" fill="#e2452f"/>'+
+         '<path d="M'+f(x+dx)+' '+f(g+dy-1.4)+'q1.8-1.2 2-.2q-1.4 1-2 .2z" fill="#4a9b3f"/>';});
+    return o+'<path d="M'+f(x-3)+' '+f(g-2)+'q3-2 6 0" stroke="#ffffff" stroke-width="1.2" fill="none" opacity=".8"/>';}},
+  {id:'pif7', n:'珍珠瑪莉珍鞋', p:200, slot:'foot', only:'a-pig', d:a=>{
+    const y=(a.fy||107)-2, w=(a.fw||9)+1, f=n=>n.toFixed(1);
+    return AC.feet(a,cx=>'<path d="M'+f(cx-w)+' '+f(y+8)+'q0-8 '+f(w)+'-8t'+f(w)+' 8z" fill="#f2f4f8"/>'+
+      '<path d="M'+f(cx-w)+' '+f(y+8)+'h'+f(w*2)+'" stroke="#c9ccd6" stroke-width="1.8"/>'+
+      '<path d="M'+f(cx-w+1.4)+' '+f(y+3)+'q'+f(w-1.4)+' 3.4 '+f((w-1.4)*2)+' 0" stroke="#ffd1e0" stroke-width="2"/>'+
+      '<circle cx="'+f(cx)+'" cy="'+f(y+3.4)+'" r="1.8" fill="#f8f6ff"/>');}},
+  {id:'moh7', n:'蝴蝶結髮夾', p:100, slot:'head', only:'a-mou', d:a=>{
+    const cx=60+a.hr*.34, cy=HT(a)+7, f=n=>n.toFixed(1);
+    return '<path d="M'+f(cx-7)+' '+f(cy+3)+'h14v3h-14z" fill="#c9ccd6" transform="rotate(-14,'+f(cx)+','+f(cy+4)+')"/>'+
+      '<path d="M'+f(cx)+' '+f(cy)+'l-6.4-4q-2.2 4 0 8zM'+f(cx)+' '+f(cy)+'l6.4-4q2.2 4 0 8z" fill="#e2588f"/>'+
+      '<circle cx="'+f(cx)+'" cy="'+f(cy)+'" r="2.4" fill="#ff9ec4"/>';}},
+  {id:'moe7', n:'亮片眼影', p:100, slot:'face', only:'a-mou', d:a=>{
+    const y=eyeY(a), g=a.gap, r=AC.ew(a), f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-g-r)+' '+f(y-r*.6)+'a'+f(r)+' '+f(r*.85)+' 0 0 1 '+f(r*2)+' 0z" fill="#c9b0ff" opacity=".72"/>'+
+      '<path d="M'+f(60+g-r)+' '+f(y-r*.6)+'a'+f(r)+' '+f(r*.85)+' 0 0 1 '+f(r*2)+' 0z" fill="#c9b0ff" opacity=".72"/>';
+    [[-1,-.5],[-1,.4],[1,-.5],[1,.4]].forEach(([sg,kx])=>{
+      const x=60+sg*g+kx*r;
+      o+='<circle cx="'+f(x)+'" cy="'+f(y-r*.8)+'" r=".8" fill="#f8f6ff"/>';});
+    return o+'<path d="M'+f(60-g-r-1)+' '+f(y-r*.6)+'l-3-2M'+f(60+g+r+1)+' '+f(y-r*.6)+
+      'l3-2" stroke="#a879ff" stroke-width="1.4" stroke-linecap="round"/>';}},
+  {id:'mon7', n:'蕾絲蝴蝶結領', p:100, slot:'neck', only:'a-mou', d:a=>{
+    const y=NKB(a)-3, r=3, w=bwAt(a,0)+1.5-r, f=n=>n.toFixed(1);
+    let o='';
+    for(let i=0;i<6;i++){const x=60-w+i*(w*2/5), dy=y+2+Math.sin(i/5*Math.PI)*4.4;
+      o+='<circle cx="'+f(x)+'" cy="'+f(dy)+'" r="'+r+'" fill="#ffffff"/>';}
+    return o+'<path d="M60 '+f(y+6)+'l-5.4-3.4q-1.8 3.4 0 6.8zM60 '+f(y+6)+'l5.4-3.4q1.8 3.4 0 6.8z" fill="#ff9ec4"/>'+
+      '<circle cx="60" cy="'+f(y+6)+'" r="2" fill="#ffd1e0"/>';}},
+  {id:'mob7', n:'圓點洋裝', p:200, slot:'body', only:'a-mou', d:a=>{
+    const t=a.by-a.bh, h=a.bh*2, f=n=>n.toFixed(1);
+    let o='<path d="'+garment(a,.06,.94)+'" fill="#ff9ec4"/>';
+    for(let r=0;r<5;r++)for(let c=0;c<4;c++){
+      const k=.18+r*.16, x=60-bwAt(a,k)*.72+c*(bwAt(a,k)*1.44/3)+(r%2?2:0);
+      o+='<circle cx="'+f(x)+'" cy="'+f(t+h*k)+'" r="1.6" fill="#ffffff"/>';}
+    return o+'<path d="M'+f(60-a.bw*.62)+' '+f(t+h*.08)+'q'+f(a.bw*.62)+' 7 '+f(a.bw*1.24)+' 0" stroke="#ffffff" stroke-width="2.6" fill="none"/>'+
+      '<path d="M'+f(60-a.bw*.9)+' '+f(t+h*.52)+'h'+f(a.bw*1.8)+'" stroke="#ffffff" stroke-width="3"/>';}},
+  {id:'mod7', n:'起司蛋糕', p:200, slot:'hand', only:'a-mou', d:a=>{
+    const x=AC.gx(a), g=AC.gy(a)-2, f=n=>n.toFixed(1);
+    return '<path d="M'+f(x-8)+' '+f(g+12)+'l6-13h10v13z" fill="#fff0c4" stroke="#e8d49a" stroke-width="1.2" stroke-linejoin="round"/>'+
+      '<path d="M'+f(x-8)+' '+f(g+12)+'l6-13h10" fill="none" stroke="#e8c48a" stroke-width="1.4"/>'+
+      '<path d="M'+f(x-6.4)+' '+f(g+8.4)+'l5.4-11.6h9v2.4h-8z" fill="#c98a5e"/>'+
+      '<path d="M'+f(x+1)+' '+f(g-3)+'q-2.4-1.8-2.4 .4t2.4 2.6 2.4-2.6-2.4-.4z" fill="#e2452f"/>'+
+      '<path d="M'+f(x+1)+' '+f(g-5)+'q1.6-1 1.8-.2q-1.2 .9-1.8 .2z" fill="#4a9b3f"/>';}},
+  {id:'mof7', n:'蕾絲襪', p:200, slot:'foot', only:'a-mou', d:a=>{
+    const y=(a.fy||107)-5, w=(a.fw||9), f=n=>n.toFixed(1);
+    return AC.feet(a,cx=>{
+      let o='<rect x="'+f(cx-w)+'" y="'+f(y)+'" width="'+f(w*2)+'" height="12" rx="4" fill="#ffffff"/>';
+      for(let i=0;i<4;i++){const px=cx-w+1.4+i*((w*2-2.8)/3);
+        o+='<circle cx="'+f(px)+'" cy="'+f(y+.6)+'" r="1.7" fill="#ffffff"/>';}
+      return o+'<path d="M'+f(cx-w)+' '+f(y+4)+'h'+f(w*2)+'" stroke="#ff9ec4" stroke-width="1.8"/>'+
+        '<path d="M'+f(cx-w+1)+' '+f(y+7)+'q'+f(w-1)+' 2.6 '+f((w-1)*2)+' 0" stroke="#ffd1e0" stroke-width="1.2" fill="none"/>';});}},
+  {id:'mkh7', n:'花環冠', p:100, slot:'head', only:'a-mky', d:a=>{
+    const y=AC.crest(a)+3, w=AC.crestW(a)*.96, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' -10 '+f(w*2)+' 0" stroke="#3fa06a" stroke-width="2.6" fill="none"/>';
+    [-.78,-.24,.3,.78].forEach((k,i)=>{
+      const x=60+k*w, cy=y-4-(1-Math.abs(k))*4.6, c=['#ff6f91','#ffd75e','#ffffff','#ff9ec4'][i];
+      for(let j=0;j<5;j++){const A=j*72*Math.PI/180;
+        o+='<ellipse cx="'+f(x+Math.cos(A)*3)+'" cy="'+f(cy+Math.sin(A)*3)+'" rx="2.6" ry="1.7" fill="'+c+
+           '" transform="rotate('+(j*72)+','+f(x+Math.cos(A)*3)+','+f(cy+Math.sin(A)*3)+')"/>';}
+      o+='<circle cx="'+f(x)+'" cy="'+f(cy)+'" r="1.5" fill="#ffe27a"/>';});
+    return o;}},
+  {id:'mke7', n:'亮粉眼影', p:100, slot:'face', only:'a-mky', d:a=>{
+    const y=eyeY(a), g=a.gap, r=AC.ew(a), f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-g-r)+' '+f(y-r*.6)+'a'+f(r)+' '+f(r*.9)+' 0 0 1 '+f(r*2)+' 0z" fill="#ff9ec4" opacity=".68"/>'+
+      '<path d="M'+f(60+g-r)+' '+f(y-r*.6)+'a'+f(r)+' '+f(r*.9)+' 0 0 1 '+f(r*2)+' 0z" fill="#ff9ec4" opacity=".68"/>';
+    [[-1,0],[1,0]].forEach(([sg])=>{
+      const x=60+sg*g;
+      o+='<circle cx="'+f(x-r*.4)+'" cy="'+f(y-r*.85)+'" r=".8" fill="#fff0b8"/>'+
+         '<circle cx="'+f(x+r*.45)+'" cy="'+f(y-r*.7)+'" r=".7" fill="#ffffff"/>';});
+    return o+'<circle cx="'+f(60-g-r-2)+'" cy="'+f(y-r-1)+'" r="1.1" fill="#ffd75e"/>'+
+      '<circle cx="'+f(60+g+r+2)+'" cy="'+f(y-r-1)+'" r="1.1" fill="#ffd75e"/>';}},
+  {id:'mkn7', n:'貝殼花鍊', p:100, slot:'neck', only:'a-mky', d:a=>{
+    const y=NKB(a)-2, w=bwAt(a,0)+1, cy=y+10, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 10 '+f(w*2)+' 0" stroke="#3fa06a" stroke-width="1.6" fill="none"/>';
+    [-.72,.72].forEach(k=>{const x=60+k*w, dy=y+2.6+(1-Math.abs(k))*6;
+      for(let j=0;j<5;j++){const A=j*72*Math.PI/180;
+        o+='<ellipse cx="'+f(x+Math.cos(A)*1.8)+'" cy="'+f(dy+Math.sin(A)*1.8)+'" rx="1.6" ry="1.1" fill="#ff6f91" transform="rotate('+(j*72)+','+f(x+Math.cos(A)*1.8)+','+f(dy+Math.sin(A)*1.8)+')"/>';}});
+    [-.36,.36].forEach(k=>{const x=60+k*w, dy=y+2.6+(1-Math.abs(k))*6;
+      o+='<circle cx="'+f(x)+'" cy="'+f(dy)+'" r="1.8" fill="#f8f6ff"/>';});
+    return o+'<path d="M60 '+f(cy-2)+'q-5 2-5 5.4h10q0-3.4-5-5.4z" fill="#ffd1e0"/>'+
+      '<path d="M60 '+f(cy-2)+'v7.4M'+f(60-2.6)+' '+f(cy+1)+'l-.8 4.4M'+f(60+2.6)+' '+f(cy+1)+
+      'l.8 4.4" stroke="#e2a8c0" stroke-width="1"/>';}},
+  {id:'mkb7', n:'草裙', p:200, slot:'body', only:'a-mky', d:a=>{
+    const t=a.by-a.bh, h=a.bh*2, f=n=>n.toFixed(1);
+    let o='';
+    for(let i=0;i<13;i++){
+      const k=-1+i*.167, x=60+k*a.bw*.94, len=13+Math.cos(k*1.4)*7;
+      o+='<path d="M'+f(x)+' '+f(t+h*.5)+'q'+f(k*2)+' '+f(len*.6)+' '+f(k*3)+' '+f(len)+
+         '" stroke="#8ac97a" stroke-width="2.6" fill="none" stroke-linecap="round"/>';}
+    o+='<path d="M'+f(60-a.bw*.96)+' '+f(t+h*.48)+'h'+f(a.bw*1.92)+'" stroke="#ff6f91" stroke-width="4.4"/>';
+    [-.5,0,.5].forEach(k=>{const x=60+k*a.bw*.8;
+      for(let j=0;j<5;j++){const A=j*72*Math.PI/180;
+        o+='<ellipse cx="'+f(x+Math.cos(A)*2)+'" cy="'+f(t+h*.48+Math.sin(A)*2)+'" rx="1.8" ry="1.2" fill="#ffd75e" transform="rotate('+(j*72)+','+f(x+Math.cos(A)*2)+','+f(t+h*.48+Math.sin(A)*2)+')"/>';}});
+    return o;}},
+  {id:'mkd7', n:'熱帶花束', p:200, slot:'hand', only:'a-mky', d:a=>{
+    const x=AC.gx(a), g=AC.gy(a), f=n=>n.toFixed(1);
+    let o='<path d="M'+f(x-2)+' '+f(g+10)+'L'+f(x+2)+' '+f(g-6)+'" stroke="#3fa06a" stroke-width="2.4" stroke-linecap="round"/>'+
+      '<path d="M'+f(x)+' '+f(g+1)+'q-7 2-8 6q6 1 8-6z" fill="#3fa06a"/>';
+    [[0,-10,'#ff6f91'],[-5,-6,'#ffd75e'],[5,-7,'#ffffff']].forEach(([dx,dy,c])=>{
+      for(let j=0;j<5;j++){const A=j*72*Math.PI/180;
+        o+='<ellipse cx="'+f(x+dx+Math.cos(A)*3.2)+'" cy="'+f(g+dy+Math.sin(A)*3.2)+'" rx="2.8" ry="1.8" fill="'+c+
+           '" transform="rotate('+(j*72)+','+f(x+dx+Math.cos(A)*3.2)+','+f(g+dy+Math.sin(A)*3.2)+')"/>';}
+      o+='<circle cx="'+f(x+dx)+'" cy="'+f(g+dy)+'" r="1.6" fill="#ffe27a"/>';});
+    return o;}},
+  {id:'mkf7', n:'花朵涼鞋', p:200, slot:'foot', only:'a-mky', d:a=>{
+    const y=(a.fy||107)+1, w=(a.fw||9)+1, f=n=>n.toFixed(1);
+    return AC.feet(a,cx=>{
+      let o='<rect x="'+f(cx-w)+'" y="'+f(y)+'" width="'+f(w*2)+'" height="5.4" rx="2.6" fill="#f2e3c0"/>'+
+        '<path d="M'+f(cx-w+1)+' '+f(y)+'l'+f(w-1)+'-4.4 '+f(w-1)+' 4.4" stroke="#ffd1e0" stroke-width="2.4" fill="none"/>';
+      for(let j=0;j<5;j++){const A=j*72*Math.PI/180;
+        o+='<ellipse cx="'+f(cx+Math.cos(A)*2.4)+'" cy="'+f(y-4.4+Math.sin(A)*2.4)+'" rx="2.1" ry="1.4" fill="#ff6f91" transform="rotate('+(j*72)+','+f(cx+Math.cos(A)*2.4)+','+f(y-4.4+Math.sin(A)*2.4)+')"/>';}
+      return o+'<circle cx="'+f(cx)+'" cy="'+f(y-4.4)+'" r="1.4" fill="#ffe27a"/>';});}},
+  {id:'duh7', n:'蕾絲遮陽帽', p:100, slot:'head', only:'a-duk', hide:'ear', d:a=>{
+    const y=HT(a)+9, cw=a.hr*.86, w=a.hr+7, t=Math.max(5,y-12), f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 9 '+f(w*2)+' 0q-'+f(w)+' 5 -'+f(w*2)+' 0z" fill="#fff6e8"/>'+
+      '<path d="M'+f(60-cw)+' '+f(y)+'q0-'+f(y-t)+' '+f(cw)+'-'+f(y-t)+'t'+f(cw)+' '+f(y-t)+'z" fill="#fffdf8"/>';
+    for(let i=0;i<9;i++){const k=-1+i*.25;
+      o+='<circle cx="'+f(60+k*w*.96)+'" cy="'+f(y+2.6+(1-Math.abs(k))*2.6)+'" r="2" fill="#fff6e8"/>';}
+    return o+'<path d="M'+f(60-cw)+' '+f(y-3)+'q'+f(cw)+' 5 '+f(cw*2)+' 0" stroke="#ffb0cc" stroke-width="3.4" fill="none"/>'+
+      '<path d="M'+f(60+cw*.5)+' '+f(y-4)+'l-4-3q-1.6 3 0 6zM'+f(60+cw*.5)+' '+f(y-4)+
+      'l4-3q1.6 3 0 6z" fill="#ff9ec4"/>';}},
+  {id:'due7', n:'水藍眼影', p:100, slot:'face', only:'a-duk', d:a=>{
+    const y=eyeY(a), g=a.gap, r=AC.ew(a), f=n=>n.toFixed(1);
+    return '<path d="M'+f(60-g-r)+' '+f(y-r*.6)+'a'+f(r)+' '+f(r*.85)+' 0 0 1 '+f(r*2)+' 0z" fill="#8ad3f2" opacity=".72"/>'+
+      '<path d="M'+f(60+g-r)+' '+f(y-r*.6)+'a'+f(r)+' '+f(r*.85)+' 0 0 1 '+f(r*2)+' 0z" fill="#8ad3f2" opacity=".72"/>'+
+      '<path d="M'+f(60-g-r-1)+' '+f(y-r*.55)+'l-3.4-2M'+f(60+g+r+1)+' '+f(y-r*.55)+
+      'l3.4-2" stroke="#4aa3df" stroke-width="1.5" stroke-linecap="round"/>'+
+      '<circle cx="'+f(60-g+r*.4)+'" cy="'+f(y-r*.95)+'" r=".9" fill="#e6f7ff"/>'+
+      '<circle cx="'+f(60+g-r*.4)+'" cy="'+f(y-r*.95)+'" r=".9" fill="#e6f7ff"/>';}},
+  {id:'dun7', n:'蝴蝶結領巾', p:100, slot:'neck', only:'a-duk', d:a=>{
+    const y=NKB(a)-4, w=bwAt(a,0)+1.5, f=n=>n.toFixed(1);
+    return '<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 9 '+f(w*2)+' 0v4q-'+f(w)+' 7 -'+f(w*2)+' 0z" fill="#ffd1e0"/>'+
+      '<path d="M60 '+f(y+7)+'l-6.4-3.6q-2 3.6 0 7.2zM60 '+f(y+7)+'l6.4-3.6q2 3.6 0 7.2z" fill="#ff9ec4"/>'+
+      '<circle cx="60" cy="'+f(y+7)+'" r="2.4" fill="#ffffff"/>';}},
+  {id:'dub7', n:'水手百褶裙', p:200, slot:'body', only:'a-duk', d:a=>{
+    const t=a.by-a.bh, h=a.bh*2, f=n=>n.toFixed(1);
+    let o='<path d="'+garment(a,.42,.96)+'" fill="#4aa3df"/>';
+    for(let i=0;i<8;i++){const x=60-a.bw*.86+i*(a.bw*1.72/7);
+      o+='<path d="M'+f(x)+' '+f(t+h*.46)+'v'+f(h*.48)+'" stroke="#3a86bd" stroke-width="1.4"/>';}
+    o+='<path d="M'+f(60-a.bw*.96)+' '+f(t+h*.42)+'h'+f(a.bw*1.92)+'" stroke="#f2f4f8" stroke-width="4"/>';
+    return o+'<path d="M60 '+f(t+h*.42)+'l-5.4-3q-1.8 3 0 6zM60 '+f(t+h*.42)+'l5.4-3q1.8 3 0 6z" fill="#ff9ec4"/>';}},
+  {id:'dud7', n:'草莓冰淇淋', p:200, slot:'hand', only:'a-duk', d:a=>{
+    const x=AC.gx(a), g=AC.gy(a)-2, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(x-6)+' '+f(g+2)+'h12l-6 12z" fill="#e8c48a"/>'+
+      '<path d="M'+f(x-4)+' '+f(g+5)+'l3 3M'+f(x+1)+' '+f(g+4)+'l3 3M'+f(x-2)+' '+f(g+9)+
+      'l2.6 2.6" stroke="#c9a45e" stroke-width="1"/>'+
+      '<circle cx="'+f(x)+'" cy="'+f(g-1)+'" r="6.4" fill="#ffb0cc"/>'+
+      '<circle cx="'+f(x-3.4)+'" cy="'+f(g-5.4)+'" r="4.4" fill="#ffd1e0"/>'+
+      '<path d="M'+f(x-5)+' '+f(g-3)+'q2.6-2.6 5-2" stroke="#ffffff" stroke-width="1.4" fill="none" opacity=".8"/>';
+    [[-2,-8.6],[3,-6],[1,-2.6]].forEach(([dx,dy])=>{
+      o+='<circle cx="'+f(x+dx)+'" cy="'+f(g+dy)+'" r=".9" fill="#e2452f"/>';});
+    return o;}},
+  {id:'duf7', n:'果凍涼鞋', p:200, slot:'foot', only:'a-duk', d:a=>{
+    const y=(a.fy||107), w=(a.fw||9)+1, f=n=>n.toFixed(1);
+    return AC.feet(a,cx=>'<path d="M'+f(cx-w)+' '+f(y+7)+'q0-6 '+f(w)+'-6t'+f(w)+' 6z" fill="#ffb0cc" opacity=".8"/>'+
+      '<path d="M'+f(cx-w)+' '+f(y+7)+'h'+f(w*2)+'" stroke="#ff9ec4" stroke-width="1.8"/>'+
+      '<path d="M'+f(cx-w+1.4)+' '+f(y+2)+'q'+f(w-1.4)+' 3.4 '+f((w-1.4)*2)+' 0" stroke="#ffd1e0" stroke-width="2"/>'+
+      '<path d="M'+f(cx-w+2.6)+' '+f(y+4.4)+'q3 2 6 0" stroke="#ffffff" stroke-width="1.2" fill="none" opacity=".8"/>');}},
 ];
 /* 背景跟勝利動作也是買來的，價格與擁有狀態走同一套 */
 const EXTRAS=()=>BGS.map(b=>({id:b.id,n:b.n,p:b.p,cat:'bg'}))
