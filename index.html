@@ -4871,7 +4871,9 @@ const ITEMS=[
        '" stroke="#f7f4ec" stroke-width="2.2"/>';}
   return o+'<ellipse cx="60" cy="'+y.toFixed(1)+'" rx="'+w.toFixed(1)+'" ry="2.6" fill="#d1568f"/>'+
     '<circle cx="60" cy="'+t.toFixed(1)+'" r="3.4" fill="#f7f4ec"/>';}},
-  {id:'pgh5', n:'企鵝寶寶', p:100, slot:'head', only:'a-peng', d:a=>{
+  /* frontOnly：1 白肚子、2/3 眼睛、4 嘴 —— 轉到背面只剩深色的身體，
+     跟企鵝自己的背面一樣 */
+  {id:'pgh5', n:'企鵝寶寶', p:100, slot:'head', only:'a-peng', frontOnly:[1,2,3,4], d:a=>{
     const y=AC.crest(a)+4;
     return '<ellipse cx="60" cy="'+(y-8)+'" rx="9" ry="10" fill="#7c8797"/>'+
       '<ellipse cx="60" cy="'+(y-5)+'" rx="5.4" ry="6" fill="#f7f4ec"/>'+
@@ -8731,6 +8733,10 @@ const WEARPARTS=(()=>{
         parts.forEach(p=>{ p.kind=k; });
       }
     }
+    /* frontOnly：這幾個零件是「正面才有」的（企鵝寶寶的臉）。
+       其餘部分照舊跟著頭轉，轉到背面時只有這幾個消失 —— 就跟角色
+       自己的臉一樣，背面看到的是後腦勺 */
+    if(it.frontOnly) it.frontOnly.forEach(i=>{ if(parts[i]) parts[i].onlyFront=1; });
     g.remove();
     return cache[it.id]=parts;
   };
@@ -8801,6 +8807,7 @@ const YAWCTX={t:0,on:false,side:1};
      front     眼鏡、吊墜、髮夾、胸前的圖案 ── 跟臉、身上的花紋同一個滑動與壓縮 */
 function partYaw(p){
   const t=YAWCTX.t, c=Math.cos(t);
+  if(p.onlyFront&&c<-.1) return null;      /* 正面才有的零件，轉過去就沒了 */
   /* 貼合輪廓的：寬度一定不能改（改了就會比身體窄、露出一塊空的），
      但完全不動又會看起來像沒反應。所以只給一點點位移，
      幅度小到不會把身體的邊緣露出來 */
