@@ -2746,6 +2746,9 @@ const HLINE=a=>a.hatY!==undefined?a.hatY:a.hy-HRY(a)*.45;
 /* 頭在某個高度有多寬，k 是從頭中心往上算的比例 */
 const HWAT=(a,k)=>a.sq?a.hr:a.hr*Math.sqrt(Math.max(.04,1-k*k));
 const HATW=a=>a.hatW!==undefined?a.hatW:HWAT(a,.45);
+/* 「戴在頭上」跟「貼在臉上」的分界。蛋型角色（企鵝）的頭沒有單獨畫，
+   照 hy-HRY*.55 算會落在蛋頂上面，結果頭上的東西一件都算不進來 */
+const TOPLINE=a=>a.egg?(a.by-a.bh)+a.bh*.35:a.hy-HRY(a)*.55;
 /* 脖子上的東西掛在哪、做多寬。
    NKB：掛的高度。預設是頭底，往上挪一點才接得到頭 —— 頭是往下收的橢圓，
         貼著頭底那條線的話，那個高度的頭只剩一點點寬，看起來會像浮在身體上。
@@ -4848,14 +4851,18 @@ const ITEMS=[
     '<circle cx="60" cy="'+(y-dm*.55)+'" r="4" fill="#ffc233"/>'+
     '<path d="M60 '+(y-dm*.55-6)+'v12M'+(60-6)+' '+(y-dm*.55)+'h12" stroke="#ffc233" stroke-width="1.6"/>';}},
   {id:'pgh3', n:'冰晶皇冠', p:100, slot:'head', only:'a-peng', d:a=>{
-  const w=AC.crestW(a)*1.06,y=AC.crest(a)+3,h=Math.min(14,Math.max(7,(y-4)/1.45));
+  /* 這一頂維持原本的高度（AC.crest 改成認得蛋之後整個下來了，這頂戴高的比較好看），
+     所以把舊公式寫死在自己身上，不跟著 crest 走 */
+  const cy=Math.min(HT(a)+4,HLINE(a)), w=AC.wAtY(a,cy)*1.06, y=cy+3,
+        h=Math.min(14,Math.max(7,(y-4)/1.45));
   const spike=(x,hh)=>'<path d="M'+x.toFixed(1)+' '+(y-hh).toFixed(1)+'l3.4 '+(hh*.55).toFixed(1)+
     'h-6.8z" fill="#e6f4fb"/>';
   return '<path d="M'+(60-w).toFixed(1)+' '+y+'h'+(w*2).toFixed(1)+'v-4h-'+(w*2).toFixed(1)+
     'z" fill="#9fd8f0"/>'+
     spike(60-w*.62,h*.7)+spike(60,h*1.25)+spike(60+w*.62,h*.7)+
     '<circle cx="60" cy="'+(y-2)+'" r="2.4" fill="#5aa9ff"/>';}},
-  {id:'pgh4', n:'生日尖帽', p:100, slot:'head', only:'a-peng', d:a=>{
+  /* mid:1 —— 畫在臉的下面，帽子照樣戴在蛋上，但眼睛會壓在帽子前面 */
+  {id:'pgh4', n:'生日尖帽', p:100, slot:'head', only:'a-peng', mid:1, d:a=>{
   const y=AC.crest(a)+2,w=AC.crestW(a)*.85,t=Math.max(8,y-24);
   let o='<path d="M'+(60-w).toFixed(1)+' '+y.toFixed(1)+'L60 '+t.toFixed(1)+
     'L'+(60+w).toFixed(1)+' '+y.toFixed(1)+'z" fill="#ff9ec4"/>';
@@ -8698,7 +8705,7 @@ const WEARPARTS=(()=>{
       /* 幾乎跟身體一樣寬的，是貼著輪廓的那層（帽身、衣身）。
          這種連一點點都不能移，移了就會從旁邊露出底下的頭或身體 */
       else if(b.width>=ref*.95)                           kind='skin';
-      else if(b.y+b.height<a.hy-ry*.55&&b.width<ref*.75)  kind='top';
+      else if(b.y+b.height<TOPLINE(a)&&b.width<ref*.75)   kind='top';
       /* 只長在一邊的（髮箍的耳朵、口袋）：跟著頭一起往中間壓，不會掉出去 */
       else if(Math.abs(off)>ref*.22)                      kind='side';
       else if(b.width>=ref*.72)                           kind='wrap';   /* 比較窄的環帶 */
@@ -8717,7 +8724,7 @@ const WEARPARTS=(()=>{
         const cx=b.x+b.width/2, off=cx-60;
         let k;
         if(b.width>=ref*.95)                             k='skin';
-        else if(b.y+b.height<a.hy-ry*.55&&b.width<ref*.75) k='top';
+        else if(b.y+b.height<TOPLINE(a)&&b.width<ref*.75)  k='top';
         else if(Math.abs(off)>ref*.22)                   k='side';
         else if(b.width>=ref*.72)                        k='wrap';
         else                                             k='front';
