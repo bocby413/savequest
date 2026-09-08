@@ -4211,12 +4211,24 @@ const ITEMS=[
     '<path d="M'+f(L+2)+' '+f(y-h*.18)+'Q60 '+f(y-h*.55)+' '+f(R-2)+' '+f(y-h*.18)+
     '" stroke="#3d7fd6" stroke-width="2.2" fill="none"/>'+
     '<path d="M'+f(L+3)+' '+f(y+h*.05)+'l4 4" stroke="#ffffff" stroke-width="2" opacity=".6"/>';}},
-  {id:'dge2', n:'鼻樑十字繃', p:100, slot:'face', only:'a-dog', d:a=>{
-  const x=60,y=mouY(a)-8;
-  return '<rect x="'+(x-3.4)+'" y="'+(y-9)+'" width="6.8" height="18" rx="2.4" fill="#f2e3c0"/>'+
-    '<rect x="'+(x-9)+'" y="'+(y-3.4)+'" width="18" height="6.8" rx="2.4" fill="#f2e3c0"/>'+
-    '<circle cx="'+x+'" cy="'+y+'" r="3" fill="#e0c890"/>';}},
-  {id:'dge3', n:'運動口罩', p:100, slot:'face', only:'a-dog', d:a=>AC.maskLow(a,'#3d7fd6','#1b4f9e')},
+  {id:'dge2', n:'單邊眼圈', p:100, slot:'face', only:'a-dog', d:a=>{
+    /* 眼圈畫在臉上會蓋住眼珠，所以斑塊畫完要把那隻眼睛補回來 */
+    const y=eyeY(a), g=a.gap, r=(a.pup||4.5), f=n=>n.toFixed(1), x=60-g;
+    return '<ellipse cx="'+f(x-1)+'" cy="'+f(y-1)+'" rx="'+f(r*2.4)+'" ry="'+f(r*2.2)+
+      '" fill="#4a3226" transform="rotate(-12,'+f(x)+','+f(y)+')"/>'+
+      '<ellipse cx="'+f(x-1)+'" cy="'+f(y-1)+'" rx="'+f(r*2.4)+'" ry="'+f(r*2.2)+
+      '" fill="#5c4030" opacity=".55" transform="rotate(-12,'+f(x)+','+f(y)+')"/>'+
+      '<circle cx="'+f(x)+'" cy="'+f(y)+'" r="'+f(r)+'" fill="'+a.ink+'"/>'+
+      '<circle cx="'+f(x-r*.32)+'" cy="'+f(y-r*.36)+'" r="'+f(r*.3)+'" fill="#ffffff" opacity=".9"/>';}},
+  {id:'dge3', n:'叼著飛盤', p:100, slot:'face', only:'a-dog', d:a=>{
+    /* 咬在嘴上，盤子往外斜出去 —— 整片壓在臉中間就變成盤子貼在臉上 */
+    const m=mouY(a), cx=60+a.hr*.34, cy=m+2, f=n=>n.toFixed(1);
+    return '<g transform="rotate(-18,'+f(cx)+','+f(cy)+')">'+
+      '<ellipse cx="'+f(cx)+'" cy="'+f(cy)+'" rx="13" ry="4.4" fill="#e2452f"/>'+
+      '<ellipse cx="'+f(cx)+'" cy="'+f(cy-1.2)+'" rx="13" ry="4.4" fill="#ff6a52"/>'+
+      '<ellipse cx="'+f(cx)+'" cy="'+f(cy-1.2)+'" rx="7.4" ry="2.2" fill="#e2452f"/>'+
+      '<path d="M'+f(cx-9)+' '+f(cy-2.6)+'q3-1.6 6-.6" stroke="#ffb0a0" stroke-width="1.4" fill="none"/>'+
+      '</g>';}},
   {id:'dge4', n:'吐舌頭', p:100, slot:'face', only:'a-dog', d:a=>{
   const y=mouY(a)+2;
   return '<path d="M'+(60-6)+' '+y+'q6-3 12 0v7a6 6 0 0 1-12 0z" fill="#ff7fa8"/>'+
@@ -4228,12 +4240,20 @@ const ITEMS=[
     'C60 '+(y-2.4)+' 61 '+(y-4)+' 62.8 '+(y-4)+
     'C66 '+(y-4)+' 66 '+(y+1)+' 60 '+(y+5)+'Z" fill="#e8447a"/>'+
     '<circle cx="57.6" cy="'+(y-1.6)+'" r="1.2" fill="#ffffff" opacity=".8"/>';}},
-  {id:'dge6', n:'翹鬍子', p:100, slot:'face', only:'a-dog', d:a=>{
-  const y=mouY(a)-4,w=a.hr*.5;
-  const side=sg=>'<path d="M60 '+y+'Q'+(60+sg*w*.55)+' '+(y-1)+' '+(60+sg*w)+' '+(y-5)+
-    'Q'+(60+sg*w*.75)+' '+(y+3)+' 60 '+(y+2.4)+'Z" fill="#22232a"/>'+
-    '<circle cx="'+(60+sg*w)+'" cy="'+(y-5)+'" r="1.8" fill="#22232a"/>';
-  return side(-1)+side(1);}},
+  {id:'dge6', n:'星星墨鏡', p:100, slot:'face', only:'a-dog', d:a=>{
+    const y=eyeY(a), g=a.gap, sz=AC.ew(a)*.92, f=n=>n.toFixed(1);
+    const star=(x,c)=>{let d='';
+      for(let i=0;i<5;i++){
+        const A=(-90+i*72)*Math.PI/180, B=(-54+i*72)*Math.PI/180;
+        d+=(i?'L':'M')+f(x+Math.cos(A)*sz)+' '+f(y+Math.sin(A)*sz)+
+           'L'+f(x+Math.cos(B)*sz*.46)+' '+f(y+Math.sin(B)*sz*.46);}
+      return '<path d="'+d+'z" fill="'+c+'"/>';};
+    return '<path d="M'+f(60-g+sz*.5)+' '+f(y)+'h'+f((g-sz*.5)*2)+'" stroke="#ffc233" stroke-width="2.6"/>'+
+      '<path d="M'+f(60-g-sz)+' '+f(y-1)+'l-6-2M'+f(60+g+sz)+' '+f(y-1)+
+      'l6-2" stroke="#ffc233" stroke-width="2.2" stroke-linecap="round"/>'+
+      star(60-g,'#2a2d38')+star(60+g,'#2a2d38')+
+      '<circle cx="'+f(60-g-sz*.28)+'" cy="'+f(y-sz*.3)+'" r="1.2" fill="#ffffff" opacity=".7"/>'+
+      '<circle cx="'+f(60+g-sz*.28)+'" cy="'+f(y-sz*.3)+'" r="1.2" fill="#ffffff" opacity=".7"/>';}},
   {id:'dgn1', n:'運動毛巾', p:100, slot:'neck', only:'a-dog', d:a=>{
   const y=NKB(a)-2,w=NKW(a)*.82;
   return '<path d="M'+(60-w)+' '+y+'q'+w+' 11 '+(w*2)+' 0v6q-'+w+' 11 -'+(w*2)+' 0z" fill="#f7f4ec"/>'+
@@ -7015,12 +7035,12 @@ const ITEMS=[
       '<circle cx="'+(60+g)+'" cy="'+(y-.5)+'" r="'+(AC.ew(a)*.5)+'" fill="#5ce07a" opacity=".85"/>'+
       '<path d="M'+(60-w)+' '+(y-4)+'h-6M'+(60+w)+' '+(y-4)+'h6" stroke="#2a3a2c" stroke-width="3"/>';}},
   {id:'moe5', n:'沾到麵粉', p:100, slot:'face', only:'a-mou', d:a=>{
-    /* 白麵粉配灰老鼠幾乎看不出來，麵粉塊要不透明、屑屑要加深一圈邊 */
-    const ry=HRY(a), ny=a.hy+ry*(a.chin||1)-4, y=eyeY(a), g=a.gap;
-    let o='<ellipse cx="60" cy="'+ny.toFixed(1)+'" rx="8.4" ry="5.4" fill="#ffffff"/>'+
-      '<ellipse cx="'+(60-g)+'" cy="'+(y+1)+'" rx="6.6" ry="5.6" fill="#ffffff" opacity=".9"/>';
-    [[-11,4,1.8],[9,3,1.5],[5,-6,1.3],[-7,-7,1.1],[12,-2,1.1]].forEach(([dx,dy,r])=>{
-      o+='<circle cx="'+(60+dx)+'" cy="'+(ny+dy).toFixed(1)+'" r="'+r+'" fill="#ffffff" stroke="#cfd3dc" stroke-width=".7"/>';});
+    /* 沾在口鼻跟臉頰上。之前有一塊蓋在眼珠上，整隻眼睛就糊掉了 */
+    const ry=HRY(a), ny=a.hy+ry*(a.chin||1)-4, g=a.gap, y=eyeY(a)+(a.pup||4.5)+5, f=n=>n.toFixed(1);
+    let o='<ellipse cx="60" cy="'+f(ny)+'" rx="8.4" ry="5.4" fill="#ffffff"/>'+
+      '<ellipse cx="'+f(60-g-1)+'" cy="'+f(y)+'" rx="5" ry="3.4" fill="#ffffff" opacity=".9"/>';
+    [[-11,3,1.8],[9,2,1.5],[5,-6,1.3],[-6,-8,1.1],[12,-3,1.1]].forEach(([dx,dy,r])=>{
+      o+='<circle cx="'+f(60+dx)+'" cy="'+f(ny+dy)+'" r="'+r+'" fill="#ffffff" stroke="#cfd3dc" stroke-width=".7"/>';});
     return o;}},
   {id:'moe6', n:'起司屑', p:100, slot:'face', only:'a-mou', hide:'whisk', d:a=>{
     const ry=HRY(a), ny=a.hy+ry*(a.chin||1)-1.6;
@@ -7790,8 +7810,12 @@ const ITEMS=[
       '" stroke="#e2588f" stroke-width="1.2"/>'+
       '<circle cx="60" cy="'+f(y)+'" r="3.6" fill="#ffb0cc"/>';}},
   {id:'dge7', n:'心形腮紅', p:100, slot:'face', only:'a-dog', d:a=>{
-    const y=eyeY(a)+8, g=Math.min(a.gap+8,a.hr-8), f=n=>n.toFixed(1);
-    const hh=x=>'<path d="M'+f(x)+' '+f(y+3.4)+'q-6-4.6-6-8q0-4 6-1q6-3 6 1q0 3.4-6 8z" fill="#ff7fae" opacity=".7"/>';
+    /* 腮紅要在眼睛「下面」，不能碰到眼珠。愛心最高點是 y-8，
+       所以中心至少要壓到眼珠下緣再多 8，橫向再讓臉的寬度收一次 */
+    const hw=6, y=eyeY(a)+(a.pup||4.5)+9.5;
+    const g=Math.min(a.gap+8, AC.wAtY(a,y)-hw-1), f=n=>n.toFixed(1);
+    const hh=x=>'<path d="M'+f(x)+' '+f(y+3.4)+'q-'+hw+'-4.6-'+hw+'-8q0-4 '+hw+'-1q'+hw+'-3 '+hw+
+      ' 1q0 3.4-'+hw+' 8z" fill="#ff7fae" opacity=".7"/>';
     return hh(60-g)+hh(60+g)+
       '<circle cx="'+f(60-g-5)+'" cy="'+f(y-5)+'" r="1.4" fill="#ffb0cc"/>'+
       '<circle cx="'+f(60+g+5)+'" cy="'+f(y-5)+'" r="1.4" fill="#ffb0cc"/>';}},
