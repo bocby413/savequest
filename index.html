@@ -2565,7 +2565,7 @@ function chFaceMark(a){
     return '<path d="M60 '+(my-7)+'l-3.5 3.5h7z" fill="#e8736f"/>';
   if(a.k==='a-dog')
     return '<ellipse cx="60" cy="'+(my+1)+'" rx="13" ry="10" fill="#f3ddd0"/>'+
-           '<circle cx="60" cy="'+(my-5)+'" r="3.6" fill="'+a.ink+'"/>';
+           (hides(a,'nose')?'':'<circle cx="60" cy="'+(my-5)+'" r="3.6" fill="'+a.ink+'"/>');
   if(a.k==='a-bear')
     return '<ellipse cx="60" cy="'+(my+1)+'" rx="14" ry="11" fill="#e7cdb8"/>'+
            '<ellipse cx="60" cy="'+(my-5)+'" rx="4.6" ry="3.6" fill="'+a.ink+'"/>';
@@ -3619,12 +3619,17 @@ const ITEMS=[
     return '<path d="M'+(60-w)+' '+y+'a'+w+' '+dome+' 0 0 1 '+(w*2)+' 0z" fill="#3f5a75"/>'+
       '<circle cx="60" cy="'+(y-dome+1)+'" r="4" fill="#26394d"/>'+
       '<path d="M'+(60-w-4)+' '+(y-1)+'h'+(w*1.1)+'a4 4 0 0 1 0 7h-'+(w*1.1)+'z" fill="#26394d"/>';}},
-  {id:'aviator', n:'飛行員眼鏡', p:100, slot:'face', only:'a-dog', d:a=>{
-    const y=eyeY(a), g=a.gap, r=Math.max(7,g*.78);
-    return '<g fill="#bfe9f7" stroke="#8a5a3c" stroke-width="3">'+
-      '<circle cx="'+(60-g)+'" cy="'+y+'" r="'+r+'"/><circle cx="'+(60+g)+'" cy="'+y+'" r="'+r+'"/></g>'+
-      '<path d="M'+(60-g+r)+' '+y+'h'+((g-r)*2)+'" stroke="#8a5a3c" stroke-width="3"/>'+
-      '<path d="M'+(60-g-r)+' '+y+'h-6M'+(60+g+r)+' '+y+'h6" stroke="#5f3a22" stroke-width="3"/>';}},
+  {id:'aviator', n:'水汪汪眼睛', p:100, slot:'face', only:'a-dog', d:a=>{
+    /* 眼珠是半徑 a.pup 的實心圓，高光跟下睫毛都要落在那顆圓上 */
+    const y=eyeY(a), g=a.gap, r=(a.pup||4.5), f=n=>n.toFixed(1);
+    const one=(x,sg)=>
+      '<circle cx="'+f(x)+'" cy="'+f(y)+'" r="'+f(r*1.28)+'" fill="'+a.ink+'"/>'+
+      '<circle cx="'+f(x-sg*r*.38)+'" cy="'+f(y-r*.42)+'" r="'+f(r*.46)+'" fill="#ffffff"/>'+
+      '<circle cx="'+f(x+sg*r*.42)+'" cy="'+f(y+r*.4)+'" r="'+f(r*.24)+'" fill="#ffffff" opacity=".85"/>'+
+      '<path d="M'+f(x-r*.7)+' '+f(y+r*1.5)+'v'+f(r*.5)+'M'+f(x)+' '+f(y+r*1.62)+'v'+f(r*.56)+
+      'M'+f(x+r*.7)+' '+f(y+r*1.5)+'v'+f(r*.5)+'" stroke="'+a.ink+
+      '" stroke-width="1.5" stroke-linecap="round"/>';
+    return one(60-g,-1)+one(60+g,1);}},
   {id:'sneaker', n:'運動鞋', p:200, slot:'foot', only:'a-dog', d:a=>{
     const y=(a.fy||107)-3, x=a.fx||13, w=(a.fw||9)+1.5;
     const one=cx=>'<path d="M'+(cx-w)+' '+(y+4)+'q0-8 '+(w*.8)+'-8h'+(w*.6)+'l'+(w*.7)+' 8z" fill="#ff5c8a"/>'+
@@ -4203,23 +4208,24 @@ const ITEMS=[
     '" height="9" rx="3" fill="#f7f4ec"/>'+
     '<path d="M'+(60-w*.5).toFixed(1)+' '+(y-8)+'v9M60 '+(y-8)+'v9M'+(60+w*.5).toFixed(1)+' '+(y-8)+
     'v9" stroke="#dcd6c8" stroke-width="1.3"/>';}},
-  {id:'dge1', n:'球場運動鏡', p:100, slot:'face', only:'a-dog', d:a=>{
-  const y=eyeY(a),g=a.gap,r=AC.ew(a),f=n=>n.toFixed(1);const L=60-g-r,R=60+g+r,h=r*1.28;
-  return '<path d="M'+f(L)+' '+f(y-h*.5)+'Q60 '+f(y-h*.95)+' '+f(R)+' '+f(y-h*.5)+
-    'L'+f(R)+' '+f(y+h*.28)+'Q60 '+f(y+h*.5)+' 60 '+f(y+h*.2)+
-    'Q60 '+f(y+h*.5)+' '+f(L)+' '+f(y+h*.28)+'Z" fill="#22232a"/>'+
-    '<path d="M'+f(L+2)+' '+f(y-h*.18)+'Q60 '+f(y-h*.55)+' '+f(R-2)+' '+f(y-h*.18)+
-    '" stroke="#3d7fd6" stroke-width="2.2" fill="none"/>'+
-    '<path d="M'+f(L+3)+' '+f(y+h*.05)+'l4 4" stroke="#ffffff" stroke-width="2" opacity=".6"/>';}},
-  {id:'dge2', n:'單邊眼圈', p:100, slot:'face', only:'a-dog', d:a=>{
-    /* 眼圈畫在臉上會蓋住眼珠，所以斑塊畫完要把那隻眼睛補回來 */
-    const y=eyeY(a), g=a.gap, r=(a.pup||4.5), f=n=>n.toFixed(1), x=60-g;
-    return '<ellipse cx="'+f(x-1)+'" cy="'+f(y-1)+'" rx="'+f(r*2.4)+'" ry="'+f(r*2.2)+
-      '" fill="#4a3226" transform="rotate(-12,'+f(x)+','+f(y)+')"/>'+
-      '<ellipse cx="'+f(x-1)+'" cy="'+f(y-1)+'" rx="'+f(r*2.4)+'" ry="'+f(r*2.2)+
-      '" fill="#5c4030" opacity=".55" transform="rotate(-12,'+f(x)+','+f(y)+')"/>'+
-      '<circle cx="'+f(x)+'" cy="'+f(y)+'" r="'+f(r)+'" fill="'+a.ink+'"/>'+
-      '<circle cx="'+f(x-r*.32)+'" cy="'+f(y-r*.36)+'" r="'+f(r*.3)+'" fill="#ffffff" opacity=".9"/>';}},
+  {id:'dge1', n:'叼著玫瑰', p:100, slot:'face', only:'a-dog', d:a=>{
+    /* 咬在嘴角，花朝外 —— 擺在正中間會變成花貼在鼻子上 */
+    const m=mouY(a), x=60+a.hr*.3, y=m+3, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(x-2)+' '+f(y)+'l16-7" stroke="#3fa06a" stroke-width="2.4" stroke-linecap="round"/>'+
+      '<path d="M'+f(x+5)+' '+f(y-3.4)+'q5 1 6 5q-5 0-6-5z" fill="#3fa06a"/>';
+    const cx=x+16, cy=y-7.6;
+    o+='<circle cx="'+f(cx)+'" cy="'+f(cy)+'" r="5.4" fill="#e2452f"/>';
+    for(let i=0;i<3;i++){const rr=4.2-i*1.3;
+      o+='<path d="M'+f(cx)+' '+f(cy)+'m-'+f(rr)+' 0a'+f(rr)+' '+f(rr)+' 0 1 1 '+f(rr*2)+
+         ' 0" fill="none" stroke="#ff7a68" stroke-width="1"/>';}
+    return o;}},
+  {id:'dge2', n:'奶油鬍子', p:100, slot:'face', only:'a-dog', d:a=>{
+    /* 喝完牛奶嘴邊那一圈。沿著口鼻的下緣走，不要蓋到鼻頭 */
+    const m=mouY(a), f=n=>n.toFixed(1);
+    return '<path d="M'+f(60-11)+' '+f(m-1)+'q11 9 22 0q-1 7-11 7t-11-7z" fill="#fffdf8" opacity=".95"/>'+
+      '<path d="M'+f(60-11)+' '+f(m-1)+'q11 9 22 0" stroke="#e8e2d6" stroke-width="1.2" fill="none"/>'+
+      '<circle cx="'+f(60-13)+'" cy="'+f(m+1)+'" r="1.5" fill="#fffdf8"/>'+
+      '<circle cx="'+f(60+13)+'" cy="'+f(m)+'" r="1.2" fill="#fffdf8"/>';}},
   {id:'dge3', n:'叼著飛盤', p:100, slot:'face', only:'a-dog', d:a=>{
     /* 咬在嘴上，盤子往外斜出去 —— 整片壓在臉中間就變成盤子貼在臉上 */
     const m=mouY(a), cx=60+a.hr*.34, cy=m+2, f=n=>n.toFixed(1);
@@ -4233,7 +4239,8 @@ const ITEMS=[
   const y=mouY(a)+2;
   return '<path d="M'+(60-6)+' '+y+'q6-3 12 0v7a6 6 0 0 1-12 0z" fill="#ff7fa8"/>'+
     '<path d="M60 '+(y+2)+'v5" stroke="#e8447a" stroke-width="1.6"/>';}},
-  {id:'dge5', n:'鼻頭愛心', p:100, slot:'face', only:'a-dog', d:a=>{
+  /* hide:'nose' —— 愛心就是鼻頭，底下那顆黑點要收掉，不然兩個疊在一起 */
+  {id:'dge5', n:'鼻頭愛心', p:100, slot:'face', only:'a-dog', hide:'nose', d:a=>{
   const y=mouY(a)-7;
   return '<path d="M60 '+(y+5)+'C54 '+(y+1)+' 54 '+(y-4)+' 57.2 '+(y-4)+
     'C59 '+(y-4)+' 60 '+(y-2.4)+' 60 '+(y-2.4)+
@@ -7570,9 +7577,21 @@ const ITEMS=[
     return one(60-g)+one(60+g)+
       '<path d="M'+(60-g+5)+' '+(y-9)+'q2.4 3 2.4 4a2.4 2.4 0 0 1-4.8 0q0-1 2.4-4z" fill="#bfe9f7" opacity=".75"/>';}},
   {id:'due6', n:'長睫毛', p:100, slot:'face', only:'a-duk', d:a=>{
-    const y=eyeY(a), g=a.gap, r=AC.ew(a);
-    const one=(x,sg)=>'<path d="M'+(x+sg*r*.5)+' '+(y-r*.9)+'l'+(sg*4)+'-3M'+(x+sg*r)+' '+(y-r*.4)+'l'+(sg*5)+'-1M'+
-      (x+sg*r*.1)+' '+(y-r*1.05)+'l'+(sg*2)+'-4" stroke="#3a2e12" stroke-width="1.8" stroke-linecap="round"/>';
+    /* 跟熊那件一樣：起點要落在眼珠的圓周上。用 AC.ew 當半徑的話
+       是照著一個兩倍大的假眼睛擺，整排會飄在眼睛外面 */
+    const y=eyeY(a), g=a.gap, r=(a.pup||4.5), f=n=>n.toFixed(1);
+    const one=(x,sg)=>{
+      let o='';
+      [[-52,5.6],[-24,6.4],[2,5.6]].forEach(([deg,len])=>{
+        const A=(-90+sg*deg)*Math.PI/180, cs=Math.cos(A), sn=Math.sin(A);
+        /* 尾端往外翹一點，才像刷過的睫毛不是刺蝟 */
+        o+='<path d="M'+f(x+cs*(r-.6))+' '+f(y+sn*(r-.6))+
+           'q'+f(cs*len*.7)+' '+f(sn*len*.7)+' '+f(cs*len+sg*1.8)+' '+f(sn*len-.6)+
+           '" stroke="'+a.ink+'" stroke-width="1.7" fill="none" stroke-linecap="round"/>';
+      });
+      o+='<circle cx="'+f(x-sg*r*.3)+'" cy="'+f(y-r*.34)+'" r="'+f(r*.3)+'" fill="#ffffff" opacity=".9"/>';
+      return o;
+    };
     return one(60-g,-1)+one(60+g,1);}},
   {id:'dun1', n:'游泳圈', p:100, slot:'neck', only:'a-duk', mid:1, d:a=>{
     /* mid:1 ── 整個圈畫在頭的下面，頭就蓋在圈上面，後半圈自然被擋住，
@@ -9179,11 +9198,11 @@ function chSVG(a,e,small,yaw){
         (faceOn?'<g'+slide(60,a.noseR?a.hr*a.noseR:fsl)+' class="whisk">'+chWhisk(a)+'</g>':'')+
         (a.eyesTop?(turned?'':'<g class="faceMark">'+chFaceMark(a)+'</g>')
                   :onHead('<g class="faceMark">'+
-                     markYaw('fm:'+a.k,a,chFaceMark(a),a.hr*2,a.hr*.55,'rest')+'</g>'))+
+                     markYaw('fm:'+a.k+(hides(a,'nose')?'-nn':''),a,chFaceMark(a),a.hr*2,a.hr*.55,'rest')+'</g>'))+
         /* 蓋在頭上的（羊頭頂那撮毛）長在頭的外面，不能套頭的遮罩 ——
            剪下去就齊頭切平，正面凸凸的一轉身就變成頭頂一條白邊 */
         (a.eyesTop?'':'<g class="crownMark">'+
-           markYaw('fm:'+a.k,a,chFaceMark(a),a.hr*2,a.hr*.55,'crown')+'</g>')+
+           markYaw('fm:'+a.k+(hides(a,'nose')?'-nn':''),a,chFaceMark(a),a.hr*2,a.hr*.55,'crown')+'</g>')+
         (faceOn?onHead('<g'+slide(60,fsl)+'>'+
           '<g class="face">'+chFace(a,e,(turned&&a.eyesTop)?'rest':undefined)+'</g></g>'):'')+
         (turned&&tailFront?tailG(chBack(a,0,'tail')):'')+
