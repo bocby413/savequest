@@ -2270,7 +2270,29 @@ const TCHARS=[
    hr:22, hy:44, hry:20, bw:21, bh:17, by:82, gap:9, eo:-4, mo:11, pup:4.6,
    hatY:27, hatW:19, fx:14, fy:107, fw:9, legs:1, avaK:.72},
   {k:'a-sqr', n:'松鼠',   c:'#d98b4a', d:'#b56a2e', ink:'#3a2414', tailC:'#e0a468',
-   hr:23, hy:46, bw:16, bh:18, by:86, gap:10, eo:1, mo:12, fx:12, fy:106, fw:8, tilt:13}
+   hr:23, hy:46, bw:16, bh:18, by:86, gap:10, eo:1, mo:12, fx:12, fy:106, fw:8, tilt:13},
+  /* 豬：大鼻頭是重點，所以嘴巴的位置往下讓開，鼻頭才擺得下 */
+  {k:'a-pig', n:'豬',     c:'#f7a8bd', d:'#e8879f', ink:'#4a2531', tailC:'#f7a8bd', noMouth:1,
+   hr:26, hy:44, bw:22, bh:19, by:84, gap:10, eo:-1, mo:13, pup:4.6,
+   fx:14, fy:107, fw:10, tilt:12},
+  /* 老鼠：耳朵是兩個大圓，比頭還搶眼，所以頭本身畫小一點 */
+  {k:'a-mou', n:'老鼠',   c:'#b9bdc9', d:'#949aab', ink:'#2a2d38', tailC:'#e6a9b8',
+   /* 臉是尖的，鼻子要擺到那根尖嘴的尖端上，所以 mo 拉得比別隻大。
+      鼻子加鬍鬚就夠了，再畫嘴巴會跟鼻子疊在一起 */
+   /* chin：頭本身就畫成下巴收窄的尖臉（數字是下巴伸到頭半高的幾倍）。
+      鼻子鬍鬚跟眼睛用同一片位移，轉身時整張臉一起走，不會有東西自己滑掉。
+      頭要壓低一點，不然圓的那半跟身體之間會空一條縫 */
+   hr:22, hy:56, bw:16, bh:17, by:88, gap:9, eo:0, mo:20, pup:4.2, noMouth:1, chin:1.00,
+   noseR:1.15, fx:12, fy:106, fw:8, tilt:13},
+  /* 猴子：耳朵長在頭的正兩側（不是頭頂），臉中間有一塊淺色的臉盤 */
+  {k:'a-mky', n:'猴子',   c:'#c08552', d:'#9a6739', ink:'#33210f', tailC:'#a97245',
+   /* 眼睛壓小：深色的瞳孔配淺色臉盤，同樣大小看起來會比別隻大一圈 */
+   hr:25, hy:44, bw:19, bh:18, by:85, gap:10, eo:0, mo:11, pup:3.6,
+   fx:13, fy:107, fw:9, tilt:12},
+  /* 鴨子：有喙，嘴巴那格會自動換成喙；蹼是橘色的 */
+  {k:'a-duk', n:'鴨子',   c:'#ffd75e', d:'#e8bd3e', ink:'#3a2e12', beak:'#f5a623', foot:'#f5a623', bill:1,
+   hr:25, hy:45, bw:20, bh:19, by:84, gap:10, eo:0, mo:13, pup:4.4, spark:1,
+   fx:13, fy:107, fw:11, tilt:12}
 ];
 const eyeY=a=>a.hy+a.eo, mouY=a=>a.hy+a.mo;
 
@@ -2413,6 +2435,56 @@ function chBack(a,noTail,part){
                     tuft(-1,35,67,.86,1.18,'#f6dcc0','.8')+tuft(1,35,67,.86,1.18,'#f6dcc0','.8');
            })());
   }
+  if(a.k==='a-pig'){                                   /* 軟軟的三角耳，往上外側翹 */
+    /* 耳根的兩個點要算在頭的橢圓上。用固定偏移的話耳朵會飄在頭外面 */
+    const ry=HRY(a), rad=t=>t*Math.PI/180;
+    const P=(sg,t,k)=>[(60+sg*hr*k*Math.cos(rad(t))).toFixed(1),
+                       (hy-ry*k*Math.sin(rad(t))).toFixed(1)];
+    const ear=(sg)=>{
+      const A=P(sg,26,.97), B=P(sg,74,.97), T=P(sg,50,1.52);
+      const Q1=P(sg,36,1.34), Q2=P(sg,66,1.24);
+      return '<path d="M'+A[0]+' '+A[1]+'Q'+Q1[0]+' '+Q1[1]+' '+T[0]+' '+T[1]+
+             'Q'+Q2[0]+' '+Q2[1]+' '+B[0]+' '+B[1]+
+             'Z" fill="'+a.d+'" stroke="'+a.d+'" stroke-width="3" stroke-linejoin="round"/>';
+    };
+    /* 捲尾巴：兩圈的螺旋，不是直線 */
+    const tx0=60+a.bw-1, ty0=a.by+2;
+    return TAIL('<g class="tail" data-p="'+tx0+','+ty0+'">'+
+             '<path d="M'+tx0+' '+ty0+'c9 0 11-7 6-9s-9 3-5 7 12 3 13-4" stroke="'+a.tailC+
+             '" stroke-width="4.2" fill="none" stroke-linecap="round"/></g>')+
+           E(ear(-1)+ear(1));
+  }
+  if(a.k==='a-mou'){                                   /* 兩個大圓耳，比頭還搶眼 */
+    const ear=(sg)=>{
+      const x=60+sg*(hr-5), y=hy-hr+3;
+      return '<circle cx="'+x+'" cy="'+y+'" r="11.5" fill="'+a.d+'"/>'+
+             '<circle cx="'+(x+sg*1)+'" cy="'+(y+1)+'" r="6.8" fill="#f0c2cc"/>';
+    };
+    /* 細長的尾巴，從屁股拉出去再翹起來 */
+    const tx0=60+a.bw-1, ty0=a.by+7;
+    return TAIL('<g class="tail" data-p="'+tx0+','+ty0+'">'+
+             '<path d="M'+tx0+' '+ty0+'c14 2 20-4 18-14s-9-11-12-7" stroke="'+a.tailC+
+             '" stroke-width="3.4" fill="none" stroke-linecap="round"/></g>')+
+           E(ear(-1)+ear(1));
+  }
+  if(a.k==='a-mky'){                                   /* 耳朵長在頭的正兩側，不是頭頂 */
+    const ear=(sg)=>{
+      const x=60+sg*(hr+4);
+      return '<circle cx="'+x+'" cy="'+hy+'" r="8" fill="'+a.d+'"/>'+
+             '<circle cx="'+(x-sg*1.5)+'" cy="'+hy+'" r="4.4" fill="#e8b98e"/>';
+    };
+    const tx0=60+a.bw-1, ty0=a.by+4;
+    return TAIL('<g class="tail" data-p="'+tx0+','+ty0+'">'+
+             '<path d="M'+tx0+' '+ty0+'c16 3 22-8 16-18s-14-6-13 2" stroke="'+a.tailC+
+             '" stroke-width="4" fill="none" stroke-linecap="round"/></g>')+
+           E(ear(-1)+ear(1));
+  }
+  if(a.k==='a-duk'){                                   /* 沒有耳朵，頭頂一撮呆毛 */
+    const ty0=60+a.bw-3, tb=a.by+2;
+    return TAIL('<g class="tail" data-p="'+ty0+','+tb+'">'+
+             '<path d="M'+ty0+' '+(tb-5)+'q13 2 15 8q-9 2-15 3z" fill="'+a.d+'"/></g>')+
+           E('<path d="M60 '+(hy-hr+2)+'q-2-12 5-15q-1 7 3 9q-4 3-3 7z" fill="'+a.d+'"/>');
+  }
   return '';
 }
 /* 身體：企鵝是一顆蛋，機器人是方的，其他是圓潤的梯形身 */
@@ -2442,6 +2514,16 @@ function chHead(a){
   if(a.sq) return '<rect x="'+(60-a.hr)+'" y="'+(a.hy-a.hry)+'" width="'+(a.hr*2)+'" height="'+(a.hry*2)+
                   '" rx="12" fill="'+a.c+'"/>';
   if(a.egg) return '';                       /* 企鵝的頭跟身體是同一顆蛋 */
+  if(a.chin){
+    /* 尖臉（老鼠）：上半圓、下巴收窄，整顆頭一筆畫完。
+       另外疊一塊口鼻上去的話，那塊只要比頭寬就會露出一道肩膀 —— 那就是斷層 */
+    const ry=a.hry||a.hr*.94, r=a.hr, f=n=>n.toFixed(1);
+    return '<path d="M'+f(60-r)+' '+f(a.hy)+
+      'A'+f(r)+' '+f(ry)+' 0 0 1 '+f(60+r)+' '+f(a.hy)+
+      'C'+f(60+r)+' '+f(a.hy+ry*.62)+' '+f(60+r*.40)+' '+f(a.hy+ry*a.chin)+' 60 '+f(a.hy+ry*a.chin)+
+      'C'+f(60-r*.40)+' '+f(a.hy+ry*a.chin)+' '+f(60-r)+' '+f(a.hy+ry*.62)+' '+f(60-r)+' '+f(a.hy)+
+      'Z" fill="'+a.c+'"/>';
+  }
   return '<ellipse cx="60" cy="'+a.hy+'" rx="'+a.hr+'" ry="'+(a.hry||a.hr*.94)+'" fill="'+a.c+'"/>';
 }
 /* 頭上的花紋，畫在五官底下。頭貼也會用到這一份，所以只放頭上的東西 */
@@ -2457,8 +2539,21 @@ function chWhisk(a){
   if(a.k==='a-sqr')
     return '<path d="M'+(60-14)+' '+(my-2)+'h-8M'+(60+14)+' '+(my-2)+'h8" stroke="'+a.ink+
            '" stroke-width="1.5" stroke-linecap="round" opacity=".55"/>';
+  if(a.k==='a-mou'){
+    /* 鼻子壓在下巴的最下緣。走鬍鬚這條路有兩個理由：
+       不受頭的遮罩（鬍鬚才伸得出頭的輪廓外），
+       而且這一組有自己的位移半徑 noseR —— 轉身時鼻子會盪到頭的側邊 */
+    const ry=HRY(a), f=n=>n.toFixed(1), ny=a.hy+ry*a.chin-1.6;
+    return '<ellipse cx="60" cy="'+f(ny)+'" rx="4.6" ry="3.6" fill="'+a.ink+'"/>'+
+           '<path d="M'+f(60-5)+' '+f(ny-3)+'h-15M'+f(60-5)+' '+f(ny+1)+'h-14'+
+           'M'+f(60+5)+' '+f(ny-3)+'h15M'+f(60+5)+' '+f(ny+1)+'h14" stroke="'+a.ink+
+           '" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>';
+  }
   return '';
 }
+/* 往前突出來的口鼻（老鼠的尖嘴）。回傳 {top,tip,svg}，
+   top 是它接在頭上的高度、tip 是尖端 —— 轉身的變形要靠這兩個值 */
+function chSnout(a){ return null; }
 function chFaceMark(a){
   const L=60-a.gap, R=60+a.gap, ey=eyeY(a), my=mouY(a);
   if(a.k==='a-cat')
@@ -2508,6 +2603,20 @@ function chFaceMark(a){
     return '<ellipse cx="60" cy="'+(my+1)+'" rx="10" ry="8" fill="#f6dcc0"/>'+
            '<path d="M60 '+(my-6)+'l-3.4 3.4h6.8z" fill="'+a.ink+'"/>'+
            '';
+  if(a.k==='a-pig')                                    /* 大鼻頭配兩個鼻孔 */
+    return '<ellipse cx="60" cy="'+(my+1)+'" rx="12.5" ry="9" fill="#ffc8d8"/>'+
+           '<ellipse cx="60" cy="'+(my+1)+'" rx="12.5" ry="9" fill="none" stroke="'+a.d+
+             '" stroke-width="1.4" opacity=".6"/>'+
+           '<ellipse cx="'+(60-4.2)+'" cy="'+(my+1)+'" rx="2.1" ry="3.1" fill="'+a.ink+'"/>'+
+           '<ellipse cx="'+(60+4.2)+'" cy="'+(my+1)+'" rx="2.1" ry="3.1" fill="'+a.ink+'"/>';
+  if(a.k==='a-mky'){                                   /* 淺色的臉盤幾乎佔滿整顆頭，只留一圈棕邊 */
+    /* 之前畫小小一片，看起來像臉上貼了東西。照參考圖：
+       臉盤要大到只剩外圈一道毛邊，位置略偏下（額頭的毛留寬一點） */
+    const ry=HRY(a), f=n=>n.toFixed(1), L=60-a.gap, R=60+a.gap;
+    return '<ellipse cx="60" cy="'+f(a.hy+ry*.12)+'" rx="'+f(a.hr*.80)+'" ry="'+f(ry*.80)+
+             '" fill="#f0cba2"/>'+
+           '<ellipse cx="60" cy="'+f(my-5)+'" rx="1.5" ry="1.2" fill="'+a.ink+'" opacity=".7"/>';
+  }
   return '';
 }
 /* 身上的花紋，只有全身圖才畫 */
@@ -2532,6 +2641,14 @@ function chBodyMark(a){
   }
   if(a.k==='a-sqr') return '<ellipse cx="60" cy="'+(a.by+4)+'" rx="'+(a.bw*.6)+'" ry="'+(a.bh*.55)+
                            '" fill="#f6dcc0" opacity=".7"/>';
+  if(a.k==='a-mky') return '<ellipse cx="60" cy="'+(a.by+3)+'" rx="'+(a.bw*.62)+'" ry="'+(a.bh*.62)+
+                           '" fill="#f0cba2" opacity=".85"/>';
+  if(a.k==='a-pig') return '<ellipse cx="60" cy="'+(a.by+4)+'" rx="'+(a.bw*.58)+'" ry="'+(a.bh*.55)+
+                           '" fill="#ffd0dd" opacity=".6"/>';
+  if(a.k==='a-mou') return '<ellipse cx="60" cy="'+(a.by+4)+'" rx="'+(a.bw*.6)+'" ry="'+(a.bh*.55)+
+                           '" fill="#dfe2ea" opacity=".7"/>';
+  if(a.k==='a-duk') return '<ellipse cx="60" cy="'+(a.by+5)+'" rx="'+(a.bw*.66)+'" ry="'+(a.bh*.6)+
+                           '" fill="#fff0b8" opacity=".7"/>';
   if(a.k==='a-frog') return '<ellipse cx="60" cy="'+(a.by+5)+'" rx="'+(a.bw*.65)+'" ry="'+(a.bh*.5)+
                             '" fill="#d8f5c0" opacity=".8"/>';
   if(a.k==='a-owl')  return '<path d="M54 '+(a.by-6)+'h4v4h-4zM62 '+(a.by)+'h4v4h-4zM56 '+(a.by+6)+'h4v4h-4z'+
@@ -2575,7 +2692,14 @@ function chFace(a,e,part){
   else                         eyes='<circle cx="'+L+'" cy="'+y+'" r="'+(a.pup||4.5)+'" fill="'+ink+'"/>'+
                                     '<circle cx="'+R+'" cy="'+y+'" r="'+(a.pup||4.5)+'" fill="'+ink+'"/>';
   let mouth;
-  if(a.beak){                                     /* 有喙的就張喙代替嘴型 */
+  if(a.noMouth) mouth='';                         /* 豬的鼻頭就是整張臉的重點，再畫嘴巴會黏在一起 */
+  else if(a.bill){                                /* 鴨子是又寬又扁的嘴，不是尖喙 */
+    const open=(e==='joy'||e==='win'||e==='blush')?5:(e==='bad'||e==='sad')?0:2;
+    mouth='<ellipse cx="60" cy="'+(m-1)+'" rx="12.5" ry="5.5" fill="'+a.beak+'"/>'+
+          (open?'<path d="M'+(60-11)+' '+(m-1)+'q11 '+(2+open)+' 22 0q-11 '+(1+open*.6)+' -22 0z" fill="#c25c12"/>'
+               :'<path d="M'+(60-10)+' '+(m-1)+'q10 2 20 0" stroke="#c25c12" stroke-width="1.6" fill="none"/>');
+  }
+  else if(a.beak){                                /* 有喙的就張喙代替嘴型 */
     const open=(e==='joy'||e==='win'||e==='blush')?7:(e==='bad'||e==='sad')?1:4;
     mouth='<path d="M60 '+(m-6)+'l-7 6 7 '+(1+open)+' 7-'+(1+open)+'z" fill="'+a.beak+'"/>'+
           (open>5?'<path d="M53 '+m+'l7 7 7-7z" fill="#c25c12"/>':'');
@@ -2839,7 +2963,31 @@ const WINS=[
   {id:'win-sqdash', n:'竄動', p:150, only:'a-sqr', seq:[{t:0,y:4,sx:1.12,sy:.9,rot:-16,aL:-70,aR:40,f:"up"},{t:120,rot:16,aL:-40,aR:70},{t:240,rot:-16,aL:-70,aR:40},{t:360,rot:16,aL:-40,aR:70},{t:480,rot:-12},{t:620,y:-16,sx:.94,sy:1.1,rot:0,aL:-150,aR:150,f:"joy"},{t:820,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
   {id:'win-sqpuff', n:'蓬尾巴', p:150, only:'a-sqr', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-20,aR:20,f:"up"},{t:160,y:-6,sx:1.22,sy:1.16,aL:-70,aR:70,f:"bad"},{t:420,y:-4,sx:1.18,sy:1.12,f:"win"},{t:700,y:-6,sx:1.24,sy:1.18},{t:920,y:0,sx:1,sy:1,aL:0,aR:0,f:"joy"}]},
   {id:'win-sqclimb', n:'爬樹', p:150, only:'a-sqr', seq:[{t:0,y:2,sx:.96,sy:1.06,rot:0,aL:-160,aR:-20,fr:1,f:"up"},{t:180,y:-6,aL:-20,aR:-160},{t:360,y:-14,aL:-160,aR:-20},{t:540,y:-22,aL:-20,aR:-160},{t:720,y:-30,aL:-160,aR:-20},{t:900,y:-34,sx:.94,sy:1.1,aL:-165,aR:165,fr:0,f:"joy"},{t:1100,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
-  {id:'win-sqspin', n:'陀螺轉', p:150, only:'a-sqr', seq:[{t:0,y:4,sx:1.1,sy:.92,rot:0,aL:-60,aR:60,f:"up"},{t:140,y:-14,rot:180,sx:.94,sy:1.08,f:"joy"},{t:300,y:-10,rot:360},{t:440,y:-14,rot:540},{t:580,y:-6,rot:720},{t:760,y:0,snap:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]}
+  {id:'win-sqspin', n:'陀螺轉', p:150, only:'a-sqr', seq:[{t:0,y:4,sx:1.1,sy:.92,rot:0,aL:-60,aR:60,f:"up"},{t:140,y:-14,rot:180,sx:.94,sy:1.08,f:"joy"},{t:300,y:-10,rot:360},{t:440,y:-14,rot:540},{t:580,y:-6,rot:720},{t:760,y:0,snap:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-pigroll', n:'打滾', p:150, only:'a-pig', seq:[{t:0,y:4,sx:1.14,sy:.88,rot:0,aL:-40,aR:40,f:"up"},{t:180,y:-6,rot:200,sx:1,sy:1,f:"joy"},{t:380,y:-2,rot:420},{t:560,y:-6,rot:640},{t:760,y:0,snap:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-pigmud', n:'踩泥巴', p:150, only:'a-pig', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-30,aR:30,f:"blush"},{t:140,y:8,sx:1.18,sy:.84,aL:-15,aR:45},{t:280,y:0,sx:1,sy:1,aL:-45,aR:15},{t:420,y:8,sx:1.18,sy:.84,aL:-15,aR:45},{t:560,y:0,sx:1,sy:1,aL:-45,aR:15},{t:700,y:6,sx:1.14,sy:.88},{t:900,y:0,sx:1,sy:1,aL:0,aR:0,f:"joy"}]},
+  {id:'win-pigsniff', n:'到處聞', p:150, only:'a-pig', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-110,aR:-92,fr:1,f:"down"},{t:160,y:4,rot:-12},{t:300,y:3,rot:12},{t:440,y:4,rot:-12},{t:580,y:3,rot:10},{t:760,y:-8,rot:0,aL:-140,aR:140,fr:0,f:"win"},{t:940,y:0,aL:0,aR:0,f:"joy"}]},
+  {id:'win-pighop', n:'蹦蹦跳', p:150, only:'a-pig', seq:[{t:0,y:6,sx:1.16,sy:.86,rot:0,aL:-25,aR:25,f:"up"},{t:170,y:-22,sx:.9,sy:1.14,aL:-140,aR:140,f:"joy"},{t:340,y:6,sx:1.16,sy:.86,aL:-25,aR:25,f:"up"},{t:510,y:-20,sx:.92,sy:1.12,aL:-140,aR:140,f:"joy"},{t:700,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-pigwiggle', n:'扭屁股', p:150, only:'a-pig', seq:[{t:0,y:0,sx:1,sy:1,rot:-9,aL:-55,aR:55,f:"smile"},{t:150,rot:9},{t:300,rot:-9},{t:450,rot:9},{t:600,rot:-7},{t:750,rot:6},{t:920,y:0,rot:0,aL:0,aR:0,f:"joy"}]},
+  {id:'win-pigfeast', n:'大吃一頓', p:150, only:'a-pig', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-118,aR:-96,fr:1,f:"blush"},{t:120,sx:1.08,sy:.94},{t:240,sx:1,sy:1},{t:360,sx:1.08,sy:.94},{t:480,sx:1,sy:1},{t:600,sx:1.1,sy:.92},{t:780,y:-6,sx:1.16,sy:1.08,aL:-150,aR:150,fr:0,f:"joy"},{t:960,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-mouscurry', n:'竄來竄去', p:150, only:'a-mou', seq:[{t:0,y:2,sx:1.1,sy:.92,rot:-18,aL:-80,aR:30,f:"up"},{t:110,rot:18,aL:-30,aR:80},{t:220,rot:-18,aL:-80,aR:30},{t:330,rot:18,aL:-30,aR:80},{t:440,rot:-14},{t:600,y:-14,sx:.94,sy:1.1,rot:0,aL:-150,aR:150,f:"joy"},{t:800,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-mousnibble', n:'啃起司', p:150, only:'a-mou', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-116,aR:-98,fr:1,f:"blush"},{t:90,y:2,rot:4},{t:170,y:0,rot:-4},{t:250,y:2,rot:4},{t:330,y:0,rot:-4},{t:410,y:2,rot:3},{t:600,y:0,rot:0,aL:0,aR:0,fr:0,f:"joy"}]},
+  {id:'win-mouspeek', n:'探頭探腦', p:150, only:'a-mou', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-20,aR:20,f:"meh"},{t:180,rot:-22,y:-4,f:"up"},{t:400,rot:22,y:-4},{t:620,rot:-16,y:-2},{t:820,rot:0,y:-12,sx:.96,sy:1.08,aL:-140,aR:140,f:"joy"},{t:1000,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-mousleap', n:'高高跳', p:150, only:'a-mou', seq:[{t:0,y:8,sx:1.2,sy:.82,rot:0,aL:-30,aR:30,f:"down"},{t:200,y:-30,sx:.86,sy:1.2,aL:-160,aR:160,f:"joy"},{t:420,y:-24,sx:.92,sy:1.12},{t:600,y:6,sx:1.14,sy:.88,aL:-30,aR:30,f:"up"},{t:780,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-mouswhisk', n:'抖鬍鬚', p:150, only:'a-mou', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-40,aR:40,f:"smile"},{t:70,rot:5},{t:130,rot:-5},{t:190,rot:5},{t:250,rot:-5},{t:310,rot:4},{t:370,rot:-4},{t:430,rot:3},{t:620,rot:0,y:-6,aL:-130,aR:130,f:"joy"},{t:820,y:0,aL:0,aR:0,f:"win"}]},
+  {id:'win-mousspin', n:'轉圈圈', p:150, only:'a-mou', seq:[{t:0,y:3,sx:1.08,sy:.94,rot:0,aL:-55,aR:55,f:"up"},{t:130,y:-12,rot:180,sx:.95,sy:1.07,f:"joy"},{t:280,y:-8,rot:360},{t:420,y:-12,rot:540},{t:560,y:-5,rot:720},{t:740,y:0,snap:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-mkyswing', n:'盪來盪去', p:150, only:'a-mky', seq:[{t:0,y:-4,sx:.96,sy:1.06,rot:-20,aL:-165,aR:-140,fr:1,f:"up"},{t:200,rot:20,aL:-140,aR:-165},{t:400,rot:-20,aL:-165,aR:-140},{t:600,rot:16},{t:800,y:-14,rot:0,aL:-150,aR:150,fr:0,f:"joy"},{t:1000,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-mkyclap', n:'拍拍手', p:150, only:'a-mky', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-150,aR:-40,fr:1,f:"joy"},{t:110,aL:-95,aR:-95,sx:1.06,sy:.96},{t:220,aL:-150,aR:-40,sx:1,sy:1},{t:330,aL:-95,aR:-95,sx:1.06,sy:.96},{t:440,aL:-150,aR:-40,sx:1,sy:1},{t:550,aL:-95,aR:-95,sx:1.06,sy:.96},{t:760,y:-8,aL:-150,aR:150,fr:0,f:"win"},{t:940,y:0,aL:0,aR:0,f:"joy"}]},
+  {id:'win-mkyflip', n:'翻筋斗', p:150, only:'a-mky', seq:[{t:0,y:6,sx:1.14,sy:.88,rot:0,aL:-60,aR:60,f:"up"},{t:180,y:-26,rot:-180,sx:.9,sy:1.14,f:"joy"},{t:360,y:-26,rot:-360},{t:540,y:4,rot:-360,sx:1.1,sy:.92},{t:720,y:0,snap:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-mkyscratch', n:'抓抓頭', p:150, only:'a-mky', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-168,aR:20,fr:1,f:"meh"},{t:130,rot:6,aL:-150},{t:250,rot:-4,aL:-168},{t:370,rot:6,aL:-150},{t:490,rot:-4,aL:-168},{t:660,rot:0,y:-8,aL:-140,aR:140,fr:0,f:"joy"},{t:860,y:0,aL:0,aR:0,f:"win"}]},
+  {id:'win-mkybanana', n:'剝香蕉', p:150, only:'a-mky', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-120,aR:-100,fr:1,f:"down"},{t:200,aL:-140,aR:-70},{t:380,aL:-110,aR:-110},{t:560,aL:-140,aR:-70,f:"blush"},{t:760,y:-6,aL:-150,aR:150,fr:0,f:"joy"},{t:960,y:0,aL:0,aR:0,f:"win"}]},
+  {id:'win-mkyjump', n:'猴子跳', p:150, only:'a-mky', seq:[{t:0,y:6,sx:1.16,sy:.86,rot:0,aL:-40,aR:40,f:"up"},{t:160,y:-24,sx:.9,sy:1.14,rot:-10,aL:-160,aR:160,f:"joy"},{t:320,y:4,sx:1.12,sy:.9,rot:0,aL:-40,aR:40,f:"up"},{t:480,y:-24,sx:.9,sy:1.14,rot:10,aL:-160,aR:160,f:"joy"},{t:680,y:0,sx:1,sy:1,rot:0,aL:0,aR:0,f:"win"}]},
+  {id:'win-dukwaddle', n:'搖搖擺擺', p:150, only:'a-duk', seq:[{t:0,y:0,sx:1,sy:1,rot:-12,aL:-70,aR:20,f:"smile"},{t:170,y:3,rot:12,aL:-20,aR:70},{t:340,y:0,rot:-12,aL:-70,aR:20},{t:510,y:3,rot:12,aL:-20,aR:70},{t:680,y:0,rot:-8},{t:880,rot:0,y:-8,aL:-140,aR:140,f:"joy"},{t:1060,y:0,aL:0,aR:0,f:"win"}]},
+  {id:'win-dukflap', n:'拍翅膀', p:150, only:'a-duk', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-150,aR:150,f:"up"},{t:90,y:-10,aL:-30,aR:30},{t:180,y:0,aL:-150,aR:150},{t:270,y:-12,aL:-30,aR:30},{t:360,y:0,aL:-150,aR:150},{t:450,y:-14,aL:-30,aR:30,f:"joy"},{t:640,y:0,aL:0,aR:0,f:"win"}]},
+  {id:'win-dukdive', n:'一頭栽下去', p:150, only:'a-duk', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-60,aR:60,f:"up"},{t:180,y:-14,rot:-30,sx:.94,sy:1.1,aL:-150,aR:150},{t:360,y:10,rot:-160,sx:1.16,sy:.86,f:"blink"},{t:560,y:6,rot:-200},{t:760,y:0,snap:0,sx:1,sy:1,aL:0,aR:0,f:"joy"}]},
+  {id:'win-dukquack', n:'呱呱叫', p:150, only:'a-duk', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-45,aR:45,f:"joy"},{t:110,y:-4,sx:1.1,sy:1.06},{t:220,y:0,sx:1,sy:1},{t:330,y:-4,sx:1.1,sy:1.06},{t:440,y:0,sx:1,sy:1},{t:550,y:-5,sx:1.12,sy:1.08},{t:760,y:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]},
+  {id:'win-dukfloat', n:'水上漂', p:150, only:'a-duk', seq:[{t:0,y:0,sx:1,sy:1,rot:0,aL:-80,aR:80,f:"sleep"},{t:300,y:-6,rot:5},{t:600,y:-2,rot:-5},{t:900,y:-6,rot:4},{t:1150,y:-12,rot:0,aL:-140,aR:140,f:"joy"},{t:1350,y:0,aL:0,aR:0,f:"win"}]},
+  {id:'win-dukspin', n:'轉圈圈', p:150, only:'a-duk', seq:[{t:0,y:3,sx:1.08,sy:.94,rot:0,aL:-60,aR:60,f:"up"},{t:140,y:-12,rot:-180,sx:.95,sy:1.07,f:"joy"},{t:290,y:-8,rot:-360},{t:430,y:-12,rot:-540},{t:570,y:-5,rot:-720},{t:750,y:0,snap:0,sx:1,sy:1,aL:0,aR:0,f:"win"}]}
 ];
 /* 預設那款用 id 認，不要靠陣列位置——下面會依深淺重排 */
 const DEFBG='bg-violet';
@@ -6501,6 +6649,166 @@ const ITEMS=[
     '<path d="M'+(cx-w)+' '+(y+2)+'a'+w+' 6 0 0 1 '+(w*2)+' 0z" fill="#266b45"/>'+
     '<path d="M'+(cx-2.6)+' '+(y-4)+'q0 4 2.6 4t2.6-4z" fill="#e0d0a8"/>'+
     '<path d="M'+(cx-3)+' '+(y-4)+'q3 2.6 6 0z" fill="#7a4a24"/>');}},
+  /* a-pig */
+  {id:'pih1', n:'泥巴草帽', p:100, slot:'head', only:'a-pig', hide:'ear', d:a=>AC.cap(a,'#e0c77e','#b39a52')},
+  {id:'pih2', n:'蘋果髮飾', p:100, slot:'head', only:'a-pig', d:a=>AC.flower(a,'#d0392b','#ffd75e')},
+  {id:'pih3', n:'農夫毛帽', p:100, slot:'head', only:'a-pig', hide:'ear', d:a=>AC.beanie(a,'#6aa84f','#3d6b2e')},
+  {id:'pih4', n:'生日尖帽', p:100, slot:'head', only:'a-pig', d:a=>AC.cone(a,'#7b5cd6','#4b3390')},
+  {id:'pih5', n:'豬王皇冠', p:100, slot:'head', only:'a-pig', d:a=>AC.crown(a,'#ffc233','#fff0b8')},
+  {id:'pih6', n:'農場安全帽', p:100, slot:'head', only:'a-pig', hide:'ear', d:a=>AC.helm(a,'#ffc233','#c28800')},
+  {id:'pie1', n:'農場墨鏡', p:100, slot:'face', only:'a-pig', d:a=>AC.shades(a,'#2a2d38','#4a4f5e')},
+  {id:'pie2', n:'圓框眼鏡', p:100, slot:'face', only:'a-pig', d:a=>AC.round(a,'#e8f4ff','#4a2531')},
+  {id:'pie3', n:'蘋果腮紅', p:100, slot:'face', only:'a-pig', d:a=>AC.blush(a,'#e8628f','#ffffff')},
+  {id:'pie4', n:'午睡眼罩', p:100, slot:'face', only:'a-pig', d:a=>AC.sleepmask(a,'#9c3055','#6b1f3a')},
+  {id:'pie5', n:'泥點雀斑', p:100, slot:'face', only:'a-pig', d:a=>AC.freckle(a,'#9c6b4a')},
+  {id:'pie6', n:'農會單片鏡', p:100, slot:'face', only:'a-pig', d:a=>AC.monoc(a,'#ffc233','#fff2c0')},
+  {id:'pin1', n:'農場領結', p:100, slot:'neck', only:'a-pig', d:a=>AC.bowN(a,'#d0392b','#8a1f16')},
+  {id:'pin2', n:'麥稈圍巾', p:100, slot:'neck', only:'a-pig', d:a=>AC.scarf(a,'#e0c77e','#b39a52')},
+  {id:'pin3', n:'鈴鐺項圈', p:100, slot:'neck', only:'a-pig', d:a=>AC.collar2(a,'#6aa84f','#ffc233',2)},
+  {id:'pin4', n:'農會領帶', p:100, slot:'neck', only:'a-pig', d:a=>AC.tieN(a,'#4aa3df','#1f5f8f')},
+  {id:'pin5', n:'最佳豬獎牌', p:100, slot:'neck', only:'a-pig', d:a=>AC.medalN(a,'#ffc233','#c28800')},
+  {id:'pin6', n:'花圈', p:100, slot:'neck', only:'a-pig', d:a=>AC.ruff(a,'#ffffff','#d0b8c4')},
+  {id:'pib1', n:'吊帶褲', p:200, slot:'body', only:'a-pig', d:a=>AC.overall(a,'#4aa3df','#1f5f8f')},
+  {id:'pib2', n:'農場圍裙', p:200, slot:'body', only:'a-pig', d:a=>AC.apron(a,'#f2f4f8','#c9ccd6')},
+  {id:'pib3', n:'藍白橫紋衫', p:200, slot:'body', only:'a-pig', d:a=>AC.stripes(a,'#f2f4f8','#4aa3df')},
+  {id:'pib4', n:'農場襯衫', p:200, slot:'body', only:'a-pig', d:a=>AC.shirt(a,'#d0392b','#8a1f16')},
+  {id:'pib5', n:'麥稈背心', p:200, slot:'body', only:'a-pig', d:a=>AC.vestOpen(a,'#e0c77e','#b39a52')},
+  {id:'pib6', n:'泥巴披風', p:200, slot:'body', only:'a-pig', back:1, d:a=>AC.capeB(a,'#8a6a4a','#5c452e')},
+  {id:'pid1', n:'紅蘋果', p:200, slot:'hand', only:'a-pig', d:a=>AC.ball(a,'#d0392b','#8a1f16')},
+  {id:'pid2', n:'飼料籃', p:200, slot:'hand', only:'a-pig', d:a=>AC.basket(a,'#e0c77e','#b39a52')},
+  {id:'pid3', n:'草莓牛奶', p:200, slot:'hand', only:'a-pig', d:a=>AC.cup(a,'#f2f4f8','#d0392b')},
+  {id:'pid4', n:'紫氣球', p:200, slot:'hand', only:'a-pig', d:a=>AC.balloon(a,'#7b5cd6','#4b3390')},
+  {id:'pid5', n:'甜甜圈', p:200, slot:'hand', only:'a-pig', d:a=>AC.donut(a,'#b0632e','#ffe9b0')},
+  {id:'pid6', n:'烤地瓜', p:200, slot:'hand', only:'a-pig', d:a=>AC.yam(a,'#b06a3a','#7a4423')},
+  {id:'pif1', n:'農場雨鞋', p:200, slot:'foot', only:'a-pig', d:a=>AC.bootF(a,'#4aa3df','#1f5f8f')},
+  {id:'pif2', n:'棉襪', p:200, slot:'foot', only:'a-pig', d:a=>AC.sockF(a,'#f2f4f8','#c9ccd6')},
+  {id:'pif3', n:'皮涼鞋', p:200, slot:'foot', only:'a-pig', d:a=>AC.sandal(a,'#8a6a4a','#5c452e')},
+  {id:'pif4', n:'白運動鞋', p:200, slot:'foot', only:'a-pig', d:a=>AC.sneak(a,'#f2f4f8','#4a4f5e')},
+  {id:'pif5', n:'室內拖鞋', p:200, slot:'foot', only:'a-pig', d:a=>AC.slipper(a,'#ffc233','#c28800')},
+  {id:'pif6', n:'木鞋', p:200, slot:'foot', only:'a-pig', d:a=>AC.clog(a,'#a8763f','#6b4a22')},
+  /* a-mou */
+  {id:'moh1', n:'起司毛帽', p:100, slot:'head', only:'a-mou', d:a=>AC.beanie(a,'#ffd45e','#d8a92e')},
+  {id:'moh2', n:'夜行小禮帽', p:100, slot:'head', only:'a-mou', d:a=>AC.tophat(a,'#2a2d38','#9c3055',10)},
+  {id:'moh3', n:'穀倉草帽', p:100, slot:'head', only:'a-mou', d:a=>AC.cap(a,'#e0c77e','#b39a52')},
+  {id:'moh4', n:'小花髮飾', p:100, slot:'head', only:'a-mou', d:a=>AC.flower(a,'#ff9ec4','#ffd45e')},
+  {id:'moh5', n:'派對尖帽', p:100, slot:'head', only:'a-mou', d:a=>AC.cone(a,'#9c3055','#5e0f2c')},
+  {id:'moh6', n:'起司皇冠', p:100, slot:'head', only:'a-mou', d:a=>AC.crown(a,'#ffd45e','#fff0b8')},
+  {id:'moe1', n:'圓框眼鏡', p:100, slot:'face', only:'a-mou', d:a=>AC.round(a,'#e8f4ff','#2a2d38')},
+  {id:'moe2', n:'夜視墨鏡', p:100, slot:'face', only:'a-mou', d:a=>AC.shades(a,'#1c1f28','#3a3f4e')},
+  {id:'moe3', n:'小偷眼罩', p:100, slot:'face', only:'a-mou', d:a=>AC.patch(a,'#2a2d38','#2a2d38')},
+  {id:'moe4', n:'午睡眼罩', p:100, slot:'face', only:'a-mou', d:a=>AC.sleepmask(a,'#4a6aa8','#2a3f6b')},
+  {id:'moe5', n:'學者單片鏡', p:100, slot:'face', only:'a-mou', d:a=>AC.monoc(a,'#ffd45e','#fff2c0')},
+  {id:'moe6', n:'長睫毛', p:100, slot:'face', only:'a-mou', d:a=>AC.lash(a,'#2a2d38')},
+  {id:'mon1', n:'起司項鍊', p:100, slot:'neck', only:'a-mou', d:a=>AC.medalN(a,'#ffd45e','#d8a92e')},
+  {id:'mon2', n:'毛線圍巾', p:100, slot:'neck', only:'a-mou', d:a=>AC.scarf(a,'#9c3055','#5e0f2c')},
+  {id:'mon3', n:'小領結', p:100, slot:'neck', only:'a-mou', d:a=>AC.bowN(a,'#4aa3df','#1f5f8f')},
+  {id:'mon4', n:'珍珠項鍊', p:100, slot:'neck', only:'a-mou', d:a=>AC.beads(a,'#f2f4f8','#c9ccd6')},
+  {id:'mon5', n:'夜行領帶', p:100, slot:'neck', only:'a-mou', d:a=>AC.tieN(a,'#2a2d38','#0f1118')},
+  {id:'mon6', n:'蕾絲領', p:100, slot:'neck', only:'a-mou', d:a=>AC.ruff(a,'#f2f4f8','#c9ccd6')},
+  {id:'mob1', n:'條紋衫', p:200, slot:'body', only:'a-mou', d:a=>AC.stripes(a,'#4a6aa8','#2a3f6b')},
+  {id:'mob2', n:'穀倉圍裙', p:200, slot:'body', only:'a-mou', d:a=>AC.apron(a,'#e0c77e','#b39a52')},
+  {id:'mob3', n:'夜行背心', p:200, slot:'body', only:'a-mou', d:a=>AC.vestOpen(a,'#2a2d38','#0f1118')},
+  {id:'mob4', n:'起司T恤', p:200, slot:'body', only:'a-mou', d:a=>AC.tee(a,'#ffd45e','#d8a92e')},
+  {id:'mob5', n:'連帽衫', p:200, slot:'body', only:'a-mou', d:a=>AC.hoodie(a,'#9c3055','#5e0f2c')},
+  {id:'mob6', n:'夜行斗篷', p:200, slot:'body', only:'a-mou', back:1, d:a=>AC.capeB(a,'#2a2d38','#0f1118')},
+  {id:'mod1', n:'起司塊', p:200, slot:'hand', only:'a-mou', d:a=>{
+    const x=AC.gx(a), y=AC.gy(a)-2;
+    return '<path d="M'+(x-9)+' '+(y+7)+'l7-13h11v13z" fill="#ffd45e" stroke="#d8a92e" stroke-width="1.4" stroke-linejoin="round"/>'+
+      '<circle cx="'+(x-1)+'" cy="'+(y+2)+'" r="2.2" fill="#d8a92e"/>'+
+      '<circle cx="'+(x+5)+'" cy="'+(y-2)+'" r="1.6" fill="#d8a92e"/>'+
+      '<circle cx="'+(x+4)+'" cy="'+(y+5)+'" r="1.4" fill="#d8a92e"/>';}},
+  {id:'mod2', n:'麥穗提籃', p:200, slot:'hand', only:'a-mou', d:a=>AC.basket(a,'#e0c77e','#b39a52')},
+  {id:'mod3', n:'小提燈', p:200, slot:'hand', only:'a-mou', d:a=>AC.lamp(a,'#ffd45e','#d8a92e')},
+  {id:'mod4', n:'小書', p:200, slot:'hand', only:'a-mou', d:a=>AC.book(a,'#9c3055','#5e0f2c')},
+  {id:'mod5', n:'黃銅鑰匙', p:200, slot:'hand', only:'a-mou', d:a=>AC.key(a,'#ffd45e','#d8a92e')},
+  {id:'mod6', n:'莓果杯', p:200, slot:'hand', only:'a-mou', d:a=>AC.cup(a,'#f2f4f8','#c9ccd6')},
+  {id:'mof1', n:'小短靴', p:200, slot:'foot', only:'a-mou', d:a=>AC.bootF(a,'#543424','#2f1c10')},
+  {id:'mof2', n:'條紋襪', p:200, slot:'foot', only:'a-mou', d:a=>AC.sockF(a,'#f2f4f8','#9c3055')},
+  {id:'mof3', n:'草編涼鞋', p:200, slot:'foot', only:'a-mou', d:a=>AC.sandal(a,'#a8763f','#6b4a22')},
+  {id:'mof4', n:'運動鞋', p:200, slot:'foot', only:'a-mou', d:a=>AC.sneak(a,'#4aa3df','#1f5f8f')},
+  {id:'mof5', n:'起司拖鞋', p:200, slot:'foot', only:'a-mou', d:a=>AC.slipper(a,'#ffd45e','#d8a92e')},
+  {id:'mof6', n:'溜冰鞋', p:200, slot:'foot', only:'a-mou', d:a=>AC.skate(a,'#9c3055','#5e0f2c')},
+  /* a-mky */
+  {id:'mkh1', n:'叢林毛帽', p:100, slot:'head', only:'a-mky', d:a=>AC.beanie(a,'#2f7d4f','#1a4a2c')},
+  {id:'mkh2', n:'馬戲團尖帽', p:100, slot:'head', only:'a-mky', d:a=>AC.cone(a,'#d0392b','#8a1f16')},
+  {id:'mkh3', n:'探險帽', p:100, slot:'head', only:'a-mky', d:a=>AC.cap(a,'#7d8f4f','#54613a')},
+  {id:'mkh4', n:'香蕉皇冠', p:100, slot:'head', only:'a-mky', d:a=>AC.crown(a,'#ffd75e','#fff0b8')},
+  {id:'mkh5', n:'叢林花飾', p:100, slot:'head', only:'a-mky', d:a=>AC.flower(a,'#ff6f91','#ffd75e')},
+  {id:'mkh6', n:'探險安全帽', p:100, slot:'head', only:'a-mky', d:a=>AC.helm(a,'#ffc233','#c28800')},
+  {id:'mke1', n:'探險墨鏡', p:100, slot:'face', only:'a-mky', d:a=>AC.shades(a,'#33210f','#5a3a1a')},
+  {id:'mke2', n:'圓框眼鏡', p:100, slot:'face', only:'a-mky', d:a=>AC.round(a,'#e8f4ff','#33210f')},
+  {id:'mke3', n:'飛行風鏡', p:100, slot:'face', only:'a-mky', d:a=>AC.snork(a,'#c9ccd6','#8a8f9c')},
+  {id:'mke4', n:'午睡眼罩', p:100, slot:'face', only:'a-mky', d:a=>AC.sleepmask(a,'#2f7d4f','#1a4a2c')},
+  {id:'mke5', n:'單片鏡', p:100, slot:'face', only:'a-mky', d:a=>AC.monoc(a,'#ffd75e','#fff2c0')},
+  {id:'mke6', n:'OK繃', p:100, slot:'face', only:'a-mky', d:a=>AC.bandaid(a,'#ffe0b8','#e0b98a')},
+  {id:'mkn1', n:'香蕉項鍊', p:100, slot:'neck', only:'a-mky', d:a=>AC.medalN(a,'#ffd75e','#d8a92e')},
+  {id:'mkn2', n:'藤蔓圍巾', p:100, slot:'neck', only:'a-mky', d:a=>AC.scarf(a,'#2f7d4f','#1a4a2c')},
+  {id:'mkn3', n:'馬戲團領結', p:100, slot:'neck', only:'a-mky', d:a=>AC.bowN(a,'#d0392b','#8a1f16')},
+  {id:'mkn4', n:'藍領帶', p:100, slot:'neck', only:'a-mky', d:a=>AC.tieN(a,'#4aa3df','#1f5f8f')},
+  {id:'mkn5', n:'果實串', p:100, slot:'neck', only:'a-mky', d:a=>AC.beads(a,'#d0392b','#8a1f16')},
+  {id:'mkn6', n:'皮革項圈', p:100, slot:'neck', only:'a-mky', d:a=>AC.collar(a,'#33210f','#ffc233')},
+  {id:'mkb1', n:'馬戲團背心', p:200, slot:'body', only:'a-mky', d:a=>AC.vestOpen(a,'#d0392b','#8a1f16')},
+  {id:'mkb2', n:'卡其襯衫', p:200, slot:'body', only:'a-mky', d:a=>AC.shirt(a,'#7d8f4f','#54613a')},
+  {id:'mkb3', n:'香蕉T恤', p:200, slot:'body', only:'a-mky', d:a=>AC.tee(a,'#ffd75e','#d8a92e')},
+  {id:'mkb4', n:'吊帶褲', p:200, slot:'body', only:'a-mky', d:a=>AC.overall(a,'#2f7d4f','#1a4a2c')},
+  {id:'mkb5', n:'橫紋衫', p:200, slot:'body', only:'a-mky', d:a=>AC.stripes(a,'#f2f4f8','#d0392b')},
+  {id:'mkb6', n:'叢林斗篷', p:200, slot:'body', only:'a-mky', back:1, d:a=>AC.capeB(a,'#2f7d4f','#1a4a2c')},
+  {id:'mkd1', n:'香蕉', p:200, slot:'hand', only:'a-mky', d:a=>{
+    const x=AC.gx(a), y=AC.gy(a)-1;
+    return '<path d="M'+(x-7)+' '+(y-9)+'q-3 14 9 17q6-4 5-9q-8 1-11-8z" fill="#ffd75e" stroke="#d8a92e" stroke-width="1.3" stroke-linejoin="round"/>'+
+      '<path d="M'+(x-7)+' '+(y-9)+'l-1-3" stroke="#7a5a1a" stroke-width="2.6" stroke-linecap="round"/>';}},
+  {id:'mkd2', n:'椰子杯', p:200, slot:'hand', only:'a-mky', d:a=>AC.cup(a,'#f2ead8','#8a5a2a')},
+  {id:'mkd3', n:'藤球', p:200, slot:'hand', only:'a-mky', d:a=>AC.ball(a,'#7d8f4f','#54613a')},
+  {id:'mkd4', n:'探險提燈', p:200, slot:'hand', only:'a-mky', d:a=>AC.lamp(a,'#ffc233','#c28800')},
+  {id:'mkd5', n:'叢林地圖', p:200, slot:'hand', only:'a-mky', d:a=>AC.scroll(a,'#e8d7a8','#b39a52')},
+  {id:'mkd6', n:'探險旗', p:200, slot:'hand', only:'a-mky', d:a=>AC.flag(a,'#d0392b','#8a1f16')},
+  {id:'mkf1', n:'探險靴', p:200, slot:'foot', only:'a-mky', d:a=>AC.bootF(a,'#3a3f4e','#1c1f28')},
+  {id:'mkf2', n:'條紋襪', p:200, slot:'foot', only:'a-mky', d:a=>AC.sockF(a,'#f2f4f8','#d0392b')},
+  {id:'mkf3', n:'藤編涼鞋', p:200, slot:'foot', only:'a-mky', d:a=>AC.sandal(a,'#e0c77e','#b39a52')},
+  {id:'mkf4', n:'紅運動鞋', p:200, slot:'foot', only:'a-mky', d:a=>AC.sneak(a,'#d0392b','#8a1f16')},
+  {id:'mkf5', n:'香蕉拖鞋', p:200, slot:'foot', only:'a-mky', d:a=>AC.slipper(a,'#ffd75e','#d8a92e')},
+  {id:'mkf6', n:'木鞋', p:200, slot:'foot', only:'a-mky', d:a=>AC.clog(a,'#e0c28a','#a8763f')},
+  /* a-duk */
+  {id:'duh1', n:'雨天漁夫帽', p:100, slot:'head', only:'a-duk', hide:'ear', d:a=>AC.cap(a,'#4aa3df','#1f5f8f')},
+  {id:'duh2', n:'泳帽', p:100, slot:'head', only:'a-duk', hide:'ear', d:a=>AC.helm(a,'#f2f4f8','#c9ccd6')},
+  {id:'duh3', n:'粉紅尖帽', p:100, slot:'head', only:'a-duk', d:a=>AC.cone(a,'#e2589c','#a82c68')},
+  {id:'duh4', n:'蓮花髮飾', p:100, slot:'head', only:'a-duk', d:a=>AC.flower(a,'#ff9ec4','#ffd75e')},
+  {id:'duh5', n:'水鑽皇冠', p:100, slot:'head', only:'a-duk', d:a=>AC.crown(a,'#8ad3f2','#e6f7ff')},
+  {id:'duh6', n:'毛線帽', p:100, slot:'head', only:'a-duk', hide:'ear', d:a=>AC.beanie(a,'#2f7d4f','#1a4a2c')},
+  {id:'due1', n:'泳鏡', p:100, slot:'face', only:'a-duk', d:a=>AC.snork(a,'#4aa3df','#1f5f8f')},
+  {id:'due2', n:'太陽眼鏡', p:100, slot:'face', only:'a-duk', d:a=>AC.shades(a,'#1c1f28','#3a3f4e')},
+  {id:'due3', n:'圓框眼鏡', p:100, slot:'face', only:'a-duk', d:a=>AC.round(a,'#e8f4ff','#3a2e12')},
+  {id:'due4', n:'午睡眼罩', p:100, slot:'face', only:'a-duk', d:a=>AC.sleepmask(a,'#4aa3df','#1f5f8f')},
+  {id:'due5', n:'腮紅', p:100, slot:'face', only:'a-duk', d:a=>AC.blush(a,'#ff8fb8','#ffffff')},
+  {id:'due6', n:'長睫毛', p:100, slot:'face', only:'a-duk', d:a=>AC.lash(a,'#3a2e12')},
+  {id:'dun1', n:'游泳圈領', p:100, slot:'neck', only:'a-duk', d:a=>AC.ruff(a,'#f5601f','#ffffff')},
+  {id:'dun2', n:'水手領', p:100, slot:'neck', only:'a-duk', d:a=>AC.collar2(a,'#f2f4f8','#4aa3df',1)},
+  {id:'dun3', n:'防水圍巾', p:100, slot:'neck', only:'a-duk', d:a=>AC.scarf(a,'#4aa3df','#1f5f8f')},
+  {id:'dun4', n:'紅領結', p:100, slot:'neck', only:'a-duk', d:a=>AC.bowN(a,'#d0392b','#8a1f16')},
+  {id:'dun5', n:'泳賽金牌', p:100, slot:'neck', only:'a-duk', d:a=>AC.medalN(a,'#d0392b','#ffc233')},
+  {id:'dun6', n:'珍珠鍊', p:100, slot:'neck', only:'a-duk', d:a=>AC.beads(a,'#f2f4f8','#c9ccd6')},
+  {id:'dub1', n:'水手服', p:200, slot:'body', only:'a-duk', d:a=>AC.shirt(a,'#f2f4f8','#4aa3df')},
+  {id:'dub2', n:'雨衣', p:200, slot:'body', only:'a-duk', d:a=>AC.poncho(a,'#4aa3df','#1f5f8f')},
+  {id:'dub3', n:'泳裝橫紋', p:200, slot:'body', only:'a-duk', d:a=>AC.stripes(a,'#f2f4f8','#4aa3df')},
+  {id:'dub4', n:'救生背心', p:200, slot:'body', only:'a-duk', d:a=>AC.vestOpen(a,'#f5601f','#a83c0c')},
+  {id:'dub5', n:'廚房圍裙', p:200, slot:'body', only:'a-duk', d:a=>AC.apron(a,'#f2f4f8','#c9ccd6')},
+  {id:'dub6', n:'雨披', p:200, slot:'body', only:'a-duk', back:1, d:a=>AC.capeB(a,'#4aa3df','#1f5f8f')},
+  {id:'dud1', n:'小雨傘', p:200, slot:'hand', only:'a-duk', d:a=>AC.umbrella(a,'#4aa3df','#1f5f8f')},
+  {id:'dud2', n:'水球', p:200, slot:'hand', only:'a-duk', d:a=>AC.waterball(a,'#8ad3f2','#4aa3df')},
+  {id:'dud3', n:'麵包', p:200, slot:'hand', only:'a-duk', d:a=>AC.yam(a,'#c98a4a','#8a5a28')},
+  {id:'dud4', n:'汽水冰棒', p:200, slot:'hand', only:'a-duk', d:a=>AC.popsicle(a,'#8ad3f2','#4aa3df')},
+  {id:'dud5', n:'野餐籃', p:200, slot:'hand', only:'a-duk', d:a=>AC.basket(a,'#a8763f','#6b4a22')},
+  {id:'dud6', n:'水晶球', p:200, slot:'hand', only:'a-duk', d:a=>AC.orb(a,'#8ad3f2','#4aa3df')},
+  {id:'duf1', n:'雨鞋', p:200, slot:'foot', only:'a-duk', d:a=>AC.bootF(a,'#4aa3df','#1f5f8f')},
+  {id:'duf2', n:'蛙鞋', p:200, slot:'foot', only:'a-duk', d:a=>{
+    const y=(a.fy||107)+1, w=(a.fw||9)+1;
+    return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-3)+'" width="'+(w*2)+'" height="6" rx="2.4" fill="#2f7d4f"/>'+
+      '<path d="M'+(cx-w-2)+' '+(y+3)+'q'+(w+2)+' 12 '+(w*2+4)+' 0z" fill="#3fa06a"/>'+
+      '<path d="M'+cx+' '+(y+3)+'v8M'+(cx-w*.5)+' '+(y+3)+'v6M'+(cx+w*.5)+' '+(y+3)+'v6" stroke="#2f7d4f" stroke-width="1.3"/>');}},
+  {id:'duf3', n:'綠涼鞋', p:200, slot:'foot', only:'a-duk', d:a=>AC.sandal(a,'#2f7d4f','#1a4a2c')},
+  {id:'duf4', n:'白運動鞋', p:200, slot:'foot', only:'a-duk', d:a=>AC.sneak(a,'#f2f4f8','#c9ccd6')},
+  {id:'duf5', n:'條紋襪', p:200, slot:'foot', only:'a-duk', d:a=>AC.sockF(a,'#f2f4f8','#4aa3df')},
+  {id:'duf6', n:'粉紅拖鞋', p:200, slot:'foot', only:'a-duk', d:a=>AC.slipper(a,'#ff9ec4','#e2699c')},
 ];
 /* 背景跟勝利動作也是買來的，價格與擁有狀態走同一套 */
 const EXTRAS=()=>BGS.map(b=>({id:b.id,n:b.n,p:b.p,cat:'bg'}))
@@ -6956,6 +7264,7 @@ function chSVG(a,e,small,yaw){
   /* 青蛙的眼球包又大又圓（半徑比頭的一半還多），兩顆再往外撐就會整顆跑出頭外。
      它那一組收得多一點、臉整片也偏得少一點，外側那顆才不會飛出去 */
   const fsl=a.hr*(a.eyesTop?.32:.55);          /* 臉整片橫向偏移的半徑 */
+  const SNOUT=chSnout(a);                     /* 往前突出來的口鼻，有的角色才有 */
   const earK=(yc<0?-1:1)*Math.max(earHang?.9:(a.eyesTop?.5:.72),Math.abs(yc));
   const earXf=turned
     ? ' transform="translate(60,0) scale('+earK.toFixed(4)+',1) translate(-60,0)"' : '';
@@ -7090,7 +7399,15 @@ function chSVG(a,e,small,yaw){
         /* 靠鏡頭那隻手：畫在身體跟衣服的上面 */
         ((nearL||nearR)?'<g class="armsNear"'+armSqz+'>'+
           (nearL?armLg:'')+(nearR?armRg:'')+'</g>':'')+
-        chHead(a)+
+        /* 尖臉的頭要跟著轉身斜過去。以「頭頂」為軸斜切：頭頂不動（耳朵才不會跟著跑），
+           越往下偏得越多，下巴偏最多。偏移量取成跟臉那片一樣 ——
+           這樣下巴跟鼻子是同一個位置，才會像整顆頭轉過去，而不是鼻子從下巴滑掉 */
+        (a.chin&&turned?(()=>{
+          const ry=HRY(a), y0=a.hy-ry, tip=a.hy+ry*a.chin;
+          const k=fsl*ys/(tip-y0);
+          return '<g transform="matrix(1,0,'+k.toFixed(4)+',1,'+(-k*y0).toFixed(2)+',0)">'+
+                 chHead(a)+'</g>';
+        })():chHead(a))+
         /* 靠鏡頭那隻耳朵挪到頭前面 —— 但要在五官「之前」畫。
            畫在五官後面的話，青蛙那種眼球包會直接把自己的眼睛蓋掉 */
         /* 青蛙的眼球包是眼睛不是耳朵，永遠在頭前面。
@@ -7103,6 +7420,25 @@ function chSVG(a,e,small,yaw){
            分開算的話眼白留在原地、眼珠滑走，就變成眼白跟眼珠分離 */
         /* 青蛙的眼白跟著眼球包走（在上面那組裡）—— 但那組只有轉身時才畫，
            正面還是要在這裡畫，不然正面會沒有眼白 */
+        /* 往前突出來的口鼻（老鼠的尖嘴）。它是立體的，不是貼在臉上的一張圖：
+           根部長在頭的前面，跟著臉小幅移動；尖端是整顆頭最前面的點，移動得最多。
+           所以用斜切 —— 根部那條線幾乎不動，越往尖端偏移越大，寬度完全不壓。
+           整組（嘴、鼻、鬍鬚）套同一個變形，才會像一起轉。
+           照臉那樣整片位移又壓寬的話，就會變成一片跟著滑的平面貼紙。 */
+        (faceOn&&SNOUT?(()=>{
+          const base=fsl*ys, tipDx=a.hr*.85*ys;
+          const k=turned?(tipDx-base)/(SNOUT.tip-SNOUT.top):0;
+          const tf=turned?' transform="matrix(1,0,'+k.toFixed(4)+',1,'+
+            (base-k*SNOUT.top).toFixed(2)+',0)"':'';
+          return '<g class="snout"'+tf+'>'+SNOUT.svg+'</g>';
+        })():'')+
+        /* 伸出頭的輪廓外、又不能被頭的遮罩剪掉的（貓、松鼠的鬍鬚）。
+           要畫在五官之前，畫在後面會蓋到臉 */
+        /* 鬍鬚跟鼻子那組可以有自己的位移半徑（noseR）。
+           老鼠的鼻子長在往前突出的口鼻最前端，那是整顆頭最前面的點 ——
+           轉身時它移動得比臉上其他東西都多，會盪到頭的側邊去。
+           正面 sin 是 0，所以不管設多少，正面都不會變。 */
+        (faceOn?'<g'+slide(60,a.noseR?a.hr*a.noseR:fsl)+' class="whisk">'+chWhisk(a)+'</g>':'')+
         (a.eyesTop?(turned?'':'<g class="faceMark">'+chFaceMark(a)+'</g>')
                   :onHead('<g class="faceMark">'+
                      markYaw('fm:'+a.k,a,chFaceMark(a),a.hr*2,a.hr*.55,'rest')+'</g>'))+
@@ -7112,8 +7448,6 @@ function chSVG(a,e,small,yaw){
            markYaw('fm:'+a.k,a,chFaceMark(a),a.hr*2,a.hr*.55,'crown')+'</g>')+
         (faceOn?onHead('<g'+slide(60,fsl)+'>'+
           '<g class="face">'+chFace(a,e,(turned&&a.eyesTop)?'rest':undefined)+'</g></g>'):'')+
-        /* 鬍鬚往頭外面長，不受頭的遮罩 */
-        (faceOn?'<g'+slide(60,fsl)+' class="whisk">'+chWhisk(a)+'</g>':'')+
         (turned&&tailFront?tailG(chBack(a,0,'tail')):'')+
         /* 頭上、臉上、脖子上的東西。每一件（其實是每一個零件）
            自己照長在圓柱的哪個位置去算，這裡不再整層一起壓 */
