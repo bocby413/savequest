@@ -7534,18 +7534,13 @@ const ITEMS=[
     const one=(x,sg)=>'<path d="M'+(x+sg*r*.5)+' '+(y-r*.9)+'l'+(sg*4)+'-3M'+(x+sg*r)+' '+(y-r*.4)+'l'+(sg*5)+'-1M'+
       (x+sg*r*.1)+' '+(y-r*1.05)+'l'+(sg*2)+'-4" stroke="#3a2e12" stroke-width="1.8" stroke-linecap="round"/>';
     return one(60-g,-1)+one(60+g,1);}},
-  {id:'dun1', n:'游泳圈', p:100, slot:'neck', only:'a-duk', d:a=>{
-    /* 脖子上的東西畫在頭上面那一層，所以圈頂一定要留在嘴巴下面，
-       擋住後半圈的那塊也只能待在圈的洞裡，不然會蓋到臉。 */
-    const y=Math.max(NKB(a), mouY(a)+10);
-    const mid=bwAt(a,0)+2, hry=3.2, th=6, nkw=bwAt(a,0)*.66, f=n=>n.toFixed(1);
+  {id:'dun1', n:'游泳圈', p:100, slot:'neck', only:'a-duk', mid:1, d:a=>{
+    /* mid:1 ── 整個圈畫在頭的下面，頭就蓋在圈上面，後半圈自然被擋住，
+       不用再自己補一塊脖子（那塊之前會蓋到臉）。 */
+    const y=Math.max(NKB(a)-2, mouY(a)+8);
+    const mid=bwAt(a,0)+4, hry=4, th=6.6, f=n=>n.toFixed(1);
     let o='<ellipse cx="60" cy="'+f(y)+'" rx="'+f(mid)+'" ry="'+f(hry)+
       '" fill="none" stroke="#f5601f" stroke-width="'+f(th)+'"/>';
-    /* 洞裡面補一塊脖子，蓋掉後半圈 —— 只到洞的上緣，不會爬到臉上 */
-    o+='<path d="M'+f(60-nkw)+' '+f(y-hry)+'h'+f(nkw*2)+'v'+f(hry)+'h-'+f(nkw*2)+'z" fill="'+a.c+'"/>';
-    /* 前半圈疊回來，脖子就是穿過去的 */
-    o+='<path d="M'+f(60-mid)+' '+f(y)+'a'+f(mid)+' '+f(hry)+' 0 0 0 '+f(mid*2)+' 0'+
-       '" fill="none" stroke="#f5601f" stroke-width="'+f(th)+'"/>';
     [-1,1].forEach(k=>{
       o+='<path d="M'+f(60+k*mid)+' '+f(y-th*.5)+'v'+f(th)+'" stroke="#ffffff" stroke-width="3.4"/>';});
     return o+'<path d="M'+f(60-mid*.44)+' '+f(y+hry+th*.28)+'h'+f(mid*.88)+
@@ -8075,7 +8070,8 @@ function wearSVG(a,mode){
     if(it.back) return '';
     if(mode==='head') return ['body','hand','foot'].indexOf(it.slot)>=0?'':it.d(a);
     /* 衣服畫在頭的下面，不然領口會把下巴切掉 */
-    if(mode==='mid')  return it.slot==='body'?yawWrap(a,it):'';
+    /* mid：標了的配件跟衣服一樣畫在頭的下面（游泳圈要讓頭蓋在上面） */
+    if(mode==='mid')  return (it.slot==='body'||it.mid)?yawWrap(a,it):'';
     /* 手跟腳的東西各自塞進手臂／腳掌的群組裡，才會跟著動畫一起動 */
     if(mode==='hand') return it.slot==='hand'?AC.hold(a,it,it.d(a)):'';
     if(mode==='footL'||mode==='footR'){
@@ -8089,6 +8085,7 @@ function wearSVG(a,mode){
        不然也畫在腳掌那層 */
     if(it.slot==='hand') return '';
     if(it.slot==='foot') return a.base?it.d(a):'';
+    if(it.mid) return '';                          /* 已經畫在頭的下面那層 */
     return yawWrap(a,it);
   }).join('');
 }
