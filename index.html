@@ -10666,9 +10666,8 @@ function renderStocks(){
       '<td>'+(tp!==null?cell(tp,tp>=0?'up':'down')+
         '<span class="nm">'+(tc?((tp/tc*100)>=0?'+':'')+(tp/tc*100).toFixed(1)+'%':'')+'</span>':'—')+'</td><td></td></tr>'+
     '</tbody></table><div class="stkfoot"><span>'+
-      (PRICES?'收盤價 '+PRICES.date+'（'+PRICES.count+' 檔）':'還沒抓到收盤價')+
-    (us?'　美股 '+((PRICES&&PRICES.usCount)||0)+' 檔'+
-        (usdTwd()?'　1 美金 = '+usdTwd().toFixed(2)+' 台幣':'　還沒抓到匯率'):'')+
+    /* 只有真的有美股的時候才需要知道匯率。收盤日期跟檔數對使用者沒有意義 */
+    (us?(usdTwd()?'1 美金 = '+usdTwd().toFixed(2)+' 台幣':'還沒抓到匯率'):'')+
     '</span><span>'+(PRICES?'更新於 '+PRICES.updated:'')+'</span></div></div>';
 }
 /* 其他資產：手動維護的價值，跟股票一起算進總資產 */
