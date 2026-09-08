@@ -7535,20 +7535,21 @@ const ITEMS=[
       (x+sg*r*.1)+' '+(y-r*1.05)+'l'+(sg*2)+'-4" stroke="#3a2e12" stroke-width="1.8" stroke-linecap="round"/>';
     return one(60-g,-1)+one(60+g,1);}},
   {id:'dun1', n:'游泳圈', p:100, slot:'neck', only:'a-duk', d:a=>{
-    /* 先畫整個圈，再把脖子那一截補回來蓋住圈的後半，最後補上前半圈。
-       這樣脖子是穿過圈的，不是貼在圈前面。 */
-    const y=NKB(a)-3, rx=bwAt(a,0)+3, ry=6.4, f=n=>n.toFixed(1);
-    const mid=rx*.72, th=rx*.56;
-    const nkw=bwAt(a,0)*.72;
-    let o='<ellipse cx="60" cy="'+f(y)+'" rx="'+f(mid)+'" ry="'+f(ry*.7)+
+    /* 脖子上的東西畫在頭上面那一層，所以圈頂一定要留在嘴巴下面，
+       擋住後半圈的那塊也只能待在圈的洞裡，不然會蓋到臉。 */
+    const y=Math.max(NKB(a), mouY(a)+10);
+    const mid=bwAt(a,0)+2, hry=3.2, th=6, nkw=bwAt(a,0)*.66, f=n=>n.toFixed(1);
+    let o='<ellipse cx="60" cy="'+f(y)+'" rx="'+f(mid)+'" ry="'+f(hry)+
       '" fill="none" stroke="#f5601f" stroke-width="'+f(th)+'"/>';
-    /* 脖子：擋掉圈的後半 */
-    o+='<path d="M'+f(60-nkw)+' '+f(y-ry-th*.5-1)+'h'+f(nkw*2)+'v'+f(ry+th*.5+1)+'h-'+f(nkw*2)+'z" fill="'+a.c+'"/>';
-    /* 前半圈疊回來 */
-    o+='<path d="M'+f(60-mid)+' '+f(y)+'a'+f(mid)+' '+f(ry*.7)+' 0 0 0 '+f(mid*2)+' 0" fill="none" stroke="#f5601f" stroke-width="'+f(th)+'"/>';
+    /* 洞裡面補一塊脖子，蓋掉後半圈 —— 只到洞的上緣，不會爬到臉上 */
+    o+='<path d="M'+f(60-nkw)+' '+f(y-hry)+'h'+f(nkw*2)+'v'+f(hry)+'h-'+f(nkw*2)+'z" fill="'+a.c+'"/>';
+    /* 前半圈疊回來，脖子就是穿過去的 */
+    o+='<path d="M'+f(60-mid)+' '+f(y)+'a'+f(mid)+' '+f(hry)+' 0 0 0 '+f(mid*2)+' 0'+
+       '" fill="none" stroke="#f5601f" stroke-width="'+f(th)+'"/>';
     [-1,1].forEach(k=>{
-      o+='<path d="M'+f(60+k*mid)+' '+f(y-th*.5)+'v'+f(th)+'" stroke="#ffffff" stroke-width="3.6"/>';});
-    return o+'<path d="M'+f(60-mid*.5)+' '+f(y+ry*.7+th*.3)+'h'+f(mid)+'" stroke="#ffffff" stroke-width="3.2"/>';}},
+      o+='<path d="M'+f(60+k*mid)+' '+f(y-th*.5)+'v'+f(th)+'" stroke="#ffffff" stroke-width="3.4"/>';});
+    return o+'<path d="M'+f(60-mid*.44)+' '+f(y+hry+th*.28)+'h'+f(mid*.88)+
+      '" stroke="#ffffff" stroke-width="3"/>';}},
   {id:'dun2', n:'水手領', p:100, slot:'neck', only:'a-duk', d:a=>{
     const y=NKB(a)-5, w=bwAt(a,0)+2, f=n=>n.toFixed(1);
     return '<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 9 '+f(w*2)+' 0l-3 11h-'+f(w*2-6)+'z" fill="#f2f4f8"/>'+
