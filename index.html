@@ -5250,7 +5250,7 @@ const ITEMS=[
     '<rect x="'+(cx-w)+'" y="'+(y+1)+'" width="'+(w*2)+'" height="6" rx="3" fill="#f7f4ec"/>'+
     '<path d="M'+cx+' '+(y-6)+'v6M'+(cx-2.6)+' '+(y-4)+'h5.2M'+(cx-3)+' '+(y-1)+
     'q3 3 6 0" stroke="#ffc233" stroke-width="1.5" fill="none"/>');}},
-  {id:'bth1', n:'衛星天線盤', p:100, slot:'head', only:'a-bot', d:a=>{
+  {id:'bth1', n:'衛星天線盤', p:100, slot:'head', only:'a-bot', hide:'ant', d:a=>{
     /* 底座壓在頭頂上，桅杆往右上，盤子朝天空。訊號弧不能畫出畫布上緣 */
     const y=HLINE(a), f=n=>n.toFixed(1), mx=60+6, my=Math.max(11,y-13);
     return '<rect x="'+f(60-7)+'" y="'+f(y-5)+'" width="14" height="5.4" rx="2" fill="#6c7fa8"/>'+
@@ -5260,14 +5260,19 @@ const ITEMS=[
       '<circle cx="'+f(mx+2.8)+'" cy="'+f(my-4)+'" r="1.8" fill="#3ce0d0"/>'+
       '<path d="M'+f(mx+7)+' '+f(my-5.4)+'a5 5 0 0 1 3.4 4.4M'+f(mx+10)+' '+f(my-7.4)+
       'a8.6 8.6 0 0 1 5.4 7.4" stroke="#3ce0d0" stroke-width="1.5" fill="none" stroke-linecap="round"/>';}},
-  {id:'bth2', n:'資料皇冠', p:100, slot:'head', only:'a-bot', d:a=>{
-  const w=AC.crestW(a)*1.06,y=AC.crest(a)+3,h=Math.min(14,Math.max(7,(y-4)/1.45));
-  const bar=(x,hh)=>'<rect x="'+(x-2.4).toFixed(1)+'" y="'+(y-hh).toFixed(1)+'" width="4.8" height="'+
-    hh.toFixed(1)+'" rx="1.2" fill="#1f9b96"/>';
-  return '<rect x="'+(60-w).toFixed(1)+'" y="'+(y-4)+'" width="'+(w*2).toFixed(1)+
-    '" height="5" rx="1.6" fill="#0d6b66"/>'+
-    bar(60-w*.6,h*.6)+bar(60-w*.2,h*1.1)+bar(60+w*.2,h*.85)+bar(60+w*.6,h*1.3)+
-    '<circle cx="'+(60+w*.6).toFixed(1)+'" cy="'+(y-h*1.3-3)+'" r="2.4" fill="#3ce0d0"/>';}},
+  {id:'bth2', n:'像素皇冠', p:100, slot:'head', only:'a-bot', d:a=>{
+    /* 八位元的皇冠，跟牠的像素笑臉、像素愛心是同一套風格。
+       一格一格排出來，邊緣不加圓角才有點陣感 */
+    const y=HLINE(a), u=4.4, f=n=>n.toFixed(1), x0=60-u*3;
+    let o='';
+    const cell=(gx,gy,c)=>'<rect x="'+f(x0+gx*u)+'" y="'+f(y-(gy+1)*u)+'" width="'+f(u)+'" height="'+f(u)+'" fill="'+c+'"/>';
+    /* 底座兩排 */
+    for(let gx=0;gx<6;gx++){ o+=cell(gx,0,'#e0a92e'); o+=cell(gx,1,'#ffd75e'); }
+    /* 三個尖角 */
+    [0,2.5,5].forEach((gx,k)=>{ o+=cell(gx,2,'#ffd75e'); if(k===1) o+=cell(gx,3,'#ffd75e'); });
+    /* 寶石 */
+    o+=cell(2.5,1,'#3ce0d0')+cell(1,0,'#ff5f8f')+cell(4,0,'#ff5f8f');
+    return o+'<rect x="'+f(x0)+'" y="'+f(y-u)+'" width="'+f(u*6)+'" height="'+f(u*.5)+'" fill="#c98f1e"/>';}},
   {id:'bth3', n:'散熱風扇帽', p:100, slot:'head', only:'a-bot', d:a=>{
     /* 圓形風扇罩壓在頭頂，四片扇葉，旁邊兩道排風 */
     const y=HLINE(a), cy=y-10, f=n=>n.toFixed(1);
@@ -5296,7 +5301,7 @@ const ITEMS=[
       [-1,1].map(sg=>'<rect x="'+f(60+sg*w-5)+'" y="'+f(cy-3)+'" width="10" height="16" rx="4.4" fill="#22304f"/>'+
         '<rect x="'+f(60+sg*w-3)+'" y="'+f(cy)+'" width="6" height="10" rx="3" fill="#5f7099"/>'+
         '<circle cx="'+f(60+sg*w)+'" cy="'+f(cy+5)+'" r="1.8" fill="#3ce0d0"/>').join('');}},
-  {id:'bth6', n:'太陽能板帽', p:100, slot:'head', only:'a-bot', d:a=>{
+  {id:'bth6', n:'太陽能板帽', p:100, slot:'head', only:'a-bot', hide:'ant', d:a=>{
     /* 一片斜著架在頭上的太陽能板。要有支架撐著，不然看起來是浮在頭上面 */
     const y=HLINE(a), cy=y-8, f=n=>n.toFixed(1), R='rotate(-13,60,'+f(cy)+')';
     let o='<rect x="'+f(60-6)+'" y="'+f(y-6)+'" width="12" height="7" rx="2.4" fill="#6c7fa8"/>'+
