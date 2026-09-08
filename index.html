@@ -7395,11 +7395,16 @@ const ITEMS=[
       '<path d="M'+(x+9)+' '+(y+10)+'l6 5" stroke="#8a5a2a" stroke-width="2.6" stroke-linecap="round"/>'+
       '<circle cx="'+(x+15)+'" cy="'+(y+16)+'" r="2.6" fill="#d0392b"/>';}},
   {id:'mkd5', n:'樹枝', p:200, slot:'hand', only:'a-mky', d:a=>{
-    const x=AC.gx(a), y=AC.gy(a);
-    let o='<path d="M'+(x-2)+' '+(y+13)+'L'+(x+2)+' '+(y-11)+'" stroke="#8a5a2a" stroke-width="3" stroke-linecap="round"/>'+
-      '<path d="M'+(x+1)+' '+(y-4)+'l6-4M'+x+' '+(y+3)+'l-6-3" stroke="#8a5a2a" stroke-width="2.2" stroke-linecap="round"/>';
-    [[7,-8,20],[-6,0,-140],[2,-11,-10]].forEach(([dx,dy,rot])=>{
-      o+='<path d="M'+(x+dx)+' '+(y+dy)+'q8 3 0 8q-8-5 0-8z" fill="#3fa06a" transform="rotate('+rot+','+(x+dx)+','+(y+dy)+')"/>';});
+    /* 斜斜往上舉著，底端只露一小截 —— 直直杵到地上就變拐杖了 */
+    const x=AC.gx(a), g=AC.gy(a), f=n=>n.toFixed(1);
+    const bx=x+4, by=g+7, tx=x-7, ty=g-17;   /* 往身體外側斜舉，斜進身體就會被擋掉 */
+    let o='<path d="M'+f(bx)+' '+f(by)+'L'+f(tx)+' '+f(ty)+'" stroke="#8a5a2a" stroke-width="2.8" stroke-linecap="round"/>'+
+      '<path d="M'+f(x-1)+' '+f(g-5)+'l5 2M'+f(x-4)+' '+f(g-11)+'l-4 0'+
+      '" stroke="#8a5a2a" stroke-width="2" stroke-linecap="round"/>';
+    /* 葉子長在枝條上，不是浮在旁邊 */
+    [[tx,ty,-120],[tx+2,ty+2,-40],[x-4,g-11,-160],[x-1,g-5,20]].forEach(([lx,ly,rot])=>{
+      o+='<path d="M'+f(lx)+' '+f(ly)+'q8 3 0 8q-8-5 0-8z" fill="#3fa06a" stroke="#2f7d4f" stroke-width=".9" '+
+         'transform="rotate('+rot+','+f(lx)+','+f(ly)+')"/>';});
     return o;}},
   {id:'mkd6', n:'叢林地圖', p:200, slot:'hand', only:'a-mky', d:a=>{
     const x=AC.gx(a), y=AC.gy(a)-3;

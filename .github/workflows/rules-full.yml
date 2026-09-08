@@ -1,0 +1,20 @@
+name: 印出完整的線上規則
+
+# 手動觸發。這個 repo 是公開的，log 也會公開 ——
+# 拿到規則之後請把那次執行刪掉：gh run delete <run-id>
+on:
+  workflow_dispatch:
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm i --no-save google-auth-library@9
+      - env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SA }}
+        run: node scripts/rules-full.mjs
