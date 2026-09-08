@@ -6652,18 +6652,17 @@ const ITEMS=[
     '<path d="M'+(cx-3)+' '+(y-4)+'q3 2.6 6 0z" fill="#7a4a24"/>');}},
   /* a-pig　農場、泥巴、蘋果、松露，還有存錢筒 —— 這是存錢的 app，豬不用這個梗太可惜 */
   {id:'pih1', n:'稻草農夫帽', p:100, slot:'head', only:'a-pig', hide:'ear', d:a=>{
-    const y=HLINE(a)+HRY(a)*.2, w=a.hr+11, cw=AC.wAtY(a,y)+1.5, t=AC.top(a,HRY(a)*.52);
-    let o='<path d="M'+(60-w)+' '+y.toFixed(1)+'q'+w+' 9 '+(w*2)+' 0q-'+w+' 6 -'+(w*2)+' 0z" fill="#e0c77e"/>'+
-      '<path d="M'+(60-cw).toFixed(1)+' '+(y+1).toFixed(1)+'q0-'+(y-t).toFixed(1)+' '+cw.toFixed(1)+'-'+(y-t).toFixed(1)+
-      't'+cw.toFixed(1)+' '+(y-t).toFixed(1)+'z" fill="#e8d49a"/>';
-    for(let i=0;i<7;i++){const x=60-w*.86+i*(w*1.72/6);
-      o+='<path d="M'+x.toFixed(1)+' '+(y+2).toFixed(1)+'V'+(y-1).toFixed(1)+
-         '" stroke="#c9a95e" stroke-width="1.1" opacity=".75"/>';}
-    for(let i=0;i<5;i++){const x=60-cw*.72+i*(cw*1.44/4);
-      o+='<path d="M'+x.toFixed(1)+' '+(y-1).toFixed(1)+'V'+(t+3+Math.abs(i-2)*2).toFixed(1)+
-         '" stroke="#c9a95e" stroke-width="1.1" opacity=".8"/>';}
-    return o+'<path d="M'+(60-cw).toFixed(1)+' '+(y-2).toFixed(1)+'q'+cw.toFixed(1)+' 4 '+(cw*2).toFixed(1)+
-      ' 0" stroke="#c4471d" stroke-width="4" fill="none"/>';}},
+    /* 斗笠：一個從頭頂上方蓋下來的錐。錐頂要高過 HT，不然頭的圓弧會從
+       帽子上緣冒出來 —— 之前是圓頂而且比頭頂矮，才會一直露出粉紅色。 */
+    const y=HLINE(a)-1, w=a.hr+11, t=HT(a)-7, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'L60 '+f(t)+'L'+f(60+w)+' '+f(y)+
+      'q-'+f(w)+' 8 -'+f(w*2)+' 0z" fill="#e8d49a"/>'+
+      '<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 8 '+f(w*2)+' 0q-'+f(w)+' 5 -'+f(w*2)+' 0z" fill="#d8c084"/>';
+    for(let i=0;i<9;i++){const k=-1+i*.25;
+      o+='<path d="M60 '+f(t+2)+'L'+f(60+k*w*.96)+' '+f(y+(1-Math.abs(k))*3)+
+         '" stroke="#c9a95e" stroke-width="1.1" opacity=".7"/>';}
+    return o+'<path d="M'+f(60-w*.62)+' '+f(y-6)+'q'+f(w*.62)+' 5 '+f(w*1.24)+' 0" stroke="#c4471d" stroke-width="4.4" fill="none"/>'+
+      '<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 8 '+f(w*2)+' 0" stroke="#c9a95e" stroke-width="1.4" fill="none"/>';}},
   {id:'pih2', n:'蘋果髮飾', p:100, slot:'head', only:'a-pig', d:a=>{
     const cx=60+a.hr*.2, cy=AC.crest(a)-1;
     return '<path d="M'+(cx-7)+' '+(cy+5)+'h14v3h-14z" fill="#8a8f9c" transform="rotate(-10,'+cx+','+(cy+6)+')"/>'+
@@ -6698,12 +6697,17 @@ const ITEMS=[
          '<path d="M'+cx.toFixed(1)+' '+(cy-3)+'v6M'+(cx-2.4).toFixed(1)+' '+(cy-1.4)+'h4.8" stroke="#c28800" stroke-width="1.4"/>';});
     return o;}},
   {id:'pih6', n:'松露獵人帽', p:100, slot:'head', only:'a-pig', hide:'ear', d:a=>{
-    const y=HLINE(a), w=AC.hugW(a)+1, t=AC.top(a,HRY(a)*.66);
-    return '<path d="M'+(60-w)+' '+y+'q0-'+(y-t)+' '+w+'-'+(y-t)+'t'+w+' '+(y-t)+'z" fill="#7a4a24"/>'+
-      '<path d="M'+(60-w-6)+' '+y+'q'+(w+6)+' 9 '+((w+6)*2)+' 0q-'+(w+6)+' 4 -'+((w+6)*2)+' 0z" fill="#5c3618"/>'+
-      '<path d="M'+(60-w*.86)+' '+(y-2)+'q'+(w*.86)+' 4 '+(w*1.72)+' 0" stroke="#3d2410" stroke-width="4" fill="none"/>'+
-      '<ellipse cx="60" cy="'+(y-4)+'" rx="5" ry="4.2" fill="#33261a"/>'+
-      '<path d="M'+(60-3)+' '+(y-5)+'q3-2 6 0M'+(60-2)+' '+(y-2.4)+'q2-1.4 4 0" stroke="#5a4638" stroke-width="1.1" fill="none"/>';}},
+    /* 帽冠要整個罩住頭頂，帽緣要比頭寬 —— 之前只有一片淺淺的蓋子 */
+    const y=HLINE(a)+1, w=a.hr+8, cw=a.hr-1, t=(HT(a)-6-y*.25)/.75, f=n=>n.toFixed(1);
+    return '<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 10 '+f(w*2)+' 0q-'+f(w)+' 6 -'+f(w*2)+' 0z" fill="#5c3618"/>'+
+      '<path d="M'+f(60-cw)+' '+f(y+1)+'C'+f(60-cw)+' '+f(t)+' '+f(60+cw)+' '+f(t)+' '+f(60+cw)+' '+f(y+1)+
+      'z" fill="#7a4a24"/>'+
+      '<path d="M'+f(60-cw*.5)+' '+f(y-16)+'C'+f(60-cw*.5)+' '+f(y-22)+' '+f(60+cw*.5)+' '+f(y-22)+' '+
+      f(60+cw*.5)+' '+f(y-16)+'" stroke="#5c3618" stroke-width="1.6" fill="none" opacity=".8"/>'+
+      '<path d="M'+f(60-cw)+' '+f(y-2)+'q'+f(cw)+' 6 '+f(cw*2)+' 0" stroke="#3d2410" stroke-width="5" fill="none"/>'+
+      '<ellipse cx="'+f(60+cw*.5)+'" cy="'+f(y-4)+'" rx="5" ry="4.2" fill="#33261a"/>'+
+      '<path d="M'+f(60+cw*.5-3)+' '+f(y-5)+'q3-2 6 0M'+f(60+cw*.5-2)+' '+f(y-2.4)+'q2-1.4 4 0'+
+      '" stroke="#5a4638" stroke-width="1.1" fill="none"/>';}},
   {id:'pie1', n:'金鼻環', p:100, slot:'face', only:'a-pig', d:a=>{
     const sy=mouY(a)+8;                  /* 鼻頭的下緣，環要從這裡穿過去 */
     return '<circle cx="60" cy="'+(sy+2)+'" r="4.4" fill="none" stroke="#ffc233" stroke-width="2.6"/>'+
@@ -6761,11 +6765,11 @@ const ITEMS=[
          '<path d="M'+x.toFixed(1)+' '+(cy-2.6)+'q3-2 3.4 .4q-2.6 1.6-3.4-.4z" fill="#4a9b3f"/>';});
     return o;}},
   {id:'pin4', n:'農場方巾', p:100, slot:'neck', only:'a-pig', d:a=>{
-    const y=NKB(a)-2, w=NKW(a)*.82;
-    let o='<path d="M'+(60-w)+' '+y+'q'+w+' 8 '+(w*2)+' 0l-'+(w*.62)+' 13h-'+(w*.76)+'z" fill="#d0392b"/>';
-    for(let i=0;i<3;i++){const yy=y+5+i*4;
-      o+='<path d="M'+(60-w*.6+i*2)+' '+yy+'h'+(w*1.2-i*4)+'" stroke="#f2f4f8" stroke-width="1.3" opacity=".8"/>';}
-    return o+'<circle cx="'+(60-w*.8)+'" cy="'+(y+3)+'" r="3.2" fill="#8a1f16"/>';}},
+    const y=NKB(a)-3, w=bwAt(a,0)+1.5, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 8 '+f(w*2)+' 0l-'+f(w*.62)+' 12h-'+f(w*.76)+'z" fill="#d0392b"/>';
+    for(let i=0;i<3;i++){const yy=y+5+i*3.6;
+      o+='<path d="M'+f(60-w*.6+i*2)+' '+f(yy)+'h'+f(w*1.2-i*4)+'" stroke="#f2f4f8" stroke-width="1.3" opacity=".8"/>';}
+    return o+'<circle cx="'+f(60-w*.78)+'" cy="'+f(y+3)+'" r="3" fill="#8a1f16"/>';}},
   {id:'pin5', n:'最佳豬獎牌', p:100, slot:'neck', only:'a-pig', d:a=>{
     const y=NKB(a)-1, cy=y+13;
     let o='<path d="M'+(60-5)+' '+(cy+2)+'l-4 11h5l4-9zM'+(60+5)+' '+(cy+2)+'l4 11h-5l-4-9z" fill="#4aa3df"/>';
@@ -6775,14 +6779,14 @@ const ITEMS=[
     return o+'<circle cx="60" cy="'+cy+'" r="5.4" fill="#ffc233"/>'+
       '<path d="M'+(60-2.4)+' '+(cy+2)+'q2.4-6 4.8 0" stroke="#c28800" stroke-width="1.4" fill="none"/>';}},
   {id:'pin6', n:'雛菊花圈', p:100, slot:'neck', only:'a-pig', d:a=>{
-    const y=NKB(a), w=NKW(a)*.86;
-    let o='<path d="M'+(60-w)+' '+y+'q'+w+' 13 '+(w*2)+' 0" stroke="#4a9b3f" stroke-width="2" fill="none"/>';
-    [-.8,-.4,0,.4,.8].forEach((k,i)=>{
-      const x=60+k*w, cy=y+2+(1-Math.abs(k))*10;
+    const y=NKB(a)-2, w=bwAt(a,0)+1, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 12 '+f(w*2)+' 0" stroke="#4a9b3f" stroke-width="2" fill="none"/>';
+    [-.82,-.4,0,.4,.82].forEach(k=>{
+      const x=60+k*w, cy=y+2+(1-Math.abs(k))*9;
       for(let j=0;j<5;j++){const ang=j*72*Math.PI/180;
-        o+='<ellipse cx="'+(x+Math.cos(ang)*2.8).toFixed(1)+'" cy="'+(cy+Math.sin(ang)*2.8).toFixed(1)+
-           '" rx="2.4" ry="1.6" fill="#ffffff" transform="rotate('+(j*72)+','+(x+Math.cos(ang)*2.8).toFixed(1)+','+(cy+Math.sin(ang)*2.8).toFixed(1)+')"/>';}
-      o+='<circle cx="'+x.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="1.8" fill="#ffd75e"/>';});
+        o+='<ellipse cx="'+f(x+Math.cos(ang)*2.6)+'" cy="'+f(cy+Math.sin(ang)*2.6)+
+           '" rx="2.2" ry="1.5" fill="#ffffff" transform="rotate('+(j*72)+','+f(x+Math.cos(ang)*2.6)+','+f(cy+Math.sin(ang)*2.6)+')"/>';}
+      o+='<circle cx="'+f(x)+'" cy="'+f(cy)+'" r="1.7" fill="#ffd75e"/>';});
     return o;}},
   {id:'pib1', n:'飼料麻袋衣', p:200, slot:'body', only:'a-pig', d:a=>{
     const t=a.by-a.bh, h=a.bh*2;
@@ -6933,12 +6937,12 @@ const ITEMS=[
       o+='<circle cx="'+(60+kx*w).toFixed(1)+'" cy="'+(t+(y-t)*ky).toFixed(1)+'" r="'+r+'" fill="#e0b400"/>';});
     return o;}},
   {id:'moh2', n:'頂針帽', p:100, slot:'head', only:'a-mou', d:a=>{
-    const y=HLINE(a)+1, w=AC.hugW(a)*.76, t=AC.top(a,HRY(a)*.9);
-    let o='<path d="M'+(60-w)+' '+y+'q0-'+(y-t)+' '+w+'-'+(y-t)+'t'+w+' '+(y-t)+'z" fill="#c9ccd6"/>'+
-      '<path d="M'+(60-w)+' '+(y-1)+'h'+(w*2)+'v3h-'+(w*2)+'z" fill="#8a8f9c"/>';
+    const y=HT(a)+9, w=AC.wAtY(a,y)*.94, t=Math.max(5,y-17), f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q0-'+f(y-t)+' '+f(w)+'-'+f(y-t)+'t'+f(w)+' '+f(y-t)+'z" fill="#c9ccd6"/>'+
+      '<path d="M'+f(60-w)+' '+f(y-1)+'h'+f(w*2)+'v3.4h-'+f(w*2)+'z" fill="#8a8f9c"/>';
     for(let r=0;r<3;r++)for(let c=0;c<5;c++){
-      o+='<circle cx="'+(60-w*.66+c*(w*1.32/4)).toFixed(1)+'" cy="'+(t+3+r*4).toFixed(1)+'" r="1" fill="#8a8f9c"/>';}
-    return o;}},
+      o+='<circle cx="'+f(60-w*.62+c*(w*1.24/4))+'" cy="'+f(t+4+r*4)+'" r="1" fill="#8a8f9c"/>';}
+    return o+'<path d="M'+f(60-w*.5)+' '+f(t+2)+'q'+f(w*.5)+' -2 '+f(w)+' 0" stroke="#e8ebf2" stroke-width="1.4" fill="none"/>';}},
   {id:'moh3', n:'報紙折帽', p:100, slot:'head', only:'a-mou', d:a=>{
     const y=HLINE(a)+1, w=AC.hugW(a)+3, t=AC.top(a,HRY(a)*.6);
     let o='<path d="M'+(60-w)+' '+y+'L60 '+t+'L'+(60+w)+' '+y+'z" fill="#f2f0e8"/>'+
@@ -6947,18 +6951,18 @@ const ITEMS=[
       o+='<path d="M'+(60-hw).toFixed(1)+' '+yy+'h'+(hw*2).toFixed(1)+'" stroke="#9a978c" stroke-width="1.1"/>';}
     return o+'<path d="M60 '+t+'L60 '+y+'" stroke="#c9c6bb" stroke-width="1.2"/>';}},
   {id:'moh4', n:'麥稈小草帽', p:100, slot:'head', only:'a-mou', d:a=>{
-    const y=HLINE(a), w=AC.hugW(a)+2, t=AC.top(a,HRY(a)*.44);
-    return '<path d="M'+(60-w-3)+' '+(y+1)+'q'+(w+3)+' 6 '+((w+3)*2)+' 0q-'+(w+3)+' 4 -'+((w+3)*2)+' 0z" fill="#e0c77e"/>'+
-      '<path d="M'+(60-w*.78)+' '+(y+1)+'q0-'+(y-t)+' '+(w*.78)+'-'+(y-t)+'t'+(w*.78)+' '+(y-t)+'z" fill="#e8d49a"/>'+
-      '<path d="M'+(60-w*.78)+' '+(y-2)+'q'+(w*.78)+' 4 '+(w*1.56)+' 0" stroke="#9c3055" stroke-width="3" fill="none"/>'+
-      '<path d="M'+(60+w*.5)+' '+(y-3)+'l3-8" stroke="#c9a95e" stroke-width="1.6"/>'+
-      '<path d="M'+(60+w*.5+2.6)+' '+(y-11)+'q3-2.6 1-5q-3 2-1 5z" fill="#e8d49a"/>';}},
+    const y=HT(a)+8, w=AC.wAtY(a,y)+7, cw=AC.wAtY(a,y)*.96, t=Math.max(5,y-13), f=n=>n.toFixed(1);
+    return '<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 6 '+f(w*2)+' 0q-'+f(w)+' 4 -'+f(w*2)+' 0z" fill="#e0c77e"/>'+
+      '<path d="M'+f(60-cw)+' '+f(y)+'q0-'+f(y-t)+' '+f(cw)+'-'+f(y-t)+'t'+f(cw)+' '+f(y-t)+'z" fill="#e8d49a"/>'+
+      '<path d="M'+f(60-cw)+' '+f(y-3)+'q'+f(cw)+' 4 '+f(cw*2)+' 0" stroke="#9c3055" stroke-width="3" fill="none"/>'+
+      '<path d="M'+f(60+cw*.5)+' '+f(y-4)+'l3-8" stroke="#c9a95e" stroke-width="1.6"/>'+
+      '<path d="M'+f(60+cw*.5+2.6)+' '+f(y-12)+'q3-2.6 1-5q-3 2-1 5z" fill="#e8d49a"/>';}},
   {id:'moh5', n:'夜行小禮帽', p:100, slot:'head', only:'a-mou', d:a=>{
-    const y=HLINE(a)-1, w=AC.hugW(a)*.68, t=Math.max(5,y-15);
-    return '<path d="M'+(60-w-6)+' '+y+'q'+(w+6)+' 6 '+((w+6)*2)+' 0q-'+(w+6)+' 4 -'+((w+6)*2)+' 0z" fill="#2a2d38"/>'+
-      '<path d="M'+(60-w)+' '+(y+1)+'V'+t+'h'+(w*2)+'v'+(y+1-t)+'z" fill="#2a2d38"/>'+
-      '<path d="M'+(60-w)+' '+(y-3)+'h'+(w*2)+'v4h-'+(w*2)+'z" fill="#9c3055"/>'+
-      '<path d="M'+(60-w+2)+' '+(t+3)+'v'+(y-t-7)+'" stroke="#454a5c" stroke-width="1.6" opacity=".8"/>';}},
+    const y=HT(a)+8, w=AC.wAtY(a,y)*.78, t=Math.max(5,y-16), f=n=>n.toFixed(1);
+    return '<path d="M'+f(60-w-6)+' '+f(y)+'q'+f(w+6)+' 6 '+f((w+6)*2)+' 0q-'+f(w+6)+' 4 -'+f((w+6)*2)+' 0z" fill="#2a2d38"/>'+
+      '<path d="M'+f(60-w)+' '+f(y+1)+'V'+f(t)+'h'+f(w*2)+'v'+f(y+1-t)+'z" fill="#2a2d38"/>'+
+      '<path d="M'+f(60-w)+' '+f(y-3)+'h'+f(w*2)+'v4h-'+f(w*2)+'z" fill="#9c3055"/>'+
+      '<path d="M'+f(60-w+2)+' '+f(t+3)+'v'+f(y-t-7)+'" stroke="#454a5c" stroke-width="1.6" opacity=".8"/>';}},
   {id:'moh6', n:'起司皇冠', p:100, slot:'head', only:'a-mou', d:a=>{
     const y=AC.crest(a)+3, w=AC.crestW(a)*1.02;
     let o='<path d="M'+(60-w)+' '+y+'h'+(w*2)+'v-4h-'+(w*2)+'z" fill="#d8a92e"/>'+
@@ -7037,19 +7041,20 @@ const ITEMS=[
     return o+'<path d="M'+(x-2).toFixed(1)+' '+(y+7)+'q4 3 8 0" stroke="#9c3055" stroke-width="1.6" fill="none"/>'+
       '<circle cx="'+(x+2).toFixed(1)+'" cy="'+(y+8)+'" r="1.4" fill="#9c3055"/>';}},
   {id:'mon4', n:'毛線圍巾', p:100, slot:'neck', only:'a-mou', d:a=>{
-    const y=NKB(a)-3, w=NKW(a)*.9;
-    let o='<path d="M'+(60-w)+' '+y+'q'+w+' 12 '+(w*2)+' 0v7q-'+w+' 11 -'+(w*2)+' 0z" fill="#9c3055"/>'+
-      '<path d="M'+(60+w*.4)+' '+(y+8)+'l4 15h-7l-2-13z" fill="#8a2648"/>';
+    const y=NKB(a)-4, w=bwAt(a,0)+1.5, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 11 '+f(w*2)+' 0v6q-'+f(w)+' 10 -'+f(w*2)+' 0z" fill="#9c3055"/>'+
+      '<path d="M'+f(60+w*.4)+' '+f(y+7)+'l3.4 13h-6l-1.8-11z" fill="#8a2648"/>';
     for(let i=0;i<3;i++){
-      o+='<path d="M'+(60+w*.4+i*1.6-2)+' '+(y+22+i*.6).toFixed(1)+'v4" stroke="#c94a78" stroke-width="1.2"/>';}
-    return o+'<path d="M'+(60-w*.7)+' '+(y+5)+'q'+(w*.7)+' 8 '+(w*1.4)+' 0" stroke="#c94a78" stroke-width="1.4" fill="none" opacity=".7"/>';}},
+      o+='<path d="M'+f(60+w*.4+i*1.4-1.6)+' '+f(y+20+i*.6)+'v3.4" stroke="#c94a78" stroke-width="1.2"/>';}
+    return o+'<path d="M'+f(60-w*.7)+' '+f(y+5)+'q'+f(w*.7)+' 7 '+f(w*1.4)+' 0" stroke="#c94a78" stroke-width="1.4" fill="none" opacity=".7"/>';}},
   {id:'mon5', n:'蕾絲領', p:100, slot:'neck', only:'a-mou', d:a=>{
-    const y=NKB(a)-1, w=NKW(a)*.92;
+    /* 外圈是圓的，圓心的範圍要再往內收一個半徑，不然整圈比肩膀寬 */
+    const y=NKB(a)-2, r=3.4, w=bwAt(a,0)+1.5-r, f=n=>n.toFixed(1);
     let o='';
-    for(let i=0;i<8;i++){const x=60-w+i*(w*2/7), dy=y+2+Math.sin(i/7*Math.PI)*7;
-      o+='<circle cx="'+x.toFixed(1)+'" cy="'+dy.toFixed(1)+'" r="4.4" fill="#ffffff"/>';}
-    for(let i=0;i<8;i++){const x=60-w+i*(w*2/7), dy=y+2+Math.sin(i/7*Math.PI)*7;
-      o+='<circle cx="'+x.toFixed(1)+'" cy="'+dy.toFixed(1)+'" r="1.6" fill="#dfe2ea"/>';}
+    for(let i=0;i<7;i++){const x=60-w+i*(w*2/6), dy=y+2+Math.sin(i/6*Math.PI)*6;
+      o+='<circle cx="'+f(x)+'" cy="'+f(dy)+'" r="'+r+'" fill="#ffffff"/>';}
+    for(let i=0;i<7;i++){const x=60-w+i*(w*2/6), dy=y+2+Math.sin(i/6*Math.PI)*6;
+      o+='<circle cx="'+f(x)+'" cy="'+f(dy)+'" r="1.3" fill="#dfe2ea"/>';}
     return o;}},
   {id:'mon6', n:'小鈴鐺', p:100, slot:'neck', only:'a-mou', d:a=>{
     const y=NKB(a)-1, w=NKW(a)*.82, cy=y+10;
@@ -7184,13 +7189,14 @@ const ITEMS=[
       return o;});}},
   /* a-mky　香蕉、藤蔓、椰子、馬戲團；香蕉皮蓋在頭上是猴子才做得出來的蠢事 */
   {id:'mkh1', n:'香蕉皮頭套', p:100, slot:'head', only:'a-mky', d:a=>{
-    const y=HLINE(a)+4, w=AC.hugW(a)*.9, t=AC.top(a,HRY(a)*.6);
-    let o='<path d="M'+(60-w*.34)+' '+t+'q'+(w*.34)+'-4 '+(w*.68)+' 0v6h-'+(w*.68)+'z" fill="#e8c247"/>';
+    /* 皮的尾端要停在眼睛上面 —— 之前掛在 HLINE 底下 8，整片蓋住臉 */
+    const top=HT(a)+1, end=Math.min(eyeY(a)-10, top+13), w=AC.wAtY(a,end)+3, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w*.3)+' '+f(top)+'q'+f(w*.3)+'-4 '+f(w*.6)+' 0v5h-'+f(w*.6)+'z" fill="#e8c247"/>';
     [-1,-.34,.34,1].forEach(k=>{
-      const x=60+k*w*.86, ex=60+k*w*1.02;
-      o+='<path d="M60 '+(t+3)+'Q'+((60+x)/2).toFixed(1)+' '+(t+6)+' '+x.toFixed(1)+' '+y.toFixed(1)+
-         'q'+((ex-x)*.6).toFixed(1)+' 5 '+((ex-x)).toFixed(1)+' 8q-6-2-9-8z" fill="#ffd75e" stroke="#e8c247" stroke-width="1.1" stroke-linejoin="round"/>';});
-    return o+'<path d="M60 '+(t-1)+'v-4" stroke="#7a5a1a" stroke-width="2.4" stroke-linecap="round"/>';}},
+      const x=60+k*w*.86, ex=60+k*w*1.04;
+      o+='<path d="M60 '+f(top+3)+'Q'+f((60+x)/2)+' '+f(top+5)+' '+f(x)+' '+f(end)+
+         'q'+f((ex-x)*.6)+' 4 '+f(ex-x)+' 6q-5-2-7-6z" fill="#ffd75e" stroke="#e8c247" stroke-width="1.1" stroke-linejoin="round"/>';});
+    return o+'<path d="M60 '+f(top-1)+'v-4" stroke="#7a5a1a" stroke-width="2.4" stroke-linecap="round"/>';}},
   {id:'mkh2', n:'馬戲團尖帽', p:100, slot:'head', only:'a-mky', d:a=>{
     const y=AC.crest(a)+2, w=AC.crestW(a)*.82, t=Math.max(7,y-25);
     let o='<path d="M60 '+t+'L'+(60+w)+' '+y+'H'+(60-w)+'z" fill="#f2f4f8"/>';
@@ -7256,13 +7262,15 @@ const ITEMS=[
       return '<path d="'+d+'z" fill="'+c+'"/>';};
     return star(60-cx,cy-2,4.6,'#d0392b')+star(60+cx,cy-2,4.6,'#4aa3df')+
       '<path d="M'+(60-g)+' '+(y+6)+'q0 5 2 7q2-2 0-7z" fill="#4aa3df"/>';}},
-  {id:'mke5', n:'葉子眼罩', p:100, slot:'face', only:'a-mky', d:a=>{
-    const y=eyeY(a), g=a.gap, w=g+AC.ew(a)+2;
-    let o='<path d="M'+(60-w)+' '+(y-6)+'h'+(w*2)+'v8q0 4-'+w+' 4t-'+w+'-4z" fill="#2f7d4f"/>'+
-      '<path d="M'+(60-w)+' '+(y-4)+'h-7M'+(60+w)+' '+(y-4)+'h7" stroke="#1a4a2c" stroke-width="2.4"/>';
-    [-1,0,1].forEach(k=>{const x=60+k*w*.5;
-      o+='<path d="M'+x.toFixed(1)+' '+(y-3)+'q4 3 0 7q-4-4 0-7z" fill="#3fa06a"/>';});
-    return o;}},
+  {id:'mke5', n:'偷吃的果汁漬', p:100, slot:'face', only:'a-mky', d:a=>{
+    const m=mouY(a), f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-9)+' '+f(m-1)+'q9-5 18 0q1 7-9 8t-9-8z" fill="#7b2f8a" opacity=".55"/>';
+    /* 沿著嘴角往下滴，滴痕要往下不能往上 */
+    [[-6.5,4,5],[3.4,5,6.4],[7,2.6,3.4]].forEach(([dx,dy,len])=>{
+      o+='<path d="M'+f(60+dx)+' '+f(m+dy)+'v'+f(len)+'" stroke="#7b2f8a" stroke-width="2" stroke-linecap="round" opacity=".6"/>'+
+         '<circle cx="'+f(60+dx)+'" cy="'+f(m+dy+len)+'" r="1.5" fill="#7b2f8a" opacity=".65"/>';});
+    return o+'<circle cx="'+f(60-11)+'" cy="'+f(m-4)+'" r="1.6" fill="#9c3fb0" opacity=".6"/>'+
+      '<circle cx="'+f(60+10)+'" cy="'+f(m-5)+'" r="1.2" fill="#9c3fb0" opacity=".55"/>';}},
   {id:'mke6', n:'抓痕與OK繃', p:100, slot:'face', only:'a-mky', d:a=>{
     const x=60-AC.cheekX(a), y=AC.cheekY(a)+1;
     return '<g transform="rotate(-22,'+x.toFixed(1)+','+y.toFixed(1)+')">'+
@@ -7277,12 +7285,12 @@ const ITEMS=[
       o+='<path d="M'+(x-2.6).toFixed(1)+' '+(cy-1)+'q-1.6 8 2.6 10q3.4-2 2.6-10q-2.6 1.6-5.2 0z" fill="#ffd75e" stroke="#d8a92e" stroke-width="1" stroke-linejoin="round"/>';});
     return o+'<path d="M60 '+(cy-2)+'v-3" stroke="#7a5a1a" stroke-width="2.2"/>';}},
   {id:'mkn2', n:'藤蔓圍巾', p:100, slot:'neck', only:'a-mky', d:a=>{
-    const y=NKB(a)-1, w=NKW(a)*.9;
-    let o='<path d="M'+(60-w)+' '+y+'q'+w+' 12 '+(w*2)+' 0" stroke="#2f7d4f" stroke-width="3.4" fill="none" stroke-linecap="round"/>';
-    [-.75,-.3,.3,.75].forEach((k,i)=>{
-      const x=60+k*w, dy=y+3+(1-Math.abs(k))*8, sg=i%2?1:-1;
-      o+='<path d="M'+x.toFixed(1)+' '+dy.toFixed(1)+'q'+(sg*6)+' 2 '+(sg*5)+' 6q-5-1-5-6z" fill="#3fa06a"/>';});
-    return o+'<path d="M'+(60+w*.9)+' '+(y+2)+'q6 4 4 10" stroke="#2f7d4f" stroke-width="2" fill="none"/>';}},
+    const y=NKB(a)-2, w=bwAt(a,0)+.5, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 11 '+f(w*2)+' 0" stroke="#2f7d4f" stroke-width="3.4" fill="none" stroke-linecap="round"/>';
+    [-.7,-.26,.26,.7].forEach((k,i)=>{
+      const x=60+k*w, dy=y+3+(1-Math.abs(k))*7, sg=i%2?1:-1;
+      o+='<path d="M'+f(x)+' '+f(dy)+'q'+f(sg*4.4)+' 2 '+f(sg*3.6)+' 4.6q-3.6-1-3.6-4.6z" fill="#3fa06a"/>';});
+    return o+'<path d="M'+f(60+w*.8)+' '+f(y+3)+'q4.4 5 2.6 9" stroke="#2f7d4f" stroke-width="2" fill="none"/>';}},
   {id:'mkn3', n:'馬戲團領結', p:100, slot:'neck', only:'a-mky', d:a=>{
     const y=NKB(a)+4, w=NKW(a)*.72, h=w*.6;
     let o='<path d="M60 '+y+'L'+(60-w)+' '+(y-h)+'v'+(h*2)+'zM60 '+y+'L'+(60+w)+' '+(y-h)+'v'+(h*2)+'z" fill="#d0392b"/>';
@@ -7304,14 +7312,14 @@ const ITEMS=[
       '<circle cx="60" cy="'+cy+'" r="3" fill="#e0a400"/>'+
       '<path d="M'+(60-4.6)+' '+(cy-3.4)+'l2.6 2.6" stroke="#fff0b8" stroke-width="1.6"/>';}},
   {id:'mkn6', n:'攀繩圈', p:100, slot:'neck', only:'a-mky', d:a=>{
-    const y=NKB(a)-1, w=NKW(a)*.86;
+    const y=NKB(a)-1, w=bwAt(a,0)+1, f=n=>n.toFixed(1);
     let o='';
     for(let i=0;i<3;i++){
-      o+='<path d="M'+(60-w+i).toFixed(1)+' '+(y+i*3.4).toFixed(1)+'q'+(w-i)+' '+(10+i*2)+' '+((w-i)*2)+
+      o+='<path d="M'+f(60-w+i)+' '+f(y+i*3.2)+'q'+f(w-i)+' '+f(10+i*2)+' '+f((w-i)*2)+
          ' 0" stroke="#c9a86a" stroke-width="2.6" fill="none" stroke-linecap="round"/>';}
-    for(let i=0;i<8;i++){const k=-.85+i*.24, x=60+k*w, dy=y+4+(1-Math.abs(k))*8;
-      o+='<path d="M'+x.toFixed(1)+' '+(dy-3.4).toFixed(1)+'l2.6 6.8" stroke="#8a6a3a" stroke-width="1" opacity=".8"/>';}
-    return o+'<path d="M'+(60+w*.72).toFixed(1)+' '+(y+6)+'q5 5 3 11" stroke="#c9a86a" stroke-width="2.4" fill="none" stroke-linecap="round"/>';}},
+    for(let i=0;i<7;i++){const k=-.82+i*.27, x=60+k*w, dy=y+4+(1-Math.abs(k))*8;
+      o+='<path d="M'+f(x)+' '+f(dy-3.2)+'l2.4 6.4" stroke="#8a6a3a" stroke-width="1" opacity=".8"/>';}
+    return o+'<path d="M'+f(60+w*.7)+' '+f(y+6)+'q5 5 3 10" stroke="#c9a86a" stroke-width="2.4" fill="none" stroke-linecap="round"/>';}},
   {id:'mkb1', n:'馬戲團背心', p:200, slot:'body', only:'a-mky', d:a=>{
     const t=a.by-a.bh, h=a.bh*2;
     let o='<path d="'+garment(a,.08,.95)+'" fill="#d0392b"/>'+
@@ -7437,23 +7445,23 @@ const ITEMS=[
       '<path d="M'+(cx-w*.7)+' '+(y-1)+'l-1.6-2.6" stroke="#7a5a1a" stroke-width="1.8"/>');}},
   /* a-duk　水、雨、麵包、蹼；荷葉當傘、報紙折船帽都是水邊才有的東西 */
   {id:'duh1', n:'荷葉帽', p:100, slot:'head', only:'a-duk', hide:'ear', d:a=>{
-    const y=AC.crest(a)+4, w=AC.hugW(a)+7;
-    let o='<path d="M'+(60-w)+' '+y+'q'+w+'-16 '+(w*2)+' 0q-'+w+' 6 -'+(w*2)+' 0z" fill="#3fa06a"/>'+
-      '<path d="M'+(60-w*.94)+' '+(y-1)+'q'+(w*.94)+'-14 '+(w*1.88)+' 0" fill="#4fb87c"/>';
+    /* 壓太低會把頭吃掉，看起來像頭縮水。往上帶、收窄到比頭寬一點就好 */
+    const y=HT(a)+6, w=a.hr+2, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+'-15 '+f(w*2)+' 0q-'+f(w)+' 6 -'+f(w*2)+' 0z" fill="#3fa06a"/>'+
+      '<path d="M'+f(60-w*.94)+' '+f(y-1)+'q'+f(w*.94)+'-13 '+f(w*1.88)+' 0" fill="#4fb87c"/>';
     for(let i=0;i<5;i++){const k=-1+i*.5;
-      o+='<path d="M60 '+(y-2)+'L'+(60+k*w*.9).toFixed(1)+' '+(y-2-Math.cos(k*1.1)*4.6).toFixed(1)+
+      o+='<path d="M60 '+f(y-2)+'L'+f(60+k*w*.9)+' '+f(y-2-Math.cos(k*1.1)*4.4)+
          '" stroke="#2f7d4f" stroke-width="1.2" opacity=".8"/>';}
-    /* 葉柄從葉子中心往旁邊翹，不是從頭上長出來 */
-    return o+'<path d="M60 '+(y-11)+'q7-5 9-11" stroke="#2f7d4f" stroke-width="2.4" fill="none" stroke-linecap="round"/>'+
-      '<circle cx="'+(60-w*.42)+'" cy="'+(y-7)+'" r="2.2" fill="#bfe9f7" opacity=".9"/>'+
-      '<circle cx="'+(60+w*.3)+'" cy="'+(y-5)+'" r="1.5" fill="#bfe9f7" opacity=".85"/>';}},
+    return o+'<path d="M60 '+f(y-11)+'q7-5 9-10" stroke="#2f7d4f" stroke-width="2.4" fill="none" stroke-linecap="round"/>'+
+      '<circle cx="'+f(60-w*.42)+'" cy="'+f(y-7)+'" r="2.2" fill="#bfe9f7" opacity=".9"/>'+
+      '<circle cx="'+f(60+w*.3)+'" cy="'+f(y-5)+'" r="1.5" fill="#bfe9f7" opacity=".85"/>';}},
   {id:'duh2', n:'雨天漁夫帽', p:100, slot:'head', only:'a-duk', hide:'ear', d:a=>{
-    const y=HLINE(a)+1, w=AC.hugW(a)+2, t=AC.top(a,HRY(a)*.6);
-    return '<path d="M'+(60-w-4)+' '+y+'q'+(w+4)+' 9 '+((w+4)*2)+' 0q-'+(w+4)+' 4 -'+((w+4)*2)+' 0z" fill="#1f5f8f"/>'+
-      '<path d="M'+(60-w*.9)+' '+y+'q0-'+(y-t)+' '+(w*.9)+'-'+(y-t)+'t'+(w*.9)+' '+(y-t)+'z" fill="#4aa3df"/>'+
-      '<path d="M'+(60-w*.9)+' '+(y-3)+'q'+(w*.9)+' 4 '+(w*1.8)+' 0" stroke="#1f5f8f" stroke-width="3"/>'+
-      '<path d="M'+(60-w*.4)+' '+(y-2)+'q'+(w*.4)+' 5 '+(w*.8)+' 0" stroke="#7fc4f0" stroke-width="1.6" fill="none"/>'+
-      '<path d="M'+(60+w*.2)+' '+(y-1)+'v6" stroke="#1f5f8f" stroke-width="2" stroke-linecap="round"/>';}},
+    const y=HT(a)+9, cw=AC.wAtY(a,HT(a)+9)+1, w=cw+6, t=Math.max(5,y-13), f=n=>n.toFixed(1);
+    return '<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 9 '+f(w*2)+' 0q-'+f(w)+' 4 -'+f(w*2)+' 0z" fill="#1f5f8f"/>'+
+      '<path d="M'+f(60-cw)+' '+f(y)+'q0-'+f(y-t)+' '+f(cw)+'-'+f(y-t)+'t'+f(cw)+' '+f(y-t)+'z" fill="#4aa3df"/>'+
+      '<path d="M'+f(60-cw)+' '+f(y-3)+'q'+f(cw)+' 4 '+f(cw*2)+' 0" stroke="#1f5f8f" stroke-width="3"/>'+
+      '<path d="M'+f(60-cw*.4)+' '+f(y-2)+'q'+f(cw*.4)+' 5 '+f(cw*.8)+' 0" stroke="#7fc4f0" stroke-width="1.6" fill="none"/>'+
+      '<path d="M'+f(60+cw*.2)+' '+f(y-1)+'v5" stroke="#1f5f8f" stroke-width="2" stroke-linecap="round"/>';}},
   {id:'duh3', n:'泳帽', p:100, slot:'head', only:'a-duk', hide:'ear', d:a=>{
     const y=HLINE(a)+2, w=a.hr+2, t=AC.top(a,HRY(a)*.84);
     let o='<path d="M'+(60-w)+' '+y+'q0-'+(y-t)+' '+w+'-'+(y-t)+'t'+w+' '+(y-t)+'z" fill="#f2f4f8"/>'+
@@ -7478,18 +7486,16 @@ const ITEMS=[
          '<path d="M'+(x-1.6).toFixed(1)+' '+(cy+3)+'q1.6-2 3-1" stroke="#ffffff" stroke-width="1.4" fill="none"/>';});
     return o;}},
   {id:'duh6', n:'水草頭巾', p:100, slot:'head', only:'a-duk', hide:'ear', d:a=>{
-    const y=HLINE(a)+3, w=a.hr+2, t=AC.top(a,HRY(a)*.72), f=n=>n.toFixed(1);
-    let o='<path d="M'+(60-w)+' '+f(y)+'q0-'+f(y-t)+' '+f(w)+'-'+f(y-t)+
-      't'+f(w)+' '+f(y-t)+'z" fill="#3fa06a"/>';
+    const y=HT(a)+9, w=a.hr+1, t=Math.max(5,y-14), f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q0-'+f(y-t)+' '+f(w)+'-'+f(y-t)+'t'+f(w)+' '+f(y-t)+'z" fill="#3fa06a"/>';
     for(let i=0;i<5;i++){const k=-1+i*.5, x=60+k*w*.8;
       o+='<path d="M'+f(x)+' '+f(t+3)+'q'+f(k*4)+' '+f((y-t)*.6)+' '+f(k*2)+' '+f(y-t-2)+
          '" stroke="#2f7d4f" stroke-width="1.4" fill="none"/>';}
-    /* 兩撮從帽緣垂下來，被重力拉直。用絕對座標，相對值串起來會出現 `--` */
+    const end=Math.min(y+11, eyeY(a)-5);
     [-1,1].forEach(k=>{
-      const x0=60+k*w*.84, tipx=x0+k*2, tipy=y+12;
-      o+='<path d="M'+f(x0)+' '+f(y-1)+
-         'Q'+f(x0+k*5.5)+' '+f(y+6)+' '+f(tipx)+' '+f(tipy)+
-         'Q'+f(x0+k*.5)+' '+f(y+6)+' '+f(x0-k*2.4)+' '+f(y-1)+'Z" fill="#4fb87c"/>';});
+      const x0=60+k*w*.84, tipx=x0+k*2;
+      o+='<path d="M'+f(x0)+' '+f(y-1)+'Q'+f(x0+k*5.5)+' '+f((y+end)/2)+' '+f(tipx)+' '+f(end)+
+         'Q'+f(x0+k*.5)+' '+f((y+end)/2)+' '+f(x0-k*2.4)+' '+f(y-1)+'Z" fill="#4fb87c"/>';});
     return o;}},
   {id:'due1', n:'泳鏡', p:100, slot:'face', only:'a-duk', d:a=>{
     const y=eyeY(a), g=a.gap, r=AC.ew(a)+1.8;
@@ -7529,47 +7535,53 @@ const ITEMS=[
       (x+sg*r*.1)+' '+(y-r*1.05)+'l'+(sg*2)+'-4" stroke="#3a2e12" stroke-width="1.8" stroke-linecap="round"/>';
     return one(60-g,-1)+one(60+g,1);}},
   {id:'dun1', n:'游泳圈', p:100, slot:'neck', only:'a-duk', d:a=>{
-    const y=NKB(a)+3, rx=NKW(a)*.86, ry=7;
-    const mid=(rx+rx*.5)/2, th=(rx-rx*.5);
-    let o='<ellipse cx="60" cy="'+y+'" rx="'+mid.toFixed(1)+'" ry="'+(ry*.72).toFixed(1)+
-      '" fill="none" stroke="#f5601f" stroke-width="'+th.toFixed(1)+'"/>';
+    /* 先畫整個圈，再把脖子那一截補回來蓋住圈的後半，最後補上前半圈。
+       這樣脖子是穿過圈的，不是貼在圈前面。 */
+    const y=NKB(a)-3, rx=bwAt(a,0)+3, ry=6.4, f=n=>n.toFixed(1);
+    const mid=rx*.72, th=rx*.56;
+    const nkw=bwAt(a,0)*.72;
+    let o='<ellipse cx="60" cy="'+f(y)+'" rx="'+f(mid)+'" ry="'+f(ry*.7)+
+      '" fill="none" stroke="#f5601f" stroke-width="'+f(th)+'"/>';
+    /* 脖子：擋掉圈的後半 */
+    o+='<path d="M'+f(60-nkw)+' '+f(y-ry-th*.5-1)+'h'+f(nkw*2)+'v'+f(ry+th*.5+1)+'h-'+f(nkw*2)+'z" fill="'+a.c+'"/>';
+    /* 前半圈疊回來 */
+    o+='<path d="M'+f(60-mid)+' '+f(y)+'a'+f(mid)+' '+f(ry*.7)+' 0 0 0 '+f(mid*2)+' 0" fill="none" stroke="#f5601f" stroke-width="'+f(th)+'"/>';
     [-1,1].forEach(k=>{
-      o+='<path d="M'+(60+k*mid).toFixed(1)+' '+(y-ry*.72-th/2).toFixed(1)+'v'+(th+ry*1.44).toFixed(1)+
-         '" stroke="#ffffff" stroke-width="4.4"/>';});
-    return o;}},
+      o+='<path d="M'+f(60+k*mid)+' '+f(y-th*.5)+'v'+f(th)+'" stroke="#ffffff" stroke-width="3.6"/>';});
+    return o+'<path d="M'+f(60-mid*.5)+' '+f(y+ry*.7+th*.3)+'h'+f(mid)+'" stroke="#ffffff" stroke-width="3.2"/>';}},
   {id:'dun2', n:'水手領', p:100, slot:'neck', only:'a-duk', d:a=>{
-    const y=NKB(a)-2, w=NKW(a)*.94;
-    return '<path d="M'+(60-w)+' '+y+'q'+w+' 9 '+(w*2)+' 0l-4 14h-'+(w*2-8)+'z" fill="#f2f4f8"/>'+
-      '<path d="M'+(60-w+2)+' '+(y+4)+'q'+(w-2)+' 8 '+((w-2)*2)+' 0" stroke="#4aa3df" stroke-width="2.4" fill="none"/>'+
-      '<path d="M'+(60-w+5)+' '+(y+8)+'q'+(w-5)+' 7 '+((w-5)*2)+' 0" stroke="#4aa3df" stroke-width="1.8" fill="none"/>'+
-      '<path d="M60 '+(y+9)+'l-4 10h8z" fill="#d0392b"/>';}},
+    const y=NKB(a)-5, w=bwAt(a,0)+2, f=n=>n.toFixed(1);
+    return '<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 9 '+f(w*2)+' 0l-3 11h-'+f(w*2-6)+'z" fill="#f2f4f8"/>'+
+      '<path d="M'+f(60-w+2)+' '+f(y+4)+'q'+f(w-2)+' 8 '+f((w-2)*2)+' 0" stroke="#4aa3df" stroke-width="2.4" fill="none"/>'+
+      '<path d="M'+f(60-w+5)+' '+f(y+7.6)+'q'+f(w-5)+' 6 '+f((w-5)*2)+' 0" stroke="#4aa3df" stroke-width="1.8" fill="none"/>'+
+      '<path d="M60 '+f(y+9)+'l-3.4 9h6.8z" fill="#d0392b"/>';}},
   {id:'dun3', n:'貝殼項鍊', p:100, slot:'neck', only:'a-duk', d:a=>{
-    const y=NKB(a), w=NKW(a)*.78, cy=y+12;
-    let o='<path d="M'+(60-w)+' '+y+'q'+w+' 11 '+(w*2)+' 0" stroke="#c9ccd6" stroke-width="1.6" fill="none"/>';
-    [-.72,-.36,.36,.72].forEach(k=>{const x=60+k*w, dy=y+3+(1-Math.abs(k))*7;
-      o+='<circle cx="'+x.toFixed(1)+'" cy="'+dy.toFixed(1)+'" r="2" fill="#f2f4f8"/>';});
-    return o+'<path d="M60 '+(cy-3)+'q-6 2-6 6h12q0-4-6-6z" fill="#ffd1e0"/>'+
-      '<path d="M60 '+(cy-3)+'v9M'+(60-3)+' '+(cy+1)+'l-1 5M'+(60+3)+' '+(cy+1)+'l1 5" stroke="#e2a8c0" stroke-width="1.1"/>';}},
+    const y=NKB(a)-5, w=bwAt(a,0)+.5, cy=y+10, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 10 '+f(w*2)+' 0" stroke="#c9ccd6" stroke-width="1.6" fill="none"/>';
+    [-.7,-.34,.34,.7].forEach(k=>{const x=60+k*w, dy=y+2.6+(1-Math.abs(k))*6.4;
+      o+='<circle cx="'+f(x)+'" cy="'+f(dy)+'" r="1.9" fill="#f2f4f8"/>';});
+    return o+'<path d="M60 '+f(cy-2)+'q-5.4 1.8-5.4 5.4h10.8q0-3.6-5.4-5.4z" fill="#ffd1e0"/>'+
+      '<path d="M60 '+f(cy-2)+'v8M'+f(60-2.6)+' '+f(cy+1.4)+'l-.9 4.4M'+f(60+2.6)+' '+f(cy+1.4)+'l.9 4.4" stroke="#e2a8c0" stroke-width="1.1"/>';}},
   {id:'dun4', n:'防水圍巾', p:100, slot:'neck', only:'a-duk', d:a=>{
-    const y=NKB(a)-3, w=NKW(a)*.88;
-    let o='<path d="M'+(60-w)+' '+y+'q'+w+' 11 '+(w*2)+' 0v6q-'+w+' 10 -'+(w*2)+' 0z" fill="#4aa3df"/>'+
-      '<path d="M'+(60-w*.5)+' '+(y+7)+'l-4 14h7l2-12z" fill="#3a86bd"/>';
+    const y=NKB(a)-6, w=bwAt(a,0)+2, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 10 '+f(w*2)+' 0v5q-'+f(w)+' 9 -'+f(w*2)+' 0z" fill="#4aa3df"/>'+
+      '<path d="M'+f(60-w*.5)+' '+f(y+6)+'l-3.4 12h6l1.8-10z" fill="#3a86bd"/>';
     for(let i=0;i<3;i++){
-      o+='<path d="M'+(60-w*.72+i*3)+' '+(y+3+i*.6).toFixed(1)+'q'+(w*.72)+' 8 '+(w*1.44-i*6)+' 0" stroke="#7fc4f0" stroke-width="1.2" fill="none" opacity=".8"/>';}
+      o+='<path d="M'+f(60-w*.72+i*3)+' '+f(y+3+i*.6)+'q'+f(w*.72)+' 7 '+f(w*1.44-i*6)+' 0" stroke="#7fc4f0" stroke-width="1.2" fill="none" opacity=".8"/>';}
     return o;}},
   {id:'dun5', n:'泳賽金牌', p:100, slot:'neck', only:'a-duk', d:a=>{
-    const y=NKB(a)-1, w=NKW(a)*.5, cy=y+14;
-    return '<path d="M'+(60-w)+' '+y+'l'+(w-2)+' '+(cy-y-4)+'M'+(60+w)+' '+y+'l-'+(w-2)+' '+(cy-y-4)+
-      '" stroke="#d0392b" stroke-width="3"/>'+
-      '<circle cx="60" cy="'+cy+'" r="6" fill="#ffc233" stroke="#c28800" stroke-width="1.6"/>'+
-      '<path d="M'+(60-3.4)+' '+(cy+1)+'q3.4-4 6.8 0" stroke="#c28800" stroke-width="1.6" fill="none"/>'+
-      '<path d="M'+(60-3.4)+' '+(cy-2.6)+'q3.4-4 6.8 0" stroke="#c28800" stroke-width="1.4" fill="none"/>';}},
+    const y=NKB(a)-5, w=bwAt(a,0)*.62, cy=y+11, f=n=>n.toFixed(1);
+    return '<path d="M'+f(60-w)+' '+f(y)+'L'+f(60-1.6)+' '+f(cy-4)+
+      'M'+f(60+w)+' '+f(y)+'L'+f(60+1.6)+' '+f(cy-4)+'" stroke="#d0392b" stroke-width="3"/>'+
+      '<circle cx="60" cy="'+f(cy)+'" r="5.6" fill="#ffc233" stroke="#c28800" stroke-width="1.6"/>'+
+      '<path d="M'+f(60-3.2)+' '+f(cy+1)+'q3.2-3.6 6.4 0" stroke="#c28800" stroke-width="1.6" fill="none"/>'+
+      '<path d="M'+f(60-3.2)+' '+f(cy-2.4)+'q3.2-3.6 6.4 0" stroke="#c28800" stroke-width="1.4" fill="none"/>';}},
   {id:'dun6', n:'珍珠鍊', p:100, slot:'neck', only:'a-duk', d:a=>{
-    const y=NKB(a), w=NKW(a)*.74;
+    const y=NKB(a)-4, w=bwAt(a,0)+1, f=n=>n.toFixed(1);
     let o='';
-    for(let i=0;i<9;i++){const k=-1+i*.25, x=60+k*w, dy=y+3+(1-Math.abs(k))*8;
-      o+='<circle cx="'+x.toFixed(1)+'" cy="'+dy.toFixed(1)+'" r="2.4" fill="#f8f6ff"/>'+
-         '<circle cx="'+(x-.7).toFixed(1)+'" cy="'+(dy-.7).toFixed(1)+'" r=".8" fill="#ffffff"/>';}
+    for(let i=0;i<9;i++){const k=-1+i*.25, x=60+k*w, dy=y+2.6+(1-Math.abs(k))*7;
+      o+='<circle cx="'+f(x)+'" cy="'+f(dy)+'" r="2.3" fill="#f8f6ff"/>'+
+         '<circle cx="'+f(x-.7)+'" cy="'+f(dy-.7)+'" r=".8" fill="#ffffff"/>';}
     return o;}},
   {id:'dub1', n:'水手服', p:200, slot:'body', only:'a-duk', d:a=>{
     const t=a.by-a.bh, h=a.bh*2;
@@ -7628,13 +7640,15 @@ const ITEMS=[
       '<circle cx="'+(x-2)+'" cy="'+(y+7)+'" r="1.1" fill="#e0c9a0"/>'+
       '<circle cx="'+(x+3)+'" cy="'+(y+10)+'" r=".9" fill="#e0c9a0"/>';}},
   {id:'dud2', n:'小雨傘', p:200, slot:'hand', only:'a-duk', d:a=>{
-    const x=AC.gx(a), y=AC.gy(a)-4;
-    let o='<path d="M'+(x-11)+' '+y+'a11 9 0 0 1 22 0z" fill="#4aa3df"/>';
+    /* 傘面要在手的上方，柄穿過手心，手才是握著柄 */
+    const x=AC.gx(a), g=AC.gy(a), top=g-21, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(x-11)+' '+f(top)+'a11 9 0 0 1 22 0z" fill="#4aa3df"/>';
     [-1,1].forEach(k=>{
-      o+='<path d="M'+x+' '+(y-9)+'q'+(k*6)+' 5 '+(k*5.5)+' 9" stroke="#2b6c9c" stroke-width="1.2" fill="none"/>';});
-    return o+'<path d="M'+(x-11)+' '+y+'q5.5 4 5.5 0t5.5 0 5.5 0 5.5 0" fill="#7fc4f0"/>'+
-      '<path d="M'+x+' '+(y-9)+'v-3" stroke="#8a5a2a" stroke-width="1.8" stroke-linecap="round"/>'+
-      '<path d="M'+x+' '+y+'v13q0 4-4 4" stroke="#8a5a2a" stroke-width="2.2" fill="none" stroke-linecap="round"/>';}},
+      o+='<path d="M'+f(x)+' '+f(top-9)+'q'+f(k*6)+' 5 '+f(k*5.5)+' 9" stroke="#2b6c9c" stroke-width="1.2" fill="none"/>';});
+    return o+'<path d="M'+f(x-11)+' '+f(top)+'q5.5 4 5.5 0t5.5 0 5.5 0 5.5 0" fill="#7fc4f0"/>'+
+      '<path d="M'+f(x)+' '+f(top-9)+'v-3" stroke="#8a5a2a" stroke-width="1.8" stroke-linecap="round"/>'+
+      '<path d="M'+f(x)+' '+f(top)+'V'+f(g+7)+'q0 4-4 4" stroke="#8a5a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/>'+
+      '<path d="M'+f(x-2.4)+' '+f(g-3)+'h4.8v7h-4.8z" fill="#6b4426"/>';}},
   {id:'dud3', n:'小黃鴨玩具', p:200, slot:'hand', only:'a-duk', d:a=>{
     const x=AC.gx(a), y=AC.gy(a)-7;
     return '<ellipse cx="'+x+'" cy="'+(y+7)+'" rx="7.6" ry="5.4" fill="#ffd75e"/>'+
@@ -7644,15 +7658,17 @@ const ITEMS=[
       '<path d="M'+(x+2)+' '+(y+4)+'q5.4 1 5.4 4.6q-3.6 .9-5.4-1.8z" fill="#e8bd3e"/>'+
       '<path d="M'+(x-.6)+' '+(y-4.6)+'q-.9-3.6 1.8-4.6q0 2.7 .9 2.7q-.9 1.8-.9 2.7z" fill="#e8bd3e"/>';}},
   {id:'dud4', n:'撈網', p:200, slot:'hand', only:'a-duk', d:a=>{
-    const x=AC.gx(a), y=AC.gy(a), hx=x+5, hy=y-13;   /* 網框在竿子的上端 */
-    let o='<path d="M'+(x-3)+' '+(y+12)+'L'+hx+' '+hy+'" stroke="#a8763f" stroke-width="2.8" stroke-linecap="round"/>'+
-      '<ellipse cx="'+hx+'" cy="'+hy+'" rx="7.4" ry="5" fill="none" stroke="#8a8f9c" stroke-width="2"/>'+
-      '<path d="M'+(hx-7.4)+' '+hy+'q7.4 11 14.8 0" fill="#e8ecf4" opacity=".5"/>';
-    for(let k=-2;k<=2;k++){                          /* 網目：被重力往下垂 */
-      o+='<path d="M'+(hx+k*2.8).toFixed(1)+' '+(hy-(k?2:4.4)).toFixed(1)+'v'+(9-Math.abs(k)*2).toFixed(1)+
+    /* 網框拉到手的上方，桿子從網框穿過手心再往下露一截 */
+    const x=AC.gx(a), g=AC.gy(a), hx=x+4, hy=g-20, f=n=>n.toFixed(1);
+    let o='<path d="M'+f(x-2)+' '+f(g+9)+'L'+f(hx)+' '+f(hy)+'" stroke="#a8763f" stroke-width="2.8" stroke-linecap="round"/>'+
+      '<ellipse cx="'+f(hx)+'" cy="'+f(hy)+'" rx="7.4" ry="5" fill="none" stroke="#8a8f9c" stroke-width="2"/>'+
+      '<path d="M'+f(hx-7.4)+' '+f(hy)+'q7.4 11 14.8 0" fill="#e8ecf4" opacity=".5"/>';
+    for(let k=-2;k<=2;k++){
+      o+='<path d="M'+f(hx+k*2.8)+' '+f(hy-(k?2:4.4))+'v'+f(9-Math.abs(k)*2)+
          '" stroke="#c9ccd6" stroke-width=".9"/>';}
-    return o+'<path d="M'+(hx-6)+' '+(hy+3)+'q6 3 12 0" stroke="#c9ccd6" stroke-width=".9" fill="none"/>'+
-      '<path d="M'+(hx-2)+' '+(hy+5)+'q2.6-2 4 .6q-1.4 2.4-4-.6z" fill="#7fc4f0"/>';}},
+    return o+'<path d="M'+f(hx-6)+' '+f(hy+3)+'q6 3 12 0" stroke="#c9ccd6" stroke-width=".9" fill="none"/>'+
+      '<path d="M'+f(hx-2)+' '+f(hy+5)+'q2.6-2 4 .6q-1.4 2.4-4-.6z" fill="#7fc4f0"/>'+
+      '<path d="M'+f(x-1.4)+' '+f(g-3.4)+'h3.4v7h-3.4z" fill="#6b4426" transform="rotate(-11,'+f(x)+','+f(g)+')"/>';}},
   {id:'dud5', n:'漂流瓶', p:200, slot:'hand', only:'a-duk', d:a=>{
     const x=AC.gx(a), y=AC.gy(a)-5;
     return '<path d="M'+(x-4)+' '+(y-4)+'h8v4q4 2 4 7v6q0 2-2 2h-12q-2 0-2-2v-6q0-5 4-7z" fill="#bfe9f7" opacity=".85"/>'+
