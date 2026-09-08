@@ -6091,17 +6091,23 @@ const ITEMS=[
        ','+(x+Math.cos(an)*r*1.1).toFixed(1)+','+(y+Math.sin(an)*r*1.1).toFixed(1)+')"/>';}
   return o+'<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(r*.66).toFixed(1)+'" fill="#c4471d"/>';}},
   {id:'gfh6', n:'晚宴禮帽', p:100, slot:'head', only:'a-gir', d:a=>AC.tophat(a,'#22232a','#101119',5)},
-  {id:'gfe1', n:'紫色長舌', p:100, slot:'face', only:'a-gir', d:a=>{
-    /* 長頸鹿的舌頭是紫黑色的，而且很長 —— 從嘴角垂下來一截才對味 */
-    const m=mouY(a), f=n=>n.toFixed(1);
-    return '<path d="M '+f(60-4.4)+' '+f(m)+
-      ' Q '+f(60-5.4)+' '+f(m+7)+' '+f(60-2)+' '+f(m+10.4)+
-      ' Q '+f(60+2.6)+' '+f(m+13.6)+' '+f(60+4.4)+' '+f(m+9)+
-      ' Q '+f(60+5)+' '+f(m+3)+' '+f(60+4)+' '+f(m)+' Z" fill="#8a5a9c"/>'+
-      '<path d="M 60 '+f(m+2)+' Q '+f(60-1.4)+' '+f(m+7)+' 60 '+f(m+10.6)+
-      '" stroke="#6b4278" stroke-width="1.3" fill="none"/>'+
-      '<path d="M '+f(60-3)+' '+f(m+1.4)+' Q 60 '+f(m+3.4)+' '+f(60+3)+' '+f(m+1.4)+
-      '" stroke="#a878b8" stroke-width="1.2" fill="none"/>';}},
+  {id:'gfe1', n:'小角蝴蝶結', p:100, slot:'face', only:'a-gir', d:a=>{
+    /* 長頸鹿的兩支小角在 x=60±8，桿子從 hy-hry+3 往上到 hy-hry-4。
+       蝴蝶結綁在桿子上，不是浮在空中 */
+    const bx=8, y=a.hy-(a.hry||a.hr)-1, f=n=>n.toFixed(1);
+    const bow=sg=>{const x=60+sg*bx;
+      return '<path d="M'+f(x)+' '+f(y)+' Q'+f(x-5.6)+' '+f(y-4.2)+' '+f(x-5.2)+' '+f(y+.6)+
+        ' Q'+f(x-4.6)+' '+f(y+4)+' '+f(x)+' '+f(y)+' Z" fill="#ff8ab4"/>'+
+        '<path d="M'+f(x)+' '+f(y)+' Q'+f(x+5.6)+' '+f(y-4.2)+' '+f(x+5.2)+' '+f(y+.6)+
+        ' Q'+f(x+4.6)+' '+f(y+4)+' '+f(x)+' '+f(y)+' Z" fill="#ff8ab4"/>'+
+        '<path d="M'+f(x-1.6)+' '+f(y+1.4)+' Q'+f(x-3.4)+' '+f(y+6)+' '+f(x-4.6)+' '+f(y+7.4)+
+        '" stroke="#ff8ab4" stroke-width="1.6" fill="none"/>'+
+        '<path d="M'+f(x+1.6)+' '+f(y+1.4)+' Q'+f(x+3.2)+' '+f(y+5.6)+' '+f(x+4.2)+' '+f(y+7)+
+        '" stroke="#ff8ab4" stroke-width="1.6" fill="none"/>'+
+        '<ellipse cx="'+f(x)+'" cy="'+f(y+.4)+'" rx="1.8" ry="2.2" fill="#ffb3cf"/>'+
+        '<path d="M'+f(x-4.2)+' '+f(y-1.4)+' Q'+f(x-2.6)+' '+f(y-.6)+' '+f(x-1.6)+' '+f(y+.4)+
+        '" stroke="#ffd0e2" stroke-width="1" fill="none" opacity=".8"/>';};
+    return bow(-1)+bow(1);}},
   {id:'gfe2', n:'金合歡花瓣', p:100, slot:'face', only:'a-gir', d:a=>{
     /* 吃樹葉沾到的花瓣。往下離開眼珠、往外不超出臉 */
     const pr=(a.pup||4.5), y=eyeY(a)+pr+5.4, r=4.2, f=n=>n.toFixed(1);
@@ -6317,27 +6323,40 @@ const ITEMS=[
       '<path d="M'+X(1.5)+' '+(by+2)+'Q'+X(6)+' '+(by+3)+' '+X(6.5)+' '+(by+7)+
       '" stroke="#e0c9a8" stroke-width="1.4" fill="none"/>';};
   return horn(-1)+horn(1);}},
-  {id:'she1', n:'毛線圓鏡', p:100, slot:'face', only:'a-shp', d:a=>{
-  const y=eyeY(a),g=a.gap,r=AC.ew(a),f=n=>n.toFixed(1);let o='';
-  [-1,1].forEach(sg=>{const cx=60+sg*g;
-    for(let i=0;i<10;i++){const an=i*36*Math.PI/180;
-      o+='<circle cx="'+f(cx+Math.cos(an)*r)+'" cy="'+f(y+Math.sin(an)*r)+'" r="1.7" fill="#9fd8f0"/>';}
-    o+='<circle cx="'+f(cx)+'" cy="'+f(y)+'" r="'+f(r*.85)+'" fill="#e6f4fb" opacity=".3"/>';});
-  return o+'<path d="M'+f(60-g+r)+' '+f(y)+'H'+f(60+g-r)+'" stroke="#9fd8f0" stroke-width="2.6"/>';}},
-  {id:'she2', n:'交叉膠帶', p:100, slot:'face', only:'a-shp', d:a=>{
-  const x=60+AC.cheekX(a)*.9,y=AC.cheekY(a);
-  const tape=an=>'<rect x="'+(x-9)+'" y="'+(y-2.6)+'" width="18" height="5.2" rx="2.6" fill="#ff9ec4" '+
-    'transform="rotate('+an+','+x+','+y+')"/>';
-  return tape(34)+tape(-34)+'<circle cx="'+x+'" cy="'+y+'" r="2.2" fill="#ffffff" opacity=".8"/>';}},
+  {id:'she1', n:'毛線球髮夾', p:100, slot:'face', only:'a-shp', d:a=>{
+    /* 夾在左邊那撮羊毛上（羊毛球在 60-11, hy-hry+5, r7.6），夾子壓進毛裡才不會浮著 */
+    const cx=60-13, cy=a.hy-(a.hry||a.hr)+3, f=n=>n.toFixed(1);
+    let o='<rect x="'+f(cx-1)+'" y="'+f(cy-1.3)+'" width="12" height="2.6" rx="1.3" fill="#c9ccd8" transform="rotate(-16,'+f(cx)+','+f(cy)+')"/>'+
+      '<circle cx="'+f(cx+10.4)+'" cy="'+f(cy+2.2)+'" r="1.2" fill="#a8acbb"/>';
+    [[0,0,4.6],[-3.4,-2.4,3],[3.2,-2.6,2.8],[-3,2.6,2.8],[3,2.4,3]].forEach(([dx,dy,r])=>{
+      o+='<circle cx="'+f(cx+dx)+'" cy="'+f(cy+dy)+'" r="'+r+'" fill="#ff9ec4"/>';});
+    return o+'<circle cx="'+f(cx-1.4)+'" cy="'+f(cy-1.6)+'" r="1.6" fill="#ffd0e2" opacity=".85"/>'+
+      '<path d="M'+f(cx+3.6)+' '+f(cy+3.4)+' Q'+f(cx+8.6)+' '+f(cy+7)+' '+f(cx+6.2)+' '+f(cy+11)+
+      '" stroke="#ff9ec4" stroke-width="1.4" fill="none"/>';}},
+  {id:'she2', n:'莓果唇彩', p:100, slot:'face', only:'a-shp', d:a=>{
+    /* 綿羊的口鼻是 (60,my+3) rx6.5 ry4.6 的灰橢圓，唇彩就擦在那上面 */
+    const my=mouY(a), f=n=>n.toFixed(1);
+    return '<ellipse cx="60" cy="'+f(my+3.4)+'" rx="6.2" ry="4.2" fill="#a83354"/>'+
+      '<path d="M'+f(60-6.2)+' '+f(my+2.4)+' Q60 '+f(my-1.4)+' '+f(60+6.2)+' '+f(my+2.4)+
+      ' Q60 '+f(my+1.2)+' '+f(60-6.2)+' '+f(my+2.4)+' Z" fill="#e0628a"/>'+
+      '<ellipse cx="'+f(60-2.4)+'" cy="'+f(my+4.6)+'" rx="1.9" ry="1.1" fill="#ffd6e2" opacity=".85"/>'+
+      '<ellipse cx="'+f(60+3)+'" cy="'+f(my+2)+'" rx="1" ry=".7" fill="#ffffff" opacity=".6"/>';}},
   {id:'she3', n:'叼著牧草', p:100, slot:'face', only:'a-shp', d:a=>{
   return AC.bite(a,'<path d="M0 0q11-3 15-12M2 2q9 0 13-7" stroke="#8a9b3c" stroke-width="2" fill="none"/>'+
     '<ellipse cx="15" cy="-13" rx="2.6" ry="5" fill="#c9b44a" transform="rotate(30,15,-13)"/>');}},
-  {id:'she4', n:'睡眠眼罩', p:100, slot:'face', only:'a-shp', d:a=>{
-    const y=eyeY(a), g=a.gap, w=g+11;
-    return '<path d="M'+(60-a.hr)+' '+(y-8)+'h'+(a.hr*2)+'" stroke="#8f5ce0" stroke-width="2.4"/>'+
-      '<rect x="'+(60-w)+'" y="'+(y-8)+'" width="'+(w*2)+'" height="15" rx="7.5" fill="#8f5ce0"/>'+
-      '<path d="M'+(60-9)+' '+(y-3)+'h7l-7 6h7" stroke="#ffffff" stroke-width="1.6" fill="none"/>'+
-      '<path d="M'+(60+3)+' '+(y-1)+'h5l-5 4h5" stroke="#ffffff" stroke-width="1.4" fill="none"/>';}},
+  {id:'she4', n:'捲翹睫毛', p:100, slot:'face', only:'a-shp', d:a=>{
+    /* 綿羊的眼白是 r=9.6 的大圓，睫毛要長在那圈的上緣、往外翹 */
+    const y=eyeY(a), g=a.gap, R=9.6, f=n=>n.toFixed(1);
+    const one=(x,sg)=>{
+      let o='<path d="M'+f(x-R*.72)+' '+f(y-R*.7)+' Q'+f(x)+' '+f(y-R*1.12)+' '+f(x+R*.72)+' '+f(y-R*.7)+
+        '" stroke="#2a2a32" stroke-width="2.2" fill="none" stroke-linecap="round"/>';
+      [[68,7.4],[40,8.6],[12,7]].forEach(([deg,len])=>{
+        const A=(-90+sg*deg)*Math.PI/180, cs=Math.cos(A), sn=Math.sin(A);
+        o+='<path d="M'+f(x+cs*(R-1.4))+' '+f(y+sn*(R-1.4))+
+           ' q'+f(cs*len*.7)+' '+f(sn*len*.7)+' '+f(cs*len+sg*2)+' '+f(sn*len-.8)+
+           '" stroke="#2a2a32" stroke-width="1.9" fill="none" stroke-linecap="round"/>';});
+      return o;};
+    return one(60-g,-1)+one(60+g,1);}},
   {id:'she5', n:'雲朵腮紅', p:100, slot:'face', only:'a-shp', d:a=>{
   const y=AC.cheekY(a),g=Math.min(a.gap+7,a.hr-8);
   const one=sg=>{const x=60+sg*g;
@@ -6829,15 +6848,16 @@ const ITEMS=[
     const one=x=>'<path d="M'+x+' '+(y+1)+'q-5-4-5 1t5 5 5-5-5-1z" fill="#e8628f" opacity=".72"/>'+
       '<path d="M'+x+' '+(y-2.6)+'q4-2.6 4.6 .6q-3.4 2-4.6-.6z" fill="#4a9b3f" opacity=".75"/>';
     return one(60-g)+one(60+g);}},
-  {id:'pie3', n:'泥巴面膜', p:100, slot:'face', only:'a-pig', d:a=>{
-    const y=eyeY(a), g=a.gap, w=g+AC.ew(a)+3;
-    return '<path d="M'+(60-w)+' '+(y-8)+'h'+(w*2)+'q2 9-2 15h-'+(w*2-4)+'q-4-6-2-15z" fill="#8a6a4a"/>'+
-      '<circle cx="'+(60-g)+'" cy="'+y+'" r="4.6" fill="#c9e08a"/>'+
-      '<circle cx="'+(60+g)+'" cy="'+y+'" r="4.6" fill="#c9e08a"/>'+
-      '<circle cx="'+(60-g)+'" cy="'+y+'" r="2.4" fill="#a8c96a"/>'+
-      '<circle cx="'+(60+g)+'" cy="'+y+'" r="2.4" fill="#a8c96a"/>'+
-      '<circle cx="'+(60-w+5)+'" cy="'+(y+8)+'" r="1.6" fill="#6b5138"/>'+
-      '<circle cx="'+(60+w-6)+'" cy="'+(y+6)+'" r="1.3" fill="#6b5138"/>';}},
+  {id:'pie3', n:'泡泡浴泡沫', p:100, slot:'face', only:'a-pig', d:a=>{
+    /* 洗澡的泡沫堆在額頭上。下緣不能碰到眼珠上緣 */
+    const lim=eyeY(a)-(a.pup||4.5)-3, cy=lim-8, f=n=>n.toFixed(1);
+    let o='';
+    [[-13,3,4.2],[-6,-1,5.4],[1,2,5],[8,-1,4.8],[14,3,3.8],[-2,-6,3.4],[6,-6,3]].forEach(([dx,dy,r])=>{
+      o+='<circle cx="'+f(60+dx)+'" cy="'+f(cy+dy)+'" r="'+r+'" fill="#ffffff" opacity=".94"/>'+
+         '<circle cx="'+f(60+dx-r*.32)+'" cy="'+f(cy+dy-r*.36)+'" r="'+f(r*.3)+'" fill="#bfe4f2" opacity=".75"/>';});
+    [[-17,-9,2.6],[17,-8,3],[10,-13,2]].forEach(([dx,dy,r])=>{
+      o+='<circle cx="'+f(60+dx)+'" cy="'+f(cy+dy)+'" r="'+r+'" fill="#ffffff" opacity=".45" stroke="#bfe4f2" stroke-width="1"/>';});
+    return o;}},
   {id:'pie4', n:'叼著稻草', p:100, slot:'face', only:'a-pig', d:a=>{
     const my=mouY(a)+1, x=60+11, y=my+4;     /* 鼻頭右緣 rx=12.5，從那裡咬出來 */
     return '<path d="M'+x+' '+y+'l13-10" stroke="#e0c77e" stroke-width="2.4" stroke-linecap="round"/>'+
@@ -7110,14 +7130,16 @@ const ITEMS=[
       '<circle cx="'+(60-g)+'" cy="'+(y-.5)+'" r="'+(AC.ew(a)*.5)+'" fill="#5ce07a" opacity=".85"/>'+
       '<circle cx="'+(60+g)+'" cy="'+(y-.5)+'" r="'+(AC.ew(a)*.5)+'" fill="#5ce07a" opacity=".85"/>'+
       '<path d="M'+(60-w)+' '+(y-4)+'h-6M'+(60+w)+' '+(y-4)+'h6" stroke="#2a3a2c" stroke-width="3"/>';}},
-  {id:'moe5', n:'沾到麵粉', p:100, slot:'face', only:'a-mou', d:a=>{
-    /* 沾在口鼻跟臉頰上。之前有一塊蓋在眼珠上，整隻眼睛就糊掉了 */
-    const ry=HRY(a), ny=a.hy+ry*(a.chin||1)-4, g=a.gap, y=eyeY(a)+(a.pup||4.5)+5, f=n=>n.toFixed(1);
-    let o='<ellipse cx="60" cy="'+f(ny)+'" rx="8.4" ry="5.4" fill="#ffffff"/>'+
-      '<ellipse cx="'+f(60-g-1)+'" cy="'+f(y)+'" rx="5" ry="3.4" fill="#ffffff" opacity=".9"/>';
-    [[-11,3,1.8],[9,2,1.5],[5,-6,1.3],[-6,-8,1.1],[12,-3,1.1]].forEach(([dx,dy,r])=>{
-      o+='<circle cx="'+f(60+dx)+'" cy="'+f(ny+dy)+'" r="'+r+'" fill="#ffffff" stroke="#cfd3dc" stroke-width=".7"/>';});
-    return o;}},
+  {id:'moe5', n:'珍珠耳夾', p:100, slot:'face', only:'a-mou', d:a=>{
+    /* 老鼠的大圓耳在 (60±(hr-5), hy-hr+3) r=11.5。扣環咬在耳朵外緣上，珍珠垂在耳朵外面 */
+    const ex=a.hr-5, ey=a.hy-a.hr+3, R=11.5, f=n=>n.toFixed(1);
+    const one=sg=>{const x=60+sg*(ex+R*.66), y=ey+R*.66;
+      return '<circle cx="'+f(x)+'" cy="'+f(y)+'" r="2.4" fill="none" stroke="#e0b64a" stroke-width="1.5"/>'+
+        '<path d="M'+f(x)+' '+f(y+2.4)+'V'+f(y+4.6)+'" stroke="#e0b64a" stroke-width="1.3"/>'+
+        '<circle cx="'+f(x)+'" cy="'+f(y+8.4)+'" r="4" fill="#fdeef4" stroke="#d8b8c6" stroke-width=".8"/>'+
+        '<circle cx="'+f(x-1.3)+'" cy="'+f(y+7.1)+'" r="1.3" fill="#ffffff"/>'+
+        '<circle cx="'+f(x+2)+'" cy="'+f(y+9.8)+'" r="1" fill="#eec6d6"/>';};
+    return one(-1)+one(1);}},
   {id:'moe6', n:'起司屑', p:100, slot:'face', only:'a-mou', hide:'whisk', d:a=>{
     const ry=HRY(a), ny=a.hy+ry*(a.chin||1)-1.6;
     let o='<ellipse cx="60" cy="'+ny.toFixed(1)+'" rx="4.6" ry="3.6" fill="'+a.ink+'"/>'+
@@ -7345,12 +7367,18 @@ const ITEMS=[
          '" stroke="#54331c" stroke-width="1.4" fill="none" opacity=".8"/>';}
     return o+'<path d="M'+(60-w)+' '+(y-1)+'h'+(w*2)+'" stroke="#54331c" stroke-width="2.4"/>'+
       '<circle cx="'+(60-w*.3)+'" cy="'+(t+5)+'" r="2" fill="#8a5a2a"/>';}},
-  {id:'mke1', n:'小丑紅鼻', p:100, slot:'face', only:'a-mky', d:a=>{
-    const y=eyeY(a), g=a.gap, m=mouY(a), r=AC.ew(a);
-    return '<ellipse cx="'+(60-g)+'" cy="'+(y+r+1.6)+'" rx="'+(r+1.6)+'" ry="3" fill="#f2f4f8" opacity=".9"/>'+
-      '<ellipse cx="'+(60+g)+'" cy="'+(y+r+1.6)+'" rx="'+(r+1.6)+'" ry="3" fill="#f2f4f8" opacity=".9"/>'+
-      '<circle cx="60" cy="'+(m-2)+'" r="5" fill="#d0392b"/>'+
-      '<circle cx="'+(60-1.6)+'" cy="'+(m-3.6)+'" r="1.6" fill="#ff8a7c" opacity=".8"/>';}},
+  {id:'mke1', n:'扶桑花耳飾', p:100, slot:'face', only:'a-mky', d:a=>{
+    /* 塞在左耳前面的頭側邊（猴子的耳朵長在頭的正兩側） */
+    const y=a.hy-7, x=60-AC.wAtY(a,y)+3, f=n=>n.toFixed(1);
+    let o='';
+    for(let i=0;i<5;i++){const A=(i*72-90)*Math.PI/180;
+      o+='<circle cx="'+f(x+Math.cos(A)*4.2)+'" cy="'+f(y+Math.sin(A)*4.2)+'" r="3.5" fill="#ff5f8f"/>';}
+    for(let i=0;i<5;i++){const A=(i*72-90)*Math.PI/180;
+      o+='<circle cx="'+f(x+Math.cos(A)*3.2)+'" cy="'+f(y+Math.sin(A)*3.2)+'" r="1.9" fill="#ff96b6" opacity=".8"/>';}
+    return o+'<circle cx="'+f(x)+'" cy="'+f(y)+'" r="2.2" fill="#ffd75e"/>'+
+      '<path d="M'+f(x)+' '+f(y)+' L'+f(x+1.6)+' '+f(y-5.6)+'" stroke="#ffd75e" stroke-width="1.2"/>'+
+      '<circle cx="'+f(x+1.6)+'" cy="'+f(y-5.9)+'" r="1.1" fill="#ffe9a0"/>'+
+      '<path d="M'+f(x+3)+' '+f(y+4.4)+' q4 1.6 5.6-1.4 q-4-1.6-5.6 1.4z" fill="#4f9b4a"/>';}},
   {id:'mke2', n:'探險墨鏡', p:100, slot:'face', only:'a-mky', d:a=>{
     const y=eyeY(a), g=a.gap, r=AC.ew(a)*1.05;
     return '<path d="M'+(60-g-r)+' '+(y-r*.8)+'h'+(r*2)+'v'+(r*1.3)+'q0 '+(r*.6)+' -'+r+' '+(r*.6)+'t-'+r+'-'+(r*.6)+'z" fill="#33210f"/>'+
@@ -7631,36 +7659,36 @@ const ITEMS=[
     return '<path d="M'+(60-7)+' '+(my+2)+'q-6 5-4 11q4-3 5-8z" fill="#3fa06a"/>'+
       '<path d="M'+(60+3)+' '+(my+3)+'q5 4 4 9q-4-3-5-7z" fill="#4fb87c"/>'+
       '<path d="M'+(60-4)+' '+(my+2)+'q4 3 8 0" stroke="#2f7d4f" stroke-width="1.6" fill="none"/>';}},
-  {id:'due4', n:'沾到麵包屑', p:100, slot:'face', only:'a-duk', d:a=>{
-    /* 麵包色配黃鴨會糊在一起，屑屑改成烤過的深棕 */
-    const my=mouY(a);
-    let o='';
-    [[-6,4,1.9],[4,5,1.6],[-1,7,1.3],[8,2,1.2],[-9,1,1.1]].forEach(([dx,dy,r])=>{
-      o+='<circle cx="'+(60+dx)+'" cy="'+(my+dy)+'" r="'+r+'" fill="#a8763f" stroke="#6b4426" stroke-width=".8"/>';});
-    return o+'<ellipse cx="60" cy="'+(my+4)+'" rx="9" ry="4.4" fill="#e0c9a0" opacity=".45"/>'+
-      '<circle cx="'+(60+2)+'" cy="'+(my-3)+'" r="1" fill="#c98a4a"/>';}},
-  {id:'due5', n:'水珠', p:100, slot:'face', only:'a-duk', d:a=>{
-    const y=eyeY(a)+6, g=Math.min(a.gap+8,a.hr-7);
-    const one=x=>'<path d="M'+x+' '+(y-4)+'q4 5 4 7a4 4 0 0 1-8 0q0-2 4-7z" fill="#bfe9f7" opacity=".9"/>'+
-      '<path d="M'+(x-1.4)+' '+(y+2)+'q1.4-1.6 2.6-.6" stroke="#ffffff" stroke-width="1.3" fill="none"/>';
-    return one(60-g)+one(60+g)+
-      '<path d="M'+(60-g+5)+' '+(y-9)+'q2.4 3 2.4 4a2.4 2.4 0 0 1-4.8 0q0-1 2.4-4z" fill="#bfe9f7" opacity=".75"/>';}},
+  {id:'due4', n:'蜜桃喙彩', p:100, slot:'face', only:'a-duk', d:a=>{
+    /* 喙是 (60,m-1) rx12.5 ry5.5 的橢圓。整片一起染才看得出是「上了色的喙」——
+       只染下半片的話遠看會變成嘴巴裡面是粉紅的 */
+    const m=mouY(a)-1, f=n=>n.toFixed(1);
+    return '<ellipse cx="60" cy="'+f(m)+'" rx="12.5" ry="5.5" fill="#ff8fb4"/>'+
+      '<path d="M'+f(60-12.5)+' '+f(m)+' A12.5 5.5 0 0 0 '+f(60+12.5)+' '+f(m)+' Z" fill="#e8628f" opacity=".55"/>'+
+      '<path d="M'+f(60-10.4)+' '+f(m)+' Q60 '+f(m+2.6)+' '+f(60+10.4)+' '+f(m)+
+      '" stroke="#b8395e" stroke-width="1.5" fill="none"/>'+
+      '<ellipse cx="'+f(60-5)+'" cy="'+f(m-2.6)+'" rx="3.4" ry="1.4" fill="#ffffff" opacity=".55"/>'+
+      '<circle cx="'+f(60+6.4)+'" cy="'+f(m-2.2)+'" r="1.1" fill="#ffffff" opacity=".45"/>';}},
+  {id:'due5', n:'水波腮紅', p:100, slot:'face', only:'a-duk', d:a=>{
+    /* 臉頰只剩眼睛跟喙之間那條窄縫，往外靠著臉邊擺，才不會壓到喙（喙的左緣 x=47.5） */
+    const y=eyeY(a)+6, g=AC.wAtY(a,y)-6, f=n=>n.toFixed(1);
+    const one=x=>'<ellipse cx="'+f(x)+'" cy="'+f(y)+'" rx="5.4" ry="3.8" fill="#ff8fb4" opacity=".6"/>'+
+      '<path d="M'+f(x-4.2)+' '+f(y+.8)+' q2.1-1.8 4.2 0 t4.2 0" stroke="#ffffff" stroke-width="1.1" fill="none" opacity=".7"/>'+
+      '<path d="M'+f(x-3.2)+' '+f(y+3.4)+' q1.6-1.5 3.2 0 t3.2 0" stroke="#ffffff" stroke-width="1" fill="none" opacity=".55"/>';
+    return one(60-g)+one(60+g);}},
   {id:'due6', n:'長睫毛', p:100, slot:'face', only:'a-duk', d:a=>{
-    /* 跟熊那件一樣：起點要落在眼珠的圓周上。用 AC.ew 當半徑的話
-       是照著一個兩倍大的假眼睛擺，整排會飄在眼睛外面 */
+    /* 睫毛要長在眼珠那顆圓上（半徑 pup，不是 AC.ew 那顆兩倍大的假眼睛），
+       而且要往外翹 —— 角度的正負號寫反整排就會往鼻子中間倒 */
     const y=eyeY(a), g=a.gap, r=(a.pup||4.5), f=n=>n.toFixed(1);
     const one=(x,sg)=>{
-      let o='';
-      [[-52,5.6],[-24,6.4],[2,5.6]].forEach(([deg,len])=>{
+      let o='<path d="M'+f(x-r*.75)+' '+f(y-r*.72)+' Q'+f(x)+' '+f(y-r*1.18)+' '+f(x+r*.75)+' '+f(y-r*.72)+
+        '" stroke="'+a.ink+'" stroke-width="1.9" fill="none" stroke-linecap="round"/>';
+      [[66,6.2],[38,7.2],[10,5.8]].forEach(([deg,len])=>{
         const A=(-90+sg*deg)*Math.PI/180, cs=Math.cos(A), sn=Math.sin(A);
-        /* 尾端往外翹一點，才像刷過的睫毛不是刺蝟 */
-        o+='<path d="M'+f(x+cs*(r-.6))+' '+f(y+sn*(r-.6))+
-           'q'+f(cs*len*.7)+' '+f(sn*len*.7)+' '+f(cs*len+sg*1.8)+' '+f(sn*len-.6)+
-           '" stroke="'+a.ink+'" stroke-width="1.7" fill="none" stroke-linecap="round"/>';
-      });
-      o+='<circle cx="'+f(x-sg*r*.3)+'" cy="'+f(y-r*.34)+'" r="'+f(r*.3)+'" fill="#ffffff" opacity=".9"/>';
-      return o;
-    };
+        o+='<path d="M'+f(x+cs*(r-.8))+' '+f(y+sn*(r-.8))+
+           ' q'+f(cs*len*.7)+' '+f(sn*len*.7)+' '+f(cs*len+sg*1.8)+' '+f(sn*len-.6)+
+           '" stroke="'+a.ink+'" stroke-width="1.7" fill="none" stroke-linecap="round"/>';});
+      return o+'<circle cx="'+f(x-sg*r*.3)+'" cy="'+f(y-r*.3)+'" r="'+f(r*.3)+'" fill="#ffffff" opacity=".9"/>';};
     return one(60-g,-1)+one(60+g,1);}},
   {id:'dun1', n:'游泳圈', p:100, slot:'neck', only:'a-duk', mid:1, d:a=>{
     /* mid:1 ── 整個圈畫在頭的下面，頭就蓋在圈上面，後半圈自然被擋住，
