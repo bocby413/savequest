@@ -3050,8 +3050,10 @@ const AC={
     return a.hr*Math.sqrt(Math.max(.04,1-k*k));},
   /* 頭頂線。派對帽、廚師帽、皇冠這類是擺在頭頂上的，
      用帽沿線去畫會變成戴進頭裡面 */
-  crest:a=>Math.min(HT(a)+4,HLINE(a)),
-  crestW:a=>a.sq?a.hr*.62:AC.wAtY(a,AC.crest(a)),
+  /* 蛋型角色（企鵝）的頭沒有單獨畫，頂點是蛋的頂 —— 照 HT 算會浮在空中 */
+  eggW:(a,y)=>{const d=(a.by-y)/a.bh; return d>=1?0:a.bw*Math.sqrt(Math.max(0,1-d*d));},
+  crest:a=>a.egg?a.by-a.bh+4:Math.min(HT(a)+4,HLINE(a)),
+  crestW:a=>a.sq?a.hr*.62:(a.egg?AC.eggW(a,AC.crest(a)):AC.wAtY(a,AC.crest(a))),
   /* ── 頭 ── */
   hugW:a=>a.sq?a.hr*.9:HATW(a),        /* 貼著頭戴的那種帽子有多寬 */
   cap:(a,c,d)=>{const y=HLINE(a),w=AC.hugW(a),dm=y-AC.top(a,HRY(a)*.62);
@@ -7928,12 +7930,14 @@ const ITEMS=[
       o+='<circle cx="'+f(x)+'" cy="'+f(dy)+'" r="2.2" fill="#e6f0ff"/>';}
     return o;}},
   {id:'pgb7', n:'冰藍紗裙', p:200, slot:'body', only:'a-peng', d:a=>{
+    /* 企鵝的 t 是蛋頂，臉也在這顆蛋上 —— 裙頭要跟其他企鵝衣服一樣從 .53 起，
+       用 .42 的話裙頭會壓到嘴巴 */
     const t=a.by-a.bh, h=a.bh*2, f=n=>n.toFixed(1);
-    let o='<path d="'+garment(a,.42,.96)+'" fill="#8ad3f2" opacity=".82"/>';
-    for(let i=0;i<3;i++){const k=.56+i*.14, wq=bwAt(a,k)+2;
+    let o='<path d="'+garment(a,.53,.96)+'" fill="#8ad3f2" opacity=".82"/>';
+    for(let i=0;i<3;i++){const k=.66+i*.1, wq=bwAt(a,k)+2;
       o+='<path d="M'+f(60-wq)+' '+f(t+h*k)+'q'+f(wq*.5)+' 4.4 '+f(wq)+' 0t'+f(wq)+' 0" stroke="#e6f7ff" stroke-width="2" fill="none"/>';}
-    return o+'<path d="M'+f(60-a.bw*.9)+' '+f(t+h*.42)+'h'+f(a.bw*1.8)+'" stroke="#bfe9f7" stroke-width="4"/>'+
-      '<circle cx="60" cy="'+f(t+h*.42)+'" r="3" fill="#ffffff"/>';}},
+    return o+'<path d="M'+f(60-bwAt(a,.53)-1)+' '+f(t+h*.53)+'h'+f((bwAt(a,.53)+1)*2)+'" stroke="#bfe9f7" stroke-width="4"/>'+
+      '<circle cx="60" cy="'+f(t+h*.53)+'" r="3" fill="#ffffff"/>';}},
   {id:'pgd7', n:'棉花糖', p:200, slot:'hand', only:'a-peng', d:a=>{
     const x=AC.gx(a), g=AC.gy(a), f=n=>n.toFixed(1);
     let o='<path d="M'+f(x)+' '+f(g+11)+'v-9" stroke="#c9a95e" stroke-width="2.2" stroke-linecap="round"/>';
