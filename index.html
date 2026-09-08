@@ -10607,16 +10607,19 @@ function renderStocks(){
       '股票的收盤價每天盤後自動更新，市值會併進總資產。</div>';
     $('stkSub').textContent=''; return;
   }
-  /* 每個數字都先換成現在要顯示的幣別。其他資產是手填的，一律當台幣 */
-  const cv=(v,from)=>fxTo(v,from||'TWD',stkCur);
-  const ov=os.reduce((s,o)=>s+(cv(o.value)||0),0);
-  const oc=os.reduce((s,o)=>s+(cv(o.cost)||0),0);
-  const tv=rows.reduce((s,r)=>s+(cv(r.value,r.cur)||0),0)+ov;
-  const tc=rows.reduce((s,r)=>s+(cv(r.cost,r.cur)||0),0)+oc;
+  /* 每一列用哪個幣別顯示：台股永遠台幣，美股看上面切到哪一邊。
+     其他資產是手填的，一律台幣 */
+  const cv=(v,from)=>fxTo(v,from||'TWD',from==='USD'?stkCur:'TWD');
+  /* 合計一律台幣 —— 一半美金一半台幣加起來沒有意義 */
+  const tw=(v,from)=>fxTo(v,from||'TWD','TWD');
+  const ov=os.reduce((s,o)=>s+(o.value||0),0);
+  const oc=os.reduce((s,o)=>s+(o.cost||0),0);
+  const tv=rows.reduce((s,r)=>s+(tw(r.value,r.cur)||0),0)+ov;
+  const tc=rows.reduce((s,r)=>s+(tw(r.cost,r.cur)||0),0)+oc;
   const hasPl=rows.some(r=>r.pl!==null)||os.some(o=>o.cost>0);
-  const tp=hasPl?rows.reduce((s,r)=>s+(cv(r.pl,r.cur)||0),0)
-    +os.reduce((s,o)=>s+(o.cost>0?cv(o.value-o.cost)||0:0),0):null;
-  const sign=us?curSign(stkCur)+' ':'';
+  const tp=hasPl?rows.reduce((s,r)=>s+(tw(r.pl,r.cur)||0),0)
+    +os.reduce((s,o)=>s+(o.cost>0?o.value-o.cost:0),0):null;
+  const sign=us?'NT$ ':'';
   const colName=stkCol==='cost'?'成本':'市值';
   /* 成本填 0 或沒填的當作沒有，寫 0 會讓人以為是免費拿到的 */
   const colOf=x=>{
@@ -10633,7 +10636,8 @@ function renderStocks(){
     rows.map(r=>{
       const plpct=(r.pl!==null&&r.cost)?(r.pl/r.cost*100):null;
       const px=cv(r.price,r.cur), av=cv(r.avg>0?r.avg:null,r.cur);
-      return '<tr><td><span class="cd">'+esc(r.code)+(r.cur==='USD'?' <span class="mk">美股</span>':'')+'</span>'+
+      return '<tr><td><span class="cd">'+esc(r.code)+
+          (r.cur==='USD'?' <span class="mk">美股 '+curSign(stkCur)+'</span>':'')+'</span>'+
           '<span class="nm">'+(r.name||'<span class="miss">查不到這檔</span>')+'</span></td>'+
         '<td class="hidem">'+money(r.shares)+'</td>'+
         '<td class="hidem">'+(av!==null&&av!==undefined?av.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—')+'</td>'+
