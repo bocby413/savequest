@@ -4219,13 +4219,21 @@ const ITEMS=[
       o+='<path d="M'+f(cx)+' '+f(cy)+'m-'+f(rr)+' 0a'+f(rr)+' '+f(rr)+' 0 1 1 '+f(rr*2)+
          ' 0" fill="none" stroke="#ff7a68" stroke-width="1"/>';}
     return o;}},
-  {id:'dge2', n:'奶油鬍子', p:100, slot:'face', only:'a-dog', d:a=>{
-    /* 喝完牛奶嘴邊那一圈。沿著口鼻的下緣走，不要蓋到鼻頭 */
-    const m=mouY(a), f=n=>n.toFixed(1);
-    return '<path d="M'+f(60-11)+' '+f(m-1)+'q11 9 22 0q-1 7-11 7t-11-7z" fill="#fffdf8" opacity=".95"/>'+
-      '<path d="M'+f(60-11)+' '+f(m-1)+'q11 9 22 0" stroke="#e8e2d6" stroke-width="1.2" fill="none"/>'+
-      '<circle cx="'+f(60-13)+'" cy="'+f(m+1)+'" r="1.5" fill="#fffdf8"/>'+
-      '<circle cx="'+f(60+13)+'" cy="'+f(m)+'" r="1.2" fill="#fffdf8"/>';}},
+  {id:'dge2', n:'櫻花貼紙', p:100, slot:'face', only:'a-dog', d:a=>{
+    /* 貼在臉頰上。往下要離開眼珠、往外不能超出臉在那個高度的寬度 */
+    const pr=(a.pup||4.5), y=eyeY(a)+pr+4.6, r=4.4, f=n=>n.toFixed(1);
+    const g=Math.min(a.gap+pr+r+3, AC.wAtY(a,y)-r-1);
+    const petal=(cx,cy,sz,c)=>{
+      let o='';
+      for(let i=0;i<5;i++){const A=i*72*Math.PI/180;
+        o+='<ellipse cx="'+f(cx+Math.cos(A)*sz*.62)+'" cy="'+f(cy+Math.sin(A)*sz*.62)+
+           '" rx="'+f(sz*.56)+'" ry="'+f(sz*.38)+'" fill="'+c+'" transform="rotate('+(i*72)+','+
+           f(cx+Math.cos(A)*sz*.62)+','+f(cy+Math.sin(A)*sz*.62)+')"/>';}
+      return o+'<circle cx="'+f(cx)+'" cy="'+f(cy)+'" r="'+f(sz*.22)+'" fill="#ffe27a"/>';
+    };
+    return petal(60-g,y,r,'#ffb0cc')+petal(60+g,y,r*.78,'#ffd1e0')+
+      '<circle cx="'+f(60-g+r*1.5)+'" cy="'+f(y-r)+'" r="1.2" fill="#ffd1e0"/>'+
+      '<circle cx="'+f(60+g-r*1.4)+'" cy="'+f(y+r*.9)+'" r="1" fill="#ffb0cc"/>';}},
   {id:'dge3', n:'叼著飛盤', p:100, slot:'face', only:'a-dog', d:a=>{
     /* 咬在嘴上，盤子往外斜出去 —— 整片壓在臉中間就變成盤子貼在臉上 */
     const m=mouY(a), cx=60+a.hr*.34, cy=m+2, f=n=>n.toFixed(1);
