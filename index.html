@@ -7226,7 +7226,7 @@ const ITEMS=[
          '" rx="4.2" ry="3" fill="#ff6f91" transform="rotate('+(i*72)+','+(cx+Math.cos(ang)*4.4).toFixed(1)+','+(cy+Math.sin(ang)*4.4).toFixed(1)+')"/>';}
     return o+'<circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="2.4" fill="#ffd75e"/>'+
       '<path d="M'+cx.toFixed(1)+' '+cy.toFixed(1)+'l4 5" stroke="#ffe9b0" stroke-width="1.4" stroke-linecap="round"/>';}},
-  {id:'mkh6', n:'椰子殼帽', p:100, slot:'head', only:'a-mky', hide:'ear', d:a=>{
+  {id:'mkh6', n:'椰子殼帽', p:100, slot:'head', only:'a-mky', d:a=>{
     const y=HLINE(a), w=a.hr+2, t=AC.top(a,HRY(a)*.74);
     let o='<path d="M'+(60-w)+' '+y+'q0-'+(y-t)+' '+w+'-'+(y-t)+'t'+w+' '+(y-t)+'z" fill="#6b4426"/>';
     for(let i=0;i<4;i++){const x=60-w*.7+i*(w*1.4/3);
