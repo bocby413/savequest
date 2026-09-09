@@ -373,6 +373,26 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .pie .mid{position:absolute;text-align:center;pointer-events:none}
 .pie .mid b{display:block;font-size:22px;font-weight:800;letter-spacing:-.5px}
 .pie .mid span{font-size:11.5px;color:var(--txt3)}
+/* 股票損益：0 在中間的分向長條。損益有正有負，畫成圓餅的話
+   「各段加起來」會是一個不存在的數字，真正的淨損益反而沒有對應的一塊 */
+.pnl{padding:18px 20px;display:block}
+.pnl .head{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+.pnl .head b{font-size:26px;font-weight:800;letter-spacing:-.5px}
+.pnl .head span{font-size:12px;color:var(--txt3)}
+.pnl .row{display:grid;grid-template-columns:52px 1fr 84px;gap:10px;align-items:center;
+  padding:5px 4px;border-radius:8px;transition:background-color .14s}
+.pnl .row:hover{background:var(--panel2)}
+.pnl .nm{font-size:13px;font-weight:600;white-space:nowrap}
+.pnl .nm i{font-size:11px;color:var(--txt3);font-weight:400;font-style:normal;margin-left:5px}
+.pnl .track{position:relative;height:15px}
+.pnl .track:before{content:"";position:absolute;left:50%;top:-4px;bottom:-4px;width:1px;background:var(--edge2)}
+.pnl .tot .track:before{display:none}
+.pnl .track u{position:absolute;top:0;height:15px;width:50%;border-radius:4px;
+  transform:scaleX(0);transition:transform .45s cubic-bezier(.25,1,.4,1)}
+.pnl .track u.p{left:50%;transform-origin:left;background:#8ee65a;border-radius:0 4px 4px 0}
+.pnl .track u.n{right:50%;transform-origin:right;background:#ff6b6b;border-radius:4px 0 0 4px}
+.pnl .amt{text-align:right;font-size:13px;font-variant-numeric:tabular-nums}
+.pnl .tot{border-top:1px solid var(--edge);margin-top:8px;padding-top:10px;font-weight:700}
 .legend{display:flex;flex-direction:column;gap:2px}
 .lg{display:grid;grid-template-columns:12px 1fr auto auto;gap:9px;align-items:center;padding:5px 6px;border-radius:8px;
   transition:background-color .14s}
@@ -10717,6 +10737,7 @@ function renderStock(){
   const buy=rs.filter(x=>x.kind==='out').reduce((s,x)=>s+x.amount,0);
   const sell=rs.filter(x=>x.kind==='in').reduce((s,x)=>s+x.amount,0);
   if(!rs.length){
+    box.className='card piebox';
     box.innerHTML=donut([],1,'<b style="color:var(--txt3)">—</b>',rangeName()+'沒有進出',180)+
       '<div class="legend"><div class="lg" style="grid-template-columns:1fr">'+
       '<span class="nm" style="color:var(--txt3);font-weight:400;font-size:13.5px;line-height:1.6">'+
@@ -10735,30 +10756,19 @@ function renderStock(){
     c:SUBCOLOR[k]||'#8a93a8'})).sort((a,b)=>b.net-a.net);
   const mx=Math.max(...strat.map(x=>Math.abs(x.net)),1);
   const mid='<b class="'+(net>=0?'up':'down')+'">'+(net>=0?'+':'-')+short(Math.abs(net))+'</b>';
-  /* 環畫的是損益不是成交金額：一段＝一個策略的 |淨損益|，賺的排前面、賠的排後面。
-     用成交金額的話「進出最多」的策略會佔最大一塊，跟中間那個淨損益完全是兩件事 */
-  const win=strat.filter(x=>x.net>0), lose=strat.filter(x=>x.net<0);
-  const winSum=win.reduce((n,x)=>n+x.net,0), loseSum=lose.reduce((n,x)=>n-x.net,0);
-  const absSum=winSum+loseSum;
-  const donutRows=win.concat(lose).map(x=>({k:x.k+(x.net>=0?' 賺 ':' 賠 ')+money(Math.abs(x.net)),
-    v:Math.abs(x.net), c:x.c}));
-  box.innerHTML=donut(donutRows,absSum,mid,rangeName()+'淨損益',180)+
-    '<div class="legend">'+
-      strat.map(x=>
-        '<div class="lg"><i style="background:'+x.c+'"></i>'+
-        '<span class="nm">'+esc(x.k)+'<span class="sn"> '+x.n+' 筆</span></span>'+
-        '<span class="amt n '+(x.net>=0?'up':'down')+'">'+(x.net>=0?'+':'-')+money(Math.abs(x.net))+'</span>'+
-        '<span class="pct">'+(x.buy?((x.net/x.buy)*100).toFixed(1)+'%':'—')+'</span>'+
-        '<span class="bar"><u data-w="'+(Math.abs(x.net)/mx)+'" style="background:'+(x.net>=0?'#8ee65a':'#ff6b6b')+'"></u></span></div>'
-      ).join('')+
-      '<div class="lg" style="border-top:1px solid var(--edge);margin-top:6px;padding-top:11px">'+
-        '<i style="background:transparent"></i><span class="nm">合計 '+rs.length+' 筆</span>'+
-        '<span class="amt n '+(net>=0?'up':'down')+'">'+(net>=0?'+':'-')+money(Math.abs(net))+'</span>'+
-        '<span class="pct">'+(buy?((net/buy)*100).toFixed(1)+'%':'—')+'</span></div>'+
-      '<div class="lg" style="padding-top:2px"><i style="background:transparent"></i>'+
-        '<span class="nm mono">買進 '+short(buy)+'　賣出 '+short(sell)+'</span></div>'+
-    '</div>';
-  setTimeout(()=>box.querySelectorAll('.lg u').forEach(u=>u.style.transform='scaleX('+u.dataset.w+')'),30);
+  /* 0 在中間的分向長條：賺往右、賠往左，長度照 |淨損益| 對 max 收 */
+  box.className='card pnl';
+  box.innerHTML=
+    '<div class="head"><b class="'+(net>=0?'up':'down')+'">'+(net>=0?'+':'-')+money(Math.abs(net))+'</b>'+
+    '<span>'+rangeName()+'淨損益・'+rs.length+' 筆</span></div>'+
+    strat.map(x=>
+      '<div class="row"><span class="nm">'+esc(x.k)+'<i>'+x.n+' 筆</i></span>'+
+      '<span class="track"><u class="'+(x.net>=0?'p':'n')+'" data-w="'+(Math.abs(x.net)/mx)+'"></u></span>'+
+      '<span class="amt '+(x.net>=0?'up':'down')+'">'+(x.net>=0?'+':'-')+money(Math.abs(x.net))+'</span></div>'
+    ).join('')+
+    '<div class="row tot"><span class="nm">合計</span><span class="track"></span>'+
+    '<span class="amt '+(net>=0?'up':'down')+'">'+(net>=0?'+':'-')+money(Math.abs(net))+'</span></div>';
+  setTimeout(()=>box.querySelectorAll('.lg u,.pnl u').forEach(u=>u.style.transform='scaleX('+u.dataset.w+')'),30);
 }
 /* 圓餅圖現在畫的是哪幾類。點圖例或扇形的時候要回頭找出那一類有哪些紀錄，
    所以連「被併成『其餘 N 類』的那些原始類別」也要一起記下來 */
@@ -10800,7 +10810,7 @@ function renderPie(){
   }
   box.innerHTML=donut(rows,total,'<b>'+short(total)+'</b>',period+(pieKind==='out'?'花掉':'存進來'),180)+
     legend(rows,total);
-  setTimeout(()=>box.querySelectorAll('.lg u').forEach(u=>u.style.transform='scaleX('+u.dataset.w+')'),30);
+  setTimeout(()=>box.querySelectorAll('.lg u,.pnl u').forEach(u=>u.style.transform='scaleX('+u.dataset.w+')'),30);
 }
 /* 點圓餅圖的某一類，列出那一類的每一筆。純看，不在這裡改 —— 要改就回闖關紀錄，
    免得又出現「上面壓著一層看不到編輯視窗」那種事 */
