@@ -10735,8 +10735,14 @@ function renderStock(){
     c:SUBCOLOR[k]||'#8a93a8'})).sort((a,b)=>b.net-a.net);
   const mx=Math.max(...strat.map(x=>Math.abs(x.net)),1);
   const mid='<b class="'+(net>=0?'up':'down')+'">'+(net>=0?'+':'-')+short(Math.abs(net))+'</b>';
-  const donutRows=strat.map(x=>({k:x.k,v:x.buy+x.sell,c:x.c}));
-  box.innerHTML=donut(donutRows,buy+sell,mid,rangeName()+'淨損益',180)+
+  /* 環畫的是損益不是成交金額：一段＝一個策略的 |淨損益|，賺的排前面、賠的排後面。
+     用成交金額的話「進出最多」的策略會佔最大一塊，跟中間那個淨損益完全是兩件事 */
+  const win=strat.filter(x=>x.net>0), lose=strat.filter(x=>x.net<0);
+  const winSum=win.reduce((n,x)=>n+x.net,0), loseSum=lose.reduce((n,x)=>n-x.net,0);
+  const absSum=winSum+loseSum;
+  const donutRows=win.concat(lose).map(x=>({k:x.k+(x.net>=0?' 賺 ':' 賠 ')+money(Math.abs(x.net)),
+    v:Math.abs(x.net), c:x.c}));
+  box.innerHTML=donut(donutRows,absSum,mid,rangeName()+'淨損益',180)+
     '<div class="legend">'+
       strat.map(x=>
         '<div class="lg"><i style="background:'+x.c+'"></i>'+
