@@ -4,7 +4,7 @@
 
 美股跟台股一樣是「整個市場一次抓下來」——  使用者隨便打一個代號都要查得到，
 不能只抓他現在持有的那幾檔（prices.json 是所有人共用的靜態檔）。"""
-import json, re, sys, time, urllib.request
+import json, re, ssl, sys, time, urllib.request
 from datetime import datetime, timedelta, timezone
 
 TPE = timezone(timedelta(hours=8))
@@ -17,11 +17,69 @@ UA = {
     'Referer': 'https://www.twse.com.tw/',
 }
 
+# ── 連線用的憑證 ──
+# 櫃買中心 2026-09-07 換了新憑證，但伺服器只送出自己那張、沒附上中間那張
+# 「TWCA SSL Certification Authority」。瀏覽器會自己去補抓所以看起來正常，
+# Python 不會，於是整個上櫃抓不到、整支程式停在那裡。
+# 這裡把那張中繼憑證放進信任清單讓鏈接得起來 —— 驗證照樣做（最上面還是要接到
+# 系統內建的 TWCA CYBER Root CA），不是把驗證關掉。
+# 來源：憑證裡 AIA 寫的 http://sslserver.twca.com.tw/cacert/Cyber_SSL_2023.crt
+# SHA-256 01:AF:23:24:D0:98:09:8F:5E:0C:DF:6F:AA:BA:DA:43:0B:21:CC:E7:77:F4:7E:AC:B2:62:48:B2:FD:A3:E5:31
+# 有效到 2033-02-23
+TWCA_SSL_CA = """
+-----BEGIN CERTIFICATE-----
+MIIG1DCCBLygAwIBAgIQQAE0sE8AAAAAAAAAA+MkrDANBgkqhkiG9w0BAQwFADBQ
+MQswCQYDVQQGEwJUVzESMBAGA1UEChMJVEFJV0FOLUNBMRAwDgYDVQQLEwdSb290
+IENBMRswGQYDVQQDExJUV0NBIENZQkVSIFJvb3QgQ0EwHhcNMjMwMjIzMDcyMjI0
+WhcNMzMwMjIzMTU1OTU5WjBhMQswCQYDVQQGEwJUVzESMBAGA1UEChMJVEFJV0FO
+LUNBMRMwEQYDVQQLEwpTU0wgU3ViLUNBMSkwJwYDVQQDEyBUV0NBIFNTTCBDZXJ0
+aWZpY2F0aW9uIEF1dGhvcml0eTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoC
+ggIBAMquxiSlMrxfOO29yqxCo/BIYBswnE7snZnuZDPcx8N9WhOdNGDsF024VjXK
+nXoVaZBcv56eFsU+w9Mcq+uIVYzjVrBoe5u8ZLE0hPSkluH8URhcxtSQJ+gXcB0L
+JHsseAeXVcgqoxTSJ6/n0xTCeXEnGwSRAzrqTvjS2gbd3TILxsfIHwRgwwPjBDgm
+tjzbHHOFTJB3GCtH65T9A0viM2B/IW9Wz73jkz02AVMrZBHQ67IJ2W9CoIjd5mdG
+eIV36U9NXl+wZa/D90pLRsFVbItKgLXgF71CQ92vS/biTx8fA6UUCU2ToNczP5Ur
+A/mDXCBCLakwa1I3ylRkgFwluJw9DqiYh56MRgsEABa+ZPrm1Qb9njQZK4Y4V+ML
+IvGM3xVoHIlvaSN29ubTueLpTeuAwN2VTiRzfOyCRKTcMBCtlMw1WCJNAMiNWDWS
+BMnY9SlKv1oujmjS/ti0ptcipMymIoeWpVuQt3Mj8lYlKRpd6Zg8MbljMwQRSClK
+6O6MSwpM3Xy5uJGh2cY5oYmKtxfyHSuKtKsk+daAPV1lpWYp9bNrbsLUPwmSY+zk
+VgkZdiWBF//RP/72/esANONINy5hkWjkVd0NLjA5TAgk+DVVmnPtQIj1vBgtk8ak
+Y9CczIbEgKBonkHWn+GX2ycR6jadg2P+xrBFg4MGjomkb2gtAgMBAAGjggGXMIIB
+kzAfBgNVHSMEGDAWgBSdhWEUfMFib5do5E83QOGt4A1WNzAdBgNVHQ4EFgQU8ijU
++dQcfhprFoLl75Mpae3KFSAwDgYDVR0PAQH/BAQDAgEGMBMGA1UdJQQMMAoGCCsG
+AQUFBwMBMEoGA1UdIARDMEEwNQYLKwYBBAGCvyUBARUwJjAkBggrBgEFBQcCARYY
+aHR0cHM6Ly93d3cudHdjYS5jb20udHcvMAgGBmeBDAECAjBNBgNVHR8ERjBEMEKg
+QKA+hjxodHRwOi8vUm9vdENBLnR3Y2EuY29tLnR3L1RXQ0FSQ0EvY3liZXJfcm9v
+dF9yZXZva2VfMjAyMi5jcmwwEgYDVR0TAQH/BAgwBgEB/wIBADB9BggrBgEFBQcB
+AQRxMG8wQwYIKwYBBQUHMAKGN2h0dHA6Ly9zc2xzZXJ2ZXIudHdjYS5jb20udHcv
+Y2FjZXJ0L2N5YmVyX3Jvb3RfMjAyMi5jcnQwKAYIKwYBBQUHMAGGHGh0dHA6Ly9y
+b290b2NzcC50d2NhLmNvbS50dy8wDQYJKoZIhvcNAQEMBQADggIBAIFF/6Gnvu8L
+3xQDIampB8QVgoKS2bcjte0uJBbCrQHpzcGTuVTkZaiA86LwVz6SAU7TVgVYRXmt
+x8l29WzfKI6wOAzmvlGZxSYAdN0I6YBkJK1nmDs0+TSw5lCzb+UOpajNOaMdJ5SN
+YTN87yRwl82AFrwUmSLaMV4tN7W49N0SsELWs/d4uNHSMM0mBjd0hLDIWJFwOkuD
+yOWahnCVfPlCwSVWpUntOGgOHOA02IUE+JNX+spIV1SwAMYaEVyHe316YUgiGA5y
+k3liTa3vuv06eE1J2yiWrs9booW2VTHD+amzucFFNN1KvSLjSbYxG1t/FclHEN/y
+6hGM3bkjRC31A0jzpv93D3MUQTdJascicPa0H4i8hviRriyetaC6HC4q8FQUTo2A
+cEpxicNGgyHhDV+YdbnS6GZL+f3bsmMM8ZFYZ77mDTS9mRO1VnIwkjiN4vpzh67a
+KTpoD9TQzZcGQiJy6Pi+PCSFiqjK7UD/63L/Pt0hpoNKvZLrz4ngrlpyzpx8KjeS
+A5cjKcc6vlHm0Kk07k5djhJsaqQELso5r+UXi9qC+nwqPuR/w5kJZv4fz0ND4UhY
+5y3qd+iCikkF3WzOzey7jUH9URKb3iZnRAHZvmyLK57UI0FwP+5xZEByvwXDtxbe
+914Hj3cSUrmKT3g/ZlOQQ1THeu48MA79
+-----END CERTIFICATE-----
+"""
+CTX = ssl.create_default_context()
+try:
+    import certifi                          # 有裝就多載一份 Mozilla 的根憑證，沒裝就用系統的
+    CTX.load_verify_locations(cafile=certifi.where())
+except Exception:
+    pass
+CTX.load_verify_locations(cadata=TWCA_SSL_CA)
+
 def get(url, tries=3):
     for i in range(tries):
         try:
             req = urllib.request.Request(url, headers=UA)
-            with urllib.request.urlopen(req, timeout=60) as r:
+            with urllib.request.urlopen(req, timeout=60, context=CTX) as r:
                 raw = r.read().decode('utf-8', 'replace')
             try:
                 return json.loads(raw)
@@ -110,14 +168,15 @@ if tpex:
             n_tpex += 1
     print('  上櫃 %d 檔' % n_tpex, flush=True)
 
-# 少了任一邊就不要覆蓋。之前只擋總數，結果上市掛掉時
-# 一份「只有上櫃」的檔案照樣蓋掉好的那份，2330 就查不到了
-if n_twse < 800:
-    print('上市只有 %d 檔，不覆蓋舊檔' % n_twse)
-    sys.exit(1)
-if n_tpex < 400:
-    print('上櫃只有 %d 檔，不覆蓋舊檔' % n_tpex)
-    sys.exit(1)
+# 少了任一邊就不要覆蓋台股收盤價。之前只擋總數，結果上市掛掉時
+# 一份「只有上櫃」的檔案照樣蓋掉好的那份，2330 就查不到了。
+# 但也不要整支停掉：匯率、美股跟台股沒關係，記帳換算幣別天天要用，
+# 台股那邊掛了就沿用舊的收盤價，其他照常更新，排程上標黃色警告
+tw_ok = n_twse >= 800 and n_tpex >= 400
+if not tw_ok:
+    print('::warning::台股資料不完整（上市 %d 檔、上櫃 %d 檔），沿用舊的收盤價，匯率跟美股照常更新'
+          % (n_twse, n_tpex), flush=True)
+    quotes = old.get('quotes') or quotes
 
 # ── 美股 ──
 # Nasdaq 的清單端點一次回全美上市（NYSE/Nasdaq/AMEX）約七千檔，一支請求就夠。
@@ -154,7 +213,7 @@ if not fx:
     # 備援：台灣銀行的牌告匯率 CSV，第一欄是幣別、第 13 欄是即期賣出
     try:
         req = urllib.request.Request('https://rate.bot.com.tw/xrt/flcsv/0/day', headers=UA)
-        with urllib.request.urlopen(req, timeout=60) as r:
+        with urllib.request.urlopen(req, timeout=60, context=CTX) as r:
             for line in r.read().decode('utf-8', 'replace').splitlines():
                 col = line.split(',')
                 if col and col[0].strip().upper().startswith('USD'):
@@ -199,6 +258,8 @@ for src, key in ((twse, 'Date'), (tpex, 'Date')):
             d = '%04d-%s-%s' % (int(raw[:3]) + 1911, raw[3:5], raw[5:7])
             break
 
+if not tw_ok:
+    d = old.get('date') or d                 # 收盤價是舊的，日期也要是舊的，不然網頁會以為是今天的價
 out = {'date': d or datetime.now(TPE).strftime('%Y-%m-%d'),
        'updated': datetime.now(TPE).strftime('%Y-%m-%d %H:%M'),
        'count': len(quotes), 'quotes': quotes,
