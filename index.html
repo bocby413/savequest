@@ -824,6 +824,21 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .gempty{color:var(--txt3);font-size:13px;padding:14px 2px;text-align:center}
 .ginvsel{font:inherit;font-size:13px;padding:7px 10px;border-radius:10px;cursor:pointer;
   background:var(--panel3);border:1.5px solid var(--edge);color:var(--txt2);width:100%}
+/* 幣別：金額框旁邊的下拉、換算提示、統計幣別 */
+/* 幣別放在標籤那一行的右邊，金額框才有整格寬可以打數字 */
+.f label.amtlb{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.f label.amtlb select{width:auto;padding:1px 6px;font-size:12px;font-weight:600;border-radius:8px;
+  border-width:1.5px;background:var(--panel3);color:var(--txt2);cursor:pointer}
+.fxnote{font-size:11.5px;color:var(--txt3);margin-top:5px;min-height:15px;line-height:1.35}
+.fxnote b{color:var(--txt2);font-weight:700}
+.fxnote.bad{color:var(--red)}
+.cursel{font:inherit;font-size:12.5px;font-weight:600;padding:5px 8px;border-radius:10px;cursor:pointer;
+  background:var(--panel2);border:1.5px solid var(--edge);color:var(--txt2)}
+.cursel option{background:var(--panel);color:var(--txt)}
+.oc{display:inline-block;text-align:right;white-space:nowrap;line-height:1.2}
+.oc small{display:block;font-size:10.5px;color:var(--txt3);font-weight:400}
+.f label.amtlb.nocur select{display:none}
+.gcurbar{display:flex;align-items:center;justify-content:flex-end;gap:8px;font-size:12px;color:var(--txt3);margin:12px 0 2px}
 .ginv{display:flex;align-items:center;gap:9px;padding:10px;border-radius:12px;margin-bottom:9px;
   background:rgba(255,194,51,.10);border:1.5px solid var(--gold);margin-bottom:8px}
 .ginv .info{flex:1;min-width:0}
@@ -1232,7 +1247,8 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 
 <div class="sec duo">
   <div>
-    <div class="sechead"><h2><svg class="i"><use href="#i-chart"/></svg>成長曲線</h2><span class="sub" id="chSub"></span></div>
+    <div class="sechead"><h2><svg class="i"><use href="#i-chart"/></svg>成長曲線</h2><span class="sub" id="chSub"></span>
+      <select class="cursel" id="statCur" title="下面這些統計用哪個幣別看"></select></div>
     <div class="card chartbox">
       <svg class="ch" id="chart" viewBox="0 0 700 260"></svg>
       <div class="tip" id="tip"><b id="tipV"></b><span id="tipD"></span><i id="tipN"></i></div>
@@ -1318,7 +1334,9 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   </div>
   <div class="two">
     <div class="f"><label>日期</label><input type="date" id="rDate"></div>
-    <div class="f"><label id="rAmtLabel">存入多少</label><input type="number" id="rAmt" placeholder="" step="1" inputmode="decimal"></div>
+    <div class="f"><label class="amtlb"><span id="rAmtLabel">存入多少</span><select id="rCur" title="幣別"></select></label>
+      <input type="number" id="rAmt" placeholder="" step="any" inputmode="decimal">
+      <div class="fxnote" id="rFx"></div></div>
   </div>
   <div class="f" id="rCatWrap"><label>類別</label><div class="cats" id="rCats"></div></div>
   <div class="f" id="rIntWrap" style="display:none"><label>本期利息（可留白）</label>
@@ -1661,7 +1679,9 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   </div>
   <div class="two">
     <div class="f"><label>日期</label><input type="date" id="grDate"></div>
-    <div class="f"><label>金額</label><input type="number" id="grAmt" placeholder="" inputmode="decimal"></div>
+    <div class="f"><label class="amtlb"><span>金額</span><select id="grCur" title="幣別"></select></label>
+      <input type="number" id="grAmt" placeholder="" step="any" inputmode="decimal">
+      <div class="fxnote" id="grFx"></div></div>
   </div>
   <div class="f"><label>項目（可留白）</label><input type="text" id="grNote" placeholder="買什麼、誰付的…"></div>
   <div class="f"><label id="grPayLb">誰先付的</label><div class="mchips" id="grPayer"></div></div>
@@ -10525,7 +10545,7 @@ let pts=[],data=[];
 function renderChart(){
   const svg=$('chart'), r=dailyPoints(), W=700,H=260,L=64,R=18,T=22,B=32;
   pts=[];data=r;
-  $('chSub').textContent=r.length?r.length+' 筆紀錄':'';
+  $('chSub').textContent=r.length?r.length+' 筆紀錄'+(statCur()!=='TWD'?'・以'+curInfo(statCur()).n+'計':''):'';
   if(r.length<2){ svg.innerHTML='<text x="350" y="130" text-anchor="middle">再記一筆就會長出曲線</text>'; return; }
   const g=focusGoal(), xs=r.map(p=>new Date(p.date).getTime()), ys=r.map(p=>p.bal);
   /* 目標線畫的是「總存款要到多少」，所以要含排在它前面的目標 */
@@ -10546,7 +10566,7 @@ function renderChart(){
   for(let i=0;i<=4;i++){
     const v=lo+(hi-lo)*i/4,y=Y(v);
     o+='<line class="gl" x1="'+L+'" y1="'+y.toFixed(1)+'" x2="'+(W-R)+'" y2="'+y.toFixed(1)+'"/>'+
-       '<text x="'+(L-9)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end">'+short(v)+'</text>';
+       '<text x="'+(L-9)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end">'+saxis(v)+'</text>';
   }
   pts=r.map((p,i)=>[X(xs[i]),Y(p.bal)]);
   const d=curve(pts);
@@ -10555,7 +10575,7 @@ function renderChart(){
   if(g&&gLine&&gLine<=hi){
     const gy=Y(gLine);
     o+='<line class="gline" x1="'+L+'" y1="'+gy.toFixed(1)+'" x2="'+(W-R)+'" y2="'+gy.toFixed(1)+'"/>'+
-       '<text class="gtext" x="'+(W-R)+'" y="'+(gy-7).toFixed(1)+'" text-anchor="end">'+esc(g.name)+' '+short(gLine)+'</text>';
+       '<text class="gtext" x="'+(W-R)+'" y="'+(gy-7).toFixed(1)+'" text-anchor="end">'+esc(g.name)+' '+sshort(gLine)+'</text>';
   }
   if(lo<0&&hi>0){
     const zy=Y(0);
@@ -10578,9 +10598,9 @@ $('chart').addEventListener('mousemove',e=>{
   hot.setAttribute('cx',p[0]);hot.setAttribute('cy',p[1]);hot.style.display='';
   const t=$('tip');
   t.style.left=(p[0]/700*b.width)+'px'; t.style.top=(p[1]/260*b.height)+'px'; t.style.opacity=1;
-  $('tipV').textContent=money(rec.bal); $('tipD').textContent=mdY(rec.date);
+  $('tipV').textContent=smoney(rec.bal); $('tipD').textContent=mdY(rec.date);
   $('tipN').textContent = rec.n>1 ? '這天記了 '+rec.n+' 筆'
-    : (rec.kind==='in'?'存入 '+money(rec.amount):rec.kind==='out'?'花掉 '+money(rec.amount):'對帳')+
+    : (rec.kind==='in'?'存入 '+smoney(rec.amount):rec.kind==='out'?'花掉 '+smoney(rec.amount):'對帳')+
       (rec.note?'　'+rec.note:'');
 });
 $('chart').addEventListener('mouseleave',()=>{
@@ -10594,7 +10614,7 @@ function renderBars(){
   const tgt=targetNow();
   if(!ms.length){ $('barSub').textContent=''; svg.innerHTML='<text x="280" y="130" text-anchor="middle">跨過一個月就會長出柱子</text>'; return; }
   const full=ms.filter(x=>!x.partial), avg=full.length?full.reduce((s,x)=>s+x.delta,0)/full.length:0;
-  $('barSub').textContent=full.length?'平均每月 '+(avg>=0?'+':'-')+short(Math.abs(avg)):'';
+  $('barSub').textContent=full.length?'平均每月 '+(avg>=0?'+':'-')+sshort(Math.abs(avg)):'';
   const mtOf=m=>targetAt(m.y,m.m);
   let mx=Math.max(...ms.map(x=>x.delta),...ms.map(mtOf),tgt,0), mn=Math.min(...ms.map(x=>x.delta),0);
   const sp=(mx-mn)||Math.abs(mx)||1, hi=mx+sp*.14, lo=mn-sp*.1;
@@ -10603,13 +10623,13 @@ function renderBars(){
   for(let i=0;i<=3;i++){
     const v=lo+(hi-lo)*i/3,y=Y(v);
     o+='<line class="gl" x1="'+L+'" y1="'+y.toFixed(1)+'" x2="'+(W-R)+'" y2="'+y.toFixed(1)+'"/>'+
-       '<text x="'+(L-8)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end">'+short(v)+'</text>';
+       '<text x="'+(L-8)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end">'+saxis(v)+'</text>';
   }
   ms.forEach((m,i)=>{
     const cx=L+bw*i+bw/2, y=Y(m.delta);
     o+='<rect class="bar'+(m.delta<0?' neg':'')+((m.partial||!m.real)?' part':'')+'" x="'+(cx-w/2).toFixed(1)+'" y="'+Math.min(y,zy).toFixed(1)+
        '" width="'+w.toFixed(1)+'" height="'+Math.max(2,Math.abs(y-zy)).toFixed(1)+'" rx="3"><title>'+
-       m.y+' 年 '+(m.m+1)+' 月：'+(m.delta>=0?'+':'-')+money(Math.abs(m.delta))+
+       m.y+' 年 '+(m.m+1)+' 月：'+(m.delta>=0?'+':'-')+smoney(Math.abs(m.delta))+
        (!m.real?'（這個月沒記帳）':m.partial?'（這個月還沒過完，'+m.n+' 筆）':'（'+m.n+' 筆）')+'</title></rect>';
     o+='<text x="'+cx.toFixed(1)+'" y="'+(H-22)+'" text-anchor="middle">'+(m.m+1)+'</text>';
     if(i===0||m.m===0) o+='<text x="'+cx.toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle" font-size="10">'+m.y+'</text>';
@@ -10676,10 +10696,10 @@ function renderLog(){
       return '<tr><td class="d">'+dateCell+'</td>'+
         '<td class="item"><div class="i1">'+topLine+badge+'</div>'+
           '<div class="i2">'+kindTxt+(p.note?'　'+esc(p.note):'')+'</div></td>'+
-        '<td class="c n up deskonly">'+(p.kind==='in'?'+'+money(p.amount):'')+'</td>'+
-        '<td class="c n down deskonly">'+(p.kind==='out'?'-'+money(p.amount):'')+'</td>'+
+        '<td class="c n up deskonly">'+(p.kind==='in'?recMoney(p,'+'):'')+'</td>'+
+        '<td class="c n down deskonly">'+(p.kind==='out'?recMoney(p,'-'):'')+'</td>'+
         '<td class="c n mobonly '+(p.delta>=0?'up':'down')+'">'+
-          (p.kind==='set'?'':(p.kind==='in'?'+':'-')+money(p.amount))+'</td>'+
+          (p.kind==='set'?'':recMoney(p,p.kind==='in'?'+':'-'))+'</td>'+
         '<td class="m n">'+money(p.bal)+'</td>'+
         '<td class="x">'+
           (p.code?'':'<button class="iq" data-edit-rec="'+p.id+'" title="改這筆">'+
@@ -10715,7 +10735,7 @@ function donut(rows,total,midTop,midSub,size){
       'stroke-dashoffset="'+(-off).toFixed(2)+'"'+
       /* 有編號的才能點（股票那張沒有分類，不給點） */
       (r.i!==undefined?' data-pcat="'+r.i+'" style="cursor:pointer"':'')+
-      '><title>'+esc(r.k)+' '+money(r.v)+'</title></circle>';
+      '><title>'+esc(r.k)+' '+smoney(r.v)+'</title></circle>';
     off+=len; return el;
   }).join('');
   return '<div class="pie"><svg viewBox="0 0 '+size+' '+size+'">'+
@@ -10727,7 +10747,7 @@ function legend(rows,total){
     '<div class="lg'+(r.i!==undefined?' tap':'')+'"'+
       (r.i!==undefined?' data-pcat="'+r.i+'" title="看這一類的每一筆"':'')+
       '><i style="background:'+r.c+'"></i><span class="nm">'+esc(r.k)+'</span>'+
-    '<span class="amt n">'+money(r.v)+'</span><span class="pct">'+(total?(r.v/total*100).toFixed(0):0)+'%</span>'+
+    '<span class="amt n">'+smoney(r.v)+'</span><span class="pct">'+(total?(r.v/total*100).toFixed(0):0)+'%</span>'+
     '<span class="bar"><u data-w="'+(total?r.v/total:0)+'" style="background:'+r.c+'"></u></span></div>').join('')+'</div>';
 }
 /* 股票單獨一張：買進對賣出，中間看淨損益 */
@@ -10759,15 +10779,15 @@ function renderStock(){
   /* 0 在中間的分向長條：賺往右、賠往左，長度照 |淨損益| 對 max 收 */
   box.className='card pnl';
   box.innerHTML=
-    '<div class="head"><b class="'+(net>=0?'up':'down')+'">'+(net>=0?'+':'-')+money(Math.abs(net))+'</b>'+
+    '<div class="head"><b class="'+(net>=0?'up':'down')+'">'+(net>=0?'+':'-')+smoney(Math.abs(net))+'</b>'+
     '<span>'+rangeName()+'淨損益・'+rs.length+' 筆</span></div>'+
     strat.map(x=>
       '<div class="row"><span class="nm">'+esc(x.k)+'<i>'+x.n+' 筆</i></span>'+
       '<span class="track"><u class="'+(x.net>=0?'p':'n')+'" data-w="'+(Math.abs(x.net)/mx)+'"></u></span>'+
-      '<span class="amt '+(x.net>=0?'up':'down')+'">'+(x.net>=0?'+':'-')+money(Math.abs(x.net))+'</span></div>'
+      '<span class="amt '+(x.net>=0?'up':'down')+'">'+(x.net>=0?'+':'-')+smoney(Math.abs(x.net))+'</span></div>'
     ).join('')+
     '<div class="row tot"><span class="nm">合計</span><span class="track"></span>'+
-    '<span class="amt '+(net>=0?'up':'down')+'">'+(net>=0?'+':'-')+money(Math.abs(net))+'</span></div>';
+    '<span class="amt '+(net>=0?'up':'down')+'">'+(net>=0?'+':'-')+smoney(Math.abs(net))+'</span></div>';
   setTimeout(()=>box.querySelectorAll('.lg u,.pnl u').forEach(u=>u.style.transform='scaleX('+u.dataset.w+')'),30);
 }
 /* 圓餅圖現在畫的是哪幾類。點圖例或扇形的時候要回頭找出那一類有哪些紀錄，
@@ -10808,7 +10828,7 @@ function renderPie(){
       period+'還沒有'+(pieKind==='out'?'支出':'收入')+'紀錄'+(split?'（股票另外算在右邊）':'')+'。</span></div></div>';
     return;
   }
-  box.innerHTML=donut(rows,total,'<b>'+short(total)+'</b>',period+(pieKind==='out'?'花掉':'存進來'),180)+
+  box.innerHTML=donut(rows,total,'<b>'+sshort(total)+'</b>',period+(pieKind==='out'?'花掉':'存進來'),180)+
     legend(rows,total);
   setTimeout(()=>box.querySelectorAll('.lg u,.pnl u').forEach(u=>u.style.transform='scaleX('+u.dataset.w+')'),30);
 }
@@ -10821,7 +10841,7 @@ function openCat(i){
     .sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(b.ts||0)-(a.ts||0));   /* 新的在前 */
   const sum=rows.reduce((n,x)=>n+x.amount,0);
   $('catTitle').textContent=r.k;
-  $('catSum').textContent=rangeName()+(pieKind==='out'?'花掉':'存進來')+' '+money(sum)+
+  $('catSum').textContent=rangeName()+(pieKind==='out'?'花掉':'存進來')+' '+smoney(sum)+
     '　共 '+rows.length+' 筆';
   $('catList').innerHTML='<div class="dlist">'+rows.map(p=>{
     const tag='<span class="cattag" style="--c:'+
@@ -10830,7 +10850,7 @@ function openCat(i){
     return '<div class="drow"><div class="dmain">'+tag+
       '<div class="d2">'+mdY(p.date)+(p.note?'　'+esc(p.note):'')+'</div></div>'+
       '<div class="damt '+(p.kind==='in'?'up':'down')+'">'+
-        (p.kind==='in'?'+':'-')+money(p.amount)+'</div></div>';
+        recMoney(p,p.kind==='in'?'+':'-')+'</div></div>';
   }).join('')+'</div>';
   SFX.play('tick'); open('vCat');
 }
@@ -10952,7 +10972,7 @@ function renderDayList(){
       return '<div class="drow"><div class="dmain">'+tag+
         '<div class="d2">'+kindTxt+(p.note?'　'+esc(p.note):'')+'</div></div>'+
         '<div class="damt '+(p.kind==='in'?'up':p.kind==='out'?'down':'')+'">'+
-          (p.kind==='set'?money(p.amount):(p.kind==='in'?'+':'-')+money(p.amount))+'</div>'+
+          (p.kind==='set'?money(p.amount):recMoney(p,p.kind==='in'?'+':'-'))+'</div>'+
         acts+'</div>';
     }).join('')+'</div>';
 }
@@ -10980,7 +11000,7 @@ function renderMonthTable(){
   }
   const rows=all.slice(0,mtLimit);
   /* 數字兩邊長得一樣：完整、有千分位。手機是靠縮字級與收窄內距塞下的 */
-  const num=(v,cls)=>'<span class="'+cls+'">'+(v>=0?'+':'-')+money(Math.abs(v))+'</span>';
+  const num=(v,cls)=>'<span class="'+cls+'">'+(v>=0?'+':'-')+smoney(Math.abs(v))+'</span>';
   const cell=(v,cls)=>v?num(v,cls):'<span class="zero">—</span>';
   let html='<table class="mtab"><thead><tr><th>月份</th><th>收入</th><th>支出</th><th>股票</th>'+
     '<th>結餘</th><th class="hidem">筆數</th></tr></thead><tbody>';
@@ -10991,11 +11011,11 @@ function renderMonthTable(){
     const tgt=targetAt(r.y,r.m-1), hit=tgt>0&&r.bal>=tgt;
     html+='<tr><td><span class="full">'+r.y+' 年 '+r.m+' 月</span>'+
       '<span class="abbr">'+r.m+' 月</span>'+(hit?' <span class="st">★</span>':'')+
-      (r.adj?'<div class="mono">含對帳 '+(r.adj>=0?'+':'-')+money(Math.abs(r.adj))+'</div>':'')+'</td>'+
+      (r.adj?'<div class="mono">含對帳 '+(r.adj>=0?'+':'-')+smoney(Math.abs(r.adj))+'</div>':'')+'</td>'+
       '<td>'+cell(r.in,'up')+'</td>'+
       '<td>'+cell(-r.out,'down')+'</td>'+
       '<td>'+(r.stock?num(r.stock,r.stock>=0?'up':'down'):'<span class="zero">—</span>')+'</td>'+
-      '<td class="bal '+(r.bal>=0?'up':'down')+'">'+(r.bal>=0?'+':'-')+money(Math.abs(r.bal))+'</td>'+
+      '<td class="bal '+(r.bal>=0?'up':'down')+'">'+(r.bal>=0?'+':'-')+smoney(Math.abs(r.bal))+'</td>'+
       '<td class="hidem mono">'+r.n+'</td></tr>';
   });
   if(curYear!==null) html+=yearRow(all,curYear);
@@ -11005,13 +11025,13 @@ function renderMonthTable(){
       '還有 '+(all.length-mtLimit)+' 個月，看更多</button></div>';
   $('mtWrap').innerHTML=html;
   const last=all[0];
-  $('mtSub').textContent=last.y+' 年 '+last.m+' 月結餘 '+(last.bal>=0?'+':'-')+money(Math.abs(last.bal));
+  $('mtSub').textContent=last.y+' 年 '+last.m+' 月結餘 '+(last.bal>=0?'+':'-')+smoney(Math.abs(last.bal));
 }
 function yearRow(all,y){
   const ys=all.filter(r=>r.y===y);
   const sum=k=>ys.reduce((s,r)=>s+r[k],0);
   const bal=sum('bal');
-  const n2=(v,cls)=>'<span class="'+cls+'">'+(v>=0?'+':'-')+money(Math.abs(v))+'</span>';
+  const n2=(v,cls)=>'<span class="'+cls+'">'+(v>=0?'+':'-')+smoney(Math.abs(v))+'</span>';
   return '<tr class="yr"><td>'+y+' 年合計</td>'+
     '<td>'+(sum('in')?n2(sum('in'),'up'):'—')+'</td>'+
     '<td>'+(sum('out')?n2(-sum('out'),'down'):'—')+'</td>'+
@@ -11099,8 +11119,87 @@ async function loadPrices(){
       PRICES=d;
       try{ localStorage.setItem(PKEY,JSON.stringify(d)); }catch(e){}
       renderStocks(); renderHud(); renderQuest(); renderQuests();
+      /* 匯率跟收盤價放在同一份檔案，換完要把用到幣別的地方重畫 */
+      fillCurSels(); renderFxStats();
     }
   }catch(e){ /* 沒網路就用上次存的 */ }
+}
+/* ── 幣別 ──
+   記帳、揪團都可以選幣別。存的時候照「當時的匯率」換成台幣放進 amount，
+   原幣金額跟那時候的匯率另外留著（cur／orig／fx）。
+   所以餘額、任務、等級、股票那些照舊用台幣算，不會被匯率影響；
+   匯率事後怎麼變，已經記下去的台幣金額也不會跟著跳。
+   匯率跟收盤價一起由 GitHub Actions 每天寫進 prices.json 的 fx.rates（1 單位外幣＝幾台幣） */
+const CURS=[
+  {c:'TWD',n:'台幣',s:'NT$',d:0},   {c:'USD',n:'美金',s:'US$',d:2},  {c:'JPY',n:'日圓',s:'¥',d:0},
+  {c:'KRW',n:'韓元',s:'₩',d:0},     {c:'CNY',n:'人民幣',s:'CN¥',d:2},{c:'HKD',n:'港幣',s:'HK$',d:2},
+  {c:'MOP',n:'澳門幣',s:'MOP$',d:2},{c:'EUR',n:'歐元',s:'€',d:2},    {c:'GBP',n:'英鎊',s:'£',d:2},
+  {c:'THB',n:'泰銖',s:'฿',d:2},     {c:'SGD',n:'新加坡幣',s:'S$',d:2},{c:'MYR',n:'馬幣',s:'RM',d:2},
+  {c:'VND',n:'越南盾',s:'₫',d:0},   {c:'PHP',n:'菲律賓披索',s:'₱',d:2},{c:'IDR',n:'印尼盾',s:'Rp',d:0},
+  {c:'AUD',n:'澳幣',s:'A$',d:2},    {c:'NZD',n:'紐幣',s:'NZ$',d:2},  {c:'CAD',n:'加幣',s:'C$',d:2},
+  {c:'CHF',n:'瑞士法郎',s:'CHF ',d:2}
+];
+const curInfo=c=>CURS.find(x=>x.c===c)||CURS[0];
+/* 1 單位 c ＝ 幾台幣。台幣是 1；還沒有匯率就回 null */
+function fxRate(c){
+  if(!c||c==='TWD') return 1;
+  const f=PRICES&&PRICES.fx;
+  const v=f&&f.rates&&+f.rates[c];
+  if(v>0) return v;
+  if(c==='USD'&&f&&+f.USDTWD>0) return +f.USDTWD;
+  return null;
+}
+const fxDate=()=>{ const f=PRICES&&PRICES.fx; return (f&&f.date)||(PRICES&&PRICES.date)||''; };
+const recCur=r=>(r&&r.cur&&r.cur!=='TWD')?r.cur:'TWD';
+/* 這筆原本記的金額。沒選幣別的就是台幣那個數字 */
+const recOrig=r=>(recCur(r)!=='TWD'&&r.orig!==undefined)?+r.orig:+((r&&r.amount)||0);
+/* 帶幣別符號的金額。台幣維持原本的樣子，不加符號 */
+function cmoney(v,c){
+  if(nomoney(v)) return '—';
+  if(PRIV) return MASK;
+  const ci=curInfo(c), a=Math.abs(+v);
+  /* 有小數的幣別，小錢才秀到小數點後兩位；大數字看整數就好 */
+  const r2=Math.round(a*100)/100, d=(ci.d&&a<1000&&Math.round(a)!==r2)?ci.d:0;
+  const t=a.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+  return (v<0?'-':'')+((c&&c!=='TWD')?ci.s:'')+t;
+}
+/* 紀錄列表用：外幣那筆秀原幣，下面小字補台幣 */
+function recMoney(r,sign){
+  const c=recCur(r);
+  if(c==='TWD') return (sign||'')+money(r.amount);
+  return '<span class="oc">'+(sign||'')+cmoney(recOrig(r),c)+'<small>≈ '+money(r.amount)+'</small></span>';
+}
+function curOptions(sel,allowMissing){
+  return CURS.map(x=>{
+    const ok=!!fxRate(x.c);
+    return '<option value="'+x.c+'"'+(x.c===sel?' selected':'')+((!ok&&!allowMissing)?' disabled':'')+'>'+
+      x.n+(ok?'':'（沒匯率）')+'</option>';
+  }).join('');
+}
+/* 換算提示：≈ NT$631　1 日圓＝0.2055 台幣（9/14） */
+function fxNote(el,v,c,lockFx){
+  if(!el) return;
+  el.className='fxnote';
+  if(!c||c==='TWD'){ el.innerHTML=''; return; }
+  const rate=lockFx||fxRate(c), ci=curInfo(c);
+  if(!rate){ el.className='fxnote bad'; el.textContent='還沒有'+ci.n+'的匯率，先用台幣記'; return; }
+  const fd=fxDate();
+  el.innerHTML=(v>0?'≈ <b>NT$'+money(v*rate)+'</b>　':'')+
+    '匯率 '+(+rate.toPrecision(4))+(lockFx?'（記的時候）':fd?'（'+md(fd)+'）':'');
+}
+function fillCurSels(){
+  const sc=$('statCur');
+  if(sc) sc.innerHTML=curOptions(statCur());
+}
+/* 統計要用哪個幣別看。只影響統計的顯示，帳本身一律是台幣 */
+const statCur=()=>{ const c=db.settings.statCur; return (c&&fxRate(c))?c:'TWD'; };
+const sconv=v=>{ const c=statCur(); return c==='TWD'?v:v/fxRate(c); };
+const smoney=v=>cmoney(sconv(v),statCur());
+const saxis=v=>short(sconv(v));
+const sshort=v=>{ const c=statCur(), x=sconv(v); return (c==='TWD'?'':curInfo(c).s)+short(x); };
+function renderFxStats(){
+  try{ renderMonthTable(); renderPie(); renderChart(); renderBars(); renderLog(); }catch(e){}
+  try{ renderGroups(); renderGHome(); }catch(e){}
 }
 const holdings=()=>Array.isArray(db.settings.holdings)?db.settings.holdings:[];
 /* 台股跟美股分兩份放，代號才不會互撞（台股是數字、美股是字母，但不保證永遠）。
@@ -12054,6 +12153,7 @@ $('gsOk').onclick=()=>{
   });
 };
 $('grAmt').addEventListener('input',()=>{ if($('vGRec').classList.contains('on')) gpNote(); });
+$('grCur').addEventListener('change',()=>{ if($('vGRec').classList.contains('on')){ SFX.play('tick'); renderGPick(); } });
 $('grMode').addEventListener('click',e=>{
   const b=e.target.closest('button[data-sm]'); if(!b) return;
   const g=GROUPS.find(x=>x.id===grFor), mem=(g&&g.members)||[];
@@ -12084,6 +12184,12 @@ $('grKinds').addEventListener('click',e=>{
   $('grKinds').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
 });
 $('gBody').addEventListener('change',e=>{
+  const gc=e.target.closest('[data-gcur]');
+  if(gc){
+    const m=db.settings.gcur||(db.settings.gcur={});
+    m[gc.dataset.gcur]=gc.value; save(); SFX.play('tick');
+    renderGroups(); renderGHome(); return;
+  }
   const sel=e.target.closest('[data-ginv]'); if(!sel||!sel.value) return;
   const g=GROUPS.find(x=>x.id===sel.dataset.ginv), f=FRIENDS.find(x=>x.uid===sel.value);
   sel.value='';
@@ -12108,7 +12214,7 @@ $('btnFriAdd').onclick=async()=>{
         $('friMail').value=''; SFX.play('coin'); }
 };
 
-function render(){ paintPriv(); renderWheel(); renderStocks(); renderLoans(); renderMonthTable(); renderPie(); renderHud(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); paintQuestSec(); }
+function render(){ paintPriv(); fillCurSels(); renderWheel(); renderStocks(); renderLoans(); renderMonthTable(); renderPie(); renderHud(); renderQuest(); renderCal(); renderQuests(); renderChart(); renderBars(); renderLog(); paintQuestSec(); }
 
 /* ── 互動 ── */
 const open=id=>{$(id).classList.add('on');const f=$(id).querySelector('input');setTimeout(()=>f&&f.focus(),120);};
@@ -12235,6 +12341,8 @@ function setKind(k){
     b.style.color       = on?'rgb('+col+')':'';
   });
   $('rAmtLabel').textContent=k==='in'?'存入多少':k==='out'?'花掉多少':'現在總共有多少';
+  /* 對帳是對銀行戶頭上的數字，一律台幣，幣別就收起來 */
+  $('rCur').parentNode.classList.toggle('nocur',k==='set');
   $('rSay').textContent=k==='in'?'這次存進去多少，餘額自動加上去。'
     :k==='out'?'這次花掉多少，餘額自動扣掉。'
     :'直接把餘額改成銀行上看到的數字。';
@@ -12242,8 +12350,14 @@ function setKind(k){
   rCat=''; rSub=''; rCustom=false; catAdd=false; subAdd=false; renderCats();
   updatePrev();
 }
+/* 改舊的那筆時，幣別沒換就沿用當時的匯率，金額才不會因為匯率變了自己跳 */
+let rOldCur='TWD', rOldFx=null;
+const rLockFx=c=>(rEdit&&c===rOldCur&&rOldFx)?rOldFx:null;
+const rCurNow=()=>rKind==='set'?'TWD':($('rCur').value||'TWD');
 function updatePrev(){
-  const v=parseFloat($('rAmt').value), cur=now(), r=recs();
+  const raw=parseFloat($('rAmt').value), c=rCurNow(), rate=rLockFx(c)||fxRate(c);
+  fxNote($('rFx'),raw,c,rLockFx(c));
+  const v=(isNaN(raw)||!rate)?NaN:raw*rate, cur=now(), r=recs();
   const backdate=r.length&&$('rDate').value&&$('rDate').value<r[r.length-1].date;
   if(isNaN(v)||v<=0){ $('rPrev').innerHTML='目前餘額<b>'+money(cur)+'</b>'; return; }
   const after=rKind==='in'?cur+v:rKind==='out'?cur-v:v;
@@ -12255,16 +12369,29 @@ $('rKinds').addEventListener('click',e=>{
   SFX.play('tick'); setKind(b.dataset.kind);
 });
 $('rAmt').addEventListener('input',updatePrev);
+$('rCur').addEventListener('change',()=>{ SFX.play('tick'); updatePrev(); });
+$('statCur').addEventListener('change',e=>{
+  db.settings.statCur=e.target.value; save(); SFX.play('tick'); renderFxStats();
+});
 $('rDate').addEventListener('change',updatePrev);
 
 let rEdit=null;
 function openRec(id){
   const r=id?db.records.find(x=>x.id===id):null;
   rEdit=r?r.id:null;
+  rOldCur=r?recCur(r):'TWD'; rOldFx=(r&&r.fx)||null;
+  /* 新的一筆沿用上次選的幣別（出國連記好幾筆不用一直切），
+     但超過三天沒用就回台幣，免得回國了還一直記成日圓 */
+  const last=db.settings.recCur||{};
+  const defCur=r?rOldCur
+    :((last.c&&Date.now()-(last.ts||0)<3*86400000&&fxRate(last.c))?last.c:'TWD');
+  $('rCur').innerHTML=curOptions(defCur,true);
+  $('rCur').value=defCur;
   setKind(r?(r.kind||'in'):'in');          /* 這行會把類別清空，所以要先叫 */
   $('rDate').value=r?(r.date||todayStr()):todayStr();
-  $('rAmt').value=r?(r.amount||''):'';
-  $('rInt').value=r?(r.int||''):'';
+  $('rAmt').value=r?(recOrig(r)||''):'';
+  /* 利息存的是台幣，外幣那筆要換回原幣給人看 */
+  $('rInt').value=r&&r.int?(rOldCur!=='TWD'&&rOldFx?Math.round(r.int/rOldFx*100)/100:r.int):'';
   $('rNote').value=r?(r.note||''):'';
   if(r){                                   /* 把當時選的類別、子分類還原回去 */
     const chips=(CATS[r.kind]||[]);
@@ -12288,14 +12415,19 @@ $('saveRec').onclick=()=>{
   const typed = rCustom&&$('rCatOther') ? $('rCatOther').value.trim() : '';
   const cat = rKind==='set' ? '' : (typed||rCat||'其他');
   const old=rEdit?db.records.find(x=>x.id===rEdit):null;
+  /* 外幣：amount 放換算後的台幣，原幣跟當時的匯率另外存 */
+  const cur=rCurNow(), rate=rLockFx(cur)||fxRate(cur);
+  if(!rate){ SFX.play('err'); toast('還沒有'+curInfo(cur).n+'的匯率，先用台幣記'); return; }
+  const tw=n=>cur==='TWD'?n:Math.round(n*rate*100)/100;
   const rec={id:old?old.id:uid(), ts:old?old.ts:Date.now(),
-             date,kind:rKind,amount:v,cat,note:$('rNote').value.trim()};
+             date,kind:rKind,amount:tw(v),cat,note:$('rNote').value.trim()};
+  if(cur!=='TWD'){ rec.cur=cur; rec.orig=v; rec.fx=rate; }
   /* 貸款才有本期利息。利息不能比繳的錢還多，不然本金會變負的 */
   if(rKind==='out'&&cat===LOAN){
     const iv=parseFloat($('rInt').value);
     if(!isNaN(iv)&&iv>0){
       if(iv>v){ SFX.play('err'); toast('本期利息不能大於這次繳的金額'); return; }
-      rec.int=iv;
+      rec.int=tw(iv);
     }
   }
   if(((cat===STOCK||cat===LOAN)||detailOn())&&rSub) rec.sub=rSub;
@@ -12306,6 +12438,7 @@ $('saveRec').onclick=()=>{
     db.records[db.records.indexOf(old)]=rec;
   }
   else db.records.push(rec);
+  if(!old&&rKind!=='set') db.settings.recCur={c:cur,ts:Date.now()};
   const wasEdit=!!old; rEdit=null;
   /* 剛記的那筆一定要看得到：跳回第一頁，範圍外就把篩選清掉 */
   logPage=1;
@@ -12327,7 +12460,7 @@ $('saveRec').onclick=()=>{
   else if(wasEdit){ SFX.play('tick'); toast('改好了　餘額 '+money(bal)); }
   else{
     SFX.play(rKind==='out'?'spend':rKind==='set'?'set':'coin');
-    toast((rKind==='in'?'存入 '+money(v):rKind==='out'?'花掉 '+money(v):'餘額校正')+'　現在 '+money(bal));
+    toast((rKind==='in'?'存入 '+cmoney(v,cur):rKind==='out'?'花掉 '+cmoney(v,cur):'餘額校正')+'　現在 '+money(bal));
   }
 };
 $('saveGoal').onclick=()=>{
@@ -12520,23 +12653,41 @@ function recOwes(g,r){
 const SPLITN={even:'平分',share:'照份數',exact:'各自金額'};
 /* 展開用的明細：每個人分多少，四捨五入之後的尾差補給金額最大的那個人，
    加總才會剛好等於這筆的總額 */
-function recSplitList(g,r){
+function recSplitList(g,r,dp){
+  const q=Math.pow(10,dp||0), rd=n=>Math.round(n*q)/q;
   const v=+r.amount||0, owes=recOwes(g,r);
   const ks=Object.keys(owes);
   if(!ks.length) return [];
   let raw=0; ks.forEach(u=>raw+=owes[u]);
   const fix=raw>0?v/raw:0;
-  const list=ks.map(u=>({uid:u, exact:owes[u]*fix, amt:Math.round(owes[u]*fix),
+  const list=ks.map(u=>({uid:u, exact:owes[u]*fix, amt:rd(owes[u]*fix),
                          share:(r.split==='share'&&r.shares)?(+r.shares[u]||0):null}));
-  let diff=Math.round(v)-list.reduce((n,x)=>n+x.amt,0);
+  let diff=rd(rd(v)-list.reduce((n,x)=>n+x.amt,0));
   if(diff){
     let big=0;
     list.forEach((x,i)=>{ if(x.exact>list[big].exact) big=i; });
-    list[big].amt+=diff;
+    list[big].amt=rd(list[big].amt+diff);
   }
   list.sort((a,b)=>b.amt-a.amt);
   return list;
 }
+/* 這團的結算用哪個幣別看：自己選過的優先，沒選過就用這團最常記的幣別
+   （去日本那團記的幾乎都是日圓，打開就直接用日圓結） */
+function gCur(g){
+  const pick=(db.settings.gcur||{})[g.id];
+  if(pick&&fxRate(pick)) return pick;
+  const n={};
+  (GALL[g.id]||[]).forEach(r=>{ const c=recCur(r); n[c]=(n[c]||0)+1; });
+  const best=Object.keys(n).sort((a,b)=>n[b]-n[a])[0];
+  return (best&&fxRate(best))?best:'TWD';
+}
+/* 把紀錄換成某個幣別的金額再拿去算。跟結算同一個幣別記的直接用原幣，
+   不繞一圈台幣 —— 不然匯率一動，記 ¥3,000 的那筆會變成 ¥2,987 */
+function gIn(recs,C){
+  const rc=fxRate(C)||1;
+  return recs.map(r=>Object.assign({},r,{amount:recCur(r)===C?recOrig(r):(+r.amount||0)/rc}));
+}
+const curTol=c=>curInfo(c).d?.005:.5;
 /* 每個人的淨額：正的代表他墊了錢別人要還他，負的代表他欠 */
 function settle(g,recs){
   const bal={};
@@ -12716,12 +12867,12 @@ function renderGHome(){
       return '<span>'+friPicOn(null,look,uid===me)+'</span>';
     }).join('');
     /* 我在這團的淨額。每個團都有監聽，所以不用先點開就算得出來 */
-    const recs=GALL[g.id]||[];
-    const mine=settle(g,recs)[me];
-    const amt=(mine===undefined||Math.abs(mine)<.5)
+    const recs=GALL[g.id]||[], C=gCur(g);
+    const mine=settle(g,gIn(recs,C))[me];
+    const amt=(mine===undefined||Math.abs(mine)<curTol(C))
       ? (recs.length?'<small>目前打平</small>':'<small>還沒有紀錄</small>')
-      : mine>0 ? '<b class="recv">'+money(Math.round(mine))+'</b><small>別人要還你</small>'
-               : '<b class="pay">-'+money(Math.round(-mine))+'</b><small>你要還別人</small>';
+      : mine>0 ? '<b class="recv">'+cmoney(mine,C)+'</b><small>別人要還你</small>'
+               : '<b class="pay">-'+cmoney(-mine,C)+'</b><small>你要還別人</small>';
     return '<button class="ghomecard" data-ghome="'+g.id+'">'+
       '<span class="who">'+faces+(mem.length>4?'<span>+'+(mem.length-4)+'</span>':'')+'</span>'+
       '<span class="mid"><span class="nm">'+esc(g.name||'一個團')+'</span>'+
@@ -12730,15 +12881,17 @@ function renderGHome(){
   }).join('');
 }
 function gDetail(g,r){
-  const list=recSplitList(g,r), payer=recPayer(g,r);
+  const c=recCur(r);
+  const list=recSplitList(g,Object.assign({},r,{amount:recOrig(r)}),curInfo(c).d), payer=recPayer(g,r);
   const share=r.split==='share';
   return '<div class="gdet">'+
     '<div class="who">'+esc(gMemName(g,payer))+(r.kind==='in'?' 收了 ':' 先付 ')+
-      '<b>'+money(r.amount)+'</b>　<i>'+(SPLITN[r.split]||'平分')+'</i></div>'+
+      '<b>'+cmoney(recOrig(r),c)+'</b>'+(c!=='TWD'?'<small style="color:var(--txt3)">（≈ NT$'+money(r.amount)+'）</small>':'')+
+      '　<i>'+(SPLITN[r.split]||'平分')+'</i></div>'+
     (list.length?list.map(x=>
       '<div class="l"><span class="n">'+esc(gMemName(g,x.uid))+'</span>'+
       (share?'<i>'+(Math.round(x.share*100)/100)+' 份</i>':'')+
-      '<b>'+money(x.amt)+'</b></div>').join('')
+      '<b>'+cmoney(x.amt,c)+'</b></div>').join('')
      :'<div class="l"><span class="n">沒有人分到這筆</span></div>')+
   '</div>';
 }
@@ -12763,12 +12916,14 @@ function renderGroups(){
     let inner='';
     if(on){
       /* 每個人各出了多少 */
+      /* 統計、誰要給誰都換成這團的結算幣別來算 */
+      const C=gCur(g), GR=gIn(GRECS,C), M=n=>cmoney(n,C);
       const per={}; let tin=0, tout=0;
-      GRECS.forEach(r=>{
+      GR.forEach(r=>{
         const v=+r.amount||0, p=recPayer(g,r);
         if(r.kind==='in') tin+=v; else { tout+=v; per[p]=(per[p]||0)+v; }
       });
-      const tr=transfers(settle(g,GRECS));
+      const tr=transfers(settle(g,GR));
       const shut=!!g.closed, mine=g.owner===me;
       inner='<div class="gin'+(shut?' shut':'')+'">'+
         '<div class="gmem">'+(g.members||[]).map(uid=>{
@@ -12778,7 +12933,7 @@ function renderGroups(){
                                avatar:db.settings.avatar,bg:db.settings.bg}
                              :{ch:i.ch,wear:i.wear,avatar:i.a,bg:i.bg};
           return '<button class="gm" data-gmem="'+uid+'">'+friPicOn(null,look,uid===me)+esc(gMemName(g,uid))+
-            (per[uid]?'<b>'+short(per[uid])+'</b>':'')+'</button>';
+            (per[uid]?'<b>'+(C==='TWD'?'':curInfo(C).s)+short(per[uid])+'</b>':'')+'</button>';
         }).join('')+'</div>'+
         (shut?groupPhoto(g)+
               '<div class="gshut">這趟已經結束了（'+md(iso(new Date(g.closed)))+'），'+
@@ -12800,7 +12955,7 @@ function renderGroups(){
                 ((r.split&&r.split!=='even')?'　'+SPLITN[r.split]
                   :recPart(g,r).length<(g.members||[]).length
                     ? '　'+recPart(g,r).length+' 人分' : '')+'</i></span>'+
-              '<span class="v '+(r.kind==='in'?'in':'out')+'">'+(r.kind==='in'?'+':'-')+money(r.amount)+'</span>'+
+              '<span class="v '+(r.kind==='in'?'in':'out')+'">'+(r.kind==='in'?'+':'-')+cmoney(recOrig(r),recCur(r))+'</span>'+
               '<span class="ch">'+(op?'▴':'▾')+'</span>'+
             '</button>'+
             ((r.by===me&&!shut)?'<button class="x" data-gedit="'+r.id+'" title="改這筆">✎</button>'+
@@ -12808,14 +12963,15 @@ function renderGroups(){
                      :'')+                       /* 別人記的沒有按鈕，也不用留位置 */
           '</div>'+(op?gDetail(g,r):'');
         }).join(''):'<div class="gempty">還沒有紀錄，按上面那顆記第一筆。</div>')+'</div>'+
-        '<div class="gsum"><span>團裡花掉<b class="down">'+money(tout)+'</b></span>'+
-          '<span>團裡收入<b>'+money(tin)+'</b></span>'+
+        '<div class="gcurbar">結算幣別 <select class="cursel" data-gcur="'+g.id+'">'+curOptions(C)+'</select></div>'+
+        '<div class="gsum"><span>團裡花掉<b class="down">'+M(tout)+'</b></span>'+
+          '<span>團裡收入<b>'+M(tin)+'</b></span>'+
           '<span>幾筆<b>'+GRECS.length+'</b></span></div>'+
         '<div class="owe"><div class="hd">誰要給誰</div>'+
           (tr.length?tr.map(t=>
             '<div class="r"><b'+(t.from===me?' style="color:var(--gold)"':'')+'>'+esc(gMemName(g,t.from))+'</b>'+
             '<span class="ar">給</span><b'+(t.to===me?' style="color:var(--gold)"':'')+'>'+esc(gMemName(g,t.to))+'</b>'+
-            '<span class="v">'+money(Math.round(t.amt))+'</span></div>').join('')
+            '<span class="v">'+M(t.amt)+'</span></div>').join('')
            :'<div class="none">'+(GRECS.length?'目前打平，沒有人欠誰。':'還沒有紀錄。')+'</div>')+
         '</div>'+
         '<div class="gops">'+
@@ -12862,7 +13018,7 @@ function renderGPick(){
       '<div class="srow"><span class="nm">'+nm(u)+'</span><span class="eq"></span>'+
       '<input type="number" inputmode="decimal" min="0"'+(share?' step="1"':'')+
       ' placeholder="0" data-su="'+u+'" value="'+grVal(u)+'">'+
-      '<span class="unit">'+(share?'份':'元')+'</span></div>').join('');
+      '<span class="unit">'+(share?'份':curInfo($('grCur').value).n)+'</span></div>').join('');
   }
   gpNote();
 }
@@ -12871,12 +13027,14 @@ function gpNote(){
   const g=GROUPS.find(x=>x.id===grFor); if(!g) return;
   const mem=g.members||[];
   const v=parseFloat($('grAmt').value), has=!isNaN(v)&&v>0;
+  const gc=$('grCur').value||'TWD', M=n=>cmoney(n,gc), tol=curTol(gc);
+  fxNote($('grFx'),v,gc,grLockFx(gc));
   const note=$('grSplit'); note.className='splitnote';
   if(grMode==='even'){
     const part=mem.filter(u=>grExcl.indexOf(u)<0);
     note.innerHTML= !part.length ? '至少要留一個人來分。'
       : !has ? part.length+' 個人平分'
-      : '<b>'+part.length+' 個人</b>平分，一人 <b>'+money(Math.round(v/part.length))+'</b>';
+      : '<b>'+part.length+' 個人</b>平分，一人 <b>'+M(v/part.length)+'</b>';
     return;
   }
   const share=grMode==='share';
@@ -12887,18 +13045,18 @@ function gpNote(){
     const n=parseFloat(grVal(el.dataset.su)), zero=isNaN(n)||n<=0;
     row.classList.toggle('off',zero);
     const eq=row.querySelector('.eq');
-    if(eq) eq.textContent=(share&&has&&tot>0&&!zero)?'= '+money(Math.round(v*n/tot)):'';
+    if(eq) eq.textContent=(share&&has&&tot>0&&!zero)?'= '+M(v*n/tot):'';
   });
   if(share){
     note.innerHTML= tot<=0 ? '至少要有一個人有份。'
       : !has ? '共 <b>'+(Math.round(tot*100)/100)+'</b> 份'
-      : '共 <b>'+(Math.round(tot*100)/100)+'</b> 份，一份 <b>'+money(Math.round(v/tot))+'</b>';
+      : '共 <b>'+(Math.round(tot*100)/100)+'</b> 份，一份 <b>'+M(v/tot)+'</b>';
   }else{
     const d=(has?v:0)-tot;
     note.innerHTML= !has ? '先把上面的金額填了'
-      : Math.abs(d)<.5 ? '剛好分完 <b>'+money(Math.round(tot))+'</b>'
-      : '已分 <b>'+money(Math.round(tot))+'</b>，還差 <b>'+money(Math.round(d))+'</b>';
-    if(has&&Math.abs(d)>=.5) note.className='splitnote bad';
+      : Math.abs(d)<tol ? '剛好分完 <b>'+M(tot)+'</b>'
+      : '已分 <b>'+M(tot)+'</b>，還差 <b>'+M(d)+'</b>';
+    if(has&&Math.abs(d)>=tol) note.className='splitnote bad';
   }
 }
 /* 結束旅行 / 改日期。edit=1 是已經結束了只改日期 */
@@ -12923,6 +13081,9 @@ function gsNote(){
   el.textContent=days===1?'這趟就一天，合照上只會寫那一天。'
                          :'共 '+days+' 天，合照上會寫這段期間。';
 }
+/* 改舊的那筆時，幣別沒換就沿用那時候的匯率 */
+let grOldCur='TWD', grOldFx=null;
+const grLockFx=c=>(grEdit&&c===grOldCur&&grOldFx)?grOldFx:null;
 function openGRec(gid,rid){
   const g=GROUPS.find(x=>x.id===gid), mem=(g&&g.members)||[];
   if(g&&g.closed){ SFX.play('err'); toast('這趟已經結束了'); return; }   /* 封起來就不給改 */
@@ -12938,7 +13099,12 @@ function openGRec(gid,rid){
   if(r&&grMode==='exact'&&r.owes)   mem.forEach(u=>grOwes[u]=r.owes[u]===undefined?'':r.owes[u]);
   $('grKinds').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.gk===grKind));
   $('grDate').value=r?(r.date||todayStr()):todayStr();
-  $('grAmt').value=r?(r.amount||''):'';
+  /* 幣別：改舊的用那筆的；新的一筆沿用這團上一筆（去日本那團一路記日圓不用一直切） */
+  grOldCur=r?recCur(r):'TWD'; grOldFx=(r&&r.fx)||null;
+  const lastIn=(GALL[gid]||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0))[0];
+  const gc0=r?grOldCur:(lastIn&&fxRate(recCur(lastIn))?recCur(lastIn):'TWD');
+  $('grCur').innerHTML=curOptions(gc0,true); $('grCur').value=gc0;
+  $('grAmt').value=r?(recOrig(r)||''):'';
   $('grNote').value=r?(r.note||''):'';
   $('grTitle').textContent=r?'改這一筆':'記一筆到團裡';
   $('grSave').textContent=r?'存起來':'記下來';
@@ -14047,7 +14213,12 @@ document.body.addEventListener('click',e=>{
     const d=$('grDate').value, v=parseFloat($('grAmt').value);
     if(!d||isNaN(v)||v<=0){ SFX.play('err'); toast('日期跟金額都要填'); return; }
     const g=GROUPS.find(x=>x.id===grFor), mem=(g&&g.members)||[];
-    const rec={date:d,kind:grKind,amount:v,note:$('grNote').value.trim(),payer:grPayer,split:grMode};
+    /* 外幣：amount 放換算後的台幣，原幣跟匯率另外存。各自金額那種分法填的是原幣 */
+    const gc=$('grCur').value||'TWD', rate=grLockFx(gc)||fxRate(gc);
+    if(!rate){ SFX.play('err'); toast('還沒有'+curInfo(gc).n+'的匯率，先用台幣記'); return; }
+    const rec={date:d,kind:grKind,amount:gc==='TWD'?v:Math.round(v*rate*100)/100,
+               note:$('grNote').value.trim(),payer:grPayer,split:grMode};
+    if(gc!=='TWD'){ rec.cur=gc; rec.orig=v; rec.fx=rate; }
     if(grMode==='even'){
       rec.part=mem.filter(u=>grExcl.indexOf(u)<0);
       if(!rec.part.length){ SFX.play('err'); toast('至少要留一個人來分'); return; }
@@ -14060,8 +14231,8 @@ document.body.addEventListener('click',e=>{
       const ow={}; let tot=0;
       mem.forEach(u=>{ const n=parseFloat(grVal(u)); if(!isNaN(n)&&n>0){ ow[u]=n; tot+=n; } });
       if(tot<=0){ SFX.play('err'); toast('至少要有一個人出錢'); return; }
-      if(Math.abs(tot-v)>=.5){ SFX.play('err');
-        toast(tot>v?'分掉的比總額多 '+money(Math.round(tot-v)):'還差 '+money(Math.round(v-tot))+' 沒分完'); return; }
+      if(Math.abs(tot-v)>=curTol(gc)){ SFX.play('err');
+        toast(tot>v?'分掉的比總額多 '+cmoney(tot-v,gc):'還差 '+cmoney(v-tot,gc)+' 沒分完'); return; }
       rec.owes=ow; rec.part=Object.keys(ow);
     }
     const job=grEdit?CLOUD.updGroupRec(grFor,grEdit,rec):CLOUD.addGroupRec(grFor,rec);

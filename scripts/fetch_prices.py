@@ -168,6 +168,28 @@ else:
     fx = ((old.get('fx') or {}).get('USDTWD'))
     print('  匯率沿用舊檔：%s' % fx, flush=True)
 
+# ── 各國幣別對台幣 ──
+# 記帳、揪團可以選幣別記，存的時候照當天匯率換成台幣；統計也可以換成別的幣別看。
+# 存的是「1 單位外幣 = 幾台幣」。er-api 給的是「1 美金 = 幾單位」，兩個相除就是了
+CURS = ['USD', 'JPY', 'KRW', 'CNY', 'HKD', 'MOP', 'EUR', 'GBP', 'THB',
+        'SGD', 'MYR', 'VND', 'PHP', 'IDR', 'AUD', 'NZD', 'CAD', 'CHF']
+rates = {}
+if d0 and isinstance(d0.get('rates'), dict):
+    twd = num(d0['rates'].get('TWD'))
+    for c in CURS:
+        v = num(d0['rates'].get(c))
+        if twd and v:
+            rates[c] = round(twd / v, 6)
+if fx:
+    rates['USD'] = round(fx, 6)          # 美金以上面那個（可能是台銀備援）為準，兩邊才一致
+if len(rates) < len(CURS) // 2:
+    # 抓失敗就整份沿用舊的，不要只剩美金一個
+    prev = (old.get('fx') or {}).get('rates') or {}
+    rates = dict(prev, **rates)
+    print('  各幣匯率沿用舊檔 %d 種' % len(rates), flush=True)
+else:
+    print('  各幣匯率 %d 種（1 日圓 = %s 台幣）' % (len(rates), rates.get('JPY')), flush=True)
+
 # 交易日期以資料裡的民國日期為準
 d = ''
 for src, key in ((twse, 'Date'), (tpex, 'Date')):
@@ -181,7 +203,8 @@ out = {'date': d or datetime.now(TPE).strftime('%Y-%m-%d'),
        'updated': datetime.now(TPE).strftime('%Y-%m-%d %H:%M'),
        'count': len(quotes), 'quotes': quotes,
        'usCount': len(us), 'us': us,
-       'fx': {'USDTWD': fx} if fx else (old.get('fx') or {})}
+       'fx': {'USDTWD': fx, 'rates': rates,
+              'date': datetime.now(TPE).strftime('%Y-%m-%d')} if fx else (old.get('fx') or {})}
 with open('prices.json', 'w', encoding='utf-8') as f:
     json.dump(out, f, ensure_ascii=False, separators=(',', ':'))
 print('寫入 prices.json：上市 %d ＋上櫃 %d ＝ %d 檔，美股 %d 檔，1 美金 %s 台幣，交易日 %s'
