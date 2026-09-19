@@ -12774,9 +12774,18 @@ function tripWhen(g){
 }
 /* 把 chSVG 的內容拆出來重新擺位。手臂的支點寫在 data-p 上，直接補一個 rotate */
 function posedCh(a,p,face){
+  /* aL 是負的＝左手往內舉（往頭那邊甩）。沒拿東西時手臂會躲到頭後面，看起來是舉手；
+     但手上的東西畫在最上層、不會被頭擋住，結果整個貼在臉上。
+     改成往外大角度舉也不行：肩膀的轉軸在身體外側，手一張開就跟身體分家，像斷掉。
+     所以拿著東西的那隻手（左手）不跟著擺姿勢，就自然垂在身邊拿著東西，
+     往外最多張 35 度；姿勢交給另一隻手做 */
+  const holds=wornList(a.k).some(id=>(itemById(id)||{}).slot==='hand');
+  const aL=holds?(p.aL<0?14:Math.min(p.aL,35)):p.aL;
   let h=chSVG(a,face,1).replace(/^<svg[^>]*>/,'').replace(/<\/svg>$/,'');
-  h=h.replace(/class="(armL|armR)" data-p="([^"]+)"/g,
-    (m,cls,pt)=>m+' transform="rotate('+(cls==='armL'?p.aL:p.aR)+','+pt+')"');
+  /* 手上拿的東西是另一個群組 class="armL held"，跟手臂同一個轉軸。
+     只轉 class="armL" 的話手舉起來了、東西還留在原地 */
+  h=h.replace(/class="(armL|armR)( held)?" data-p="([^"]+)"/g,
+    (m,cls,held,pt)=>m+' transform="rotate('+(cls==='armL'?aL:p.aR)+','+pt+')"');
   return h;
 }
 function groupPhoto(g){
