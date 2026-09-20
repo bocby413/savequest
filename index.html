@@ -13384,8 +13384,15 @@ const onCloud=()=>!!(window.CLOUD&&CLOUD.user&&CLOUD.api);
    等雲端接上來、整份錢包被伺服器那份蓋回去，就變成「又可以再領一次」。
    所以連線中一律擋下來，請他等一下再按 */
 const CLOUDMARK='life_goals_cloud_on';
+/* 開頁的時候雲端模組就會啟動，但「這台到底有沒有登入」要等 Firebase 回話
+   （手機上常常要兩三秒）。在還沒回話之前就讓錢包在本機自己加錢的話，
+   畫面會顯示領到了，等雲端接上來、錢包以伺服器那份為準整個蓋回去，
+   就變成「又可以再領一次」。所以回話之前一律擋住。
+   authKnown 由 onAuthStateChanged 設成 true；雲端模組載不起來（沒網路）時
+   也會被設成 true，離線照樣能在本機玩 */
 const cloudPending=()=>{
   if(onCloud()) return false;
+  if(window.CLOUD&&CLOUD.ready()&&!CLOUD.authKnown) return true;
   try{
     if(localStorage.getItem(CLOUDMARK)==='1') return true;
     /* 舊版沒留自己的鑰匙，就看 Firebase 自己那把 */
@@ -13833,9 +13840,10 @@ function renderWork(){
     ? '牠正在上班，你先去忙別的吧'
     : left>0 ? (left===2?'牠今天還沒出過門，精神很好':'牠還想再打一份工')
              : '今天的兩份工都打完了，明天再來賺錢';
-  b.disabled=workBusy||(!shiftDone()&&(onShift()||left<=0));
+  b.disabled=workBusy||cloudPending()||(!shiftDone()&&(onShift()||left<=0));
   b.style.opacity=b.disabled?.45:1;
-  b.textContent=workBusy?'處理中…':shiftDone()?'領薪水':onShift()?'上班中':left>0?'派牠去打工':'今天收工了';
+  b.textContent=workBusy?'處理中…':cloudPending()?'雲端連線中…'
+               :shiftDone()?'領薪水':onShift()?'上班中':left>0?'派牠去打工':'今天收工了';
   clearInterval(workTick); workTick=0;
   if(onShift()&&!shiftDone()&&$('vWork').classList.contains('on')) workTick=setInterval(tickWork,1000);
 }
@@ -14687,9 +14695,15 @@ const FIREBASE_CONFIG={
 
 window.CLOUD={
   cfg:FIREBASE_CONFIG, api:null, user:null, unsub:null, timer:null, last:0, err:'',
+  /* Firebase 回報過登入狀態了沒（不管有沒有登入）。錢包要等這個 */
+  authKnown:false,
+  authDone(){ if(!this.authKnown){ this.authKnown=true; try{ renderWork(); renderWheel(); renderShop(); }catch(e){} } },
   ready(){ return !!this.cfg; },
   async boot(){
     if(!this.ready()||this.api) return;
+    /* 網路很慢或 gstatic 連不上的時候不能讓錢包永遠卡住：
+       十秒還沒回話就放行，當成沒登入在本機玩 */
+    setTimeout(()=>this.authDone(),10000);
     try{
       const [A,U,F]=await Promise.all([
         import('https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js'),
@@ -14700,7 +14714,7 @@ window.CLOUD={
       /* 這個專案的資料庫 ID 叫 default，不是 Firebase 慣用的 (default)，要指名 */
       this.api={U,F,auth:U.getAuth(app),fs:F.getFirestore(app,'default')};
       U.onAuthStateChanged(this.api.auth,async u=>{
-        this.user=u; this.paint();
+        this.user=u; this.authDone(); this.paint();
         /* 自己記一筆「這台裝置是登入狀態」。下次打開時在登入恢復之前，
            錢包要知道該等雲端，不能自己在本機加錢 */
         try{ if(u) localStorage.setItem(CLOUDMARK,'1'); else localStorage.removeItem(CLOUDMARK); }catch(e){}
@@ -14725,7 +14739,7 @@ window.CLOUD={
         }
       });
       try{ await U.getRedirectResult(this.api.auth); }catch(e){}
-    }catch(e){ this.err='連不上雲端'; this.paint(); }
+    }catch(e){ this.err='連不上雲端'; this.authDone(); this.paint(); }
   },
   async signIn(){
     await this.boot(); if(!this.api) return toast('連不上雲端，等一下再試');
