@@ -13378,8 +13378,25 @@ async function shopAction(){
    登入了就交給雲端，本機這份只是畫面用的鏡子；沒登入就純本機。
    回傳 {ok} 或 {ok:0,e:原因}。 */
 const onCloud=()=>!!(window.CLOUD&&CLOUD.user&&CLOUD.api);
+/* 這台裝置上次是登入狀態的話，Firebase 會在 localStorage 留一把
+   firebase:authUser: 開頭的鑰匙。剛打開 App 的那幾秒鐘登入還沒恢復，
+   onCloud() 是 false —— 這時候如果讓錢包在本機自己加錢，畫面會顯示領到了，
+   等雲端接上來、整份錢包被伺服器那份蓋回去，就變成「又可以再領一次」。
+   所以連線中一律擋下來，請他等一下再按 */
+const CLOUDMARK='life_goals_cloud_on';
+const cloudPending=()=>{
+  if(onCloud()) return false;
+  try{
+    if(localStorage.getItem(CLOUDMARK)==='1') return true;
+    /* 舊版沒留自己的鑰匙，就看 Firebase 自己那把 */
+    for(let i=0;i<localStorage.length;i++)
+      if(String(localStorage.key(i)).indexOf('firebase:authUser:')===0) return true;
+  }catch(e){}
+  return false;
+};
 async function walletSpin(got){
   if(onCloud()) return CLOUD.walletSpin(got,todayStr());
+  if(cloudPending()) return {ok:0,e:'wait'};
   if(spunToday()) return {ok:0,e:'again'};
   WALLET.spunOn=todayStr(); WALLET.coins+=got; saveWallet(); return {ok:1};
 }
@@ -13388,6 +13405,7 @@ async function walletBuy(ids){
     const it=itemById(id); if(!it) continue;
     if(hasItem(id)) continue;
     if(coins()<it.p) return {ok:0,e:'coins'};
+    if(cloudPending()) return {ok:0,e:'wait',id:id,n:it.n};
     if(onCloud()){
       const r=await CLOUD.walletBuy(id,it.p);
       if(!r.ok){ r.id=id; r.n=it.n; return r; }
@@ -13400,6 +13418,7 @@ async function walletBuy(ids){
 /* 結帳失敗的說法。permission-denied 幾乎都是雲端的價目表還沒更新 */
 function buyErr(r){
   if(r.e==='coins') return 'Bo士幣不夠';
+  if(r.e==='wait') return '雲端還在連線，等兩秒再按';
   if(r.e==='permission-denied')
     return '「'+(r.n||r.id)+'」雲端還沒認得這件商品，價目表要更新';
   return '結帳沒過（'+(r.e||'不明')+'），等一下再試';
@@ -13753,6 +13772,7 @@ async function startShift(sh,pay,job,say){
   if(onShift()||workLeft()<=0) return {ok:0,e:'busy'};
   const day=todayStr();
   if(onCloud()) return CLOUD.shiftStart(sh.h,pay,job,say,day);
+  if(cloudPending()) return {ok:0,e:'wait'};
   WALLET.workN=(WALLET.workOn===day?WALLET.workN:0)+1;
   WALLET.workOn=day; WALLET.shiftAt=Date.now(); WALLET.shiftH=sh.h;
   WALLET.shiftPay=pay; WALLET.shiftJob=job; WALLET.shiftSay=say||''; saveWallet();
@@ -13762,6 +13782,7 @@ async function startShift(sh,pay,job,say){
 async function claimShift(){
   if(!shiftDone()) return {ok:0,e:'early'};
   if(onCloud()) return CLOUD.shiftClaim();
+  if(cloudPending()) return {ok:0,e:'wait'};
   WALLET.coins+=WALLET.shiftPay;
   WALLET.shiftAt=0; WALLET.shiftH=0; WALLET.shiftPay=0; WALLET.shiftJob=''; WALLET.shiftSay='';
   saveWallet();
@@ -13844,8 +13865,12 @@ async function doWork(){
     workBusy=true; renderWork();
     const r=await claimShift();
     workBusy=false;
-    if(!r.ok){ SFX.play('err'); toast(r.e==='early'?'還沒到時間':'雲端沒收到，等一下再試');
-      renderWork(); return; }
+    if(!r.ok){ SFX.play('err');
+      toast(r.e==='early'?'還沒到時間'
+           :r.e==='wait'?'雲端還在連線，等兩秒再按'
+           :r.e==='gone'?'這一班已經領過了'
+           :'雲端沒收到，等一下再試');
+      renderWork(); renderHud(); return; }
     workJust=got;
     SFX.play(got.pay>=90?'level':'coin');
     const q=$('workStage').getBoundingClientRect(); burst(q.left+q.width/2,q.top+q.height/2);
@@ -13861,7 +13886,9 @@ async function doWork(){
   const r=await startShift(sh,pay,job[0],job[1]);
   workBusy=false;
   if(!r.ok){ SFX.play('err');
-    toast(r.e==='busy'?'現在有工作在進行':'雲端沒收到，等一下再試');
+    toast(r.e==='busy'?'現在有工作在進行'
+         :r.e==='wait'?'雲端還在連線，等兩秒再按'
+         :'雲端沒收到，等一下再試');
     renderWork(); return; }
   SFX.play('tick');
   WORKPET.pose({y:2,sx:1.04,sy:.96,rot:0,aL:-42,aR:42},'up',900);
@@ -13962,7 +13989,9 @@ async function spin(){
   if(!free){
     const r=await walletSpin(got);
     if(!r.ok){ spinning=false; paintWheel();
-      toast(r.e==='again'?'今天已經轉過了':'轉盤沒能記到雲端，等一下再試'); return; }
+      toast(r.e==='again'?'今天已經轉過了'
+           :r.e==='wait'?'雲端還在連線，等兩秒再按'
+           :'轉盤沒能記到雲端，等一下再試'); return; }
   }
   /* 指針在正上方，要把中獎那一格的中線轉上去，再多繞幾圈 */
   const target=360*5-hit.mid+wheelAngle-(wheelAngle%360);
@@ -14672,6 +14701,9 @@ window.CLOUD={
       this.api={U,F,auth:U.getAuth(app),fs:F.getFirestore(app,'default')};
       U.onAuthStateChanged(this.api.auth,async u=>{
         this.user=u; this.paint();
+        /* 自己記一筆「這台裝置是登入狀態」。下次打開時在登入恢復之前，
+           錢包要知道該等雲端，不能自己在本機加錢 */
+        try{ if(u) localStorage.setItem(CLOUDMARK,'1'); else localStorage.removeItem(CLOUDMARK); }catch(e){}
         if(u){ this.watch();
                /* 錢包要先開好，名冊寫入會去對「身上穿的有沒有買過」 */
                await this.ensureWallet();
@@ -14749,15 +14781,29 @@ window.CLOUD={
       if(before!==WALLET.shiftPay+'|'+WALLET.shiftH+'|'+WALLET.shiftAt) this.pushShares();
     },()=>{});
   },
+  /* 寫錢包之前先跟伺服器拿最新的那一份。
+     手上這份可能是舊的 —— 薪水被朋友偷過、或另一台裝置剛買過東西 ——
+     而雲端規則是拿「伺服器上的數字」在比對（加的錢要等於伺服器的 shiftPay、
+     買東西扣的錢要等於伺服器的餘額減標價），對不上就整筆被擋，
+     使用者只看到「領不到」。拿不到就退回用手上這份，至少還有得試 */
+  async freshWallet(){
+    try{
+      const s=await this.api.F.getDoc(this.wref());
+      if(s.exists()){ const w=normWallet(s.data()); WALLET=w; saveWallet(); return w; }
+    }catch(e){}
+    return WALLET;
+  },
   /* 寫完之後一律「指定絕對值」，不要再加減一次。
      updateDoc 會立刻觸發自己的 snapshot 把 WALLET 換掉，
      再做一次 -= 就等於扣兩次（90 買 90 會變成 -90） */
   async walletSpin(got,day){
     const {F}=this.api;
-    const next={coins:WALLET.coins+got, owned:WALLET.owned, spunOn:day,
-                workOn:WALLET.workOn, workN:WALLET.workN, shiftH:WALLET.shiftH,
-                shiftPay:WALLET.shiftPay, shiftJob:WALLET.shiftJob,
-                shiftSay:WALLET.shiftSay};
+    const w=await this.freshWallet();
+    if(w.spunOn===day) return {ok:0,e:'again'};
+    const next={coins:w.coins+got, owned:w.owned, spunOn:day,
+                workOn:w.workOn, workN:w.workN, shiftH:w.shiftH,
+                shiftPay:w.shiftPay, shiftJob:w.shiftJob,
+                shiftSay:w.shiftSay};
     try{
       await F.updateDoc(this.wref(),next);
       /* next 裡面刻意沒有 shiftAt：那是伺服器時間，不能拿手機的時間去蓋
@@ -14770,8 +14816,10 @@ window.CLOUD={
   /* 開工。時間用伺服器的，手機時鐘調快也沒用 */
   async shiftStart(h,pay,job,say,day){
     const {F}=this.api;
-    const next={coins:WALLET.coins, owned:WALLET.owned, spunOn:WALLET.spunOn,
-                workOn:day, workN:(WALLET.workOn===day?WALLET.workN:0)+1,
+    const w=await this.freshWallet();
+    if(w.shiftH>0) return {ok:0,e:'busy'};
+    const next={coins:w.coins, owned:w.owned, spunOn:w.spunOn,
+                workOn:day, workN:(w.workOn===day?w.workN:0)+1,
                 shiftAt:F.serverTimestamp(), shiftH:h, shiftPay:pay, shiftJob:job,
                 shiftSay:say||'', raidTook:0};
     try{
@@ -14784,8 +14832,12 @@ window.CLOUD={
   },
   async shiftClaim(){
     const {F}=this.api;
-    const next={coins:WALLET.coins+WALLET.shiftPay, owned:WALLET.owned, spunOn:WALLET.spunOn,
-                workOn:WALLET.workOn, workN:WALLET.workN,
+    /* 薪水要照伺服器上的數字領 —— 被朋友偷過的話那個數字比手機上的小，
+       用舊的去寫，規則第三條的「加的錢＝shiftPay」就對不上，整筆被擋 */
+    const w=await this.freshWallet();
+    if(!(w.shiftH>0)) return {ok:0,e:'gone'};
+    const next={coins:w.coins+w.shiftPay, owned:w.owned, spunOn:w.spunOn,
+                workOn:w.workOn, workN:w.workN,
                 shiftAt:null, shiftH:0, shiftPay:0, shiftJob:'', shiftSay:'', raidTook:0};
     try{
       await F.updateDoc(this.wref(),next);
@@ -14796,10 +14848,13 @@ window.CLOUD={
   },
   async walletBuy(id,price){
     const {F}=this.api;
-    const next={coins:WALLET.coins-price, owned:WALLET.owned.concat([id]), spunOn:WALLET.spunOn,
-                workOn:WALLET.workOn, workN:WALLET.workN, shiftH:WALLET.shiftH,
-                shiftPay:WALLET.shiftPay, shiftJob:WALLET.shiftJob,
-                shiftSay:WALLET.shiftSay};
+    const w=await this.freshWallet();
+    if(w.owned.indexOf(id)>=0) return {ok:1};
+    if(w.coins<price) return {ok:0,e:'coins'};
+    const next={coins:w.coins-price, owned:w.owned.concat([id]), spunOn:w.spunOn,
+                workOn:w.workOn, workN:w.workN, shiftH:w.shiftH,
+                shiftPay:w.shiftPay, shiftJob:w.shiftJob,
+                shiftSay:w.shiftSay};
     try{
       await F.updateDoc(this.wref(),next);
       /* next 裡面刻意沒有 shiftAt：那是伺服器時間，不能拿手機的時間去蓋
