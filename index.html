@@ -951,6 +951,14 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   border-radius:99px;background:rgba(255,194,51,.14);border:1.5px solid rgba(255,194,51,.35);
   font-size:13px;font-weight:700;color:var(--gold)}
 .coinbar svg{width:15px;height:15px}
+.coinbar{cursor:pointer;transition:border-color .14s,background-color .14s}
+.coinbar:hover{background:rgba(255,194,51,.22);border-color:var(--gold)}
+/* 幣的明細 */
+.clog .drow{align-items:center}
+.clog .ci{width:26px;height:26px;border-radius:9px;display:grid;place-items:center;flex:none;
+  background:var(--panel3);font-size:14px}
+.clogsum{display:flex;gap:16px;font-size:12.5px;color:var(--txt3);margin-top:2px}
+.clogsum b{font-weight:800}
 .wheelbox{position:relative;width:min(300px,100%);aspect-ratio:1;margin:6px auto 4px}
 .wheelspin{width:100%;height:100%;border-radius:50%;overflow:hidden;
   box-shadow:0 0 0 6px var(--panel2),0 0 0 8px var(--edge2),0 8px 0 var(--deep)}
@@ -1574,6 +1582,13 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   <div class="wheelres" id="wheelRes"></div>
   <div class="dfoot"><button class="btn ghost" data-close>關閉</button>
     <button class="btn go" id="btnSpin">轉一次</button></div>
+</div></div>
+
+<div class="veil" id="vCoins"><div class="dlg wide">
+  <h3>Bo士幣明細</h3>
+  <div class="say" id="coinSum"></div>
+  <div id="coinList"></div>
+  <div class="dfoot"><button class="btn ghost" data-close>關閉</button></div>
 </div></div>
 
 <div class="veil" id="vCat"><div class="dlg wide">
@@ -9146,6 +9161,45 @@ function loadWallet(){
   /* 舊欄位清掉，免得看起來像有兩份真相 */
   if(db&&db.settings){ delete db.settings.coins; delete db.settings.owned; delete db.settings.spunOn; }
 }
+/* ── Bo士幣的流水 ──
+   錢包本身受雲端規則保護，欄位是白名單，塞不進明細；所以明細記在同步的設定裡。
+   它只是給人看的紀錄，真正的餘額還是以錢包那份為準 */
+const COINLOGMAX=200;
+function coinLog(){ const a=db.settings.coinlog; return Array.isArray(a)?a:[]; }
+function logCoin(t,v,n){
+  v=Math.round(+v||0); if(!v) return;
+  const a=coinLog().slice();
+  a.unshift({ts:Date.now(), t:t, v:v, n:(n||'').slice(0,24)});
+  db.settings.coinlog=a.slice(0,COINLOGMAX);
+  save();
+}
+const COINKIND={work:{i:'🛠',n:'打工'}, spin:{i:'🎡',n:'轉盤'}, buy:{i:'🛍',n:'買東西'},
+                raid:{i:'🥷',n:'偷薪水'}, other:{i:'🪙',n:'其他'}};
+function renderCoinLog(){
+  const rows=coinLog();
+  const got=rows.filter(x=>x.v>0).reduce((n,x)=>n+x.v,0);
+  const out=rows.filter(x=>x.v<0).reduce((n,x)=>n-x.v,0);
+  $('coinSum').innerHTML='現在有 <b style="color:var(--gold)">'+money(coins())+'</b> 枚'+
+    (rows.length?'<div class="clogsum"><span>賺到 <b class="up">+'+money(got)+'</b></span>'+
+      '<span>花掉 <b class="down">-'+money(out)+'</b></span>'+
+      '<span>共 '+rows.length+' 筆</span></div>':'');
+  if(!rows.length){
+    $('coinList').innerHTML='<div class="dlist"><div class="drow"><div class="dmain">'+
+      '<div class="d2">還沒有紀錄。打工領薪水、轉盤、買東西之後就會列在這裡。</div></div></div></div>';
+    return;
+  }
+  let day='';
+  $('coinList').innerHTML='<div class="dlist clog">'+rows.map(x=>{
+    const k=COINKIND[x.t]||COINKIND.other, d=iso(new Date(x.ts));
+    const head=(d!==day)?(day=d,'<h5 style="margin-top:10px">'+mdY(d)+'</h5>'):'';
+    const t=new Date(x.ts), hm=pad(t.getHours())+':'+pad(t.getMinutes());
+    return head+'<div class="drow"><span class="ci">'+k.i+'</span><div class="dmain">'+
+      '<b style="font-size:13.5px">'+k.n+(x.n?' · '+esc(x.n):'')+'</b>'+
+      '<div class="d2">'+hm+'</div></div>'+
+      '<div class="damt '+(x.v>0?'up':'down')+'">'+(x.v>0?'+':'-')+money(Math.abs(x.v))+'</div></div>';
+  }).join('')+'</div>';
+}
+function openCoins(){ renderCoinLog(); SFX.play('tick'); open('vCoins'); }
 const coinsOwned=()=>WALLET.owned;
 /* 價格 0 的（預設佈景）一開始就當作已經有了，不用買 */
 const isFree=id=>{ const it=itemById(id); return !!it&&it.p===0; };
@@ -13187,6 +13241,9 @@ function renderShop(){
   /* 本來就沒有這個鍵的話要刪掉。寫回 undefined 會讓整包同步被 Firestore 退件 */
   if(had) m[a.k]=keep; else delete m[a.k];
   $('shopCoins').innerHTML='<svg class="i"><use href="#i-coin"/></svg>'+money(coins())+' Bo士幣';
+  $('shopCoins').title='點一下看明細';
+  $('shopCoins').style.cursor='pointer';
+  $('shopCoins').onclick=openCoins;
   $('shopStage').style.background=bgCSS(tryBg!==null?tryBg:db.settings.bg,1);
   $('shopCats').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.sc===shopCat));
   $('shopTabs').style.display=shopCat==='char'?'':'none';
@@ -13419,6 +13476,7 @@ async function walletBuy(ids){
     }else{
       WALLET.coins-=it.p; WALLET.owned.push(id); saveWallet();
     }
+    logCoin('buy',-it.p,it.n);
   }
   return {ok:1};
 }
@@ -13790,10 +13848,11 @@ async function claimShift(){
   if(!shiftDone()) return {ok:0,e:'early'};
   if(onCloud()) return CLOUD.shiftClaim();
   if(cloudPending()) return {ok:0,e:'wait'};
+  const pay=WALLET.shiftPay, job=WALLET.shiftJob;
   WALLET.coins+=WALLET.shiftPay;
   WALLET.shiftAt=0; WALLET.shiftH=0; WALLET.shiftPay=0; WALLET.shiftJob=''; WALLET.shiftSay='';
   saveWallet();
-  return {ok:1};
+  return {ok:1,pay:pay,job:job};
 }
 let workBusy=false, workTick=0, workJust=null;
 function renderWork(){
@@ -13879,6 +13938,9 @@ async function doWork(){
            :r.e==='gone'?'這一班已經領過了'
            :'雲端沒收到，等一下再試');
       renderWork(); renderHud(); return; }
+    /* 實際領到多少以回傳的為準：被朋友偷過的話會比開工時講好的少 */
+    if(r.pay!==undefined){ got.pay=r.pay; if(r.job) got.job=r.job; }
+    logCoin('work',got.pay,got.job+(got.lost?'（被偷 '+got.lost+'）':''));
     workJust=got;
     SFX.play(got.pay>=90?'level':'coin');
     const q=$('workStage').getBoundingClientRect(); burst(q.left+q.width/2,q.top+q.height/2);
@@ -13963,7 +14025,9 @@ let spinning=false, wheelAngle=0;
    不要只掛在轉盤那個函式上（買背景、買動作、收工就不會更新） */
 function paintCoins(){
   const cb=$('coinBar');
-  if(cb) cb.innerHTML='<svg class="i"><use href="#i-coin"/></svg>'+money(coins())+' Bo士幣';
+  if(cb){ cb.innerHTML='<svg class="i"><use href="#i-coin"/></svg>'+money(coins())+' Bo士幣';
+          cb.title='點一下看這些幣怎麼來的、花到哪去';
+          cb.onclick=openCoins; }
   const sc=$('shopCoins');
   if(sc) sc.innerHTML='<svg class="i"><use href="#i-coin"/></svg>'+money(coins())+' Bo士幣';
 }
@@ -13996,6 +14060,7 @@ async function spin(){
   /* 再轉一次那格不寫進雲端，今天的次數就不算掉 */
   if(!free){
     const r=await walletSpin(got);
+    if(r.ok) logCoin('spin',got,'');
     if(!r.ok){ spinning=false; paintWheel();
       toast(r.e==='again'?'今天已經轉過了'
            :r.e==='wait'?'雲端還在連線，等兩秒再按'
@@ -14857,7 +14922,7 @@ window.CLOUD={
       await F.updateDoc(this.wref(),next);
       WALLET=normWallet(next); saveWallet();
       this.pushShares();                 /* 領完了，好友那邊的「可以偷」要熄掉 */
-      return {ok:1};
+      return {ok:1,pay:w.shiftPay,job:w.shiftJob,took:w.raidTook};
     }catch(e){ return {ok:0,e:e.code||'x'}; }
   },
   async walletBuy(id,price){
@@ -15246,7 +15311,7 @@ window.CLOUD={
                   raidOf:f.uid, raidShift:at};
       await F.updateDoc(this.wref(),next);
       WALLET=normWallet(Object.assign({},next,{shiftAt:WALLET.shiftAt}));
-      saveWallet(); renderHud(); renderWheel();
+      saveWallet(); logCoin('raid',n,friName(f)); renderHud(); renderWheel();
       return {ok:1,amount:n};
       }catch(e){ await undo(); throw e; }
     };
@@ -15312,8 +15377,17 @@ window.CLOUD={
       return m;
     };
     const done=mergeDone(db.settings.raidDone,(r.settings||{}).raidDone);
+    /* 幣的明細也是：兩台各自賺各自的，整包取新的會把另一台那幾筆蓋掉 */
+    const clog=(()=>{
+      const m={};
+      [].concat(db.settings.coinlog||[],(r.settings||{}).coinlog||[]).forEach(x=>{
+        if(x&&x.ts) m[x.ts+'|'+x.t+'|'+x.v]=x;
+      });
+      return Object.values(m).sort((a,b)=>b.ts-a.ts).slice(0,COINLOGMAX);
+    })();
     if(((r.settings||{}).updatedAt||0)>(db.settings.updatedAt||0)) db.settings=r.settings;
     if(Object.keys(done).length) db.settings.raidDone=done;
+    if(clog.length) db.settings.coinlog=clog;
     const after=JSON.stringify(db);
     this.last=Date.now(); this.err='';
     /* 「本地沒變」跟「不用做事」是兩回事。
