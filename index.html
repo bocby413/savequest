@@ -2837,6 +2837,9 @@ const TOPLINE=a=>a.egg?(a.by-a.bh)+a.bh*.35:a.hy-HRY(a)*.55;
         照身體算會做出比脖子還寬一圈的圍巾。 */
 const NKB=a=>HB(a)-(a.nkUp||0);
 const NKW=a=>a.nkw!==undefined?a.nkw:a.bw;
+/* 脖子配件真正該貼的那一圈：身體在脖線那個高度的實際半寬。
+   NKW 是拿身體最寬的地方當基準，套在脖子上會比脖子還寬一圈 */
+const FXNW=a=>bwAt(a,Math.max(0,Math.min(1,(NKB(a)-(a.by-a.bh))/(a.bh*2))));
 /* ── 背景顏色 ──
    生物身後那塊底色。HUD、商店、打工、好友看到的都會跟著換。
    c1/c2 是漸層的兩個顏色，全部角色共用 */
@@ -3771,42 +3774,112 @@ const ITEMS=[
       'M'+(60-a.bw*.8)+' '+(t+h*.35)+'h'+(a.bw*1.6)+'M'+(60-a.bw*.9)+' '+(t+h*.6)+'h'+(a.bw*1.8)+
       '" stroke="#7d2a0e" stroke-width="2" fill="none" opacity=".75"/>';}},
   /* ── 狐狸 ── */
-  {id:'bandana', n:'領巾', p:100, slot:'neck', only:'a-fox', d:a=>{
-    const y=NKB(a)-2, w=NKW(a)*.8;
-    return '<path d="M'+(60-w)+' '+y+'q'+w+' 9 '+(w*2)+' 0l-'+w+' '+(a.bh*.8)+'z" fill="#c94a1e"/>'+
-      '<path d="M'+(60-w)+' '+y+'q'+w+' 9 '+(w*2)+' 0" stroke="#7d3a12" stroke-width="2.4" fill="none"/>';}},
+  {id:'bandana', n:'注連繩頸環', p:100, slot:'neck', only:'a-fox', d:a=>{
+    /* 稻荷神社的注連繩：一條擰起來的稻草繩繞著脖子，下面垂三疊白紙垂。
+       紙垂要一疊一疊左右錯開才是紙垂，畫成單邊往下折就是一個大寫 F */
+    const f=n=>n.toFixed(1), y=NKB(a)-1, w=FXNW(a)+2.4;
+    const px=u=>(1-u)*(1-u)*(60-w)+2*u*(1-u)*60+u*u*(60+w);
+    const py=u=>y+20*u*(1-u);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'Q60 '+f(y+10)+' '+f(60+w)+' '+f(y)+
+      '" stroke="#d9c48a" stroke-width="7.6" fill="none" stroke-linecap="round"/>';
+    for(let i=0;i<7;i++){const u=(i+.5)/7;
+      o+='<path d="M'+f(px(u)-2.2)+' '+f(py(u)-3)+'L'+f(px(u)+2.2)+' '+f(py(u)+3)+
+         '" stroke="#b8a066" stroke-width="1.4" stroke-linecap="round"/>';}
+    [.22,.5,.78].forEach(u=>{const bx=px(u), by=py(u)+3.6;
+      for(let k=0;k<3;k++){const dx=k%2?1.3:-1.3;
+        o+='<path d="M'+f(bx-2.4+dx)+' '+f(by+k*2.9)+'h4.8l-1.1 3.1h-4.8z" fill="'+
+           (k%2?'#ece3cc':'#f9f3e4')+'"/>';}});
+    return o;}},
   {id:'lantern', rot:-5, n:'小提燈', p:200, slot:'hand', only:'a-fox', d:a=>{
-    const x=AC.gx(a), y=AC.gy(a)+4;          /* 提把落在手掌上，燈身垂在下面 */
-    return '<path d="M'+x+' '+(y-10)+'a6 6 0 0 0 0 8" stroke="#7d3a12" stroke-width="2" fill="none"/>'+
-      '<rect x="'+(x-7)+'" y="'+(y-2)+'" width="14" height="16" rx="3" fill="#ffe58a"/>'+
-      '<rect x="'+(x-8)+'" y="'+(y-4)+'" width="16" height="4" rx="2" fill="#7d3a12"/>'+
-      '<rect x="'+(x-8)+'" y="'+(y+13)+'" width="16" height="4" rx="2" fill="#7d3a12"/>';}},
+    /* 提把要壓在手掌那個點上，燈籠垂在下面。燈身是有橫骨的紙燈籠 */
+    const f=n=>n.toFixed(1), x=AC.gx(a), y=AC.gy(a);
+    let o='<path d="M'+f(x)+' '+f(y)+'a6 6 0 0 1 0-11" stroke="#7d3a12" stroke-width="2" fill="none"/>'+
+      '<path d="M'+f(x-8)+' '+f(y-11)+'h16v3.4h-16z" fill="#5c290b"/>'+
+      '<path d="M'+f(x-7.6)+' '+f(y-7.6)+'q-3.4 8 0 16h15.2q3.4-8 0-16z" fill="#ffe58a"/>'+
+      '<path d="M'+f(x-7.6)+' '+f(y-7.6)+'q-3.4 8 0 16h4q-3-8 0-16z" fill="#fff3c4"/>';
+    for(let i=1;i<4;i++)
+      o+='<path d="M'+f(x-9+i*.2)+' '+f(y-7.6+i*4)+'q9 1.6 18.4 0" stroke="#e0b94c" stroke-width="1.1" fill="none"/>';
+    o+='<path d="M'+f(x-8)+' '+f(y+8.4)+'h16v3.4h-16z" fill="#5c290b"/>'+
+      '<path d="M'+f(x-2)+' '+f(y-3)+'q2-4 4 0t-2 5-2-5z" fill="#e2452f"/>'+
+      '<path d="M'+f(x-1.4)+' '+f(y+11.8)+'v3.4" stroke="#c9451e" stroke-width="1.6"/>'+
+      '<path d="M'+f(x+1.6)+' '+f(y+11.8)+'v2.6" stroke="#c9451e" stroke-width="1.6"/>';
+    return o;}},
   {id:'longboot', n:'長靴', p:200, slot:'foot', only:'a-fox', d:a=>{
-    const y=(a.fy||107)-8, x=a.fx||13, w=(a.fw||9)+1;
-    const one=cx=>'<rect x="'+(cx-w)+'" y="'+y+'" width="'+(w*2)+'" height="14" rx="4" fill="#7d3a12"/>'+
-      '<rect x="'+(cx-w-1)+'" y="'+y+'" width="'+(w*2+2)+'" height="5" rx="2.5" fill="#c94a1e"/>';
-    return AC.feet(a,one);}},
-  {id:'leaf', n:'楓葉帽', p:100, slot:'head', only:'a-fox', d:a=>{
-    const y=HLINE(a)-2;
-    return '<path d="M60 '+(y-14)+'l-5 6-7-3 3 7-8 2 9 4-2 4 10-3 10 3-2-4 9-4-8-2 3-7-7 3z" fill="#c94a1e"/>'+
-      '<path d="M60 '+(y-7)+'v9" stroke="#7d3a12" stroke-width="2"/>';}},
+    /* 到小腿的長靴：靴筒比腳掌窄、靴口往外翻，最下面是獨立的鞋底。
+       筒身跟腳掌一樣寬的話，兩隻併在一起就是兩塊磚 */
+    const f=n=>n.toFixed(1), y=(a.fy||107)-12, w=(a.fw||9)+1, sw=w-2;
+    return AC.feet(a,cx=>
+      '<path d="M'+f(cx-sw)+' '+f(y+4)+'h'+f(sw*2)+'v7l'+f(w-sw)+' 1.4v3.4q0 2.6 -2.6 2.6h-'+f(w*2-5.2)+
+      'q-2.6 0 -2.6-2.6v-3.4l'+f(w-sw)+'-1.4z" fill="#7d3a12"/>'+
+      '<path d="M'+f(cx-sw-2.2)+' '+f(y+1.4)+'h'+f(sw*2+4.4)+'v4.6q-'+f(sw+2.2)+' 2.6 -'+f(sw*2+4.4)+' 0z" fill="#c94a1e"/>'+
+      '<path d="M'+f(cx-sw+1.4)+' '+f(y+8)+'v6" stroke="#5c290b" stroke-width="1.3" opacity=".7"/>'+
+      '<rect x="'+f(cx-w-1)+'" y="'+f(y+14.6)+'" width="'+f(w*2+2)+'" height="4.2" rx="1.8" fill="#3b2116"/>'+
+      '<circle cx="'+f(cx+sw-2)+'" cy="'+f(y+3.4)+'" r="1.4" fill="#e8a92b"/>');}},
+  {id:'leaf', n:'旅笠', p:100, slot:'head', only:'a-fox', d:a=>{
+    /* 斗笠是一頂比頭略寬的圓錐，笠面上有編織的紋路。
+       紋路的端點一定要落在笠面那條曲線上算出來 —— 隨便給一個 y
+       會掉到曲線外面，看起來就是從笠邊長出來的腳 */
+    const f=n=>n.toFixed(1), y=HLINE(a)+4, w=HATW(a)*1.42, t=HT(a)-8;
+    /* 笠面：從左緣拉一條二次曲線經過頂點到右緣。u=0 是左緣、1 是右緣 */
+    const bx=u=>(1-u)*(1-u)*(60-w)+2*u*(1-u)*60+u*u*(60+w);
+    const by=u=>(1-u)*(1-u)*y+2*u*(1-u)*t+u*u*y;
+    let o='<path d="M'+f(60-w)+' '+f(y)+'Q60 '+f(y+11)+' '+f(60+w)+' '+f(y)+
+      'Q60 '+f(y+4)+' '+f(60-w)+' '+f(y)+'Z" fill="#a8864a"/>';
+    o+='<path d="M'+f(60-w)+' '+f(y)+'Q60 '+f(t)+' '+f(60+w)+' '+f(y)+
+      'Q60 '+f(y+5)+' '+f(60-w)+' '+f(y)+'Z" fill="#e3cf9a"/>';
+    [.08,.28,.5,.72,.92].forEach(u=>{
+      o+='<path d="M60 '+f(t+3.4)+'Q'+f((60+bx(u))/2)+' '+f((t+by(u))/2+1.6)+' '+f(bx(u))+' '+f(by(u))+
+         '" stroke="#c9ad6e" stroke-width="1.2" fill="none" opacity=".85"/>';});
+    [.3,.62].forEach(k=>{
+      o+='<path d="M'+f(bx(.5-k/2))+' '+f(by(.5-k/2))+'Q60 '+f(by(.5-k/2)-5.5*k)+' '+
+         f(bx(.5+k/2))+' '+f(by(.5+k/2))+'" stroke="#cfb478" stroke-width="1" fill="none" opacity=".7"/>';});
+    o+='<path d="M'+f(60-w)+' '+f(y)+'Q60 '+f(y+5)+' '+f(60+w)+' '+f(y)+
+      '" stroke="#ad8c4e" stroke-width="2.2" fill="none"/>'+
+      '<ellipse cx="60" cy="'+f(t+3)+'" rx="4.6" ry="2.3" fill="#c9ad6e"/>'+
+      '<circle cx="60" cy="'+f(t+2.4)+'" r="1.8" fill="#8a6b32"/>';
+    return o;}},
   {id:'cape', n:'披風', p:200, slot:'body', only:'a-fox', back:1, d:a=>{
-    const t=a.by-a.bh, h=a.bh*2, w=a.bw+7;
-    return '<path d="M'+(60-a.bw*.7)+' '+t+'q'+(a.bw*.7)+' 7 '+(a.bw*1.4)+' 0'+
-      'l'+(w-a.bw*.7)+' '+(h*.95)+'q-'+w+' 10 -'+(w*2)+' 0z" fill="#7b4ce0"/>'+
-      '<path d="M'+(60-a.bw*.7)+' '+t+'q'+(a.bw*.7)+' 7 '+(a.bw*1.4)+' 0" '+
-      'stroke="#ffc233" stroke-width="3" fill="none"/>';}},
+    /* 披風畫在身體後面，正面只看得到張出去的兩側跟下擺 ——
+       所以要張得比身體寬很多，收窄就等於整件看不見 */
+    const f=n=>n.toFixed(1), t=a.by-a.bh, h=a.bh*2, w=a.bw+15;
+    let o='<path d="M'+f(60-a.bw*.95)+' '+f(t)+'Q60 '+f(t+9)+' '+f(60+a.bw*.95)+' '+f(t)+
+      'L'+f(60+w)+' '+f(t+h*.88)+'Q60 '+f(t+h*1.04)+' '+f(60-w)+' '+f(t+h*.88)+'Z" fill="#6f4ccf"/>';
+    for(let i=0;i<6;i++){const x=60-w+(i+.5)*(w*2/6);
+      o+='<circle cx="'+f(x)+'" cy="'+f(t+h*.88+(1-Math.pow((x-60)/w,2))*7)+'" r="'+f(w/6*.9)+'" fill="#6f4ccf"/>';}
+    o+='<path d="M'+f(60-w)+' '+f(t+h*.88)+'Q60 '+f(t+h*1.04)+' '+f(60+w)+' '+f(t+h*.88)+
+      '" stroke="#ffc233" stroke-width="2.6" fill="none" opacity=".9"/>'+
+      '<path d="M'+f(60-w*.62)+' '+f(t+h*.3)+'L'+f(60-w*.9)+' '+f(t+h*.84)+
+      'M'+f(60+w*.62)+' '+f(t+h*.3)+'L'+f(60+w*.9)+' '+f(t+h*.84)+
+      '" stroke="#5a3bb0" stroke-width="1.8" opacity=".8"/>'+
+      '<path d="M'+f(60-a.bw*1.25)+' '+f(t-6)+'q'+f(a.bw*1.25)+' 10 '+f(a.bw*2.5)+' 0'+
+      'l-2 8.4q-'+f(a.bw*1.17)+' 8 -'+f(a.bw*2.34)+' 0z" fill="#5a3bb0"/>'+
+      '<path d="M'+f(60-a.bw*1.25)+' '+f(t-6)+'q'+f(a.bw*1.25)+' 10 '+f(a.bw*2.5)+' 0'+
+      '" stroke="#ffc233" stroke-width="2.4" fill="none"/>'+
+      '<circle cx="'+f(60-a.bw*1.02)+'" cy="'+f(t+1)+'" r="2.8" fill="#ffc233"/>'+
+      '<circle cx="'+f(60+a.bw*1.02)+'" cy="'+f(t+1)+'" r="2.8" fill="#ffc233"/>';
+    return o;}},
   {id:'mask', n:'狐狸面具', p:100, slot:'face', only:'a-fox', d:a=>{
-    /* 整張臉都蓋住，只留兩個眼洞 */
-    const cy=a.hy, rx=a.hr*.98, ry=HRY(a)*.98, y=eyeY(a), g=a.gap;
-    return '<ellipse cx="60" cy="'+cy+'" rx="'+rx+'" ry="'+ry+'" fill="#fff0e2"/>'+
-      '<ellipse cx="'+(60-g)+'" cy="'+y+'" rx="5.6" ry="4.2" fill="#2b1a12"/>'+
-      '<ellipse cx="'+(60+g)+'" cy="'+y+'" rx="5.6" ry="4.2" fill="#2b1a12"/>'+
-      '<path d="M60 '+(cy+ry*.2)+'l-6.5 5.5h13z" fill="#2b1a12"/>'+
-      '<path d="M60 '+(cy+ry*.2+5.5)+'v5" stroke="#c94a1e" stroke-width="2"/>'+
-      '<path d="M'+(60-rx*.72)+' '+(cy+ry*.5)+'h9M'+(60+rx*.72-9)+' '+(cy+ry*.5)+'h9" '+
-        'stroke="#c94a1e" stroke-width="2" stroke-linecap="round"/>'+
-      '<ellipse cx="60" cy="'+cy+'" rx="'+rx+'" ry="'+ry+'" fill="none" stroke="#c94a1e" stroke-width="1.6"/>';}},
+    /* 整張臉都蓋住，只留兩個眼洞。面具自己有一對尖耳朵、一張小嘴跟一條金繩 */
+    const f=n=>n.toFixed(1), cy=a.hy, rx=a.hr*.97, ry=HRY(a)*.98, y=eyeY(a), g=a.gap;
+    const ear=sg=>'<path d="M'+f(60+sg*rx*.74)+' '+f(cy-ry*.56)+'L'+f(60+sg*rx*.9)+' '+f(cy-ry*1.2)+
+      'L'+f(60+sg*rx*.24)+' '+f(cy-ry*.88)+'Z" fill="#fbf5e8"/>'+
+      '<path d="M'+f(60+sg*rx*.68)+' '+f(cy-ry*.66)+'L'+f(60+sg*rx*.82)+' '+f(cy-ry*1.1)+
+      'L'+f(60+sg*rx*.42)+' '+f(cy-ry*.86)+'Z" fill="#d8452f"/>';
+    const eye=x=>'<path d="M'+f(x-6)+' '+f(y)+'Q'+f(x)+' '+f(y-5.6)+' '+f(x+6)+' '+f(y)+
+      'Q'+f(x)+' '+f(y+4.4)+' '+f(x-6)+' '+f(y)+'Z" fill="#2b1a12"/>';
+    return ear(-1)+ear(1)+
+      '<ellipse cx="60" cy="'+f(cy)+'" rx="'+f(rx)+'" ry="'+f(ry)+'" fill="#fbf5e8"/>'+
+      '<ellipse cx="60" cy="'+f(cy-ry*.3)+'" rx="'+f(rx*.86)+'" ry="'+f(ry*.5)+
+      '" fill="#ffffff" opacity=".5"/>'+
+      eye(60-g)+eye(60+g)+
+      '<path d="M60 '+f(cy+ry*.18)+'L'+f(60-4.6)+' '+f(cy+ry*.18+4)+'h9.2Z" fill="#2b1a12"/>'+
+      '<path d="M'+f(60-6.5)+' '+f(cy+ry*.44)+'Q60 '+f(cy+ry*.44+4.4)+' '+f(60+6.5)+' '+f(cy+ry*.44)+
+      '" stroke="#2b1a12" stroke-width="2" fill="none" stroke-linecap="round"/>'+
+      '<path d="M'+f(60-rx*.8)+' '+f(cy+ry*.52)+'q6.5 -3.2 12 0" stroke="#d8452f" stroke-width="2.4" fill="none" stroke-linecap="round"/>'+
+      '<path d="M'+f(60+rx*.8)+' '+f(cy+ry*.52)+'q-6.5 -3.2 -12 0" stroke="#d8452f" stroke-width="2.4" fill="none" stroke-linecap="round"/>'+
+      '<path d="M'+f(60-rx*.6)+' '+f(cy-ry*.62)+'q6 -4 12 -1" stroke="#d8452f" stroke-width="2.2" fill="none" stroke-linecap="round"/>'+
+      '<path d="M'+f(60+rx*.6)+' '+f(cy-ry*.62)+'q-6 -4 -12 -1" stroke="#d8452f" stroke-width="2.2" fill="none" stroke-linecap="round"/>'+
+      '<ellipse cx="60" cy="'+f(cy)+'" rx="'+f(rx)+'" ry="'+f(ry)+'" fill="none" stroke="#e8a92b" stroke-width="1.8"/>';}},
   /* ── 企鵝 ── */
   {id:'snowmask', n:'雪鏡', p:100, slot:'face', only:'a-peng', d:a=>{
     const y=eyeY(a), g=a.gap, w=g+9;
@@ -4801,240 +4874,494 @@ const ITEMS=[
     '<circle cx="'+(cx-w*.1)+'" cy="'+(y-2.4)+'" r="2" fill="#e7cdb8"/>'+
     '<circle cx="'+(cx+w*.44)+'" cy="'+(y-1.6)+'" r="2" fill="#e7cdb8"/>');}},
   {id:'fxh1', n:'楓紅貝雷帽', p:100, slot:'head', only:'a-fox', d:a=>{
-    /* 貝雷帽是軟的，會往一邊塌下去。帽緣壓在頭頂下面一點，耳朵留著穿出來 */
-    const y=HT(a)+7, w=AC.wAtY(a,y)+2, f=n=>n.toFixed(1);
-    return '<ellipse cx="'+f(60-2.6)+'" cy="'+f(y-5)+'" rx="'+f(w+2.4)+'" ry="'+f(w*.62)+'" fill="#8e2b3f"/>'+
-      '<ellipse cx="'+f(60-6)+'" cy="'+f(y-8)+'" rx="'+f(w*.5)+'" ry="'+f(w*.3)+'" fill="#a8394f" opacity=".8"/>'+
-      '<path d="M'+f(60-w)+' '+f(y-2)+'a'+f(w)+' 5 0 0 0 '+f(w*2)+' 0z" fill="#6b1f2e"/>'+
-      '<circle cx="'+f(60-2.6)+'" cy="'+f(y-11.4)+'" r="2.6" fill="#6b1f2e"/>'+
-      '<path d="M'+f(60+w*.4)+' '+f(y-7)+'q4 2 5.6 5.4" stroke="#6b1f2e" stroke-width="1.6" fill="none"/>';}},
-  {id:'fxh2', n:'秋葉花冠', p:100, slot:'head', only:'a-fox', d:a=>{
-  const y=Math.min(HT(a)+4,HLINE(a)),w=AC.crestW(a)*1.06;
-  let o='<path d="M'+(60-w).toFixed(1)+' '+y.toFixed(1)+'q'+w.toFixed(1)+' -9 '+(w*2).toFixed(1)+
-    ' 0" stroke="#7a4a24" stroke-width="3" fill="none"/>';
-  [-.75,-.28,.28,.75].forEach((t,i)=>{
-    const x=60+t*w*.92,yy=y-6+Math.abs(t)*4;
-    o+='<path d="M'+x.toFixed(1)+' '+(yy-5).toFixed(1)+'l-3 4-4-1 2 4-4 1 5 2-1 2 5-1 5 1-1-2 5-2-4-1 2-4-4 1z" '+
-       'fill="'+(i%2?'#c4471d':'#e0921a')+'" transform="scale(.8) translate('+(x*.25).toFixed(1)+','+(yy*.25).toFixed(1)+')"/>';});
-  return o;}},
-  {id:'fxh3', n:'三叉尖冠', p:100, slot:'head', only:'a-fox', d:a=>{
-  const w=AC.crestW(a)*1.05,y=AC.crest(a)+3,h=Math.min(15,Math.max(8,(y-4)/1.4));
-  const L=(60-w).toFixed(1),R=(60+w).toFixed(1);
-  return '<path d="M'+L+' '+y+'L'+L+' '+(y-h*.45)+'L'+(60-w*.5).toFixed(1)+' '+(y-h*1.1).toFixed(1)+
-    'L60 '+(y-h*.4).toFixed(1)+'L'+(60+w*.5).toFixed(1)+' '+(y-h*1.1).toFixed(1)+
-    'L'+R+' '+(y-h*.45)+'L'+R+' '+y+'Z" fill="#e0921a"/>'+
-    '<path d="M'+L+' '+(y-2)+'H'+R+'" stroke="#c9700a" stroke-width="3"/>'+
-    '<circle cx="'+(60-w*.5).toFixed(1)+'" cy="'+(y-h*1.24).toFixed(1)+'" r="2" fill="#e2452f"/>'+
-    '<circle cx="'+(60+w*.5).toFixed(1)+'" cy="'+(y-h*1.24).toFixed(1)+'" r="2" fill="#e2452f"/>';}},
+    /* 貝雷帽是軟的：帽箍貼著頭的那一圈，帽身往右邊塌下去，頂上一根小蒂 */
+    const f=n=>n.toFixed(1), y=HLINE(a)+2, w=AC.hugW(a)+1, L=60-w, R=60+w;
+    return '<path d="M'+f(L)+' '+f(y-1)+'C'+f(L-7)+' '+f(y-17)+' '+f(60-7)+' '+f(y-25)+' '+f(60+5)+' '+f(y-22)+
+      'C'+f(R+12)+' '+f(y-18)+' '+f(R+9)+' '+f(y-1)+' '+f(R+2)+' '+f(y+2)+
+      'C'+f(60+4)+' '+f(y+6)+' '+f(60-9)+' '+f(y+5)+' '+f(L)+' '+f(y-1)+'Z" fill="#8e2b3f"/>'+
+      '<path d="M'+f(L+3)+' '+f(y-7)+'C'+f(60-12)+' '+f(y-20)+' '+f(60+1)+' '+f(y-21)+' '+f(60+8)+' '+f(y-18)+
+      '" stroke="#ac3c53" stroke-width="3.4" fill="none" stroke-linecap="round" opacity=".9"/>'+
+      '<path d="M'+f(L-1)+' '+f(y)+'Q60 '+f(y+11)+' '+f(R+3)+' '+f(y+1)+
+      'Q60 '+f(y+6)+' '+f(L-1)+' '+f(y)+'Z" fill="#661c2a"/>'+
+      '<circle cx="'+f(60-5)+'" cy="'+f(y-24)+'" r="2.8" fill="#661c2a"/>';}},
+  {id:'fxh2', n:'朱色鳥居髮飾', p:100, slot:'head', only:'a-fox', d:a=>{
+    /* 稻荷神社那個朱紅色的門，縮小立在頭頂上。兩根柱子往內收，笠木兩端翹起來 */
+    const f=n=>n.toFixed(1), b=AC.crest(a)+3, w=9, h=15, t=b-h;
+    const post=sg=>{const xb=60+sg*w, xt=60+sg*(w-1.4);
+      return '<path d="M'+f(xb-2.6)+' '+f(b)+'L'+f(xt-2)+' '+f(t+4)+'L'+f(xt+2)+' '+f(t+4)+
+        'L'+f(xb+2.6)+' '+f(b)+'Z" fill="#d8452f"/>'+
+        '<path d="M'+f(xb-2.6)+' '+f(b)+'L'+f(xt-2)+' '+f(t+4)+'L'+f(xt-.4)+' '+f(t+4)+
+        'L'+f(xb-1)+' '+f(b)+'Z" fill="#ef6a4f"/>';};
+    return post(-1)+post(1)+
+      '<rect x="'+f(60-w-4.5)+'" y="'+f(t+6.6)+'" width="'+f(w*2+9)+'" height="2.8" rx="1.2" fill="#c03a26"/>'+
+      '<rect x="'+f(60-1.8)+'" y="'+f(t+3.2)+'" width="3.6" height="4.4" fill="#c03a26"/>'+
+      '<path d="M'+f(60-w-8)+' '+f(t+3.4)+'Q60 '+f(t-1.4)+' '+f(60+w+8)+' '+f(t+3.4)+
+      'L'+f(60+w+8)+' '+f(t+6.4)+'Q60 '+f(t+1.6)+' '+f(60-w-8)+' '+f(t+6.4)+'Z" fill="#a32a1c"/>'+
+      '<path d="M'+f(60-w-8)+' '+f(t+3.4)+'Q60 '+f(t-1.4)+' '+f(60+w+8)+' '+f(t+3.4)+
+      '" stroke="#e05a3f" stroke-width="1.2" fill="none"/>';}},
+  {id:'fxh3', n:'毛絨耳罩', p:100, slot:'head', only:'a-fox', d:a=>{
+    /* 一條弓跨過頭頂，兩側兩坨毛壓在耳朵根部。弓的兩端要落在耳罩的圓心上 */
+    const f=n=>n.toFixed(1), w=a.hr-1, y=eyeY(a)+2, t=HT(a)-5;
+    let o='<path d="M'+f(60-w)+' '+f(y)+'Q60 '+f(t)+' '+f(60+w)+' '+f(y)+
+      '" stroke="#5f4f96" stroke-width="5.8" fill="none" stroke-linecap="round"/>'+
+      '<path d="M'+f(60-w+1)+' '+f(y-2)+'Q60 '+f(t+3)+' '+f(60+w-1)+' '+f(y-2)+
+      '" stroke="#8b78c8" stroke-width="1.8" fill="none" opacity=".7"/>';
+    [-1,1].forEach(sg=>{const cx=60+sg*w;
+      for(let i=0;i<9;i++){const A=i*40*Math.PI/180;
+        o+='<circle cx="'+f(cx+Math.cos(A)*6.8)+'" cy="'+f(y+Math.sin(A)*6.8)+'" r="4" fill="#f4e9cf"/>';}
+      o+='<circle cx="'+f(cx)+'" cy="'+f(y)+'" r="8.4" fill="#fbf3e0"/>'+
+         '<circle cx="'+f(cx)+'" cy="'+f(y)+'" r="4.8" fill="#6f5aa8"/>'+
+         '<circle cx="'+f(cx-1.7)+'" cy="'+f(y-1.7)+'" r="1.5" fill="#a595da"/>';});
+    return o;}},
   {id:'fxh4', n:'旅人報童帽', p:100, slot:'head', only:'a-fox', d:a=>{
-  const y=HLINE(a),w=AC.hugW(a),dm=y-AC.top(a,HRY(a)*.58);
-  return '<path d="M'+(60-w)+' '+y+'a'+w+' '+dm+' 0 0 1 '+(w*2)+' 0z" fill="#7a4a24"/>'+
-    '<path d="M60 '+(y-dm)+'L'+(60-w*.7)+' '+(y-2)+'M60 '+(y-dm)+'L'+(60+w*.7)+' '+(y-2)+
-    '" stroke="#543424" stroke-width="1.4"/>'+
-    '<circle cx="60" cy="'+(y-dm+1)+'" r="3.4" fill="#543424"/>'+
-    '<path d="M'+(60-w-4)+' '+(y-1)+'a'+(w+4)+' 6.5 0 0 0 '+(w*2+8)+' 0z" fill="#543424"/>';}},
-  {id:'fxh5', n:'祭典尖帽', p:100, slot:'head', only:'a-fox', d:a=>{
-  const y=AC.crest(a)+2,w=AC.crestW(a)*.85,t=Math.max(8,y-24);
-  return '<path d="M'+(60-w).toFixed(1)+' '+y.toFixed(1)+'L60 '+t.toFixed(1)+
-    'L'+(60+w).toFixed(1)+' '+y.toFixed(1)+'z" fill="#9e2b2b"/>'+
-    '<path d="M'+(60-w*.72).toFixed(1)+' '+(y-(y-t)*.28).toFixed(1)+'h'+(w*1.44).toFixed(1)+
-    'M'+(60-w*.46).toFixed(1)+' '+(y-(y-t)*.55).toFixed(1)+'h'+(w*.92).toFixed(1)+
-    '" stroke="#f7f0e2" stroke-width="2.4"/>'+
-    '<ellipse cx="60" cy="'+y.toFixed(1)+'" rx="'+w.toFixed(1)+'" ry="2.6" fill="#6b1616"/>'+
-    '<path d="M60 '+(t-4).toFixed(1)+'l2 4h-4z" fill="#e3c98a"/>';}},
-  {id:'fxh6', n:'夜行禮帽', p:100, slot:'head', only:'a-fox', d:a=>AC.tophat(a,'#22232a','#101119',5)},
+    /* 報童帽＝一個又寬又扁、往前垂下來的帽冠，蓋住一片短硬的帽舌。
+       畫成高圓頂就變成一朵蘑菇了 */
+    const f=n=>n.toFixed(1), y=HLINE(a)+1, w=AC.hugW(a)+5,
+          dm=y-AC.top(a,HRY(a)*.5), L=60-w, R=60+w;
+    let o='<path d="M'+f(L+3)+' '+f(y+1)+'Q60 '+f(y+13)+' '+f(R-3)+' '+f(y+1)+
+      'Q60 '+f(y+7)+' '+f(L+3)+' '+f(y+1)+'Z" fill="#22401f"/>';
+    o+='<path d="M'+f(L)+' '+f(y)+'C'+f(L-4)+' '+f(y-dm*1.24)+' '+f(R+5)+' '+f(y-dm*1.34)+' '+f(R)+' '+f(y)+
+      'Q60 '+f(y+6.5)+' '+f(L)+' '+f(y)+'Z" fill="#4e7a4a"/>';
+    [-1,-.34,.34,1].forEach(k=>{
+      o+='<path d="M'+f(60+k*2.4)+' '+f(y-dm*1.16)+'Q'+f(60+k*w*.66)+' '+f(y-dm*.62)+' '+
+         f(60+k*w*.99)+' '+f(y+1)+'" stroke="#3a6037" stroke-width="1.4" fill="none" opacity=".85"/>';});
+    o+='<path d="M'+f(L+1)+' '+f(y+1.4)+'Q60 '+f(y+7.6)+' '+f(R-1)+' '+f(y+1.4)+
+      '" stroke="#2c4a2a" stroke-width="2.6" fill="none"/>'+
+      '<path d="M'+f(L+3)+' '+f(y+1)+'Q60 '+f(y+13)+' '+f(R-3)+' '+f(y+1)+
+      '" stroke="#183016" stroke-width="1.4" fill="none"/>'+
+      '<circle cx="60" cy="'+f(y-dm*1.2)+'" r="3" fill="#e3c98a"/>'+
+      '<path d="M'+f(L+5)+' '+f(y-dm*.56)+'Q'+f(60-9)+' '+f(y-dm*1.06)+' '+f(60+1)+' '+f(y-dm*1.04)+
+      '" stroke="#699f63" stroke-width="2.6" fill="none" stroke-linecap="round" opacity=".7"/>';
+    return o;}},
+  {id:'fxh5', n:'祭典鉢卷', p:100, slot:'head', only:'a-fox', d:a=>{
+    /* 額頭綁一條白布，正中間一顆紅日，右邊打結、兩條布尾飄出去 */
+    const f=n=>n.toFixed(1), y=HLINE(a)+2, w=AC.wAtY(a,y)+1, L=60-w, R=60+w;
+    return '<path d="M'+f(L)+' '+f(y)+'Q60 '+f(y-7)+' '+f(R)+' '+f(y)+'L'+f(R)+' '+f(y+6.4)+
+      'Q60 '+f(y-.6)+' '+f(L)+' '+f(y+6.4)+'Z" fill="#f9f3e4"/>'+
+      '<path d="M'+f(L)+' '+f(y)+'Q60 '+f(y-7)+' '+f(R)+' '+f(y)+
+      '" stroke="#d8cdb4" stroke-width="1.2" fill="none"/>'+
+      '<circle cx="60" cy="'+f(y+.4)+'" r="4.6" fill="#d8452f"/>'+
+      '<path d="M'+f(R-2.6)+' '+f(y-.6)+'l5.4 -2.4 .6 7.4 -5.4 2.2Z" fill="#e6dcc4"/>'+
+      '<path d="M'+f(R+2.6)+' '+f(y-1.8)+'Q'+f(R+12)+' '+f(y-7)+' '+f(R+16)+' '+f(y+1.6)+
+      'L'+f(R+10)+' '+f(y+1)+'Q'+f(R+8)+' '+f(y-2.6)+' '+f(R+3)+' '+f(y+1)+'Z" fill="#f9f3e4"/>'+
+      '<path d="M'+f(R+2.6)+' '+f(y+3)+'Q'+f(R+11)+' '+f(y+7)+' '+f(R+13.4)+' '+f(y+15)+
+      'L'+f(R+7.6)+' '+f(y+11)+'Q'+f(R+5.4)+' '+f(y+7)+' '+f(R+1.6)+' '+f(y+5.4)+'Z" fill="#ece2ca"/>';}},
+  {id:'fxh6', n:'夜行禮帽', p:100, slot:'head', only:'a-fox', d:a=>{
+    /* 原本是共用產生器畫的一塊黑磚。改成自己畫：帽冠上寬下窄、帽簷中間厚兩邊翹，
+       加一條酒紅緞帶跟金釦 */
+    const f=n=>n.toFixed(1), y=HLINE(a)+2, w=AC.hugW(a)*.74, h=19;
+    return '<path d="M'+f(60-w-2)+' '+f(y-h)+'Q60 '+f(y-h-4.4)+' '+f(60+w+2)+' '+f(y-h)+
+      'L'+f(60+w)+' '+f(y+1)+'Q60 '+f(y+5)+' '+f(60-w)+' '+f(y+1)+'Z" fill="#2b2c36"/>'+
+      '<path d="M'+f(60-w+2.4)+' '+f(y-h+4)+'L'+f(60-w+3.4)+' '+f(y-3)+
+      '" stroke="#4a4d60" stroke-width="2.6" stroke-linecap="round" opacity=".85"/>'+
+      '<path d="M'+f(60-w-.8)+' '+f(y-6.4)+'Q60 '+f(y-2.2)+' '+f(60+w+.8)+' '+f(y-6.4)+
+      'L'+f(60+w+.8)+' '+f(y-1.2)+'Q60 '+f(y+3)+' '+f(60-w-.8)+' '+f(y-1.2)+'Z" fill="#8e2b3f"/>'+
+      '<rect x="'+f(60+w*.26)+'" y="'+f(y-5.4)+'" width="5" height="5" rx="1.2" fill="#e8a92b"/>'+
+      '<path d="M'+f(60-w-9)+' '+f(y+.6)+'Q60 '+f(y+11.5)+' '+f(60+w+9)+' '+f(y+.6)+
+      'Q60 '+f(y+5.4)+' '+f(60-w-9)+' '+f(y+.6)+'Z" fill="#1b1c24"/>';}},
   {id:'fxe1', n:'金色狐瞳', p:100, slot:'face', only:'a-fox', d:a=>{
-    /* 金瞳配一條豎的黑瞳孔，蓋在原本的圓眼珠上 */
-    const y=eyeY(a), g=a.gap, r=(a.pup||4.5)*1.2, f=n=>n.toFixed(1);
-    const one=x=>'<circle cx="'+f(x)+'" cy="'+f(y)+'" r="'+f(r)+'" fill="#ffc233"/>'+
-      '<circle cx="'+f(x)+'" cy="'+f(y)+'" r="'+f(r)+'" fill="none" stroke="#c9781e" stroke-width="1"/>'+
-      '<ellipse cx="'+f(x)+'" cy="'+f(y)+'" rx="'+f(r*.3)+'" ry="'+f(r*.86)+'" fill="#2b1a12"/>'+
-      '<circle cx="'+f(x-r*.42)+'" cy="'+f(y-r*.42)+'" r="'+f(r*.22)+'" fill="#fff0b8"/>';
-    return one(60-g)+one(60+g);}},
+    /* 金瞳配一條豎的黑瞳孔，外面再描一圈眼線，蓋在原本的圓眼珠上 */
+    const f=n=>n.toFixed(1), y=eyeY(a), g=a.gap, r=(a.pup||4.5)*1.26;
+    const one=(x,sg)=>'<circle cx="'+f(x)+'" cy="'+f(y)+'" r="'+f(r)+'" fill="#ffc233"/>'+
+      '<circle cx="'+f(x)+'" cy="'+f(y)+'" r="'+f(r*.98)+'" fill="none" stroke="#c9781e" stroke-width="1.1"/>'+
+      '<ellipse cx="'+f(x)+'" cy="'+f(y)+'" rx="'+f(r*.3)+'" ry="'+f(r*.88)+'" fill="#2b1a12"/>'+
+      '<circle cx="'+f(x-r*.42)+'" cy="'+f(y-r*.44)+'" r="'+f(r*.24)+'" fill="#fff4c4"/>'+
+      '<path d="M'+f(x-sg*r*1.16)+' '+f(y-r*.62)+'Q'+f(x)+' '+f(y-r*1.5)+' '+f(x+sg*r*1.3)+' '+f(y-r*.5)+
+      '" stroke="#2b1a12" stroke-width="2" fill="none" stroke-linecap="round"/>';
+    return one(60-g,-1)+one(60+g,1);}},
   {id:'fxe2', n:'側掛面具', p:100, slot:'face', only:'a-fox', d:a=>{
-  const x=60+a.hr*1.04,y=eyeY(a)+3;
-  return '<g transform="rotate(16,'+x.toFixed(1)+','+y+')">'+
-    '<ellipse cx="'+x.toFixed(1)+'" cy="'+y+'" rx="9" ry="11" fill="#f7f0e2" stroke="#c4471d" stroke-width="1.6"/>'+
-    '<ellipse cx="'+(x-3).toFixed(1)+'" cy="'+(y-3)+'" rx="2.4" ry="1.8" fill="#22232a"/>'+
-    '<ellipse cx="'+(x+3).toFixed(1)+'" cy="'+(y-3)+'" rx="2.4" ry="1.8" fill="#22232a"/>'+
-    '<path d="M'+(x-5).toFixed(1)+' '+(y+4)+'h10" stroke="#c4471d" stroke-width="1.6"/></g>';}},
-  {id:'fxe3', n:'叼著楓葉', p:100, slot:'face', only:'a-fox', d:a=>{
-  return AC.bite(a,'<path d="M0 -2l-4 5-6-2 3 6-6 2 8 3-2 3 8-2 8 2-2-3 8-3-6-2 3-6-6 2z" '+
-    'fill="#c4471d" transform="scale(.62)"/>'+
-    '<path d="M0 0v7" stroke="#8a2f10" stroke-width="1.4"/>');}},
-  {id:'fxe4', n:'楓紅腮紅', p:100, slot:'face', only:'a-fox', d:a=>{
-    const pr=(a.pup||4.5), y=eyeY(a)+pr+8, hw=5.6, f=n=>n.toFixed(1);
-    const g=Math.min(a.gap+pr+hw+2, AC.wAtY(a,y)-hw-1);
-    const one=x=>'<ellipse cx="'+f(x)+'" cy="'+f(y)+'" rx="'+hw+'" ry="4" fill="#e2452f" opacity=".55"/>'+
-      '<path d="M'+f(x)+' '+f(y-3.4)+'l1.5 2 1.9-.8-.8 2 2 .5-2 1.2 1.1 1.8-2.1-.5-1.1 2-1.1-2-2.1 .5 1.1-1.8-2-1.2 2-.5-.8-2 1.9 .8z" fill="#ffb03c"/>';
-    return one(60-g)+one(60+g);}},
-  {id:'fxe5', n:'額頭勾玉', p:100, slot:'face', only:'a-fox', d:a=>{
-  const r=Math.max(3,Math.min(5,(eyeY(a)-(a.pup||4.5)-2-HT(a))/2.4)),y=HT(a)+r*1.4,k=r/4;
-  return '<g transform="translate(60,'+y.toFixed(1)+') scale('+k.toFixed(2)+')">'+
-    '<path d="M0 -7A7 7 0 1 1-4 5.6 3.4 3.4 0 1 0 0-7Z" fill="#1f9b96"/>'+
-    '<circle cx="-1.4" cy="-3.4" r="1.4" fill="#d8f7f4"/></g>'+
-    '<path d="M'+(60-r*2.4).toFixed(1)+' '+(y+r*.6).toFixed(1)+'l-3 2M'+(60+r*2.4).toFixed(1)+' '+
-    (y+r*.6).toFixed(1)+'l3 2" stroke="#0d5c58" stroke-width="1.6"/>';}},
-  {id:'fxe6', n:'狐妝斜紋', p:100, slot:'face', only:'a-fox', d:a=>{
-  const y=AC.cheekY(a),g=Math.min(a.gap+7,a.hr-8);
-  const one=sg=>{let o='';
-    for(let i=0;i<3;i++)
-      o+='<path d="M'+(60+sg*g-5+i*3.6).toFixed(1)+' '+(y+3.4)+'l'+(sg*3.4)+' -7'+
-         '" stroke="#c4471d" stroke-width="2.2" stroke-linecap="round" opacity=".85"/>';
-    return o;};
-  return one(-1)+one(1);}},
+    /* 面具推到頭的左側掛著：圓心壓在那個高度的頭緣上，太高就變成掛在耳朵上。
+       繩子要細，粗了就變成一條橫在額頭的皮帶 */
+    const f=n=>n.toFixed(1), cy=HT(a)+13, cx=60-AC.wAtY(a,cy)*.86, rx=8.2, ry=9.8;
+    return '<path d="M'+f(cx+rx*.92)+' '+f(cy+1)+'Q60 '+f(cy+6)+' '+f(60+AC.wAtY(a,cy)*.86)+' '+f(cy+1)+
+      '" stroke="#7d3a12" stroke-width="1.5" fill="none"/>'+
+      '<path d="M'+f(cx-rx*.5)+' '+f(cy-ry*.82)+'l-2.6 -6 6 3Z" fill="#f9f3e4"/>'+
+      '<path d="M'+f(cx+rx*.5)+' '+f(cy-ry*.82)+'l2.6 -6 -6 3Z" fill="#f9f3e4"/>'+
+      '<ellipse cx="'+f(cx)+'" cy="'+f(cy)+'" rx="'+f(rx)+'" ry="'+f(ry)+'" fill="#f9f3e4" stroke="#c4471d" stroke-width="1.5"/>'+
+      '<ellipse cx="'+f(cx-3)+'" cy="'+f(cy-2.6)+'" rx="2.2" ry="1.7" fill="#22232a"/>'+
+      '<ellipse cx="'+f(cx+3)+'" cy="'+f(cy-2.6)+'" rx="2.2" ry="1.7" fill="#22232a"/>'+
+      '<path d="M'+f(cx)+' '+f(cy+1.6)+'l-2.4 3h4.8Z" fill="#22232a"/>'+
+      '<path d="M'+f(cx-5.6)+' '+f(cy+5.6)+'q2.6 -1.6 4.6 0M'+f(cx+1)+' '+f(cy+5.6)+
+      'q2.6 -1.6 4.6 0" stroke="#c4471d" stroke-width="1.4" fill="none" stroke-linecap="round"/>';}},
+  {id:'fxe3', n:'叼著稻穗', p:100, slot:'face', only:'a-fox', d:a=>{
+    /* 稻荷的狐狸叼稻穗。穗子是兩排飽滿的穀粒，不是葉子 */
+    const f=n=>n.toFixed(1);
+    let g='<path d="M-3 2Q8 -2 21 -15" stroke="#c09a3a" stroke-width="2.2" fill="none" stroke-linecap="round"/>';
+    for(let i=0;i<7;i++){const t=i/6, x=2+t*17, y=1-t*15;
+      g+='<ellipse cx="'+f(x-2.6)+'" cy="'+f(y+1.8)+'" rx="3.2" ry="2.1" fill="#f0bf3f" transform="rotate(-40,'+
+         f(x-2.6)+','+f(y+1.8)+')"/>'+
+         '<ellipse cx="'+f(x+2.3)+'" cy="'+f(y-2.2)+'" rx="3.2" ry="2.1" fill="#ffe08a" transform="rotate(-40,'+
+         f(x+2.3)+','+f(y-2.2)+')"/>';}
+    g+='<path d="M19 -15l4.4 -6.4M21 -12l6.4 -2.6" stroke="#ffe9a8" stroke-width="1.4" stroke-linecap="round"/>'+
+       '<path d="M-2 2Q-8 6 -12 3" stroke="#8fa83c" stroke-width="2.2" fill="none" stroke-linecap="round"/>';
+    return AC.bite(a,g);}},
+  {id:'fxe4', n:'暖呼呼腮紅', p:100, slot:'face', only:'a-fox', d:a=>{
+    /* 腮紅要在臉頰、在嘴巴旁邊，不是貼在眼睛下面。上面三條斜線是漫畫式的暈紅 */
+    const f=n=>n.toFixed(1), y=AC.cheekY(a)+1, x0=AC.cheekX(a);
+    const one=sg=>{const cx=60+sg*x0;
+      let o='<ellipse cx="'+f(cx)+'" cy="'+f(y)+'" rx="7" ry="4.6" fill="#e0452f" opacity=".5"/>'+
+        '<ellipse cx="'+f(cx)+'" cy="'+f(y)+'" rx="4.4" ry="2.8" fill="#f2664c" opacity=".55"/>';
+      for(let i=-1;i<=1;i++)
+        o+='<path d="M'+f(cx+i*3.6-1.6)+' '+f(y+2.4)+'l3.2 -4.8" stroke="#c9331f" stroke-width="1.5" stroke-linecap="round" opacity=".7"/>';
+      return o;};
+    return one(-1)+one(1);}},
+  {id:'fxe5', n:'細框圓眼鏡', p:100, slot:'face', only:'a-fox', d:a=>{
+    /* 原本是一顆浮在額頭上方的勾玉，沒有東西撐著。改成真的架在臉上的圓眼鏡：
+       鏡片罩住眼睛、中間有鼻樑、兩邊的腳伸到頭的邊緣 */
+    const f=n=>n.toFixed(1), y=eyeY(a), g=a.gap, r=Math.max(7,AC.ew(a)+1), ex=AC.wAtY(a,y);
+    const lens=x=>'<circle cx="'+f(x)+'" cy="'+f(y)+'" r="'+f(r)+'" fill="#fff6d8" opacity=".3"/>'+
+      '<path d="M'+f(x-r*.62)+' '+f(y-r*.5)+'l'+f(r*.8)+' '+f(-r*.2)+
+      '" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity=".75"/>'+
+      '<circle cx="'+f(x)+'" cy="'+f(y)+'" r="'+f(r)+'" fill="none" stroke="#e0a02b" stroke-width="2.1"/>';
+    return lens(60-g)+lens(60+g)+
+      '<path d="M'+f(60-g+r)+' '+f(y-1)+'Q60 '+f(y-4.4)+' '+f(60+g-r)+' '+f(y-1)+
+      '" stroke="#e0a02b" stroke-width="2" fill="none"/>'+
+      '<path d="M'+f(60-g-r)+' '+f(y-1.4)+'L'+f(60-ex-1)+' '+f(y-3.4)+
+      'M'+f(60+g+r)+' '+f(y-1.4)+'L'+f(60+ex+1)+' '+f(y-3.4)+
+      '" stroke="#e0a02b" stroke-width="2" stroke-linecap="round"/>';}},
+  {id:'fxe6', n:'白狐妝紋', p:100, slot:'face', only:'a-fox', d:a=>{
+    /* 巫女狐的臉紋：三撇短的畫在眼睛外側往外上揚，額頭中間一道。
+       起筆不能靠近鼻樑 —— 兩邊接起來看起來就是一撇鬍子。
+       每一筆都先描白再壓朱紅，白的嘴吻跟橘的毛上都看得見 */
+    const f=n=>n.toFixed(1), y=eyeY(a), g=a.gap, ht=HT(a)+6;
+    const ink=(d,wd)=>'<path d="'+d+'" stroke="#fff6ea" stroke-width="'+(wd+1.7)+
+      '" fill="none" stroke-linecap="round"/>'+
+      '<path d="'+d+'" stroke="#d8452f" stroke-width="'+wd+'" fill="none" stroke-linecap="round"/>';
+    let o=ink('M'+f(60-6.6)+' '+f(ht+2.4)+'Q60 '+f(ht-2.2)+' '+f(60+6.6)+' '+f(ht+2.4),2.2);
+    [-1,1].forEach(sg=>{
+      for(let i=0;i<3;i++){
+        const x1=60+sg*(g+4.4+i*3.9), x2=60+sg*(g+7.1+i*3.9);
+        o+=ink('M'+f(x1)+' '+f(y+4.6)+'L'+f(x2)+' '+f(y-1.4),2.1);}});
+    return o;}},
   {id:'fxn1', n:'麥色圍巾', p:100, slot:'neck', only:'a-fox', d:a=>{
-  const y=NKB(a)-3,w=NKW(a)*.88;
-  return '<path d="M'+(60-w)+' '+y+'q'+w+' 10 '+(w*2)+' 0v10q-'+w+' 10 -'+(w*2)+' 0z" fill="#f2e3c0"/>'+
-    '<path d="M'+(60-w)+' '+(y+4)+'q'+w+' 10 '+(w*2)+' 0" stroke="#c9a86a" stroke-width="1.6" fill="none"/>'+
-    '<path d="M'+(60+w*.36)+' '+(y+12)+'l11 15-9 5-6-17z" fill="#e3c98a"/>'+
-    '<path d="M'+(60+w*.36+3)+' '+(y+27)+'v5M'+(60+w*.36+7)+' '+(y+26)+
-    'v5" stroke="#c9a86a" stroke-width="1.6" stroke-linecap="round"/>';}},
-  {id:'fxn2', n:'鈴鐺項圈', p:100, slot:'neck', only:'a-fox', d:a=>AC.collar2(a,'#e8447a','#b10b42',2)},
+    /* 繞一圈的針織圍巾：上下兩條邊都照脖子那一圈的弧線走，
+       織紋要夾在兩條弧線中間 —— 用固定的 y 起筆會戳到布面外 */
+    const f=n=>n.toFixed(1), y=NKB(a)-3, w=FXNW(a)+3;
+    const px=u=>(1-u)*(1-u)*(60-w)+2*u*(1-u)*60+u*u*(60+w);
+    const py=u=>y+20*u*(1-u);
+    let o='<path d="M'+f(60-w)+' '+f(y)+'Q60 '+f(y+10)+' '+f(60+w)+' '+f(y)+
+      'L'+f(60+w)+' '+f(y+8)+'Q60 '+f(y+18)+' '+f(60-w)+' '+f(y+8)+'Z" fill="#f2e3c0"/>';
+    for(let i=0;i<7;i++){const u=(i+.5)/7;
+      o+='<path d="M'+f(px(u))+' '+f(py(u)+1.4)+'v5.4" stroke="#dcc794" stroke-width="1.5" stroke-linecap="round"/>';}
+    o+='<path d="M'+f(60+w*.3)+' '+f(y+11.6)+'l9.6 1.6 -2.6 14 -9.4-2.2z" fill="#e8d5a4"/>'+
+      '<path d="M'+f(60+w*.3+1)+' '+f(y+16.4)+'l9 1.5M'+f(60+w*.3)+' '+f(y+21)+
+      'l9.2 1.6" stroke="#cdb47e" stroke-width="1.3"/>';
+    for(let i=0;i<4;i++)
+      o+='<path d="M'+f(60+w*.3-1.4+i*2.5)+' '+f(y+26.4-i*.7)+'v3.6" stroke="#e8d5a4" stroke-width="1.6" stroke-linecap="round"/>';
+    return o;}},
+  {id:'fxn2', n:'稻荷鈴項圈', p:100, slot:'neck', only:'a-fox', d:a=>{
+    /* 上一版是直接叫通用的 collar2 換兩個顏色。自己畫：皮帶有縫線、
+       扣環在旁邊，鈴鐺掛在正下方，有開口跟反光 */
+    const f=n=>n.toFixed(1), y=NKB(a)-1, w=FXNW(a)+2, cy=y+13;
+    let o='<path d="M'+f(60-w)+' '+f(y)+'Q60 '+f(y+10)+' '+f(60+w)+' '+f(y)+
+      '" stroke="#c8203f" stroke-width="6" fill="none" stroke-linecap="round"/>'+
+      '<path d="M'+f(60-w)+' '+f(y-.6)+'Q60 '+f(y+8.6)+' '+f(60+w)+' '+f(y-.6)+
+      '" stroke="#e8447a" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".7"/>';
+    for(let i=0;i<6;i++){const u=(i+.5)/6;
+      const bx=(1-u)*(1-u)*(60-w)+2*u*(1-u)*60+u*u*(60+w);
+      const by=(1-u)*(1-u)*y+2*u*(1-u)*(y+10)+u*u*y;
+      o+='<circle cx="'+f(bx)+'" cy="'+f(by)+'" r="1" fill="#ffd0dd" opacity=".9"/>';}
+    o+='<rect x="'+f(60+w*.5)+'" y="'+f(y+2.6)+'" width="4.4" height="4.4" rx="1.2" fill="none" stroke="#f2e3c0" stroke-width="1.3"/>'+
+      '<path d="M60 '+f(y+7.6)+'v2.4" stroke="#c8203f" stroke-width="2.4"/>'+
+      '<circle cx="60" cy="'+f(cy)+'" r="5" fill="#f2b22c"/>'+
+      '<path d="M60 '+f(cy-5)+'a5 5 0 0 1 3.4 8.6q-3.4-4-3.4-8.6z" fill="#ffe08a"/>'+
+      '<path d="M'+f(60-3.4)+' '+f(cy+1.8)+'h6.8" stroke="#a8730d" stroke-width="1.5" stroke-linecap="round"/>'+
+      '<circle cx="60" cy="'+f(cy+3.6)+'" r="1.4" fill="#a8730d"/>';
+    return o;}},
   {id:'fxn3', n:'勾玉項鍊', p:100, slot:'neck', only:'a-fox', d:a=>{
-    const y=NKB(a)+1, w=NKW(a)*.72;
-    let o='';
-    for(let i=0;i<7;i++){const t=(i/6-.5)*2;
-      o+='<circle cx="'+(60+t*w).toFixed(1)+'" cy="'+(y+(1-t*t)*9).toFixed(1)+'" r="2.6" fill="#f2e3c0"/>';}
-    return o+'<path d="M60 '+(y+11)+'q7 0 7 7t-7 7q4-4 0-7t0-7z" fill="#1f9b96"/>'+
-      '<circle cx="'+(60+1)+'" cy="'+(y+13.5)+'" r="1.5" fill="#f2e3c0"/>';}},
+    /* 珠子照脖子那一圈排，勾玉吊在最低的那一顆下面。勾玉本身要小 ——
+       畫大了就是一坨青色 */
+    const f=n=>n.toFixed(1), y=NKB(a)-1, w=FXNW(a)+1.6;
+    let o='<path d="M'+f(60-w)+' '+f(y)+'Q60 '+f(y+12)+' '+f(60+w)+' '+f(y)+
+      '" stroke="#8a6b32" stroke-width="1.2" fill="none"/>';
+    for(let i=0;i<9;i++){const u=i/8;
+      const bx=(1-u)*(1-u)*(60-w)+2*u*(1-u)*60+u*u*(60+w), by=y+24*u*(1-u);
+      o+='<circle cx="'+f(bx)+'" cy="'+f(by)+'" r="2.3" fill="#f2e3c0"/>'+
+         '<circle cx="'+f(bx-.7)+'" cy="'+f(by-.8)+'" r="1" fill="#fffaf0"/>';}
+    return o+'<g transform="translate(60,'+f(y+8.4)+') scale(.6)">'+
+      '<path d="M0 0A7.4 7.4 0 1 1-4.2 6 3.6 3.6 0 1 0 0 0Z" fill="#1f9b96"/>'+
+      '<path d="M0 1.4A6 6 0 0 1 4.6 5" stroke="#6fded9" stroke-width="1.8" fill="none" opacity=".8"/>'+
+      '<circle cx="-1.2" cy="2.8" r="1.6" fill="#d8f7f4"/></g>';}},
   {id:'fxn4', n:'旅人領結', p:100, slot:'neck', only:'a-fox', d:a=>{
-  const y=NKB(a)+3,w=NKW(a)*.66,h=w*.5;
-  return '<path d="M60 '+y+'L'+(60-w)+' '+(y-h)+'v'+(h*2)+'Z" fill="#9e2b2b"/>'+
-    '<path d="M60 '+y+'L'+(60+w)+' '+(y-h)+'v'+(h*2)+'Z" fill="#9e2b2b"/>'+
-    '<path d="M'+(60-w)+' '+(y-h)+'v'+(h*2)+'M'+(60+w)+' '+(y-h)+'v'+(h*2)+
-    '" stroke="#f7f0e2" stroke-width="1.6"/>'+
-    '<circle cx="60" cy="'+y+'" r="3.4" fill="#e3c98a"/>';}},
+    /* 蝴蝶結：兩片布往中間收，結扣壓在正中間，下面兩條垂帶 */
+    const f=n=>n.toFixed(1), y=NKB(a)+3, w=FXNW(a)*.96, h=w*.62;
+    const wing=sg=>'<path d="M'+f(60+sg*2.6)+' '+f(y)+'C'+f(60+sg*(w*.5))+' '+f(y-h*1.15)+' '+
+      f(60+sg*w)+' '+f(y-h*1.05)+' '+f(60+sg*w)+' '+f(y-h*.5)+
+      'C'+f(60+sg*w)+' '+f(y+h*.5)+' '+f(60+sg*(w*.6))+' '+f(y+h*1.05)+' '+f(60+sg*2.6)+' '+f(y)+'Z" fill="#9e2b2b"/>'+
+      '<path d="M'+f(60+sg*3.4)+' '+f(y)+'L'+f(60+sg*(w*.72))+' '+f(y-h*.5)+
+      'M'+f(60+sg*3.4)+' '+f(y)+'L'+f(60+sg*(w*.72))+' '+f(y+h*.44)+
+      '" stroke="#781c1c" stroke-width="1.4" stroke-linecap="round"/>';
+    return '<path d="M'+f(60-w*.86)+' '+f(y-1)+'Q60 '+f(y+7)+' '+f(60+w*.86)+' '+f(y-1)+
+      '" stroke="#781c1c" stroke-width="2.6" fill="none"/>'+
+      wing(-1)+wing(1)+
+      '<rect x="'+f(60-3.4)+'" y="'+f(y-4.6)+'" width="6.8" height="9.2" rx="2.6" fill="#c9451e"/>'+
+      '<path d="M'+f(60-1.6)+' '+f(y-3)+'v6" stroke="#e3c98a" stroke-width="1.3" stroke-linecap="round"/>';}},
   {id:'fxn5', n:'狡智獎牌', p:100, slot:'neck', only:'a-fox', d:a=>{
-  const y=NKB(a)-1,w=NKW(a)*.5,cy=y+20;
-  return '<path d="M'+(60-w)+' '+y+'L60 '+(cy-7)+'L'+(60+w)+' '+y+
-    '" stroke="#9e2b2b" stroke-width="3.4" fill="none"/>'+
-    '<path d="M60 '+(cy-8)+'l7.5 5.5-3 9h-9l-3-9z" fill="#ffc233"/>'+
-    '<path d="M60 '+(cy-3)+'l-3 3 3 3 3-3z" fill="#c28800"/>';}},
-  {id:'fxn6', n:'和風領巾', p:100, slot:'neck', only:'a-fox', d:a=>{
-  const y=NKB(a)-2,w=NKW(a)*.8;
-  return '<path d="M'+(60-w)+' '+y+'q'+w+' 9 '+(w*2)+' 0l-'+(w*.5)+' '+(a.bh*.5)+
-    'h-'+w+'z" fill="#2f2a5c"/>'+
-    '<path d="M'+(60-w)+' '+y+'q'+w+' 9 '+(w*2)+' 0" stroke="#e3c98a" stroke-width="2.4" fill="none"/>'+
-    '<path d="M'+(60-w*.5)+' '+(y+12)+'h'+w+'" stroke="#e3c98a" stroke-width="1.6"/>'+
-    '<circle cx="60" cy="'+(y+8)+'" r="2.6" fill="#e3c98a"/>';}},
+    /* 緞帶收窄、獎牌往上靠 —— 拉長拉開就變成胸前一支紅箭頭 */
+    const f=n=>n.toFixed(1), y=NKB(a)-1, w=FXNW(a)*.66, cy=y+17;
+    return '<path d="M'+f(60-w)+' '+f(y)+'L'+f(60-3)+' '+f(cy-7)+'h6L'+f(60+w)+' '+f(y)+
+      'L'+f(60+w-3.8)+' '+f(y-.8)+'L60 '+f(cy-9.4)+'L'+f(60-w+3.8)+' '+f(y-.8)+'Z" fill="#9e2b2b"/>'+
+      '<circle cx="60" cy="'+f(cy)+'" r="7.2" fill="#e8a92b"/>'+
+      '<circle cx="60" cy="'+f(cy)+'" r="5.6" fill="#ffd25e"/>'+
+      '<path d="M'+f(60-3.8)+' '+f(cy-1.4)+'l-1.2-3.6 3.2 1.4h3.6l3.2-1.4-1.2 3.6'+
+      'q0 4.6-3.8 4.6t-3.8-4.6z" fill="#b07a12"/>'+
+      '<circle cx="'+f(60-1.6)+'" cy="'+f(cy-.6)+'" r=".8" fill="#ffd25e"/>'+
+      '<circle cx="'+f(60+1.6)+'" cy="'+f(cy-.6)+'" r=".8" fill="#ffd25e"/>'+
+      '<path d="M'+f(60-4.8)+' '+f(cy-4)+'a6.6 6.6 0 0 1 4-2.4" stroke="#fff0c4" stroke-width="1.5" fill="none" stroke-linecap="round"/>';}},
+  {id:'fxn6', n:'蓬鬆頸圈', p:100, slot:'neck', only:'a-fox', d:a=>{
+    /* 一整圈厚厚的毛，邊緣是一顆一顆的毛球堆出來的。
+       堆太厚又掛太低就變成一條毛毛蟲趴在肚子上 */
+    const f=n=>n.toFixed(1), y=NKB(a)-2, w=FXNW(a)+2.6;
+    const px=u=>(1-u)*(1-u)*(60-w)+2*u*(1-u)*60+u*u*(60+w);
+    const py=u=>y+18*u*(1-u);
+    let o='';
+    for(let i=0;i<10;i++){const u=i/9;
+      o+='<circle cx="'+f(px(u))+'" cy="'+f(py(u)+3)+'" r="4.2" fill="#7b5aa8"/>';}
+    for(let i=0;i<9;i++){const u=(i+.5)/9;
+      o+='<circle cx="'+f(px(u))+'" cy="'+f(py(u)+.8)+'" r="3.6" fill="#9a7cc9"/>';}
+    for(let i=0;i<8;i++){const u=(i+.5)/8;
+      o+='<circle cx="'+f(px(u))+'" cy="'+f(py(u)-1)+'" r="2.4" fill="#bca6e4"/>';}
+    return o;}},
   {id:'fxb1', n:'腳印圖案毛衣', p:200, slot:'body', only:'a-fox', d:a=>{
-    /* 狐火那版縮小之後跟雨滴分不出來。改成腳印 —— 小小一顆也認得出來 */
-    const t=a.by-a.bh, h=a.bh*2, f=n=>n.toFixed(1);
+    /* 針織毛衣：領口、下襬都是羅紋，身上散著小小的腳印 */
+    const f=n=>n.toFixed(1), t=a.by-a.bh, h=a.bh*2;
     const paw=(x,y,sc)=>{let o2='<ellipse cx="'+f(x)+'" cy="'+f(y+1.6*sc)+'" rx="'+f(3.2*sc)+'" ry="'+f(2.6*sc)+'" fill="#f2e3c0"/>';
       [[-2.4,-2],[-.8,-3.2],[.8,-3.2],[2.4,-2]].forEach(([dx,dy])=>{
         o2+='<circle cx="'+f(x+dx*sc)+'" cy="'+f(y+dy*sc)+'" r="'+f(1.1*sc)+'" fill="#f2e3c0"/>';});
       return o2;};
-    let o='<path d="'+garment(a,.05,.93)+'" fill="#22315e"/>';
-    [[-.44,.28,1.1],[.36,.44,.9],[-.18,.6,1],[.4,.78,.8],[-.44,.84,.7]].forEach(([kx,ky,sc])=>{
+    let o='<path d="'+garment(a,.05,.93)+'" fill="#1e2b55"/>';
+    [[-.44,.3,1.1],[.38,.46,.9],[-.16,.62,1],[.42,.78,.8],[-.46,.86,.7]].forEach(([kx,ky,sc])=>{
       o+=paw(60+kx*bwAt(a,ky), t+h*ky, sc);});
-    return o+'<path d="M'+f(60-bwAt(a,.05)-1.5)+' '+f(t+h*.1)+'h'+f((bwAt(a,.05)+1.5)*2)+
-      '" stroke="#e8734a" stroke-width="3.4"/>'+
-      '<path d="M'+f(60-bwAt(a,.9))+' '+f(t+h*.9)+'h'+f(bwAt(a,.9)*2)+'" stroke="#e8734a" stroke-width="3"/>';}},
-  {id:'fxb2', n:'旅人背心', p:200, slot:'body', only:'a-fox', d:a=>AC.vestOpen(a,'#266b45','#092013')},
+    o+='<path d="M'+f(60-bwAt(a,.05)-2)+' '+f(t+h*.055)+'q'+f(bwAt(a,.05)+2)+' 8 '+f((bwAt(a,.05)+2)*2)+' 0'+
+      'v5q-'+f(bwAt(a,.05)+2)+' 8 -'+f((bwAt(a,.05)+2)*2)+' 0z" fill="#e8734a"/>';
+    o+='<rect x="'+f(60-bwAt(a,.9)-1.5)+'" y="'+f(t+h*.88)+'" width="'+f((bwAt(a,.9)+1.5)*2)+
+      '" height="5" rx="2" fill="#e8734a"/>';
+    for(let i=0;i<7;i++)
+      o+='<path d="M'+f(60-bwAt(a,.9)+i*(bwAt(a,.9)*2/6))+' '+f(t+h*.885)+'v4" stroke="#c95c36" stroke-width="1.2"/>';
+    return o;}},
+  {id:'fxb2', n:'旅人背心', p:200, slot:'body', only:'a-fox', d:a=>{
+    /* 上一版是直接叫通用的 vestOpen 換色。自己畫：兩片前襟中間敞開，
+       翻領、兩個帶蓋的胸袋、下襬斜角 */
+    const f=n=>n.toFixed(1), t=a.by-a.bh, h=a.bh*2, k1=-.05, k2=.92, p=2;
+    const y1=t+h*k1, y2=t+h*k2, w1=bwAt(a,.06)+p, w2=bwAt(a,k2)+p;
+    const panel=sg=>'<path d="M'+f(60+sg*w1)+' '+f(y1)+'L'+f(60+sg*4.4)+' '+f(y1+3)+
+      'L'+f(60+sg*5.6)+' '+f(y2-4)+'L'+f(60+sg*(w2*.62))+' '+f(y2)+'L'+f(60+sg*w2)+' '+f(y2-3)+'Z" fill="#2c6b48"/>'+
+      '<path d="M'+f(60+sg*w1)+' '+f(y1)+'L'+f(60+sg*4.4)+' '+f(y1+3)+'L'+f(60+sg*5)+' '+f(y1+11)+
+      'L'+f(60+sg*(w1*.9))+' '+f(y1+5)+'Z" fill="#1d4d33"/>'+
+      '<rect x="'+f(60+sg*(w2*.9)-(sg>0?7.6:0))+'" y="'+f(t+h*.42)+'" width="7.6" height="8" rx="1.4" fill="#245a3c"/>'+
+      '<rect x="'+f(60+sg*(w2*.9)-(sg>0?8.2:.6))+'" y="'+f(t+h*.41)+'" width="8.2" height="3" rx="1.2" fill="#1d4d33"/>';
+    return panel(-1)+panel(1)+
+      '<path d="M'+f(60-5.6)+' '+f(t+h*.5)+'q5.6 2.6 11.2 0" stroke="#1d4d33" stroke-width="1.4" fill="none" opacity=".6"/>';}},
   {id:'fxb3', n:'秋色帽T', p:200, slot:'body', only:'a-fox', d:a=>{
-  const t=a.by-a.bh,h=a.bh*2;
-  return '<path d="'+garment(a,.06,.92)+'" fill="#9e2b2b"/>'+
-    '<path d="M'+(60-a.bw*.66)+' '+(t+h*.06)+'q'+(a.bw*.66)+' 14 '+(a.bw*1.32)+' 0" fill="#6b1616"/>'+
-    '<path d="M'+(60-a.bw*.5)+' '+(t+h*.34)+'h'+a.bw+'M'+(60-a.bw*.5)+' '+(t+h*.46)+
-    'h'+a.bw+'" stroke="#e3c98a" stroke-width="2.4"/>'+
-    '<circle cx="60" cy="'+(t+h*.72)+'" r="4" fill="#e3c98a"/>';}},
+    /* 帽T要有帽子才叫帽T：脖子後面一圈帽緣，前面一個口袋加兩條抽繩 */
+    const f=n=>n.toFixed(1), t=a.by-a.bh, h=a.bh*2;
+    const hw=bwAt(a,.06)+3;
+    return '<path d="M'+f(60-hw)+' '+f(t+3)+'q'+f(hw)+' -12 '+f(hw*2)+' 0'+
+      'q-'+f(hw)+' 7 -'+f(hw*2)+' 0z" fill="#781c1c"/>'+
+      '<path d="'+garment(a,.06,.92)+'" fill="#9e2b2b"/>'+
+      '<path d="M'+f(60-bwAt(a,.06)-1)+' '+f(t+h*.03)+'q'+f(bwAt(a,.06)+1)+' 11 '+f((bwAt(a,.06)+1)*2)+' 0'+
+      '" stroke="#781c1c" stroke-width="3" fill="none"/>'+
+      '<path d="M'+f(60-4)+' '+f(t+h*.14)+'v9M'+f(60+4)+' '+f(t+h*.14)+'v9'+
+      '" stroke="#f2e3c0" stroke-width="2" stroke-linecap="round"/>'+
+      '<circle cx="'+f(60-4)+'" cy="'+f(t+h*.14+10)+'" r="1.6" fill="#e3c98a"/>'+
+      '<circle cx="'+f(60+4)+'" cy="'+f(t+h*.14+10)+'" r="1.6" fill="#e3c98a"/>'+
+      '<path d="M'+f(60-bwAt(a,.62)*.86)+' '+f(t+h*.58)+'h'+f(bwAt(a,.62)*1.72)+
+      'l-1.6 12h-'+f(bwAt(a,.62)*1.72-3.2)+'z" fill="#872020"/>'+
+      '<path d="M'+f(60-bwAt(a,.62)*.86)+' '+f(t+h*.58)+'h'+f(bwAt(a,.62)*1.72)+
+      '" stroke="#6d1616" stroke-width="1.4"/>'+
+      '<rect x="'+f(60-bwAt(a,.9)-1.5)+'" y="'+f(t+h*.88)+'" width="'+f((bwAt(a,.9)+1.5)*2)+
+      '" height="4.6" rx="2" fill="#781c1c"/>';}},
   {id:'fxb4', n:'祭典法被', p:200, slot:'body', only:'a-fox', d:a=>{
-    /* 狐狸配祭典：短外掛，前襟兩片交叉，腰上綁一條帶子 */
-    const t=a.by-a.bh, h=a.bh*2, f=n=>n.toFixed(1), wy=t+h*.56;
-    return '<path d="'+garment(a,.04,.9)+'" fill="#1f2a4a"/>'+
-      '<path d="M'+f(60-bwAt(a,.04)-1)+' '+f(t+h*.05)+'L60 '+f(t+h*.4)+'L'+f(60+bwAt(a,.04)+1)+' '+f(t+h*.05)+
-      'L'+f(60+bwAt(a,.2))+' '+f(t+h*.2)+'L60 '+f(t+h*.52)+'L'+f(60-bwAt(a,.2))+' '+f(t+h*.2)+'z" fill="#f2e3c0"/>'+
-      '<path d="M'+f(60-bwAt(a,.56)-1.5)+' '+f(wy)+'h'+f((bwAt(a,.56)+1.5)*2)+'v5h-'+f((bwAt(a,.56)+1.5)*2)+'z" fill="#c9451e"/>'+
-      '<path d="M'+f(60+bwAt(a,.56)*.3)+' '+f(wy+5)+'l3.4 9-6-2z" fill="#c9451e"/>'+
-      '<circle cx="60" cy="'+f(t+h*.72)+'" r="4.4" fill="none" stroke="#f2e3c0" stroke-width="1.6"/>'+
-      '<path d="M60 '+f(t+h*.72-2.6)+'v5.2M'+f(60-2.6)+' '+f(t+h*.72)+'h5.2" stroke="#f2e3c0" stroke-width="1.4"/>';}},
+    /* 祭典的短外掛：前襟兩片交叉、腰上一條朱紅帶子、背後印一個紋章 */
+    const f=n=>n.toFixed(1), t=a.by-a.bh, h=a.bh*2, wy=t+h*.56;
+    const bw0=bwAt(a,.06)+1.5, bw2=bwAt(a,.56)+1.5;
+    return '<path d="'+garment(a,.05,.9)+'" fill="#1f2a4a"/>'+
+      '<path d="M'+f(60-bw0)+' '+f(t+h*.03)+'L60 '+f(t+h*.42)+'L'+f(60+bw0)+' '+f(t+h*.03)+
+      'L'+f(60+bwAt(a,.2)+1)+' '+f(t+h*.2)+'L60 '+f(t+h*.54)+'L'+f(60-bwAt(a,.2)-1)+' '+f(t+h*.2)+'Z" fill="#f2e3c0"/>'+
+      '<path d="M'+f(60-bw0+2)+' '+f(t+h*.06)+'L60 '+f(t+h*.42)+'M'+f(60+bw0-2)+' '+f(t+h*.06)+
+      'L60 '+f(t+h*.42)+'" stroke="#d8c9a4" stroke-width="1.2"/>'+
+      '<path d="M'+f(60-bw2)+' '+f(wy)+'h'+f(bw2*2)+'v5.4h-'+f(bw2*2)+'z" fill="#c9451e"/>'+
+      '<path d="M'+f(60-bw2)+' '+f(wy+1.8)+'h'+f(bw2*2)+'" stroke="#e8764a" stroke-width="1.2" opacity=".7"/>'+
+      '<path d="M'+f(60+bw2*.34)+' '+f(wy+5.4)+'l4 9.4 -6.6-2z" fill="#a83415"/>'+
+      '<circle cx="60" cy="'+f(t+h*.74)+'" r="5" fill="none" stroke="#f2e3c0" stroke-width="1.6"/>'+
+      '<path d="M'+f(60-3.4)+' '+f(t+h*.74+1.4)+'l1.6-3.4 1.8 1.4h4l1.8-1.4 1.6 3.4'+
+      'q-2.6 3-5.4 3t-5.4-3z" fill="#f2e3c0"/>';}},
   {id:'fxb5', n:'茶屋圍裙', p:200, slot:'body', only:'a-fox', d:a=>{
-  const t=a.by-a.bh,h=a.bh*2;const p=.22;
-  return '<path d="'+garment(a,p,.95,-1)+'" fill="#2f2a5c"/>'+
-    '<path d="M'+(60-a.bw*.34)+' '+(t+h*p)+'L'+(60-a.bw*.5)+' '+(t+h*(p-.16))+
-    'M'+(60+a.bw*.34)+' '+(t+h*p)+'L'+(60+a.bw*.5)+' '+(t+h*(p-.16))+
-    '" stroke="#2f2a5c" stroke-width="3.4"/>'+
-    '<path d="M'+(60-a.bw*.5)+' '+(t+h*.55)+'h'+a.bw+'" stroke="#e3c98a" stroke-width="2.4"/>'+
-    '<circle cx="60" cy="'+(t+h*.72)+'" r="5" fill="none" stroke="#e3c98a" stroke-width="1.8"/>'+
-    '<path d="M'+(60-3)+' '+(t+h*.72)+'h6" stroke="#e3c98a" stroke-width="1.6"/>';}},
-  {id:'fxb6', n:'吊帶短褲', p:200, slot:'body', only:'a-fox', d:a=>AC.overall(a,'#7a4a24','#261508')},
+    /* 圍裙是綁在身上的一片布：胸前一片、兩條肩帶、腰上一條帶子綁在後面，
+       下面一個口袋 */
+    const f=n=>n.toFixed(1), t=a.by-a.bh, h=a.bh*2, p=.2;
+    const bwp=bwAt(a,p)-1, wy=t+h*.5;
+    return '<path d="M'+f(60-bwp)+' '+f(t+h*p)+'h'+f(bwp*2)+'L'+f(60+bwAt(a,.95))+' '+f(t+h*.95)+
+      'q-'+f(bwAt(a,.95))+' 4 -'+f(bwAt(a,.95)*2)+' 0Z" fill="#2f2a5c"/>'+
+      '<path d="M'+f(60-bwp+1)+' '+f(t+h*p)+'L'+f(60-bwAt(a,.06)-1)+' '+f(t+h*.03)+
+      'M'+f(60+bwp-1)+' '+f(t+h*p)+'L'+f(60+bwAt(a,.06)+1)+' '+f(t+h*.03)+
+      '" stroke="#2f2a5c" stroke-width="3.4" stroke-linecap="round"/>'+
+      '<path d="M'+f(60-bwAt(a,.5)-2)+' '+f(wy)+'h'+f((bwAt(a,.5)+2)*2)+'v4h-'+f((bwAt(a,.5)+2)*2)+'z" fill="#e3c98a"/>'+
+      '<path d="M'+f(60-bwAt(a,.66)*.62)+' '+f(t+h*.64)+'h'+f(bwAt(a,.66)*1.24)+'v9h-'+f(bwAt(a,.66)*1.24)+'z" fill="#3d3775"/>'+
+      '<path d="M60 '+f(t+h*.64)+'v9" stroke="#2f2a5c" stroke-width="1.4"/>'+
+      '<path d="M'+f(60-bwAt(a,.66)*.62)+' '+f(t+h*.64)+'h'+f(bwAt(a,.66)*1.24)+
+      '" stroke="#e3c98a" stroke-width="1.4"/>';}},
+  {id:'fxb6', n:'帆布吊帶褲', p:200, slot:'body', only:'a-fox', d:a=>{
+    /* 上一版是直接叫通用的 overall 換色。自己畫：短褲、胸前一塊布、
+       兩條吊帶從布的兩角跨上肩膀、扣子在接點上 */
+    const f=n=>n.toFixed(1), t=a.by-a.bh, h=a.bh*2;
+    const by0=t+h*.34, bx0=bwAt(a,.34)*.68;
+    return '<path d="'+garment(a,.52,.95)+'" fill="#3f6392"/>'+
+      '<path d="M'+f(60-bx0)+' '+f(by0)+'h'+f(bx0*2)+'v'+f(t+h*.56-by0)+'h-'+f(bx0*2)+'z" fill="#3f6392"/>'+
+      '<path d="M'+f(60-bx0+.6)+' '+f(by0+1)+'L'+f(60-bwAt(a,.06)-1)+' '+f(t+h*.02)+
+      'M'+f(60+bx0-.6)+' '+f(by0+1)+'L'+f(60+bwAt(a,.06)+1)+' '+f(t+h*.02)+
+      '" stroke="#3f6392" stroke-width="4" stroke-linecap="round"/>'+
+      '<circle cx="'+f(60-bx0+1.4)+'" cy="'+f(by0+1.8)+'" r="1.8" fill="#e8c05a"/>'+
+      '<circle cx="'+f(60+bx0-1.4)+'" cy="'+f(by0+1.8)+'" r="1.8" fill="#e8c05a"/>'+
+      '<path d="M'+f(60-bx0+2)+' '+f(by0+5.4)+'h'+f(bx0*2-4)+'" stroke="#2d4a70" stroke-width="1.3"/>'+
+      '<path d="M60 '+f(t+h*.74)+'v'+f(h*.2)+'" stroke="#2d4a70" stroke-width="1.6"/>'+
+      '<path d="M'+f(60-bwAt(a,.58)-1)+' '+f(t+h*.58)+'h'+f((bwAt(a,.58)+1)*2)+
+      '" stroke="#2d4a70" stroke-width="1.6" opacity=".8"/>'+
+      '<path d="M'+f(60-bwAt(a,.94))+' '+f(t+h*.93)+'h'+f(bwAt(a,.94)*2)+
+      '" stroke="#5d81b0" stroke-width="1.6" opacity=".8"/>';}},
   {id:'fxd1', rot:-8, n:'烤地瓜', p:200, slot:'hand', only:'a-fox', d:a=>{
-  const x=AC.gx(a),y=AC.gy(a)-3;
-  return '<g transform="rotate(-18,'+x+','+y+')">'+
-    '<ellipse cx="'+x+'" cy="'+y+'" rx="7" ry="11" fill="#b5651d"/>'+
-    '<path d="M'+(x-7)+' '+(y+3)+'a7 11 0 0 0 14 2z" fill="#e0dccf"/>'+
-    '<path d="M'+(x-3)+' '+(y-6)+'l2 3M'+(x+2)+' '+(y-9)+'l2 3" stroke="#7a3a10" stroke-width="1.4"/>'+
-    '<path d="M'+(x-2)+' '+(y-13)+'q3-5 5 0" stroke="#f7f4ec" stroke-width="1.4" fill="none" opacity=".7"/></g>';}},
+    /* 地瓜握在中間，一端剝開露出黃色的肉，上面冒兩道熱氣 */
+    const f=n=>n.toFixed(1), x=AC.gx(a), y=AC.gy(a)-4;
+    return '<g transform="rotate(-24,'+f(x)+','+f(y)+')">'+
+      '<path d="M'+f(x)+' '+f(y-12)+'c5 0 7.6 5 7.6 11s-2.6 12-7.6 12-7.6-6-7.6-12 2.6-11 7.6-11z" fill="#9e5a1c"/>'+
+      '<path d="M'+f(x-7.4)+' '+f(y+3)+'c1 5.4 3.6 8 7.4 8s6.4-2.6 7.4-8q-7.4 3.4-14.8 0z" fill="#ffd98a"/>'+
+      '<path d="M'+f(x-7.4)+' '+f(y+3)+'q7.4 3.4 14.8 0" stroke="#7d3f10" stroke-width="1.4" fill="none"/>'+
+      '<path d="M'+f(x-3.4)+' '+f(y-6)+'l2.2 3M'+f(x+2)+' '+f(y-9)+'l2 3M'+f(x+3)+' '+f(y-2)+
+      'l1.6 2.6" stroke="#7d3f10" stroke-width="1.3" stroke-linecap="round"/></g>'+
+      '<path d="M'+f(x-3.4)+' '+f(y-16)+'q3-4 0-7M'+f(x+2.6)+' '+f(y-18)+'q3-4 0-7'+
+      '" stroke="#f7f4ec" stroke-width="1.5" fill="none" opacity=".6" stroke-linecap="round"/>';}},
   {id:'fxd2', rot:-15, n:'油紙傘', p:200, slot:'hand', only:'a-fox', d:a=>{
-  const x=AC.gx(a),y=AC.gy(a);
-  return '<path d="M'+x+' '+(y-28)+'V'+(y+1)+'a4 4 0 0 1-8 0" stroke="#7a4a24" stroke-width="2.4" fill="none"/>'+
-    '<path d="M'+(x-14)+' '+(y-28)+'a14 11 0 0 1 28 0z" fill="#2f2a5c"/>'+
-    '<path d="M'+(x-14)+' '+(y-28)+'q7 4 7-11M'+(x+14)+' '+(y-28)+'q-7 4-7-11M'+(x-7)+' '+(y-28)+
-    'q3.5 4 3.5-9M'+(x+7)+' '+(y-28)+'q-3.5 4-3.5-9" stroke="#e3c98a" stroke-width="1.2" fill="none"/>'+
-    '<circle cx="'+x+'" cy="'+(y-39)+'" r="2.4" fill="#e3c98a"/>';}},
+    /* 傘面要比柄長的一半還寬，不然看起來是一支釘鎚。
+       傘骨從傘尖拉到傘緣上算出來的每一點，傘柄壓在手掌上 */
+    const f=n=>n.toFixed(1), x=AC.gx(a), y=AC.gy(a), top=y-30, ry=10, rx=18;
+    let o='<path d="M'+f(x)+' '+f(y+2)+'V'+f(top+3)+'" stroke="#7d3a12" stroke-width="2.4" stroke-linecap="round"/>'+
+      '<path d="M'+f(x)+' '+f(y+1)+'a4.4 4.4 0 0 1-8.4 1.6" stroke="#7d3a12" stroke-width="2.2" fill="none"/>'+
+      '<path d="M'+f(x-rx)+' '+f(top+ry)+'a'+f(rx)+' '+f(ry)+' 0 0 1 '+f(rx*2)+' 0'+
+      'q-'+f(rx*.5)+' 4.4 -'+f(rx)+' 4.4q-'+f(rx*.5)+' 0 -'+f(rx)+'-4.4z" fill="#9e2b2b"/>';
+    for(let i=1;i<7;i++){const u=i/7, ax=x-rx+u*rx*2;
+      const ay=top+ry-ry*Math.sqrt(Math.max(0,1-Math.pow((ax-x)/rx,2)));
+      o+='<path d="M'+f(x)+' '+f(top)+'Q'+f((x+ax)/2)+' '+f((top+ay)/2+1.4)+' '+f(ax)+' '+f(ay+3)+
+         '" stroke="#e3c98a" stroke-width="1" fill="none" opacity=".8"/>';}
+    o+='<path d="M'+f(x-rx)+' '+f(top+ry)+'q'+f(rx*.5)+' 4.4 '+f(rx)+' 4.4q'+f(rx*.5)+' 0 '+f(rx)+'-4.4'+
+      '" stroke="#781c1c" stroke-width="1.6" fill="none"/>'+
+      '<path d="M'+f(x-rx*.58)+' '+f(top+ry*.52)+'a'+f(rx*.58)+' '+f(ry*.58)+' 0 0 1 '+f(rx*1.16)+' 0'+
+      '" stroke="#e3c98a" stroke-width="1.8" fill="none"/>'+
+      '<path d="M'+f(x)+' '+f(top-4.4)+'v5.4" stroke="#e8a92b" stroke-width="2.4" stroke-linecap="round"/>';
+    return o;}},
   {id:'fxd3', rot:-6, n:'旅人提袋', p:200, slot:'hand', only:'a-fox', d:a=>{
-  const x=AC.gx(a),y=AC.gy(a);
-  return '<path d="M'+(x-5)+' '+y+'a5 7 0 0 1 10 0" stroke="#7a4a24" stroke-width="2.4" fill="none"/>'+
-    '<path d="M'+(x-9)+' '+y+'h18l-2 15h-14z" fill="#e3c98a"/>'+
-    '<path d="M'+(x-9)+' '+(y+5)+'h18" stroke="#a8763f" stroke-width="1.6"/>'+
-    '<rect x="'+(x-3)+'" y="'+(y+2)+'" width="6" height="6" rx="1.4" fill="#7a4a24"/>';}},
-  {id:'fxd4', n:'古書', p:200, slot:'hand', only:'a-fox', d:a=>{
-  const x=AC.gx(a),y=AC.gy(a)-4;
-  return '<rect x="'+(x-9)+'" y="'+(y-10)+'" width="18" height="21" rx="2" fill="#7a4a24"/>'+
-    '<rect x="'+(x-6)+'" y="'+(y-10)+'" width="3" height="21" fill="#543424"/>'+
-    '<rect x="'+(x-1)+'" y="'+(y-7)+'" width="8" height="15" fill="#f2e3c0"/>'+
-    '<path d="M'+(x-8)+' '+(y-6)+'v13" stroke="#e3c98a" stroke-width="1.2"/>'+
-    '<circle cx="'+(x+3)+'" cy="'+y+'" r="2.4" fill="none" stroke="#a8763f" stroke-width="1.2"/>';}},
+    /* 提把的最高點要壓在手掌上，袋身掛在下面，袋口有翻蓋 */
+    const f=n=>n.toFixed(1), x=AC.gx(a), y=AC.gy(a);
+    return '<path d="M'+f(x-5.4)+' '+f(y+2)+'a5.4 7 0 0 1 10.8 0" stroke="#7a4a24" stroke-width="2.4" fill="none"/>'+
+      '<path d="M'+f(x-9.4)+' '+f(y+2)+'h18.8l-2.2 16.4h-14.4z" fill="#e3c98a"/>'+
+      '<path d="M'+f(x-9.8)+' '+f(y+1)+'h19.6q1.4 0 1.2 1.6l-.4 3.4h-21.2l-.4-3.4q-.2-1.6 1.2-1.6z" fill="#c9a86a"/>'+
+      '<path d="M'+f(x-4)+' '+f(y+6.4)+'h8v6.4h-8z" fill="#a8763f"/>'+
+      '<circle cx="'+f(x)+'" cy="'+f(y+9.6)+'" r="1.4" fill="#e8c05a"/>'+
+      '<path d="M'+f(x-7.6)+' '+f(y+13.6)+'h4M'+f(x+3.6)+' '+f(y+13.6)+
+      'h4" stroke="#c9a86a" stroke-width="1.3" stroke-linecap="round"/>';}},
+  {id:'fxd4', rot:-8, n:'古書', p:200, slot:'hand', only:'a-fox', d:a=>{
+    /* 書要握在書背上：書背貼著手掌，書口朝外，書側看得到一疊紙 */
+    const f=n=>n.toFixed(1), x=AC.gx(a), y=AC.gy(a)-5;
+    let o='<path d="M'+f(x-7)+' '+f(y-11)+'h17q2 0 2 2v20q0 2 -2 2h-17z" fill="#f2e3c0"/>';
+    for(let i=0;i<5;i++)
+      o+='<path d="M'+f(x+10)+' '+f(y-8+i*4.4)+'h1.6" stroke="#cdb47e" stroke-width="1.1"/>';
+    o='<path d="M'+f(x-8.4)+' '+f(y-12)+'h6.4v26h-6.4q-1.6 0 -1.6-2v-22q0-2 1.6-2z" fill="#5c3418"/>'+o+
+      '<path d="M'+f(x-2)+' '+f(y-12)+'h10.4q2.6 0 2.6 2.6v20.8q0 2.6 -2.6 2.6h-10.4z" fill="#7a4a24"/>'+
+      '<path d="M'+f(x+1)+' '+f(y-6)+'h6.4M'+f(x+1)+' '+f(y+8)+'h6.4" stroke="#e8a92b" stroke-width="1.3"/>'+
+      '<circle cx="'+f(x+4.2)+'" cy="'+f(y+1)+'" r="3.2" fill="none" stroke="#e8a92b" stroke-width="1.4"/>'+
+      '<path d="M'+f(x+4.2)+' '+f(y-1.4)+'v4.8M'+f(x+1.8)+' '+f(y+1)+'h4.8" stroke="#e8a92b" stroke-width="1.1"/>';
+    return o;}},
   {id:'fxd5', rot:-16, n:'緋紅狐火', p:200, slot:'hand', only:'a-fox', d:a=>{
-  const x=AC.gx(a),y=AC.gy(a);
-  return '<ellipse cx="'+x+'" cy="'+(y+9)+'" rx="6" ry="2.4" fill="#e2452f" opacity=".3"/>'+
-    '<path d="M'+x+' '+(y-19)+'q9 10 5 16t-11 0 6-16z" fill="#e8447a"/>'+
-    '<path d="M'+x+' '+(y-13)+'q5 6 3 10t-6 0 3-10z" fill="#ffd84d"/>'+
-    '<circle cx="'+(x+9)+'" cy="'+(y-16)+'" r="2.4" fill="#e8447a" opacity=".75"/>'+
-    '<circle cx="'+(x-8)+'" cy="'+(y-22)+'" r="1.8" fill="#ff9ec4" opacity=".7"/>';}},
-  {id:'fxd6', n:'小鑰匙', p:200, slot:'hand', only:'a-fox', d:a=>{
-  const x=AC.gx(a),y=AC.gy(a)-4;
-  return '<path d="M'+x+' '+(y-12)+'q-6 0-6 5t6 5 6-5-6-5z" fill="none" stroke="#e0921a" stroke-width="3"/>'+
-    '<path d="M'+x+' '+(y-2)+'V'+(y+13)+'M'+x+' '+(y+6)+'h-5M'+x+' '+(y+11)+
-    'h-5" stroke="#e0921a" stroke-width="3"/>'+
-    '<circle cx="'+x+'" cy="'+(y-7)+'" r="1.6" fill="#7a4a24"/>';}},
+    /* 火要有火的形狀：底部窄、腰身鼓、尖端往一邊飄，裡面一層更亮的芯 */
+    const f=n=>n.toFixed(1), x=AC.gx(a), y=AC.gy(a)-2;
+    return '<ellipse cx="'+f(x)+'" cy="'+f(y+8)+'" rx="7" ry="2.6" fill="#e2452f" opacity=".28"/>'+
+      '<path d="M'+f(x)+' '+f(y+7)+'C'+f(x-8)+' '+f(y+1)+' '+f(x-7)+' '+f(y-9)+' '+f(x-1.6)+' '+f(y-14)+
+      'C'+f(x-3)+' '+f(y-8)+' '+f(x+2)+' '+f(y-9)+' '+f(x+2.6)+' '+f(y-16)+
+      'C'+f(x+8)+' '+f(y-10)+' '+f(x+7.6)+' '+f(y+1)+' '+f(x)+' '+f(y+7)+'Z" fill="#e8447a"/>'+
+      '<path d="M'+f(x)+' '+f(y+5)+'C'+f(x-4.4)+' '+f(y+1)+' '+f(x-4)+' '+f(y-4.4)+' '+f(x-.6)+' '+f(y-8)+
+      'C'+f(x-1)+' '+f(y-4)+' '+f(x+1.6)+' '+f(y-5)+' '+f(x+1.8)+' '+f(y-9)+
+      'C'+f(x+4.6)+' '+f(y-5)+' '+f(x+4.2)+' '+f(y+1)+' '+f(x)+' '+f(y+5)+'Z" fill="#ffd84d"/>'+
+      '<circle cx="'+f(x+8.6)+'" cy="'+f(y-11)+'" r="2.2" fill="#e8447a" opacity=".8"/>'+
+      '<circle cx="'+f(x-7.6)+'" cy="'+f(y-16)+'" r="1.6" fill="#ff9ec4" opacity=".75"/>'+
+      '<circle cx="'+f(x+4.4)+'" cy="'+f(y-20)+'" r="1.2" fill="#ffd0e2" opacity=".7"/>';}},
+  {id:'fxd6', rot:-10, n:'小鑰匙', p:200, slot:'hand', only:'a-fox', d:a=>{
+    /* 鑰匙握在匙柄那一圈上，齒在最下面。原本整支浮在手掌上方 */
+    const f=n=>n.toFixed(1), x=AC.gx(a), y=AC.gy(a);
+    return '<circle cx="'+f(x)+'" cy="'+f(y-1)+'" r="5.6" fill="none" stroke="#e0a02b" stroke-width="3"/>'+
+      '<path d="M'+f(x-2.6)+' '+f(y-3.4)+'a3.4 3.4 0 0 1 3.4-1.6" stroke="#ffd25e" stroke-width="1.4" fill="none"/>'+
+      '<path d="M'+f(x)+' '+f(y+4.6)+'V'+f(y+17)+'" stroke="#e0a02b" stroke-width="3" stroke-linecap="round"/>'+
+      '<path d="M'+f(x)+' '+f(y+11)+'h-4.6M'+f(x)+' '+f(y+15.4)+
+      'h-3.4" stroke="#e0a02b" stroke-width="2.6" stroke-linecap="round"/>'+
+      '<circle cx="'+f(x)+'" cy="'+f(y-1)+'" r="2.2" fill="#7a4a24"/>';}},
   {id:'fxf1', n:'和風草履', p:200, slot:'foot', only:'a-fox', d:a=>{
-  const y=(a.fy||107),w=(a.fw||9)+1;
-  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+2)+'" width="'+(w*2)+'" height="5" rx="2.4" fill="#ddc08a"/>'+
-    '<path d="M'+(cx-w+1)+' '+(y+4)+'h'+(w*2-2)+'M'+(cx-w+1)+' '+(y+6)+
-    'h'+(w*2-2)+'" stroke="#a8763f" stroke-width="1"/>'+
-    '<path d="M'+(cx-w+2)+' '+(y+2)+'L'+cx+' '+(y-4)+'L'+(cx+w-2)+' '+(y+2)+
-    '" stroke="#9e2b2b" stroke-width="2.4" fill="none"/>');}},
+    /* 草履：編起來的鞋底加一條 V 字鼻緒，鼻緒要收在鞋底前端的那一點上 */
+    const f=n=>n.toFixed(1), y=(a.fy||107)+1, w=(a.fw||9)+1;
+    return AC.feet(a,cx=>
+      '<rect x="'+f(cx-w)+'" y="'+f(y)+'" width="'+f(w*2)+'" height="6.4" rx="3" fill="#ddc08a"/>'+
+      '<rect x="'+f(cx-w)+'" y="'+f(y+4.6)+'" width="'+f(w*2)+'" height="2.6" rx="1.3" fill="#a8763f"/>'+
+      '<path d="M'+f(cx-w+1.4)+' '+f(y+1.6)+'h'+f(w*2-2.8)+'M'+f(cx-w+1.4)+' '+f(y+3.4)+
+      'h'+f(w*2-2.8)+'" stroke="#c0a068" stroke-width="1"/>'+
+      '<path d="M'+f(cx-w+2.4)+' '+f(y+.4)+'L'+f(cx)+' '+f(y-5.4)+'L'+f(cx+w-2.4)+' '+f(y+.4)+
+      '" stroke="#9e2b2b" stroke-width="2.6" fill="none" stroke-linecap="round"/>'+
+      '<circle cx="'+f(cx)+'" cy="'+f(y-5.4)+'" r="1.8" fill="#c9451e"/>');}},
   {id:'fxf2', n:'旅人短靴', p:200, slot:'foot', only:'a-fox', d:a=>{
-  const y=(a.fy||107),w=(a.fw||9)+1;
-  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-7)+'" width="'+(w*2)+'" height="12" rx="4" fill="#7a4a24"/>'+
-    '<rect x="'+(cx-w-1)+'" y="'+(y+3)+'" width="'+(w*2+2)+'" height="5" rx="2" fill="#3b2a22"/>'+
-    '<path d="M'+(cx-w+2)+' '+(y-4)+'l5 2M'+(cx-w+2)+' '+(y-1)+'l5 2M'+(cx-w+2)+' '+(y+2)+
-    'l5 2" stroke="#e3c98a" stroke-width="1.3"/>');}},
-  {id:'fxf3', n:'楓葉短襪', p:200, slot:'foot', only:'a-fox', d:a=>{
-  const y=(a.fy||107),w=(a.fw||9)+1-1;
-  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y-6)+'" width="'+(w*2)+'" height="12" rx="4" fill="#f7f0e2"/>'+
-    '<path d="M'+(cx-w)+' '+(y-3)+'h'+(w*2)+'" stroke="#c4471d" stroke-width="2.4"/>'+
-    '<path d="M'+cx+' '+(y+1)+'l-2.6 3-3.4-1 1.6 3.4-4 1 4.4 1.6 4.4-1.6-4-1 1.6-3.4-3.4 1z" fill="#c4471d"/>');}},
+    /* 綁帶短靴：鞋帶是細的交叉，畫粗了整隻鞋就只剩一個大 X */
+    const f=n=>n.toFixed(1), y=(a.fy||107)-7, w=(a.fw||9)+1;
+    return AC.feet(a,cx=>
+      '<path d="M'+f(cx-w)+' '+f(y+2)+'q0-3 3-3h'+f(w*2-6)+'q3 0 3 3v9q0 2.4 -2.4 2.4h-'+f(w*2-4.8)+
+      'q-2.4 0 -2.4-2.4z" fill="#95622f"/>'+
+      '<path d="M'+f(cx-w)+' '+f(y+7.4)+'q'+f(w)+' 2.6 '+f(w*2)+' 0v5q0 2.4 -2.4 2.4h-'+f(w*2-4.8)+
+      'q-2.4 0 -2.4-2.4z" fill="#6f4520"/>'+
+      '<path d="M'+f(cx-w+2.4)+' '+f(y+1.4)+'L'+f(cx+w-2.4)+' '+f(y+4.4)+
+      'M'+f(cx+w-2.4)+' '+f(y+1.4)+'L'+f(cx-w+2.4)+' '+f(y+4.4)+
+      'M'+f(cx-w+2.4)+' '+f(y+4.6)+'L'+f(cx+w-2.4)+' '+f(y+7.4)+
+      'M'+f(cx+w-2.4)+' '+f(y+4.6)+'L'+f(cx-w+2.4)+' '+f(y+7.4)+
+      '" stroke="#f2e3c0" stroke-width="1.1" stroke-linecap="round"/>'+
+      '<rect x="'+f(cx-w-1.2)+'" y="'+f(y+12.4)+'" width="'+f(w*2+2.4)+'" height="4.4" rx="1.8" fill="#3b2a22"/>');}},
+  {id:'fxf3', n:'橫紋長襪', p:200, slot:'foot', only:'a-fox', d:a=>{
+    /* 原本這雙又是楓葉。改成條紋長襪：襪口有羅紋，襪身橫條 */
+    const f=n=>n.toFixed(1), y=(a.fy||107)-13, w=(a.fw||9);
+    return AC.feet(a,cx=>{
+      let o='<path d="M'+f(cx-w)+' '+f(y)+'h'+f(w*2)+'v14q0 4.4 -3.4 4.4h-'+f(w*2-6.8)+
+        'q-3.4 0 -3.4-4.4z" fill="#f7f0e2"/>';
+      for(let i=0;i<4;i++)
+        o+='<rect x="'+f(cx-w)+'" y="'+f(y+3.6+i*3.8)+'" width="'+f(w*2)+'" height="2" fill="#c4471d"/>';
+      o+='<rect x="'+f(cx-w-.8)+'" y="'+f(y-1.4)+'" width="'+f(w*2+1.6)+'" height="4.4" rx="1.6" fill="#e8d9bd"/>';
+      for(let i=0;i<5;i++)
+        o+='<path d="M'+f(cx-w+1.4+i*((w*2-2.8)/4))+' '+f(y-.6)+'v3" stroke="#cbb896" stroke-width="1.1"/>';
+      return o;});}},
   {id:'fxf4', n:'夏日涼鞋', p:200, slot:'foot', only:'a-fox', d:a=>{
-  const y=(a.fy||107),w=(a.fw||9)+1;
-  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+2)+'" width="'+(w*2)+'" height="6" rx="3" fill="#e0921a"/>'+
-    '<path d="M'+(cx-w+1)+' '+(y+1)+'h'+(w*2-2)+'M'+(cx-w+2)+' '+(y-3)+
-    'h'+(w*2-4)+'" stroke="#a8763f" stroke-width="2.4"/>'+
-    '<circle cx="'+cx+'" cy="'+(y-1)+'" r="1.8" fill="#f7f0e2"/>');}},
+    /* 涼鞋＝一片底加兩條帶子。帶子用橘褐色會跟毛色糊成一團，改成米白配青綠 */
+    const f=n=>n.toFixed(1), y=(a.fy||107)+1, w=(a.fw||9)+1;
+    return AC.feet(a,cx=>
+      '<path d="M'+f(cx-w)+' '+f(y+1)+'h'+f(w*2)+'q1.6 0 1.6 2.2v1.6q0 2.2 -1.6 2.2h-'+f(w*2)+
+      'q-1.6 0 -1.6-2.2v-1.6q0-2.2 1.6-2.2z" fill="#f2e3c0"/>'+
+      '<rect x="'+f(cx-w)+'" y="'+f(y+5.4)+'" width="'+f(w*2)+'" height="2.6" rx="1.3" fill="#2f6f66"/>'+
+      '<path d="M'+f(cx-w+1)+' '+f(y+1.4)+'q'+f(w-1)+' -5.4 '+f(w*2-2)+' 0" stroke="#2f8f80" stroke-width="3" fill="none"/>'+
+      '<path d="M'+f(cx-w+2.4)+' '+f(y-3.4)+'q'+f(w-2.4)+' -4 '+f(w*2-4.8)+' 0" stroke="#2f8f80" stroke-width="2.6" fill="none"/>'+
+      '<rect x="'+f(cx-2)+'" y="'+f(y-2.8)+'" width="4" height="3.4" rx="1" fill="#e8a92b"/>');}},
   {id:'fxf5', n:'軟底跑鞋', p:200, slot:'foot', only:'a-fox', d:a=>{
-  const y=(a.fy||107),w=(a.fw||9)+1;
-  return AC.feet(a,cx=>'<path d="M'+(cx-w)+' '+(y+2)+'q0-8 '+(w*.85)+'-8h'+(w*.5)+'l'+(w*.8)+' 8z" fill="#f7f0e2"/>'+
-    '<rect x="'+(cx-w)+'" y="'+(y+1)+'" width="'+(w*2)+'" height="6" rx="3" fill="#9e2b2b"/>'+
-    '<path d="M'+(cx+w*.1)+' '+(y-4)+'q'+(w*.6)+' 2 '+(w*.85)+' 6" stroke="#9e2b2b" stroke-width="2" fill="none"/>');}},
+    /* 跑鞋：鞋頭翹、鞋舌露出來、側面一道弧線、厚鞋底 */
+    const f=n=>n.toFixed(1), y=(a.fy||107)-6, w=(a.fw||9)+1;
+    return AC.feet(a,cx=>
+      '<path d="M'+f(cx-w)+' '+f(y+10)+'q0-9 6-10h'+f(w*2-8)+'q'+f(w*.8)+' 3 '+f(w*.9)+' 10z" fill="#f7f0e2"/>'+
+      '<path d="M'+f(cx-w+3.4)+' '+f(y+1.4)+'q3 -2 6 0v5.4h-6z" fill="#d8d2c4"/>'+
+      '<path d="M'+f(cx-w+1.6)+' '+f(y+9)+'q'+f(w*.7)+' -6 '+f(w*1.5)+' -6.6'+
+      '" stroke="#9e2b2b" stroke-width="2.6" fill="none" stroke-linecap="round"/>'+
+      '<path d="M'+f(cx-w+4)+' '+f(y+3.4)+'l4.4 1.6M'+f(cx-w+4)+' '+f(y+6)+
+      'l4.4 1.6" stroke="#b9b2a2" stroke-width="1.2" stroke-linecap="round"/>'+
+      '<rect x="'+f(cx-w-1)+'" y="'+f(y+9)+'" width="'+f(w*2+2)+'" height="5.4" rx="2.6" fill="#9e2b2b"/>'+
+      '<rect x="'+f(cx-w-1)+'" y="'+f(y+12.4)+'" width="'+f(w*2+2)+'" height="2" rx="1" fill="#6d1a1a"/>');}},
   {id:'fxf6', n:'斜帶木屐', p:200, slot:'foot', only:'a-fox', d:a=>{
-  const y=(a.fy||107),w=(a.fw||9)+1;
-  return AC.feet(a,cx=>'<rect x="'+(cx-w)+'" y="'+(y+2)+'" width="'+(w*2)+'" height="6" rx="1.6" fill="#a9743c"/>'+
-    '<rect x="'+(cx-w+1.5)+'" y="'+(y+7)+'" width="3.4" height="3" fill="#7a4a24"/>'+
-    '<rect x="'+(cx+w-4.9)+'" y="'+(y+7)+'" width="3.4" height="3" fill="#7a4a24"/>'+
-    '<path d="M'+(cx-w+1)+' '+(y+2)+'L'+(cx+w-1)+' '+(y-4)+'" stroke="#9e2b2b" stroke-width="3.4" stroke-linecap="round"/>'+
-    '<circle cx="'+cx+'" cy="'+(y-1)+'" r="1.8" fill="#f7f0e2"/>');}},
+    /* 木屐：一塊厚木板底下兩根齒，上面一條斜的鼻緒 */
+    const f=n=>n.toFixed(1), y=(a.fy||107)-1, w=(a.fw||9)+1.4;
+    return AC.feet(a,cx=>
+      '<rect x="'+f(cx-w)+'" y="'+f(y)+'" width="'+f(w*2)+'" height="5.4" rx="1.4" fill="#c49a5e"/>'+
+      '<rect x="'+f(cx-w)+'" y="'+f(y+3.8)+'" width="'+f(w*2)+'" height="1.6" fill="#a9743c"/>'+
+      '<rect x="'+f(cx-w+1.2)+'" y="'+f(y+5.4)+'" width="3.4" height="4" fill="#8a5d2c"/>'+
+      '<rect x="'+f(cx+w-4.6)+'" y="'+f(y+5.4)+'" width="3.4" height="4" fill="#8a5d2c"/>'+
+      '<path d="M'+f(cx-w+2)+' '+f(y-.4)+'Q'+f(cx)+' '+f(y-6.4)+' '+f(cx+w-2)+' '+f(y-.4)+
+      '" stroke="#2f2a5c" stroke-width="2.8" fill="none" stroke-linecap="round"/>'+
+      '<circle cx="'+f(cx)+'" cy="'+f(y-3.8)+'" r="1.8" fill="#f7f0e2"/>');}},
   {id:'pgh1', n:'護耳毛帽', p:100, slot:'head', only:'a-peng', d:a=>{
   const y=HLINE(a),w=AC.hugW(a)+1,dm=Math.max(6,y-AC.top(a,HRY(a)*.78)-4);
   return '<path d="M'+(60-w)+' '+y+'a'+w+' '+dm+' 0 0 1 '+(w*2)+' 0z" fill="#f2e3c0"/>'+
@@ -8445,47 +8772,84 @@ const ITEMS=[
       for(let i=0;i<4;i++){const px=cx-w+1.6+i*((w*2-3.2)/3);
         o+='<circle cx="'+f(px)+'" cy="'+f(y+2)+'" r="2.4" fill="#ffffff"/>';}
       return o+'<rect x="'+f(cx-w-.8)+'" y="'+f(y+10)+'" width="'+f(w*2+1.6)+'" height="3.4" rx="1.6" fill="#e2809f"/>';});}},
-  {id:'fxh7', n:'楓葉花冠', p:100, slot:'head', only:'a-fox', d:a=>{
-    const y=AC.crest(a)+3, w=AC.crestW(a)*.92, f=n=>n.toFixed(1);
-    let o='<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' -9 '+f(w*2)+' 0" stroke="#a8763f" stroke-width="2.2" fill="none"/>';
-    [-.78,-.26,.3,.8].forEach((k,i)=>{
-      const x=60+k*w, cy=y-4-(1-Math.abs(k))*4, c=['#e2452f','#ffb03c','#e08a2f','#d0392b'][i];
-      o+='<path d="M'+f(x)+' '+f(cy-4.4)+'l2 2.6 2.6-1-1 2.6 2.6 .6-2.6 1.6 1.4 2.4-2.8-.6-1.4 2.6-1.4-2.6-2.8 .6 1.4-2.4-2.6-1.6 2.6-.6-1-2.6 2.6 1z" fill="'+c+'"/>';});
-    return o;}},
-  {id:'fxe7', n:'秋色眼影', p:100, slot:'face', only:'a-fox', d:a=>{
-    const y=eyeY(a), g=a.gap, r=AC.ew(a), f=n=>n.toFixed(1);
-    return '<path d="M'+f(60-g-r)+' '+f(y-r*.6)+'a'+f(r)+' '+f(r*.9)+' 0 0 1 '+f(r*2)+' 0z" fill="#e08a2f" opacity=".7"/>'+
-      '<path d="M'+f(60+g-r)+' '+f(y-r*.6)+'a'+f(r)+' '+f(r*.9)+' 0 0 1 '+f(r*2)+' 0z" fill="#e08a2f" opacity=".7"/>'+
-      '<path d="M'+f(60-g-r-1)+' '+f(y-r*.5)+'l-3.4-2.4M'+f(60+g+r+1)+' '+f(y-r*.5)+
-      'l3.4-2.4" stroke="#a8562f" stroke-width="1.6" stroke-linecap="round"/>'+
-      '<circle cx="'+f(60-g)+'" cy="'+f(y-r-1.6)+'" r="1.1" fill="#ffd75e"/>'+
-      '<circle cx="'+f(60+g)+'" cy="'+f(y-r-1.6)+'" r="1.1" fill="#ffd75e"/>';}},
-  {id:'fxn7', n:'絲質領巾', p:100, slot:'neck', only:'a-fox', d:a=>{
-    const y=NKB(a)-2, w=bwAt(a,0)+1.5, f=n=>n.toFixed(1);
-    return '<path d="M'+f(60-w)+' '+f(y)+'q'+f(w)+' 9 '+f(w*2)+' 0l-'+f(w*.5)+' 5q-'+f(w*.5)+' 4 -'+f(w)+' 0z" fill="#e2809f"/>'+
-      '<path d="M'+f(60+w*.42)+' '+f(y+5)+'q6 4 4 11q-5-2-6-9z" fill="#c2607f"/>'+
-      '<path d="M'+f(60-w*.6)+' '+f(y+3)+'q'+f(w*.6)+' 6 '+f(w*1.2)+' 0" stroke="#f2b0c4" stroke-width="1.4" fill="none"/>';}},
+  {id:'fxh7', n:'絨球針織帽', p:100, slot:'head', only:'a-fox', d:a=>{
+    /* 針織帽：帽身有直的織紋，下面一圈反摺的羅紋，頂上一顆大絨球 */
+    const f=n=>n.toFixed(1), y=HLINE(a)+1, w=AC.hugW(a)+1,
+          dm=y-AC.top(a,HRY(a)*.7), L=60-w, ty=y-dm;
+    let o='<path d="M'+f(L)+' '+f(y)+'A'+f(w)+' '+f(dm)+' 0 0 1 '+f(60+w)+' '+f(y)+'Z" fill="#3b4a7a"/>';
+    for(let i=-2;i<=2;i++){const x=60+i*w*.42;
+      o+='<path d="M'+f(x)+' '+f(y)+'Q'+f(60+i*w*.3)+' '+f(ty+4)+' 60 '+f(ty+1.4)+
+         '" stroke="#4d5f95" stroke-width="1.6" fill="none" opacity=".85"/>';}
+    o+='<rect x="'+f(L-1.5)+'" y="'+f(y-6)+'" width="'+f(w*2+3)+'" height="12" rx="5" fill="#54689e"/>';
+    for(let i=0;i<8;i++)
+      o+='<path d="M'+f(L+1+i*((w*2)/7))+' '+f(y-3.6)+'V'+f(y+3.6)+
+         '" stroke="#43548a" stroke-width="1.5" stroke-linecap="round"/>';
+    return o+'<circle cx="60" cy="'+f(ty-3)+'" r="6.4" fill="#f2e3c0"/>'+
+      '<circle cx="'+f(60-3)+'" cy="'+f(ty-5.2)+'" r="3.2" fill="#fbf3e2"/>'+
+      '<circle cx="'+f(60+3.4)+'" cy="'+f(ty-1.4)+'" r="2.8" fill="#e2cfa6"/>';}},
+  {id:'fxe7', n:'上挑眼線', p:100, slot:'face', only:'a-fox', d:a=>{
+    /* 沿著眼睛上緣描一圈，眼尾往上勾。睫毛只要短短兩根 ——
+       畫長畫尖就變成兩道眉毛 */
+    const f=n=>n.toFixed(1), y=eyeY(a), g=a.gap, r=(a.pup||4.5)+1.6;
+    const one=sg=>{const x=60+sg*g;
+      let o='<path d="M'+f(x-sg*r)+' '+f(y+r*.26)+'Q'+f(x)+' '+f(y-r*1.2)+' '+f(x+sg*r*1.1)+' '+f(y-r*.5)+
+        'Q'+f(x+sg*r*1.5)+' '+f(y-r*.92)+' '+f(x+sg*r*1.78)+' '+f(y-r*1.24)+
+        'Q'+f(x+sg*r*1.1)+' '+f(y-r*.98)+' '+f(x+sg*r*.86)+' '+f(y-r*.74)+
+        'Q'+f(x)+' '+f(y-r*1.52)+' '+f(x-sg*r)+' '+f(y+r*.26)+'Z" fill="#2b1a12"/>';
+      for(let i=0;i<2;i++)
+        o+='<path d="M'+f(x+sg*(i*2.6-1.2))+' '+f(y-r*1.06)+'l'+f(sg*1.1)+' -2.2'+
+           '" stroke="#2b1a12" stroke-width="1.5" stroke-linecap="round"/>';
+      return o;};
+    return one(-1)+one(1);}},
+  {id:'fxn7', n:'櫻粉絲巾', p:100, slot:'neck', only:'a-fox', d:a=>{
+    /* 一條細絲巾在脖子側邊打一個結，兩端一長一短垂下來 */
+    const f=n=>n.toFixed(1), y=NKB(a)-1, w=FXNW(a)+2;
+    return '<path d="M'+f(60-w)+' '+f(y)+'Q60 '+f(y+10)+' '+f(60+w)+' '+f(y)+
+      'L'+f(60+w)+' '+f(y+4.4)+'Q60 '+f(y+14.4)+' '+f(60-w)+' '+f(y+4.4)+'Z" fill="#e2809f"/>'+
+      '<path d="M'+f(60-w)+' '+f(y+1.4)+'Q60 '+f(y+11)+' '+f(60+w)+' '+f(y+1.4)+
+      '" stroke="#f4b6c9" stroke-width="1.6" fill="none" opacity=".8"/>'+
+      '<path d="M'+f(60+w*.42)+' '+f(y+5.4)+'l7.6 1.4 -1.4 6 -7.4-2z" fill="#c2607f"/>'+
+      '<path d="M'+f(60+w*.46)+' '+f(y+11)+'q6 5 4.6 13l-6-2.4q1-6 -2.6-9.4z" fill="#eb95b1"/>'+
+      '<path d="M'+f(60+w*.3)+' '+f(y+11.4)+'q-2 6 .6 10.6l-5-1.6q-.6-5 1.4-8.6z" fill="#d1728f"/>';}},
   {id:'fxb7', n:'燈籠袖洋裝', p:200, slot:'body', only:'a-fox', d:a=>{
-    const t=a.by-a.bh, h=a.bh*2, f=n=>n.toFixed(1);
-    return '<path d="'+garment(a,.06,.92)+'" fill="#f7e0c4"/>'+
-      '<ellipse cx="'+f(60-a.bw*.86)+'" cy="'+f(t+h*.2)+'" rx="5.4" ry="6.4" fill="#f7e0c4"/>'+
-      '<ellipse cx="'+f(60+a.bw*.86)+'" cy="'+f(t+h*.2)+'" rx="5.4" ry="6.4" fill="#f7e0c4"/>'+
-      '<path d="M'+f(60-a.bw*.7)+' '+f(t+h*.42)+'h'+f(a.bw*1.4)+'" stroke="#c2607f" stroke-width="3.4"/>'+
-      '<path d="M'+f(60-a.bw*.62)+' '+f(t+h*.08)+'q'+f(a.bw*.62)+' 7 '+f(a.bw*1.24)+' 0" stroke="#e8cfa8" stroke-width="2.4" fill="none"/>'+
-      '<path d="M60 '+f(t+h*.42)+'l-4-3 1 3.4-4 .6 4 1.4-1 3.4 4-3 4 3-1-3.4 4-1.4-4-.6 1-3.4z" fill="#c2607f"/>';}},
-  {id:'fxd7', n:'焦糖蘋果', p:200, slot:'hand', only:'a-fox', d:a=>{
-    const x=AC.gx(a), g=AC.gy(a)-2, f=n=>n.toFixed(1);
-    return '<path d="M'+f(x)+' '+f(g+13)+'v-8" stroke="#c9a95e" stroke-width="2.4" stroke-linecap="round"/>'+
-      '<path d="M'+f(x)+' '+f(g+2)+'q-8-7-8 2t8 9 8-9-8-2z" fill="#d0392b"/>'+
-      '<path d="M'+f(x-8)+' '+f(g+3)+'q0 5 2 8q6 2 12-2q1-4 0-7q-6 4-14 1z" fill="#c9762f"/>'+
-      '<path d="M'+f(x-4)+' '+f(g+1)+'q-2 5 1 8" stroke="#e8624f" stroke-width="1.6" fill="none" opacity=".6"/>'+
-      '<path d="M'+f(x)+' '+f(g-1)+'q6-4 7 1q-5 3-7-1z" fill="#4a9b3f"/>';}},
+    /* 洋裝：上半身合身、腰帶收一圈、裙襬外開，兩邊各一顆燈籠袖 */
+    const f=n=>n.toFixed(1), t=a.by-a.bh, h=a.bh*2, wy=t+h*.44;
+    const bwW=bwAt(a,.96)+4;
+    return '<path d="'+garment(a,.06,.46)+'" fill="#f7e0c4"/>'+
+      '<path d="M'+f(60-bwAt(a,.46)-1.5)+' '+f(wy)+'L'+f(60-bwW)+' '+f(t+h*.95)+
+      'q'+f(bwW)+' 5 '+f(bwW*2)+' 0L'+f(60+bwAt(a,.46)+1.5)+' '+f(wy)+'Z" fill="#f7e0c4"/>'+
+      /* 袖子要推到身體的輪廓外，縮在身體裡面就被身體蓋掉了 */
+      '<ellipse cx="'+f(60-a.bw-2.6)+'" cy="'+f(t+h*.2)+'" rx="6.4" ry="7.2" fill="#f7e0c4"/>'+
+      '<ellipse cx="'+f(60+a.bw+2.6)+'" cy="'+f(t+h*.2)+'" rx="6.4" ry="7.2" fill="#f7e0c4"/>'+
+      '<path d="M'+f(60-a.bw-7)+' '+f(t+h*.28)+'a4.4 3 0 0 0 8.8 0M'+f(60+a.bw-2.2)+' '+f(t+h*.28)+
+      'a4.4 3 0 0 0 8.8 0" stroke="#e0c49c" stroke-width="1.4" fill="none"/>'+
+      '<path d="M'+f(60-bwAt(a,.44)-2)+' '+f(wy-2.4)+'h'+f((bwAt(a,.44)+2)*2)+'v5h-'+f((bwAt(a,.44)+2)*2)+'z" fill="#c2607f"/>'+
+      '<path d="M'+f(60-bwAt(a,.06)-1)+' '+f(t+h*.03)+'q'+f(bwAt(a,.06)+1)+' 9 '+f((bwAt(a,.06)+1)*2)+' 0'+
+      '" stroke="#e8cfa8" stroke-width="2.4" fill="none"/>'+
+      '<path d="M60 '+f(wy)+'l-4.4-3.2 1.2 3.8-4.4 .8 4.4 1.6-1.2 3.8 4.4-3.2 4.4 3.2-1.2-3.8 4.4-1.6-4.4-.8 1.2-3.8z" fill="#c2607f"/>';
+    }},
+  {id:'fxd7', rot:-6, n:'焦糖蘋果', p:200, slot:'hand', only:'a-fox', d:a=>{
+    /* 握在木棒上，蘋果在棒子頂端，焦糖從上面淋下來 */
+    const f=n=>n.toFixed(1), x=AC.gx(a), y=AC.gy(a);
+    return '<path d="M'+f(x)+' '+f(y+4)+'V'+f(y-9)+'" stroke="#c9a95e" stroke-width="2.6" stroke-linecap="round"/>'+
+      '<path d="M'+f(x)+' '+f(y-11)+'q-8.6-7.4-8.6 2.2t8.6 9.6 8.6-9.6-8.6-2.2z" fill="#d0392b"/>'+
+      '<path d="M'+f(x-8.6)+' '+f(y-10)+'q0 5.4 2.2 8.6q6.4 2.2 12.8-2.2q1-4.4 0-7.6'+
+      'q-2 2.6-4 1.4q-1.6 3-3.4 1.2q-2.6 2.6-4.6-.4q-1.6 1.6-3-1z" fill="#c9762f"/>'+
+      '<path d="M'+f(x-4.4)+' '+f(y-12)+'q-2.2 5.4 1 8.6" stroke="#e8624f" stroke-width="1.6" fill="none" opacity=".6"/>'+
+      '<path d="M'+f(x)+' '+f(y-14)+'q6.4-4.4 7.6 1q-5.4 3.4-7.6-1z" fill="#4a9b3f"/>'+
+      '<path d="M'+f(x)+' '+f(y-14.6)+'v-2.6" stroke="#5c3a1a" stroke-width="1.8" stroke-linecap="round"/>';}},
   {id:'fxf7', n:'麂皮短靴', p:200, slot:'foot', only:'a-fox', d:a=>{
-    const y=(a.fy||107)-6, w=(a.fw||9)+1, f=n=>n.toFixed(1);
-    return AC.feet(a,cx=>'<rect x="'+f(cx-w)+'" y="'+f(y)+'" width="'+f(w*2)+'" height="11" rx="3.4" fill="#c98a6a"/>'+
-      '<rect x="'+f(cx-w-1)+'" y="'+f(y+9)+'" width="'+f(w*2+2)+'" height="4" rx="1.8" fill="#8a5a3a"/>'+
-      '<path d="M'+f(cx-w)+' '+f(y+2)+'h'+f(w*2)+'" stroke="#e0b09a" stroke-width="1.6"/>'+
-      '<path d="M'+f(cx-2.6)+' '+f(y-1)+'l2.6 2 2.6-2" stroke="#e2809f" stroke-width="1.6" fill="none"/>');}},
+    /* 麂皮短靴：靴口一圈毛邊、側面一顆小扣子。
+       鞋身原本的粉褐太接近皮膚色，壓深一階 */
+    const f=n=>n.toFixed(1), y=(a.fy||107)-8, w=(a.fw||9)+1;
+    return AC.feet(a,cx=>{
+      let o='<path d="M'+f(cx-w)+' '+f(y+3)+'h'+f(w*2)+'v9.4q0 2.6 -2.6 2.6h-'+f(w*2-5.2)+
+        'q-2.6 0 -2.6-2.6z" fill="#a4674a"/>';
+      for(let i=0;i<5;i++)
+        o+='<circle cx="'+f(cx-w+2+i*((w*2-4)/4))+'" cy="'+f(y+2.6)+'" r="2.6" fill="#f0dcc8"/>';
+      return o+'<path d="M'+f(cx-w)+' '+f(y+6)+'h'+f(w*2)+'" stroke="#854e35" stroke-width="1.2" opacity=".85"/>'+
+        '<circle cx="'+f(cx+w-3.4)+'" cy="'+f(y+8.6)+'" r="1.6" fill="#e8c9a8"/>'+
+        '<rect x="'+f(cx-w-1)+'" y="'+f(y+13.4)+'" width="'+f(w*2+2)+'" height="4.2" rx="1.8" fill="#5d3826"/>';});}},
   {id:'pgh7', n:'冰晶髮飾', p:100, slot:'head', only:'a-peng', d:a=>{
     const y=AC.crest(a)+2, cx=60+a.hr*.42, cy=y-4, f=n=>n.toFixed(1);
     let o='<path d="M'+f(60-AC.crestW(a)*.9)+' '+f(y+1)+'q'+f(AC.crestW(a)*.9)+' -8 '+f(AC.crestW(a)*1.8)+' 0" stroke="#bfe9f7" stroke-width="2.6" fill="none"/>';
