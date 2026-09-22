@@ -197,6 +197,55 @@ for r in rows:
     us[sym] = {'n': (r.get('name') or '').strip(), 'c': close,
                'ch': num(r.get('netchange')) or 0}
 print('  美股 %d 檔' % len(us), flush=True)
+# 上面那份「股票」清單不含 ETF（VOO、QQQ、AVUV 都查不到），ETF 另外一支端點。
+# 欄位名稱跟股票那份不一樣，而且 rows 多包了一層 data
+raw = get('https://api.nasdaq.com/api/screener/etf?tableonly=true&limit=25000&download=true', tries=2)
+d1 = ((raw or {}).get('data') or {})
+rows = (d1.get('data') or {}).get('rows') or d1.get('rows') or []
+n_etf = 0
+for r in rows:
+    sym = str(r.get('symbol') or '').strip().upper().replace('/', '.')
+    if not sym or '^' in sym or sym in us:
+        continue
+    close = num(str(r.get('lastSalePrice') or '').replace('$', ''))
+    if not close:
+        continue
+    us[sym] = {'n': (r.get('companyName') or '').strip(), 'c': close,
+               'ch': num(r.get('netChange')) or 0}
+    n_etf += 1
+print('  ETF %d 檔' % n_etf, flush=True)
+if n_etf < 500:
+    # ETF 那支沒抓到的話，舊檔裡有的 ETF 先沿用，不要讓持有 ETF 的市值整個不見
+    for k, v in (old.get('us') or {}).items():
+        us.setdefault(k, v)
+    print('::warning::ETF 只抓到 %d 檔，沿用舊檔' % n_etf, flush=True)
+
+# ── 倫敦掛牌的個別標的 ──
+# Nasdaq 只有美國掛牌的。倫敦的只抓這份清單裡的幾檔，代號照 Yahoo 的寫法加 .L，
+# 才不會跟美股同名的撞在一起（VALU 在美股是 Value Line 那家公司）。
+# 網頁把 us 這份一律當美金報價，所以只收用美金報價的；換成英鎊或便士報價的要另外處理
+LSE = ['VALU.L']
+for sym in LSE:
+    raw = get('https://query1.finance.yahoo.com/v8/finance/chart/%s?range=5d&interval=1d' % sym, tries=2)
+    try:
+        res = raw['chart']['result'][0]
+        meta = res['meta']
+        closes = [c for c in res['indicators']['quote'][0]['close'] if c]
+    except Exception:
+        res = None
+    if not res or not closes:
+        if sym in (old.get('us') or {}):
+            us[sym] = old['us'][sym]
+        print('::warning::%s 沒抓到，沿用舊的' % sym, flush=True)
+        continue
+    if meta.get('currency') != 'USD':
+        print('::warning::%s 報價幣別是 %s 不是美金，先不收' % (sym, meta.get('currency')), flush=True)
+        continue
+    c = round(closes[-1], 4)
+    ch = round(closes[-1] - closes[-2], 4) if len(closes) > 1 else 0
+    us[sym] = {'n': (meta.get('longName') or meta.get('shortName') or sym).strip(), 'c': c, 'ch': ch}
+    print('  %s %s（%s）' % (sym, c, meta.get('currency')), flush=True)
+
 if len(us) < 1000:
     # 抓失敗或只抓到零星幾檔，沿用舊的那份
     us = old.get('us') or us
