@@ -827,11 +827,23 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 /* 幣別：金額框旁邊的下拉、換算提示、統計幣別 */
 /* 幣別放在標籤那一行的右邊，金額框才有整格寬可以打數字 */
 .f label.amtlb{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.f label.amtlb>span{white-space:nowrap;flex:none}
+.f label.amtlb select{flex:0 1 5.4em;width:5.4em;min-width:3.8em}
+/* 兩欄並排的時候，格子不准被裡面的東西撐寬（grid 預設 min-width:auto 會被撐開） */
+.two>.f{min-width:0}
 .f label.amtlb select{width:auto;padding:1px 6px;font-size:12px;font-weight:600;border-radius:8px;
   border-width:1.5px;background:var(--panel3);color:var(--txt2);cursor:pointer}
 .fxnote{font-size:11.5px;color:var(--txt3);margin-top:5px;min-height:15px;line-height:1.35}
 .fxnote b{color:var(--txt2);font-weight:700}
 .fxnote.bad{color:var(--red)}
+/* 金額欄的算式：手機的數字鍵盤沒有 + - × ÷，所以在框下面放一排按鈕 */
+.calcops{display:flex;gap:5px;margin-top:6px}
+.calcops button{flex:1;min-width:0;height:28px;border-radius:8px;border:1.5px solid var(--line);
+  background:var(--panel3);color:var(--txt2);font-size:15px;font-weight:700;cursor:pointer;padding:0}
+.calcops button:active{background:var(--line)}
+.calcres{font-size:12.5px;color:var(--txt3);margin-top:5px;min-height:0}
+.calcres b{color:var(--gold);font-weight:800;font-size:14px}
+.calcres.bad b{color:var(--red)}
 .cursel{font:inherit;font-size:12.5px;font-weight:600;padding:5px 8px;border-radius:10px;cursor:pointer;
   background:var(--panel2);border:1.5px solid var(--edge);color:var(--txt2)}
 .cursel option{background:var(--panel);color:var(--txt)}
@@ -1343,7 +1355,9 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   <div class="two">
     <div class="f"><label>日期</label><input type="date" id="rDate"></div>
     <div class="f"><label class="amtlb"><span id="rAmtLabel">存入多少</span><select id="rCur" title="幣別"></select></label>
-      <input type="number" id="rAmt" placeholder="" step="any" inputmode="decimal">
+      <input type="text" id="rAmt" placeholder="" inputmode="decimal" autocomplete="off">
+      <div class="calcops" id="rOps"><button type="button" data-op="+">＋</button><button type="button" data-op="-">－</button><button type="button" data-op="*">×</button><button type="button" data-op="/">÷</button></div>
+      <div class="calcres" id="rCalc"></div>
       <div class="fxnote" id="rFx"></div></div>
   </div>
   <div class="f" id="rCatWrap"><label>類別</label><div class="cats" id="rCats"></div></div>
@@ -1695,7 +1709,9 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   <div class="two">
     <div class="f"><label>日期</label><input type="date" id="grDate"></div>
     <div class="f"><label class="amtlb"><span>金額</span><select id="grCur" title="幣別"></select></label>
-      <input type="number" id="grAmt" placeholder="" step="any" inputmode="decimal">
+      <input type="text" id="grAmt" placeholder="" inputmode="decimal" autocomplete="off">
+      <div class="calcops" id="grOps"><button type="button" data-op="+">＋</button><button type="button" data-op="-">－</button><button type="button" data-op="*">×</button><button type="button" data-op="/">÷</button></div>
+      <div class="calcres" id="grCalc"></div>
       <div class="fxnote" id="grFx"></div></div>
   </div>
   <div class="f"><label>項目（可留白）</label><input type="text" id="grNote" placeholder="買什麼、誰付的…"></div>
@@ -12575,6 +12591,7 @@ $('gsOk').onclick=()=>{
   });
 };
 $('grAmt').addEventListener('input',()=>{ if($('vGRec').classList.contains('on')) gpNote(); });
+calcOps($('grOps'),$('grAmt'),()=>{ if($('vGRec').classList.contains('on')) gpNote(); });
 $('grCur').addEventListener('change',()=>{ if($('vGRec').classList.contains('on')){ SFX.play('tick'); renderGPick(); } });
 $('grMode').addEventListener('click',e=>{
   const b=e.target.closest('button[data-sm]'); if(!b) return;
@@ -12772,12 +12789,63 @@ function setKind(k){
   rCat=''; rSub=''; rCustom=false; catAdd=false; subAdd=false; renderCats();
   updatePrev();
 }
+/* 金額欄可以打算式（500-50+60-100 → 410）。不用 eval：只認數字、+ - × ÷ 跟括號，
+   先乘除後加減。全形符號、千分位逗號、空白都先洗掉。
+   算不出來（打到一半的 "500-"、除以 0）就回 NaN，跟以前 parseFloat 空字串一樣處理 */
+function calcAmt(str){
+  const t=String(str==null?'':str)
+    .replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248))
+    .replace(/[，,\s]/g,'').replace(/．/g,'.').replace(/＋/g,'+').replace(/[－—–]/g,'-')
+    .replace(/[×xX＊]/g,'*').replace(/[÷／]/g,'/').replace(/（/g,'(').replace(/）/g,')');
+  if(!t) return NaN;
+  let i=0;
+  const num=()=>{ const m=/^(\d+\.?\d*|\.\d+)/.exec(t.slice(i)); if(!m) throw 0; i+=m[0].length; return parseFloat(m[0]); };
+  const atom=()=>{
+    if(t[i]==='-'){ i++; return -atom(); }
+    if(t[i]==='+'){ i++; return atom(); }
+    if(t[i]==='('){ i++; const v=expr(); if(t[i]!==')') throw 0; i++; return v; }
+    return num(); };
+  const term=()=>{ let v=atom();
+    while(t[i]==='*'||t[i]==='/'){ const o=t[i++], b=atom(); v=o==='*'?v*b:v/b; } return v; };
+  const expr=()=>{ let v=term();
+    while(t[i]==='+'||t[i]==='-'){ const o=t[i++], b=term(); v=o==='+'?v+b:v-b; } return v; };
+  try{ const v=expr(); return (i===t.length&&isFinite(v))?Math.round(v*100)/100:NaN; }
+  catch(e){ return NaN; }
+}
+/* 有沒有真的打算式（開頭的負號不算），有才顯示「＝ 結果」 */
+const isCalc=v=>/[+\-*/×÷xX＊＋－（）()]/.test(String(v||'').trim().replace(/^[-－]/,''));
+function calcShow(inp,el){
+  const v=inp.value;
+  if(!isCalc(v)){ el.innerHTML=''; el.classList.remove('bad'); return; }
+  const r=calcAmt(v);
+  el.classList.toggle('bad',isNaN(r));
+  el.innerHTML='＝ <b>'+(isNaN(r)?'算式還沒打完':money(r))+'</b>';
+}
+/* 按鈕插在游標的位置。按下去的時候不要讓輸入框失焦，不然手機鍵盤會收起來 */
+function calcOps(ops,inp,after){
+  ops.addEventListener('pointerdown',e=>{ if(e.target.closest('button')) e.preventDefault(); });
+  ops.addEventListener('click',e=>{
+    const b=e.target.closest('button[data-op]'); if(!b) return;
+    const v=inp.value, a=inp.selectionStart==null?v.length:inp.selectionStart,
+          z=inp.selectionEnd==null?v.length:inp.selectionEnd;
+    inp.value=v.slice(0,a)+b.dataset.op+v.slice(z);
+    inp.focus(); try{ inp.setSelectionRange(a+1,a+1); }catch(err){}
+    SFX.play('tick'); after();
+  });
+  /* 離開欄位時，算得出來就把算式換成結果，存起來的就是一個數字 */
+  inp.addEventListener('blur',()=>{
+    if(!isCalc(inp.value)) return;
+    const r=calcAmt(inp.value); if(isNaN(r)) return;
+    inp.value=String(r); after();
+  });
+}
 /* 改舊的那筆時，幣別沒換就沿用當時的匯率，金額才不會因為匯率變了自己跳 */
 let rOldCur='TWD', rOldFx=null;
 const rLockFx=c=>(rEdit&&c===rOldCur&&rOldFx)?rOldFx:null;
 const rCurNow=()=>rKind==='set'?'TWD':($('rCur').value||'TWD');
 function updatePrev(){
-  const raw=parseFloat($('rAmt').value), c=rCurNow(), rate=rLockFx(c)||fxRate(c);
+  const raw=calcAmt($('rAmt').value), c=rCurNow(), rate=rLockFx(c)||fxRate(c);
+  calcShow($('rAmt'),$('rCalc'));
   fxNote($('rFx'),raw,c,rLockFx(c));
   const v=(isNaN(raw)||!rate)?NaN:raw*rate, cur=now(), r=recs();
   const backdate=r.length&&$('rDate').value&&$('rDate').value<r[r.length-1].date;
@@ -12791,6 +12859,7 @@ $('rKinds').addEventListener('click',e=>{
   SFX.play('tick'); setKind(b.dataset.kind);
 });
 $('rAmt').addEventListener('input',updatePrev);
+calcOps($('rOps'),$('rAmt'),updatePrev);
 $('rCur').addEventListener('change',()=>{ SFX.play('tick'); updatePrev(); });
 $('statCur').addEventListener('change',e=>{
   db.settings.statCur=e.target.value; save(); SFX.play('tick'); renderFxStats();
@@ -12829,8 +12898,9 @@ function openRec(id){
 }
 $('btnAddRec').onclick=()=>openRec();
 $('saveRec').onclick=()=>{
-  const date=$('rDate').value, v=parseFloat($('rAmt').value);
-  if(!date||isNaN(v)||v<=0){ SFX.play('err'); toast('日期和金額都要填，金額要大於 0'); return; }
+  const date=$('rDate').value, v=calcAmt($('rAmt').value);
+  if(!date||isNaN(v)||v<=0){ SFX.play('err');
+    toast(isCalc($('rAmt').value)&&isNaN(v)?'金額的算式算不出來，檢查一下':'日期和金額都要填，金額要大於 0'); return; }
   const d0=new Date(), before=levelInfo().lv, tgt=targetAt(d0.getFullYear(),d0.getMonth());
   const thisMon=()=>{const d=new Date(),m=monthly().find(x=>x.y===d.getFullYear()&&x.m===d.getMonth());return m?m.delta:null;};
   const mBefore=thisMon();
@@ -13457,7 +13527,8 @@ function renderGPick(){
 function gpNote(){
   const g=GROUPS.find(x=>x.id===grFor); if(!g) return;
   const mem=g.members||[];
-  const v=parseFloat($('grAmt').value), has=!isNaN(v)&&v>0;
+  const v=calcAmt($('grAmt').value), has=!isNaN(v)&&v>0;
+  calcShow($('grAmt'),$('grCalc'));
   const gc=$('grCur').value||'TWD', M=n=>cmoney(n,gc), tol=curTol(gc);
   fxNote($('grFx'),v,gc,grLockFx(gc));
   const note=$('grSplit'); note.className='splitnote';
@@ -13536,6 +13607,7 @@ function openGRec(gid,rid){
   const gc0=r?grOldCur:(lastIn&&fxRate(recCur(lastIn))?recCur(lastIn):'TWD');
   $('grCur').innerHTML=curOptions(gc0,true); $('grCur').value=gc0;
   $('grAmt').value=r?(recOrig(r)||''):'';
+  calcShow($('grAmt'),$('grCalc'));           /* 上一次打到一半的「＝ …」要清掉 */
   $('grNote').value=r?(r.note||''):'';
   $('grTitle').textContent=r?'改這一筆':'記一筆到團裡';
   $('grSave').textContent=r?'存起來':'記下來';
@@ -14689,8 +14761,9 @@ document.body.addEventListener('click',e=>{
     return; }
   if(b.id==='grCancel'){ $('vGRec').classList.remove('on'); return; }
   if(b.id==='grSave'){
-    const d=$('grDate').value, v=parseFloat($('grAmt').value);
-    if(!d||isNaN(v)||v<=0){ SFX.play('err'); toast('日期跟金額都要填'); return; }
+    const d=$('grDate').value, v=calcAmt($('grAmt').value);
+    if(!d||isNaN(v)||v<=0){ SFX.play('err');
+      toast(isCalc($('grAmt').value)&&isNaN(v)?'金額的算式算不出來，檢查一下':'日期跟金額都要填'); return; }
     const g=GROUPS.find(x=>x.id===grFor), mem=(g&&g.members)||[];
     /* 外幣：amount 放換算後的台幣，原幣跟匯率另外存。各自金額那種分法填的是原幣 */
     const gc=$('grCur').value||'TWD', rate=grLockFx(gc)||fxRate(gc);
