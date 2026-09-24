@@ -448,6 +448,55 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .stkfoot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 20px 14px;
   font-size:12px;color:var(--txt3)}
 .stkempty{padding:26px 20px;text-align:center;color:var(--txt3);font-size:14px}
+
+/* ── 自組 ETF（再平衡）── */
+.bskbar{display:flex;align-items:center;gap:10px;margin:16px 0 10px}
+.bskbar b{font-size:14px;font-weight:800}
+.bskbar span{font-size:12px;color:var(--txt3)}
+.bskbar .btn{margin-left:auto}
+.bsk{padding:16px 18px;margin-bottom:12px}
+.bsk .hd{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+.bsk .hd b{font-size:16px;font-weight:800}
+.bsk .hd span{font-size:12px;color:var(--txt3)}
+.bsk .hd .x{margin-left:auto;display:flex;gap:4px}
+.bsk .say2{font-size:12px;color:var(--txt3);margin-bottom:10px}
+.bsk .row{display:grid;grid-template-columns:1fr 92px 108px;gap:8px;align-items:center;
+  padding:8px 6px;border-top:1px solid var(--edge)}
+.bsk .row.h{border-top:none;padding-bottom:4px;font-size:11px;letter-spacing:1px;color:var(--txt3);font-weight:700}
+.bsk .row.h .r{text-align:right}
+.bsk .cd{font-size:14px;font-weight:800}
+.bsk .nm{font-size:11.5px;color:var(--txt3);display:block;max-width:150px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.bsk .wts{text-align:right;font-size:13px;font-variant-numeric:tabular-nums}
+.bsk .wts i{display:block;font-size:11px;color:var(--txt3);font-style:normal}
+.bsk .act{text-align:right;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+.bsk .act i{display:block;font-size:11px;color:var(--txt3);font-style:normal;font-weight:400}
+.bsk .act.buy{color:#8ee65a}
+.bsk .act.sell{color:#ff6b6b}
+.bsk .act.keep{color:var(--txt3);font-weight:600}
+/* 現在／目標的對照條：上面是現在，下面那條細的是目標 */
+.bsk .gauge{grid-column:1/-1;height:3px;border-radius:2px;background:var(--panel3);position:relative;margin-top:-2px}
+.bsk .gauge u{position:absolute;left:0;top:0;height:100%;border-radius:2px;background:var(--cyan)}
+.bsk .gauge s{position:absolute;top:-2px;width:2px;height:7px;background:var(--gold);border-radius:1px}
+.bsk .foot{border-top:1px solid var(--edge2);margin-top:8px;padding-top:9px;
+  display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--txt3)}
+.bskempty{padding:22px 20px;text-align:center;color:var(--txt3);font-size:13.5px;line-height:1.6}
+/* 挑成份股的清單 */
+.bpick{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;
+  border:1.5px solid var(--edge);border-radius:12px;padding:8px}
+.bpick .it{display:grid;grid-template-columns:22px 1fr 78px 16px;gap:8px;align-items:center;
+  padding:6px 6px;border-radius:9px}
+.bpick .it.on{background:var(--panel3)}
+.bpick .it .cd{font-size:13.5px;font-weight:700}
+.bpick .it .nm{font-size:11px;color:var(--txt3);display:block;max-width:140px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.bpick .it input[type=number]{padding:6px 8px;font-size:13px;text-align:right}
+.bpick .it .pc{font-size:12px;color:var(--txt3)}
+.bpick .it input[type=checkbox]{width:18px;height:18px;accent-color:var(--cyan)}
+.bsum{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:12.5px;color:var(--txt3)}
+.bsum b{font-weight:800;color:var(--txt2)}
+.bsum b.bad{color:var(--red)}
+.bsum .btn{margin-left:auto}
 @media(max-width:640px){
   .stkt th,.stkt td{padding:10px 7px;font-size:13px}
   .stkt th:first-child,.stkt td:first-child{padding-left:12px}
@@ -1327,8 +1376,8 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
     <span class="segs" id="stkColSeg"><button data-sc="cost" class="on">成本</button><button data-sc="value">市值</button></span>
     <span class="segs" id="stkCurSeg" style="display:none"><button data-cu="TWD" class="on">台幣</button><button data-cu="USD">美金</button></span>
   </div>
-  <div class="card piebox" id="assetPie"></div>
   <div id="stocks"></div>
+  <div id="baskets"></div>
 </div>
 
 <div class="sec">
@@ -1403,6 +1452,19 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
     <div class="say" id="titleHint" style="margin-top:6px"></div></div>
   <div class="f"><label>角色<b class="picknow" id="avaName"></b></label><div class="avapick" id="avaPick"></div></div>
   <div class="dfoot"><button class="btn ghost" data-close>取消</button><button class="btn go" id="saveAva">好了</button></div>
+</div></div>
+
+<div class="veil" id="vBasket"><div class="dlg">
+  <h3 id="bskTitle">自組 ETF</h3>
+  <div class="note-bar">把手上幾檔股票<b>包成一包</b>，各自設一個目標比例，
+    下面就會算出要買賣幾股才會回到那個比例。價格用每天盤後更新的收盤價。</div>
+  <div class="f"><label>這包叫什麼</label>
+    <input type="text" id="bskName" placeholder="核心持股、退休金…" maxlength="12"></div>
+  <div class="f"><label>成份股與目標比例</label><div class="bpick" id="bskPick"></div>
+    <div class="bsum">合計 <b id="bskSum">0%</b>
+      <button class="btn sm ghost" id="bskEven">平均分配</button></div></div>
+  <div class="dfoot"><button class="btn ghost" data-close>取消</button>
+    <button class="btn go" id="saveBsk">儲存</button></div>
 </div></div>
 
 <div class="veil" id="vHold"><div class="dlg">
@@ -11175,8 +11237,7 @@ function inRange(x){
 }
 const rangeName=()=>pieRange==='m'?'這個月':pieRange==='y'?'今年':'全部';
 /* 甜甜圈：rows=[{k,v,c}] */
-function donut(rows,total,midTop,midSub,size,fmt){
-  const M=fmt||smoney;
+function donut(rows,total,midTop,midSub,size){
   const R=size*0.41, W=size*0.155, cx=size/2;
   let off=0;
   const arcs=rows.map(r=>{
@@ -11186,7 +11247,7 @@ function donut(rows,total,midTop,midSub,size,fmt){
       'stroke-dashoffset="'+(-off).toFixed(2)+'"'+
       /* 有編號的才能點（股票那張沒有分類，不給點） */
       (r.i!==undefined?' data-pcat="'+r.i+'" style="cursor:pointer"':'')+
-      '><title>'+esc(r.k)+' '+M(r.v)+'</title></circle>';
+      '><title>'+esc(r.k)+' '+smoney(r.v)+'</title></circle>';
     off+=len; return el;
   }).join('');
   return '<div class="pie"><svg viewBox="0 0 '+size+' '+size+'">'+
@@ -11699,7 +11760,7 @@ const assets=()=>now()+stockValue()+othersValue();
 
 function renderStocks(){
   const box=$('stocks'), rows=stockRows(), os=others();
-  renderAssetPie();
+  renderBaskets();
   /* 放在最前面。沒有任何資產的時候下面會提早 return，
      擺在後面的話那顆亮起來的按鈕會停在上一次的狀態 */
   document.querySelectorAll('#stkColSeg button').forEach(b=>b.classList.toggle('on',b.dataset.sc===stkCol));
@@ -11786,44 +11847,155 @@ function stkHint(){
   addEventListener('resize',upd);
   upd();
 }
-/* 資產的圓餅圖：現金一塊、每一檔股票一塊、每一項其他資產一塊。
-   一律換成台幣才畫 —— 一半美金一半台幣加起來的圓是假的。
-   查不到現價的股票沒有市值可言，不進圓餅（下面的表還是看得到那一列） */
-const PIEMAX=8;                     /* 最多畫幾塊，其餘併成「其他」，不然圖例會長到看不完 */
-function assetSlices(){
-  const out=[];
-  const cash=now();
-  if(cash>0) out.push({k:'現金',v:cash});
-  stockRows().forEach(r=>{
-    const v=fxTo(r.value,r.cur,'TWD');
-    if(v>0) out.push({k:r.code,sn:r.name||'',v:v});
+/* ── 自組 ETF ──
+   把手上幾檔包成一包、各給一個目標比例，算出要買賣幾股才會回到目標。
+   只收股票 —— 其他資產沒有股數也沒有現價，算不出「要買幾股」。
+   整包的總市值不變，只在成份股之間調，所以不用另外問還有多少現金 */
+const baskets=()=>Array.isArray(db.settings.baskets)?db.settings.baskets:[];
+function bskCalc(b){
+  const hs=stockRows();
+  const rows=(b.items||[]).map(it=>{
+    const h=hs.find(x=>x.code===it.code)||null;
+    /* 市值一律先換成台幣才能互相比較，股數再用各自的幣別回推 */
+    const val=h?fxTo(h.value,h.cur,'TWD'):null;
+    return {code:it.code, w:Math.max(0,+it.w||0), name:h?h.name:'',
+            cur:h?h.cur:'TWD', price:h?h.price:null, shares:h?h.shares:0,
+            val:val, gone:!h, noprice:!!h&&val===null};
   });
-  others().forEach(o=>{ if(o.value>0) out.push({k:o.name||'其他資產',v:o.value}); });
-  out.sort((a,b)=>b.v-a.v);
-  if(out.length>PIEMAX){
-    const rest=out.slice(PIEMAX-1);
-    return out.slice(0,PIEMAX-1).concat([{k:'其他 '+rest.length+' 項',
-      v:rest.reduce((n,x)=>n+x.v,0)}]);
+  const live=rows.filter(r=>r.val!==null);
+  const total=live.reduce((n,r)=>n+r.val,0);
+  const wsum=live.reduce((n,r)=>n+r.w,0);
+  rows.forEach(r=>{
+    r.pct  = (total&&r.val!==null)?r.val/total*100:null;
+    /* 比例沒加到 100 也要算得出來：照使用者填的比重去分 */
+    r.tpct = (wsum&&r.val!==null)?r.w/wsum*100:null;
+    r.tval = (r.tpct!==null)?total*r.tpct/100:null;
+    r.diff = (r.tval!==null)?r.tval-r.val:null;
+    /* 差額換回這檔自己的幣別再除以股價，才是股數。
+       無條件捨去（往零的方向），寧可少買一股也不要超過目標 */
+    const d=(r.diff!==null&&r.price)?fxTo(r.diff,'TWD',r.cur):null;
+    r.qty  = (d!==null&&r.price)?Math.trunc(d/r.price):null;
+    /* 賣不能賣超過手上有的 */
+    if(r.qty!==null&&r.qty<0) r.qty=-Math.min(r.shares,-r.qty);
+    r.amt  = (r.qty!==null)?fxTo(r.qty*r.price,r.cur,'TWD'):null;
+  });
+  return {rows, total, wsum};
+}
+function renderBaskets(){
+  const box=$('baskets'); if(!box) return;
+  const bs=baskets();
+  const bar='<div class="bskbar"><b>自組 ETF</b><span>設定目標比例，算出要買賣幾股</span>'+
+    '<button class="btn sm ghost" id="btnAddBasket">＋ 自組一包</button></div>';
+  if(!bs.length){
+    /* 一檔股票都還沒有的時候不用出現，先去加資產 */
+    if(!stockRows().length){ box.innerHTML=''; return; }
+    box.innerHTML=bar+'<div class="card bskempty">把手上幾檔股票包成一包，'+
+      '例如 0050 跟 2330 各一半。<br>之後隨時打開就看得到現在偏離多少、要買賣幾股。</div>';
+    return;
   }
-  return out;
+  box.innerHTML=bar+bs.map(b=>{
+    const {rows,total,wsum}=bskCalc(b);
+    const head='<div class="row h"><span>成份股</span><span class="r">現在 → 目標</span>'+
+      '<span class="r">要怎麼調</span></div>';
+    const body=rows.map(r=>{
+      const nm='<span class="cd">'+esc(r.code)+'</span>'+
+        (r.name?'<span class="nm">'+esc(r.name.length>16?r.name.slice(0,16)+'…':r.name)+'</span>':'');
+      if(r.val===null)
+        return '<div class="row"><div>'+nm+'</div><div class="wts">—</div>'+
+          '<div class="act keep">'+(r.gone?'不在持股裡':'查不到價格')+'</div></div>';
+      const act = r.qty>0 ? '<div class="act buy">買 '+money(r.qty)+' 股<i>約 '+money(Math.abs(r.amt))+'</i></div>'
+        : r.qty<0 ? '<div class="act sell">賣 '+money(-r.qty)+' 股<i>約 '+money(Math.abs(r.amt))+'</i></div>'
+        : '<div class="act keep">不用動</div>';
+      return '<div class="row"><div>'+nm+'</div>'+
+        '<div class="wts">'+r.pct.toFixed(1)+'%<i>目標 '+r.tpct.toFixed(1)+'%</i></div>'+act+
+        '<div class="gauge"><u style="width:'+Math.min(100,r.pct).toFixed(1)+'%"></u>'+
+        '<s style="left:calc('+Math.min(100,r.tpct).toFixed(1)+'% - 1px)"></s></div></div>';
+    }).join('');
+    const need=rows.some(r=>r.qty);
+    return '<div class="card bsk"><div class="hd"><b>'+esc(b.name||'自組 ETF')+'</b>'+
+      '<span>總市值 '+money(total)+'</span><span class="x">'+
+      '<button class="iq" data-editbsk="'+b.id+'"><svg class="i"><use href="#i-gear"/></svg></button>'+
+      '<button class="iq del" data-delbsk="'+b.id+'"><svg class="i"><use href="#i-x"/></svg></button>'+
+      '</span></div>'+
+      '<div class="say2">'+(need?'照下面買賣就會回到目標比例。整包的總市值不變，只在這幾檔之間調。'
+                                :'現在的比例已經很接近目標了，不用動。')+'</div>'+
+      head+body+
+      '<div class="foot"><span>'+(PRICES?'價格更新於 '+PRICES.updated:'還沒抓到價格')+'</span>'+
+      (Math.abs(wsum-100)>0.5?'<span style="color:var(--gold)">比例合計 '+(+wsum.toFixed(1))+
+        '%，已照這個比重分配</span>':'')+
+      '<span>股數無條件捨去，賣出不超過手上的股數</span></div></div>';
+  }).join('');
 }
-function renderAssetPie(){
-  const box=$('assetPie'); if(!box) return;
-  const rows=assetSlices().map((r,i)=>Object.assign({},r,{c:CATCOLOR[i%CATCOLOR.length]}));
-  const total=rows.reduce((n,x)=>n+x.v,0);
-  if(!total){ box.style.display='none'; return; }
-  box.style.display='';
-  const pct=v=>(v/total*100);
-  box.innerHTML=donut(rows,total,'<b>'+short(total)+'</b>','總資產',190,money)+
-    '<div class="legend">'+rows.map(r=>
-      '<div class="lg"><i style="background:'+r.c+'"></i>'+
-      '<span class="nm">'+esc(r.k)+(r.sn?' <span class="sn">'+esc(r.sn.length>14?r.sn.slice(0,14)+'…':r.sn)+'</span>':'')+'</span>'+
-      '<span class="amt n">'+money(r.v)+'</span>'+
-      '<span class="pct">'+(pct(r.v)>=10?pct(r.v).toFixed(0):pct(r.v).toFixed(1))+'%</span>'+
-      '<span class="bar"><u data-w="'+(r.v/total)+'" style="background:'+r.c+'"></u></span></div>').join('')+
-    '</div>';
-  setTimeout(()=>box.querySelectorAll('.lg u').forEach(u=>u.style.transform='scaleX('+u.dataset.w+')'),30);
+
+/* ── 自組 ETF 的設定視窗 ── */
+let bskEdit=null;
+function bskSum(){
+  let n=0;
+  document.querySelectorAll('#bskPick .it').forEach(it=>{
+    if(it.querySelector('input[type=checkbox]').checked) n+=Math.max(0,+it.querySelector('input[type=number]').value||0);
+  });
+  const el=$('bskSum'); el.textContent=(+n.toFixed(1))+'%';
+  el.classList.toggle('bad',Math.abs(n-100)>0.5&&n>0);
+  return n;
 }
+function openBasket(id){
+  const b=id?baskets().find(x=>x.id===id):null;
+  bskEdit=b?b.id:null;
+  const rows=stockRows();
+  if(!rows.length){ SFX.play('err'); toast('先加幾檔股票'); return; }
+  $('bskTitle').textContent=b?'改這包':'自組 ETF';
+  $('bskName').value=b?(b.name||''):'';
+  $('bskPick').innerHTML=rows.map(r=>{
+    const it=b&&(b.items||[]).find(x=>x.code===r.code);
+    return '<label class="it'+(it?' on':'')+'" data-code="'+esc(r.code)+'">'+
+      '<input type="checkbox"'+(it?' checked':'')+'>'+
+      '<span><span class="cd">'+esc(r.code)+'</span>'+
+        (r.name?'<span class="nm">'+esc(r.name)+'</span>':'')+'</span>'+
+      '<input type="number" step="any" inputmode="decimal" placeholder="0" value="'+
+        (it?it.w:'')+'">'+
+      '<span class="pc">%</span></label>';
+  }).join('');
+  bskSum();
+  SFX.play('tick'); open('vBasket');
+}
+$('bskPick').addEventListener('input',e=>{
+  const it=e.target.closest('.it'); if(!it) return;
+  it.classList.toggle('on',it.querySelector('input[type=checkbox]').checked);
+  /* 勾起來但沒填比例的，先給一個平均值，不然合計永遠是 0 */
+  if(e.target.type==='checkbox'&&e.target.checked){
+    const w=it.querySelector('input[type=number]');
+    if(!(+w.value>0)){
+      const n=[...document.querySelectorAll('#bskPick input[type=checkbox]')].filter(x=>x.checked).length;
+      w.value=n?+(100/n).toFixed(1):100;
+    }
+  }
+  bskSum();
+});
+$('bskEven').onclick=()=>{
+  const on=[...document.querySelectorAll('#bskPick .it')].filter(it=>it.querySelector('input[type=checkbox]').checked);
+  if(!on.length){ SFX.play('err'); toast('先勾要放進來的股票'); return; }
+  const w=+(100/on.length).toFixed(1);
+  on.forEach((it,i)=>{ it.querySelector('input[type=number]').value =
+    i===on.length-1 ? +(100-w*(on.length-1)).toFixed(1) : w; });
+  SFX.play('tick'); bskSum();
+};
+$('saveBsk').onclick=()=>{
+  const items=[];
+  document.querySelectorAll('#bskPick .it').forEach(it=>{
+    if(!it.querySelector('input[type=checkbox]').checked) return;
+    const w=Math.max(0,+it.querySelector('input[type=number]').value||0);
+    if(w>0) items.push({code:it.dataset.code,w:w});
+  });
+  if(items.length<2){ SFX.play('err'); toast('至少要兩檔，而且比例要大於 0'); return; }
+  const name=$('bskName').value.trim()||'自組 ETF';
+  const list=baskets().slice();
+  if(bskEdit){
+    const i=list.findIndex(x=>x.id===bskEdit);
+    if(i>=0) list[i]=Object.assign({},list[i],{name:name,items:items});
+  }else list.push({id:'b'+Date.now().toString(36),name:name,items:items});
+  db.settings.baskets=list; save(); shut(); render();
+  SFX.play('coin'); toast(bskEdit?'改好了':'包好了');
+};
 /* 其他資產：手動維護的價值，跟股票一起算進總資產 */
 const others=()=>Array.isArray(db.settings.others)?db.settings.others:[];
 const othersValue=()=>others().reduce((s,o)=>s+(o.value||0),0);
@@ -14906,6 +15078,14 @@ document.body.addEventListener('click',e=>{
     const h=holdings().find(x=>x.id===b.dataset.delhold);
     if(!confirm('刪掉持股 '+h.code+'？')) return;
     db.settings.holdings=holdings().filter(x=>x.id!==b.dataset.delhold);
+    save(); render(); SFX.play('del'); toast('已刪除'); return;
+  }
+  if(b.id==='btnAddBasket') return openBasket();
+  if(b.dataset.editbsk) return openBasket(b.dataset.editbsk);
+  if(b.dataset.delbsk){
+    const k=baskets().find(x=>x.id===b.dataset.delbsk);
+    if(!confirm('刪掉「'+(k?k.name:'')+'」？持股本身不會被刪。')) return;
+    db.settings.baskets=baskets().filter(x=>x.id!==b.dataset.delbsk);
     save(); render(); SFX.play('del'); toast('已刪除'); return;
   }
   if(b.dataset.editloan) return openLoan(b.dataset.editloan);
