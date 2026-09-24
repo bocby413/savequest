@@ -414,7 +414,14 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 /* ── 股票資產 ── */
 /* 窄螢幕（320）放不下五個欄位，讓它橫著捲，
    不然最右邊那兩顆按鈕會被切掉、點不到 */
-.stkbox{padding:0;overflow-x:auto}
+.stkbox{padding:0;overflow:hidden;position:relative}
+.stkscroll{overflow-x:auto}
+/* 右邊那層漸層：表格比卡片寬的時候才亮起來，暗示可以往右滑。
+   放在卡片上（不是捲動層裡），才不會跟著內容一起被捲走 */
+.stkbox:after{content:"";position:absolute;right:0;top:2px;bottom:42px;width:30px;
+  pointer-events:none;opacity:0;transition:opacity .2s;
+  background:linear-gradient(90deg,rgba(0,0,0,0),var(--panel))}
+.stkbox.more:after{opacity:1}
 .stkt{width:100%;border-collapse:collapse}
 .stkt th{font-size:11px;letter-spacing:1px;color:var(--txt3);font-weight:700;padding:14px 12px 10px;text-align:right;white-space:nowrap}
 .stkt th:first-child{text-align:left;padding-left:20px}
@@ -423,7 +430,10 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .stkt td:first-child{text-align:left;padding-left:20px}
 .stkt tbody tr:hover{background:var(--panel2)}
 .stkt .cd{font-weight:800;font-size:15px}
-.stkt .nm{font-size:12px;color:var(--txt3);display:block;margin-top:2px}
+/* 名字不限寬的話，美股那種長英文全名會把第一欄撐到比整張卡還寬
+   （td 是 nowrap，不會自己折），後面的欄位就被擠出畫面外 */
+.stkt .nm{font-size:12px;color:var(--txt3);display:block;margin-top:2px;
+  max-width:190px;overflow:hidden;text-overflow:ellipsis}
 .stkt .val{font-weight:800;font-size:15px}
 .stkt .miss{color:var(--gold);font-size:12px}
 /* 美股的小標。同一張表裡混著台股美股，要一眼看得出哪一檔是哪邊的 */
@@ -442,6 +452,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
   .stkt th,.stkt td{padding:10px 7px;font-size:13px}
   .stkt th:first-child,.stkt td:first-child{padding-left:12px}
   .stkt .hidem{display:none}
+  .stkt .nm{max-width:104px}
   /* 兩顆按鈕要並排在 375 的螢幕上放得下，內距跟按鈕都收小一點 */
   .stkt .x{padding-left:0!important;padding-right:6px!important}
   .stkt .x .iq{width:26px;height:26px;font-size:13px}
@@ -1316,6 +1327,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
     <span class="segs" id="stkColSeg"><button data-sc="cost" class="on">成本</button><button data-sc="value">市值</button></span>
     <span class="segs" id="stkCurSeg" style="display:none"><button data-cu="TWD" class="on">台幣</button><button data-cu="USD">美金</button></span>
   </div>
+  <div class="card piebox" id="assetPie"></div>
   <div id="stocks"></div>
 </div>
 
@@ -11163,7 +11175,8 @@ function inRange(x){
 }
 const rangeName=()=>pieRange==='m'?'這個月':pieRange==='y'?'今年':'全部';
 /* 甜甜圈：rows=[{k,v,c}] */
-function donut(rows,total,midTop,midSub,size){
+function donut(rows,total,midTop,midSub,size,fmt){
+  const M=fmt||smoney;
   const R=size*0.41, W=size*0.155, cx=size/2;
   let off=0;
   const arcs=rows.map(r=>{
@@ -11173,7 +11186,7 @@ function donut(rows,total,midTop,midSub,size){
       'stroke-dashoffset="'+(-off).toFixed(2)+'"'+
       /* 有編號的才能點（股票那張沒有分類，不給點） */
       (r.i!==undefined?' data-pcat="'+r.i+'" style="cursor:pointer"':'')+
-      '><title>'+esc(r.k)+' '+smoney(r.v)+'</title></circle>';
+      '><title>'+esc(r.k)+' '+M(r.v)+'</title></circle>';
     off+=len; return el;
   }).join('');
   return '<div class="pie"><svg viewBox="0 0 '+size+' '+size+'">'+
@@ -11686,6 +11699,7 @@ const assets=()=>now()+stockValue()+othersValue();
 
 function renderStocks(){
   const box=$('stocks'), rows=stockRows(), os=others();
+  renderAssetPie();
   /* 放在最前面。沒有任何資產的時候下面會提早 return，
      擺在後面的話那顆亮起來的按鈕會停在上一次的狀態 */
   document.querySelectorAll('#stkColSeg button').forEach(b=>b.classList.toggle('on',b.dataset.sc===stkCol));
@@ -11722,7 +11736,7 @@ function renderStocks(){
   $('stkSub').textContent=(stkCol==='cost'?'總成本 '+sign+money(tc):'總市值 '+sign+money(tv))+
     (tp!==null?'　損益 '+(tp>=0?'+':'-')+money(Math.abs(tp)):'');
   const cell=(v,cls)=>'<span class="'+cls+'">'+(v>=0?'+':'-')+money(Math.abs(v))+'</span>';
-  box.innerHTML='<div class="card stkbox"><table class="stkt"><thead><tr>'+
+  box.innerHTML='<div class="card stkbox"><div class="stkscroll"><table class="stkt"><thead><tr>'+
     '<th>股票</th><th class="hidem">股數</th><th class="hidem">均價</th><th>現價</th>'+
     '<th>'+colName+'</th><th>損益</th><th></th></tr></thead><tbody>'+
     rows.map(r=>{
@@ -11757,10 +11771,58 @@ function renderStocks(){
       '<td class="val">'+sign+money(stkCol==='cost'?tc:tv)+'</td>'+
       '<td>'+(tp!==null?cell(tp,tp>=0?'up':'down')+
         '<span class="nm">'+(tc?((tp/tc*100)>=0?'+':'')+(tp/tc*100).toFixed(1)+'%':'')+'</span>':'—')+'</td><td></td></tr>'+
-    '</tbody></table><div class="stkfoot"><span>'+
+    '</tbody></table></div><div class="stkfoot"><span>'+
     /* 只有真的有美股的時候才需要知道匯率。收盤日期跟檔數對使用者沒有意義 */
     (us?(usdTwd()?'1 美金 = '+usdTwd().toFixed(2)+' 台幣':'還沒抓到匯率'):'')+
     '</span><span>'+(PRICES?'更新於 '+PRICES.updated:'')+'</span></div></div>';
+  stkHint();
+}
+/* 還有沒有捲到底。捲到最右邊就把提示收掉 */
+function stkHint(){
+  const card=document.querySelector('.stkbox'), sc=card&&card.querySelector('.stkscroll');
+  if(!sc) return;
+  const upd=()=>card.classList.toggle('more',sc.scrollWidth-sc.clientWidth-sc.scrollLeft>4);
+  sc.addEventListener('scroll',upd);
+  addEventListener('resize',upd);
+  upd();
+}
+/* 資產的圓餅圖：現金一塊、每一檔股票一塊、每一項其他資產一塊。
+   一律換成台幣才畫 —— 一半美金一半台幣加起來的圓是假的。
+   查不到現價的股票沒有市值可言，不進圓餅（下面的表還是看得到那一列） */
+const PIEMAX=8;                     /* 最多畫幾塊，其餘併成「其他」，不然圖例會長到看不完 */
+function assetSlices(){
+  const out=[];
+  const cash=now();
+  if(cash>0) out.push({k:'現金',v:cash});
+  stockRows().forEach(r=>{
+    const v=fxTo(r.value,r.cur,'TWD');
+    if(v>0) out.push({k:r.code,sn:r.name||'',v:v});
+  });
+  others().forEach(o=>{ if(o.value>0) out.push({k:o.name||'其他資產',v:o.value}); });
+  out.sort((a,b)=>b.v-a.v);
+  if(out.length>PIEMAX){
+    const rest=out.slice(PIEMAX-1);
+    return out.slice(0,PIEMAX-1).concat([{k:'其他 '+rest.length+' 項',
+      v:rest.reduce((n,x)=>n+x.v,0)}]);
+  }
+  return out;
+}
+function renderAssetPie(){
+  const box=$('assetPie'); if(!box) return;
+  const rows=assetSlices().map((r,i)=>Object.assign({},r,{c:CATCOLOR[i%CATCOLOR.length]}));
+  const total=rows.reduce((n,x)=>n+x.v,0);
+  if(!total){ box.style.display='none'; return; }
+  box.style.display='';
+  const pct=v=>(v/total*100);
+  box.innerHTML=donut(rows,total,'<b>'+short(total)+'</b>','總資產',190,money)+
+    '<div class="legend">'+rows.map(r=>
+      '<div class="lg"><i style="background:'+r.c+'"></i>'+
+      '<span class="nm">'+esc(r.k)+(r.sn?' <span class="sn">'+esc(r.sn.length>14?r.sn.slice(0,14)+'…':r.sn)+'</span>':'')+'</span>'+
+      '<span class="amt n">'+money(r.v)+'</span>'+
+      '<span class="pct">'+(pct(r.v)>=10?pct(r.v).toFixed(0):pct(r.v).toFixed(1))+'%</span>'+
+      '<span class="bar"><u data-w="'+(r.v/total)+'" style="background:'+r.c+'"></u></span></div>').join('')+
+    '</div>';
+  setTimeout(()=>box.querySelectorAll('.lg u').forEach(u=>u.style.transform='scaleX('+u.dataset.w+')'),30);
 }
 /* 其他資產：手動維護的價值，跟股票一起算進總資產 */
 const others=()=>Array.isArray(db.settings.others)?db.settings.others:[];
