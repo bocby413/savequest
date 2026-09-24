@@ -11854,7 +11854,7 @@ function stkHint(){
    只收股票 —— 其他資產沒有股數也沒有現價，算不出「要買幾股」。
    整包的總市值不變，只在成份股之間調，所以不用另外問還有多少現金 */
 const baskets=()=>Array.isArray(db.settings.baskets)?db.settings.baskets:[];
-const bskOn=()=>db.settings.showBasket!==false;      /* 預設開著，在設定裡可以收起來 */
+const bskOn=()=>db.settings.showBasket===true;       /* 預設關著，要自己去設定裡打開 */
 function bskCalc(b){
   const hs=stockRows();
   const rows=(b.items||[]).map(it=>{
