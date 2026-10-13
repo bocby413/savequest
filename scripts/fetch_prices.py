@@ -4,7 +4,7 @@
 
 美股跟台股一樣是「整個市場一次抓下來」——  使用者隨便打一個代號都要查得到，
 不能只抓他現在持有的那幾檔（prices.json 是所有人共用的靜態檔）。"""
-import json, re, ssl, sys, time, urllib.request
+import csv, io, json, re, ssl, sys, time, urllib.request
 from datetime import datetime, timedelta, timezone
 
 TPE = timezone(timedelta(hours=8))
@@ -95,6 +95,19 @@ def get(url, tries=3):
                 return None
         time.sleep(5 * (i + 1))
 
+def get_text(url, tries=3):
+    """拿原始文字。證交所有的端點參數寫 response=json，回的其實是 CSV"""
+    for i in range(tries):
+        try:
+            req = urllib.request.Request(url, headers=UA)
+            with urllib.request.urlopen(req, timeout=60, context=CTX) as r:
+                return r.read().decode('utf-8', 'replace')
+        except Exception as e:
+            print('  第 %d 次失敗：%s' % (i + 1, e), flush=True)
+            if i == tries - 1:
+                return None
+        time.sleep(5 * (i + 1))
+
 def num(x):
     try:
         v = float(str(x).replace(',', '').replace('+', '').strip())
@@ -120,6 +133,18 @@ TWSE_URLS = [
     'https://www.twse.com.tw/exchangeReport/STOCK_DAY_ALL?response=json',
 ]
 
+def rows_csv(text):
+    """CSV 版的上市收盤行情。欄名用中文，對齊 JSON 版那邊看得懂的鍵"""
+    if not text or text.lstrip().startswith(('{', '[', '<')):
+        return []
+    out = []
+    for r in csv.reader(io.StringIO(text)):
+        if len(r) < 10 or not re.fullmatch(r'\d{7}', (r[0] or '').strip()):
+            continue
+        out.append({'Date': r[0].strip(), '證券代號': r[1].strip(), '證券名稱': r[2].strip(),
+                    '收盤價': r[8].strip(), '漲跌價差': r[9].strip()})
+    return out
+
 def rows_of(x):
     """有的端點直接回陣列，有的包在 data／fields 裡"""
     if isinstance(x, list):
@@ -133,14 +158,33 @@ def rows_of(x):
                 return v
     return []
 
+def tw_date(rows):
+    """這一份是哪一天的（民國七碼）。拿不到就回空字串"""
+    for r in rows[:5]:
+        v = str(r.get('Date') or '').strip()
+        if re.fullmatch(r'\d{7}', v):
+            return v
+    return ''
+
+# 誰先誰後不重要，重要的是誰的日期比較新 ——
+# openapi 那支要到很晚才換成當天的，照順序拿第一個成功的就會一直停在前一天
 print('抓上市…', flush=True)
-twse = None
+twse, twse_d = None, ''
 for u in TWSE_URLS:
     print('  試 %s' % u, flush=True)
-    got = rows_of(get(u, tries=2))
-    if got:
-        twse = got
-        break
+    txt = get_text(u, tries=2)
+    got = []
+    if txt:
+        try:
+            got = rows_of(json.loads(txt))
+        except Exception:
+            got = rows_csv(txt)
+    if not got:
+        continue
+    d2 = tw_date(got)
+    print('    拿到 %d 檔，交易日 %s' % (len(got), d2 or '不明'), flush=True)
+    if twse is None or (d2 > twse_d):
+        twse, twse_d = got, d2
 n_twse = 0
 if twse:
     for r in twse:
@@ -166,13 +210,18 @@ if tpex:
             quotes[str(c).strip()] = {'n': (r.get('CompanyName') or '').strip(), 'c': close,
                                       'ch': num(r.get('Change')) or 0, 'm': 'tpex'}
             n_tpex += 1
-    print('  上櫃 %d 檔' % n_tpex, flush=True)
+    print('  上櫃 %d 檔（交易日 %s）' % (n_tpex, tw_date(tpex) or '不明'), flush=True)
 
 # 少了任一邊就不要覆蓋台股收盤價。之前只擋總數，結果上市掛掉時
 # 一份「只有上櫃」的檔案照樣蓋掉好的那份，2330 就查不到了。
 # 但也不要整支停掉：匯率、美股跟台股沒關係，記帳換算幣別天天要用，
 # 台股那邊掛了就沿用舊的收盤價，其他照常更新，排程上標黃色警告
 tw_ok = n_twse >= 800 and n_tpex >= 400
+# 一邊是今天、另一邊是昨天的話，寫出去的檔案會是混的 —— 要看得到
+tpex_d = tw_date(tpex or [])
+if tw_ok and twse_d and tpex_d and twse_d != tpex_d:
+    print('::warning::上市是 %s、上櫃是 %s，兩邊對不起來（通常是某一邊的資料還沒出來）'
+          % (twse_d, tpex_d), flush=True)
 if not tw_ok:
     print('::warning::台股資料不完整（上市 %d 檔、上櫃 %d 檔），沿用舊的收盤價，匯率跟美股照常更新'
           % (n_twse, n_tpex), flush=True)
