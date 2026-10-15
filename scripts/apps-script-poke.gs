@@ -58,3 +58,49 @@ function listTriggers() {
   if (!ts.length) { console.log('目前沒有任何觸發器'); return; }
   ts.forEach(function (t) { console.log(t.getHandlerFunction() + ' / ' + t.getEventType()); });
 }
+
+/* ── 收盤價 ──
+ * 同樣的理由：GitHub 自己的 cron 常常整段漏跑（2026-10-14 排六次只跑四次、
+ * 10-15 整天零次），收盤價就卡在前一天，台股美股都一樣。
+ * 本機的工作排程 TW_Prices_Poke 也會戳，但那要電腦開著；這支跑在 Google 那邊，
+ * 電腦關機照樣會動。兩邊都戳不會有問題 —— 價格沒變動那支排程就不會 commit。
+ *
+ * 時段（Apps Script 的時區要設成台北）：
+ *   07 點那次 = 美股收盤後（台北已是隔天早上）
+ *   14、17 點那兩次 = 台股收盤後
+ * 時間觸發器是「那個鐘頭內」跑，不是整點準時，但抓價不差那幾十分鐘。
+ */
+const PRICE_WORKFLOW = 'prices.yml';
+
+function pokePrices() {
+  const token = PropertiesService.getScriptProperties().getProperty('GH_TOKEN');
+  if (!token) { console.error('還沒設 GH_TOKEN'); return; }
+  const res = UrlFetchApp.fetch(
+    'https://api.github.com/repos/' + REPO + '/actions/workflows/' + PRICE_WORKFLOW + '/dispatches',
+    {
+      method: 'post',
+      contentType: 'application/json',
+      headers: {
+        Authorization: 'Bearer ' + token,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28'
+      },
+      payload: JSON.stringify({ ref: BRANCH }),
+      muteHttpExceptions: true
+    }
+  );
+  const code = res.getResponseCode();
+  if (code === 204) return;
+  console.error('收盤價觸發失敗 ' + code + '：' + res.getContentText().slice(0, 300));
+}
+
+/* 只要手動跑一次。會先清掉舊的，重複執行不會長出一堆觸發器 */
+function setupPriceTrigger() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'pokePrices') ScriptApp.deleteTrigger(t);
+  });
+  [7, 14, 17].forEach(function (h) {
+    ScriptApp.newTrigger('pokePrices').timeBased().everyDays(1).atHour(h).create();
+  });
+  console.log('好了，每天 7、14、17 點那幾個鐘頭各會戳一次收盤價');
+}
