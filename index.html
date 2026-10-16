@@ -11987,10 +11987,13 @@ $('saveBsk').onclick=()=>{
   const items=[];
   document.querySelectorAll('#bskPick .it').forEach(it=>{
     if(!it.querySelector('input[type=checkbox]').checked) return;
-    const w=Math.max(0,+it.querySelector('input[type=number]').value||0);
-    if(w>0) items.push({code:it.dataset.code,w:w});
+    /* 0% 也要收。目標 0 的意思是「這檔清掉」，下面會算成把手上的全部賣掉；
+       勾了卻因為填 0 就被丟掉的話，那一檔根本不會出現在這包裡 */
+    items.push({code:it.dataset.code,
+                w:Math.max(0,+it.querySelector('input[type=number]').value||0)});
   });
-  if(items.length<2){ SFX.play('err'); toast('至少要兩檔，而且比例要大於 0'); return; }
+  if(items.length<2){ SFX.play('err'); toast('至少要勾兩檔'); return; }
+  if(!items.reduce((n,x)=>n+x.w,0)){ SFX.play('err'); toast('至少要有一檔的比例大於 0'); return; }
   const name=$('bskName').value.trim()||'自組 ETF';
   const list=baskets().slice();
   if(bskEdit){
