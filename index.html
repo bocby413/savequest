@@ -460,8 +460,11 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .bsk .hd span{font-size:12px;color:var(--txt3)}
 .bsk .hd .x{margin-left:auto;display:flex;gap:4px}
 .bsk .say2{font-size:12px;color:var(--txt3);margin-bottom:10px}
-.bsk .row{display:grid;grid-template-columns:1fr 92px 108px;gap:8px;align-items:center;
+.bsk .row{display:grid;grid-template-columns:minmax(0,1fr) 92px 108px;gap:8px;align-items:center;
   padding:8px 6px;border-top:1px solid var(--edge)}
+/* 第一欄要可以被壓縮，名字才會用 … 收掉。grid 預設 min-width:auto，
+   長名字會把整列撐寬，右邊那欄就被擠出卡片外（手機上又拉不動） */
+.bsk .row>div:first-child{min-width:0}
 .bsk .row.h{border-top:none;padding-bottom:4px;font-size:11px;letter-spacing:1px;color:var(--txt3);font-weight:700}
 .bsk .row.h .r{text-align:right}
 .bsk .cd{font-size:14px;font-weight:800}
@@ -478,6 +481,17 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .bsk .gauge{grid-column:1/-1;height:3px;border-radius:2px;background:var(--panel3);position:relative;margin-top:-2px}
 .bsk .gauge u{position:absolute;left:0;top:0;height:100%;border-radius:2px;background:var(--cyan)}
 .bsk .gauge s{position:absolute;top:-2px;width:2px;height:7px;background:var(--gold);border-radius:1px}
+/* 窄螢幕：固定的那兩欄收窄、字級降一階，整列才塞得進畫面。
+   欄寬還是固定的，標題列跟每一列才對得齊 */
+@media(max-width:640px){
+  .bsk{padding:14px 12px}
+  .bsk .row{grid-template-columns:minmax(0,1fr) 76px 92px;gap:6px;padding:8px 2px}
+  .bsk .cd{font-size:13.5px}
+  .bsk .nm{max-width:none;font-size:11px}
+  .bsk .wts,.bsk .act{font-size:12.5px}
+  .bsk .wts i,.bsk .act i{font-size:10.5px}
+  .bsk .row.h{font-size:10px;letter-spacing:0}
+}
 .bsk .foot{border-top:1px solid var(--edge2);margin-top:8px;padding-top:9px;
   display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--txt3)}
 .bskempty{padding:22px 20px;text-align:center;color:var(--txt3);font-size:13.5px;line-height:1.6}
