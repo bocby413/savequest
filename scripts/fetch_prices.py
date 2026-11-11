@@ -5,6 +5,7 @@
 美股跟台股一樣是「整個市場一次抓下來」——  使用者隨便打一個代號都要查得到，
 不能只抓他現在持有的那幾檔（prices.json 是所有人共用的靜態檔）。"""
 import csv, io, json, re, ssl, sys, time, urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
 TPE = timezone(timedelta(hours=8))
@@ -228,46 +229,94 @@ if not tw_ok:
     quotes = old.get('quotes') or quotes
 
 # ── 美股 ──
-# Nasdaq 的清單端點一次回全美上市（NYSE/Nasdaq/AMEX）約七千檔，一支請求就夠。
+# 2026-11-11 起 Nasdaq 的 screener API 一律回 403（本機跟 GitHub 都是），
+# 抓到 0 檔又靜默沿用舊檔，美股就停在 11/06 的收盤價沒人發現。
+# 改成兩段：
+#   代號清單 → nasdaqtrader 的官方上市清單（純文字，含名稱跟 ETF 旗標）
+#   收盤價   → Yahoo 的 spark 端點，一次最多 20 檔（第 21 檔起整包 400），分批併發
 print('抓美股…', flush=True)
+
+def us_symbols():
+    """全美上市的代號與名稱。nasdaqlisted 是 Nasdaq 自己的，otherlisted 是 NYSE/AMEX 那些"""
+    out = {}
+    for url, sym_i, name_i, test_i in (
+            ('https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt', 0, 1, 3),
+            ('https://www.nasdaqtrader.com/dynamic/SymDir/otherlisted.txt', 0, 1, 6)):
+        txt = get_text(url, tries=2)
+        if not txt:
+            print('  清單抓不到：%s' % url, flush=True)
+            continue
+        n = 0
+        for line in txt.splitlines()[1:]:
+            if '|' not in line or line.startswith('File Creation'):
+                continue
+            col = line.split('|')
+            if len(col) <= max(sym_i, name_i, test_i):
+                continue
+            sym = col[sym_i].strip().upper()
+            if col[test_i].strip() == 'Y':          # 測試用的假代號
+                continue
+            # 權證、特別股那些帶 $ 或 ^ 的打不出來也查不到
+            if not re.fullmatch(r'[A-Z.\-]{1,8}', sym):
+                continue
+            out.setdefault(sym, col[name_i].strip())
+            n += 1
+        print('  清單 %s：%d 檔' % (url.rsplit('/', 1)[-1], n), flush=True)
+    return out
+
+SPARK = 'https://query1.finance.yahoo.com/v7/finance/spark?symbols=%s&range=5d&interval=1d'
+
+def spark_batch(batch):
+    """一批 20 檔。Yahoo 用減號分股別（BRK-B），使用者打的是 BRK.B"""
+    q = ','.join(x.replace('.', '-') for x in batch)
+    for a in range(3):
+        txt = get_text(SPARK % q, tries=1)
+        if txt:
+            try:
+                return ((json.loads(txt).get('spark') or {}).get('result')) or []
+            except Exception:
+                pass
+        time.sleep(1 + a)
+    return []
+
+names = us_symbols()
+syms = sorted(names)
 us = {}
-raw = get('https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=25000&download=true', tries=2)
-rows = ((raw or {}).get('data') or {}).get('rows') or []
-for r in rows:
-    sym = str(r.get('symbol') or '').strip().upper()
-    # Nasdaq 用斜線分股別（BRK/B），但大家打的是 BRK.B，轉成點
-    sym = sym.replace('/', '.')
-    # 帶 ^ 的是權證那類，網頁上也打不出來
-    if not sym or '^' in sym:
-        continue
-    close = num(str(r.get('lastsale') or '').replace('$', ''))
-    if not close:
-        continue
-    us[sym] = {'n': (r.get('name') or '').strip(), 'c': close,
-               'ch': num(r.get('netchange')) or 0}
-print('  美股 %d 檔' % len(us), flush=True)
-# 上面那份「股票」清單不含 ETF（VOO、QQQ、AVUV 都查不到），ETF 另外一支端點。
-# 欄位名稱跟股票那份不一樣，而且 rows 多包了一層 data
-raw = get('https://api.nasdaq.com/api/screener/etf?tableonly=true&limit=25000&download=true', tries=2)
-d1 = ((raw or {}).get('data') or {})
-rows = (d1.get('data') or {}).get('rows') or d1.get('rows') or []
-n_etf = 0
-for r in rows:
-    sym = str(r.get('symbol') or '').strip().upper().replace('/', '.')
-    if not sym or '^' in sym or sym in us:
-        continue
-    close = num(str(r.get('lastSalePrice') or '').replace('$', ''))
-    if not close:
-        continue
-    us[sym] = {'n': (r.get('companyName') or '').strip(), 'c': close,
-               'ch': num(r.get('netChange')) or 0}
-    n_etf += 1
-print('  ETF %d 檔' % n_etf, flush=True)
-if n_etf < 500:
-    # ETF 那支沒抓到的話，舊檔裡有的 ETF 先沿用，不要讓持有 ETF 的市值整個不見
-    for k, v in (old.get('us') or {}).items():
+if syms:
+    batches = [syms[k:k + 20] for k in range(0, len(syms), 20)]
+    now = time.time()
+    with ThreadPoolExecutor(max_workers=6) as ex:
+        for res in ex.map(spark_batch, batches):
+            for r in res or []:
+                try:
+                    resp = (r.get('response') or [{}])[0]
+                    ts = resp.get('timestamp') or []
+                    cl = (((resp.get('indicators') or {}).get('quote') or [{}])[0].get('close')) or []
+                except Exception:
+                    continue
+                # 只收「已經收完的那一盤」。盤中跑的話最後一根是當天的半成品，
+                # 收進去會變成把盤中價當收盤價。日線那根的時戳是開盤 09:30，
+                # 收盤在 6.5 小時後 —— 不必管時區直接用這個判斷
+                done = [(t, c) for t, c in zip(ts, cl) if c and now >= t + 6.5 * 3600]
+                if not done:
+                    continue
+                sym = str(resp.get('meta', {}).get('symbol') or r.get('symbol') or '').strip().upper()
+                sym = sym.replace('-', '.')
+                if sym not in names:
+                    continue
+                close = round(done[-1][1], 4)
+                prev = done[-2][1] if len(done) > 1 else None
+                us[sym] = {'n': names[sym], 'c': close,
+                           'ch': round(close - prev, 4) if prev else 0}
+    print('  美股 %d 檔（清單 %d）' % (len(us), len(syms)), flush=True)
+
+if len(us) < 1000:
+    # 整個抓壞了就沿用舊的，不要讓使用者的美股市值整個不見。
+    # 這次要出聲，上次就是因為沒聲音才停了好幾天沒人發現
+    old_us = old.get('us') or {}
+    print('::warning::美股只抓到 %d 檔，沿用舊檔 %d 檔' % (len(us), len(old_us)), flush=True)
+    for k, v in old_us.items():
         us.setdefault(k, v)
-    print('::warning::ETF 只抓到 %d 檔，沿用舊檔' % n_etf, flush=True)
 
 # ── 倫敦掛牌的個別標的 ──
 # Nasdaq 只有美國掛牌的。倫敦的只抓這份清單裡的幾檔，代號照 Yahoo 的寫法加 .L，
@@ -294,11 +343,6 @@ for sym in LSE:
     ch = round(closes[-1] - closes[-2], 4) if len(closes) > 1 else 0
     us[sym] = {'n': (meta.get('longName') or meta.get('shortName') or sym).strip(), 'c': c, 'ch': ch}
     print('  %s %s（%s）' % (sym, c, meta.get('currency')), flush=True)
-
-if len(us) < 1000:
-    # 抓失敗或只抓到零星幾檔，沿用舊的那份
-    us = old.get('us') or us
-    print('  美股沿用舊檔 %d 檔' % len(us), flush=True)
 
 # ── 美金對台幣 ──
 # 美股的價格是美金，網頁要把它換成台幣併進總資產，沒有匯率就換不了
