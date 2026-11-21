@@ -382,6 +382,7 @@ svg.ch .avg{stroke:var(--gold);stroke-width:1.5;stroke-dasharray:6 4}
 .pnl .row{display:grid;grid-template-columns:52px 1fr 84px;gap:10px;align-items:center;
   padding:5px 4px;border-radius:8px;transition:background-color .14s}
 .pnl .row:hover{background:var(--panel2)}
+.pnl .row[data-strat]{cursor:pointer}
 .pnl .nm{font-size:13px;font-weight:600;white-space:nowrap}
 .pnl .nm i{font-size:11px;color:var(--txt3);font-weight:400;font-style:normal;margin-left:5px}
 .pnl .track{position:relative;height:15px}
@@ -11310,7 +11311,7 @@ function renderStock(){
     '<div class="head"><b class="'+(net>=0?'up':'down')+'">'+(net>=0?'+':'-')+smoney(Math.abs(net))+'</b>'+
     '<span>'+rangeName()+'淨損益・'+rs.length+' 筆</span></div>'+
     strat.map(x=>
-      '<div class="row"><span class="nm">'+esc(x.k)+'<i>'+x.n+' 筆</i></span>'+
+      '<div class="row" data-strat="'+esc(x.k)+'" title="看這個策略的每一筆"><span class="nm">'+esc(x.k)+'<i>'+x.n+' 筆</i></span>'+
       '<span class="track"><u class="'+(x.net>=0?'p':'n')+'" data-w="'+(Math.abs(x.net)/mx)+'"></u></span>'+
       '<span class="amt '+(x.net>=0?'up':'down')+'">'+(x.net>=0?'+':'-')+smoney(Math.abs(x.net))+'</span></div>'
     ).join('')+
@@ -11375,6 +11376,27 @@ function openCat(i){
     const tag='<span class="cattag" style="--c:'+
       (p.sub?(SUBCOLOR[p.sub]||catColor(p.cat,CATS[p.kind]||[])):catColor(p.cat||'其他',CATS[p.kind]||[]))+'">'+
       esc(p.cat||'其他')+(p.sub?'·'+esc(p.sub):'')+'</span>';
+    return '<div class="drow"><div class="dmain">'+tag+
+      '<div class="d2">'+mdY(p.date)+(p.note?'　'+esc(p.note):'')+'</div></div>'+
+      '<div class="damt '+(p.kind==='in'?'up':'down')+'">'+
+        recMoney(p,p.kind==='in'?'+':'-')+'</div></div>';
+  }).join('')+'</div>';
+  SFX.play('tick'); open('vCat');
+}
+/* 點股票那張的某個策略，列出那個策略的每一筆。跟圓餅圖共用同一個明細框 */
+function openStrat(k){
+  const rows=recs().filter(x=>x.cat===STOCK&&!x.asset&&inRange(x)&&(x.sub||'未分')===k)
+    .sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(b.ts||0)-(a.ts||0));   /* 新的在前 */
+  if(!rows.length) return;
+  const buy=rows.filter(x=>x.kind==='out').reduce((n,x)=>n+x.amount,0);
+  const sell=rows.filter(x=>x.kind==='in').reduce((n,x)=>n+x.amount,0);
+  const net=sell-buy;
+  $('catTitle').textContent=STOCK+'·'+k;
+  $('catSum').textContent=rangeName()+'買進 '+smoney(buy)+'・賣出 '+smoney(sell)+
+    '・淨損益 '+(net>=0?'+':'-')+smoney(Math.abs(net))+'　共 '+rows.length+' 筆';
+  $('catList').innerHTML='<div class="dlist">'+rows.map(p=>{
+    const tag='<span class="cattag" style="--c:'+(SUBCOLOR[p.sub]||'#8a93a8')+'">'+
+      (p.kind==='in'?'賣出':'買進')+(p.sub?'·'+esc(p.sub):'')+'</span>';
     return '<div class="drow"><div class="dmain">'+tag+
       '<div class="d2">'+mdY(p.date)+(p.note?'　'+esc(p.note):'')+'</div></div>'+
       '<div class="damt '+(p.kind==='in'?'up':'down')+'">'+
@@ -15185,6 +15207,11 @@ $('shopCats').addEventListener('click',e=>{
 $('pieCard').addEventListener('click',e=>{
   const b=e.target.closest('[data-pcat]'); if(!b) return;
   openCat(b.dataset.pcat);
+});
+/* 股票那張：點某個策略那一列，看那個策略的每一筆 */
+$('stockCard').addEventListener('click',e=>{
+  const b=e.target.closest('[data-strat]'); if(!b) return;
+  openStrat(b.dataset.strat);
 });
 $('shopBody').addEventListener('click',e=>{
   const b=e.target.closest('[data-extra]'); if(!b) return;
